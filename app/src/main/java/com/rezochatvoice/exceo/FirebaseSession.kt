@@ -1,0 +1,152 @@
+package com.rezochatvoice.exceo
+
+import android.util.Log
+import com.google.firebase.Timestamp
+import com.google.firebase.auth.EmailAuthProvider
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
+import kotlinx.coroutines.tasks.await
+
+object FirebaseSession {
+    fun isSignedIn(): Boolean = FirebaseAuth.getInstance().currentUser != null
+
+    /** Masuk ke Firebase memakai ID token Google. Mengembalikan UID. */
+    suspend fun signIn(idToken: String): String {
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        val result = FirebaseAuth.getInstance().signInWithCredential(credential).await()
+        return result.user?.uid ?: error("UID kosong")
+    }
+
+    /**
+     * Masuk ke Firebase memakai access token Facebook.
+     * Provider Facebook harus sudah diaktifkan di Firebase Authentication,
+     * dan App ID/Secret Facebook sudah ditempel di sana.
+     */
+    suspend fun signInFacebook(accessToken: String): FirebaseUser {
+        val credential = com.google.firebase.auth.FacebookAuthProvider.getCredential(accessToken)
+        val result = FirebaseAuth.getInstance().signInWithCredential(credential).await()
+        return result.user ?: error("User kosong")
+    }
+
+    /** Email tersembunyi untuk akun nomor HP, dipakai untuk login nomor + password. */
+    fun emailDariNomor(nomorE164: String): String =
+        nomorE164.filter { it.isDigit() } + "@phone.rezostar.app"
+
+    /**
+     * Setelah akun nomor dibuat lewat kode SMS, tautkan password agar login
+     * berikutnya cukup nomor + password tanpa menunggu SMS lagi.
+     */
+    /** Batas waktu tiap permintaan ke Firebase Auth, supaya layar tidak
+     *  menggantung kalau jaringan putus (mis. app pindah ke WhatsApp lalu kembali). */
+    private const val TIMEOUT_MS = 30_000L
+
+    suspend fun tautkanPassword(nomorE164: String, password: String): Throwable? {
+        return try {
+            val user = FirebaseAuth.getInstance().currentUser ?: return IllegalStateException("Belum login")
+            val cred = EmailAuthProvider.getCredential(emailDariNomor(nomorE164), password)
+            kotlinx.coroutines.withTimeout(TIMEOUT_MS) { user.linkWithCredential(cred).await() }
+            null
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            e
+        }
+    }
+
+    /** Buat akun email+password tersembunyi untuk nomor yang lolos kode WhatsApp. */
+    suspend fun buatAkunNomor(nomorE164: String, password: String): com.google.firebase.auth.FirebaseUser {
+        val r = kotlinx.coroutines.withTimeout(TIMEOUT_MS) {
+            FirebaseAuth.getInstance()
+                .createUserWithEmailAndPassword(emailDariNomor(nomorE164), password).await()
+        }
+        return r.user ?: error("User kosong")
+    }
+
+    /**
+     * Akun nomor lama (dibuat lewat SMS) tidak punya email+password. Saat user
+     * itu sudah masuk dan mau dipindah ke kode WhatsApp, password ditautkan.
+     */
+    suspend fun sudahPunyaPassword(): Boolean =
+        FirebaseAuth.getInstance().currentUser?.providerData
+            ?.any { it.providerId == "password" } == true
+
+    /** Login dengan email & password (harus sudah ditambahkan lewat Pengaturan). */
+    suspend fun signInEmail(email: String, password: String): FirebaseUser {
+        val r = kotlinx.coroutines.withTimeout(TIMEOUT_MS) {
+            FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password).await()
+        }
+        return r.user ?: error("User kosong")
+    }
+
+    /** Nama & foto dari Firestore untuk akun yang login lewat email. */
+    suspend fun fetchBasic(uid: String, fallbackName: String): Pair<String, String?> {
+        return try {
+            val doc = FirebaseFirestore.getInstance().collection("users").document(uid).get().await()
+            val name = doc.getString("nickname")?.takeIf { it.isNotBlank() }
+                ?: doc.getString("name")?.takeIf { it.isNotBlank() }
+                ?: fallbackName
+            name to doc.getString("photoUrl")
+        } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) {
+            fallbackName to null
+        }
+    }
+
+    fun hasPassword(): Boolean =
+        FirebaseAuth.getInstance().currentUser?.providerData?.any { it.providerId == "password" } == true
+
+    fun passwordEmail(): String? =
+        FirebaseAuth.getInstance().currentUser?.providerData
+            ?.firstOrNull { it.providerId == "password" }?.email
+
+    /** Tambahkan email & password ke akun Google yang sedang login. null = sukses. */
+    suspend fun linkEmailPassword(email: String, password: String): Throwable? {
+        val u = FirebaseAuth.getInstance().currentUser ?: return IllegalStateException("Belum login")
+        return try {
+            u.linkWithCredential(EmailAuthProvider.getCredential(email, password)).await()
+            null
+        } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) {
+            Log.w("FirebaseSession", "Link email gagal", e)
+            e
+        }
+    }
+
+    fun friendlyError(e: Throwable): String = when (e) {
+        is FirebaseAuthInvalidCredentialsException -> "Email atau password salah"
+        is FirebaseAuthInvalidUserException -> "Akun dengan email ini tidak ditemukan"
+        is FirebaseAuthUserCollisionException -> "Email ini sudah dipakai akun lain"
+        is FirebaseAuthWeakPasswordException -> "Password terlalu lemah (minimal 6 karakter)"
+        is FirebaseAuthRecentLoginRequiredException -> "Keluar lalu login Google lagi, kemudian coba lagi"
+        else -> e.message ?: "Terjadi kesalahan"
+    }
+
+    /** Simpan profil ke Firestore. Gagal di sini tidak membatalkan login. */
+    suspend fun saveProfile(uid: String, user: UserProfile): Throwable? {
+        return try {
+            val data = hashMapOf<String, Any?>(
+                "name" to user.name,
+                "email" to user.email,
+                "photoUrl" to user.photoUrl,
+                "lastLogin" to Timestamp.now(),
+            )
+            FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(uid)
+                .set(data, SetOptions.merge())
+                .await()
+            null
+        } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) {
+            Log.w("Firestore", "Simpan profil gagal", e)
+            e
+        }
+    }
+
+    fun signOut() = FirebaseAuth.getInstance().signOut()
+}

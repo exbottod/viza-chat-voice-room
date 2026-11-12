@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Rezo Star</string>
+    <!-- Diisi dari Facebook Developer Console > Settings > Basic.
+         Selama masih 000, tombol Facebook menampilkan pesan belum diatur. -->
+    <string name="facebook_app_id">GANTI_FACEBOOK_APP_ID</string>
+    <string name="facebook_client_token">a6a620b22da7245071890f47afd71ce2</string>
+    <string name="fb_login_protocol_scheme">fbGANTI_FACEBOOK_APP_ID</string>
+</resources>

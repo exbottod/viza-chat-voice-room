@@ -6,8 +6,9 @@
 # Sumber asli tidak pernah diubah: tiap build memakai salinan baru, lalu nama
 # Rezo dibersihkan dan diganti merek pembeli.
 set -e
-AKAR="/app/conversations/6acfa289d02a5b1eed769154"
-SUMBER="$AKAR/repo-whitelabel"
+# Akar repo ditentukan otomatis supaya skrip bisa jalan di sandbox maupun GitHub Actions.
+AKAR="${AKAR:-$(cd "$(dirname "$0")/.." && pwd)}"
+SUMBER="${SUMBER:-$AKAR}"
 PAKET_REZO="com.rezochatvoice.exceo"
 GJ="${1:-}"; NAMA="${2:-}"; PAKET="${3:-}"; MEREK="${4:-}"; RTDB="${5:-}"; GOOGLE_ID="${6:-}"
 
@@ -21,9 +22,9 @@ case "$PAKET" in
 esac
 
 SLUG=$(printf '%s' "$MEREK" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9')
-KERJA="$AKAR/build-wl/$SLUG"
+KERJA="${KERJA:-$AKAR/build-wl/$SLUG}"
 echo "1) Menyiapkan salinan bersih di $KERJA"
-mkdir -p "$AKAR/build-wl"
+mkdir -p "$(dirname "$KERJA")"
 if [ -d "$KERJA" ]; then find "$KERJA" -mindepth 1 -delete; else mkdir -p "$KERJA"; fi
 tar -C "$SUMBER" --exclude=.git --exclude=build --exclude=.gradle -cf - . | tar -C "$KERJA" -xf -
 
@@ -82,12 +83,16 @@ if [ -n "$GOOGLE_ID" ]; then
   sed -i "s#^googleWebClientId=.*#googleWebClientId=$GOOGLE_ID#" "$KERJA/gradle.properties"
 fi
 
-export JAVA_HOME=/opt/jdk PATH=/opt/jdk/bin:$PATH ANDROID_HOME=/opt/android-sdk ANDROID_SDK_ROOT=/opt/android-sdk
+JAVA_HOME="${JAVA_HOME:-/opt/jdk}"; export JAVA_HOME
+PATH="$JAVA_HOME/bin:$PATH"
+ANDROID_HOME="${ANDROID_HOME:-/opt/android-sdk}"; export ANDROID_HOME ANDROID_SDK_ROOT="$ANDROID_HOME"
 echo "5) Membangun APK"
-cd "$KERJA" && /opt/gradle/gradle-8.9/bin/gradle assembleRelease --no-daemon --console=plain | tail -4
+cd "$KERJA" && "${GRADLE_BIN:-/opt/gradle/gradle-8.9/bin/gradle}" assembleRelease --no-daemon --console=plain | tail -4
 
 APK="$KERJA/app/build/outputs/apk/release/app-arm64-v8a-release.apk"
 [ -f "$APK" ] || { echo "APK tidak terbentuk"; exit 1; }
 echo "6) Memeriksa hasil"
-/opt/android-sdk/cmdline-tools/latest/bin/apkanalyzer manifest application-id "$APK"
+if [ -x "$ANDROID_HOME/cmdline-tools/latest/bin/apkanalyzer" ]; then
+  "$ANDROID_HOME/cmdline-tools/latest/bin/apkanalyzer" manifest application-id "$APK"
+fi
 echo "APK: $APK"

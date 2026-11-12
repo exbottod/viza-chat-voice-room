@@ -32,8 +32,9 @@ jobs:
       - name: Perbarui halaman unduh dan patch kecil
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          UNDUH_TOKEN: ${{ secrets.UNDUH_TOKEN }}
-        run: python3 tools/ci-unduh.py
+        run: |
+          python3 -m pip install --quiet bsdiff4
+          python3 tools/ci-unduh.py
 
       - name: Simpan artifact
         uses: actions/upload-artifact@v4

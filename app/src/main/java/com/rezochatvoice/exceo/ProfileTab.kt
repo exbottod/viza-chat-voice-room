@@ -179,7 +179,8 @@ fun ProfileTab(
     var panelMgrBuka by remember { mutableStateOf(false) }
     LaunchedEffect(userId) {
         panelMgrRole = try {
-            PanelMgrViza.roleOf(FirebaseAuth.getInstance().currentUser?.email ?: "")
+            val fuser = FirebaseAuth.getInstance().currentUser
+            PanelMgrViza.roleOf(fuser?.email ?: "", fuser?.uid ?: userId)
         } catch (e: Exception) { "" }
     }
     LaunchedEffect(userId) {

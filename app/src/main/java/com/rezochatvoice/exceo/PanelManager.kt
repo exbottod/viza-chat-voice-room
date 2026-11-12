@@ -53,26 +53,50 @@ private val PMMuted = Color(0xFF9AA6BB)
 object PanelMgrViza {
     private fun db() = com.google.firebase.firestore.FirebaseFirestore.getInstance()
 
-    /** Peran akun ini: owner, admin, manager, moderator, staf, atau kosong. */
-    suspend fun roleOf(email: String): String {
-        if (email.isBlank()) return ""
-        return try {
-            val s = kotlinx.coroutines.withTimeoutOrNull(6000L) {
-                db().collection("panelAdmins").document(email.lowercase()).get().await()
-            } ?: return ""
-            if (!s.exists()) "" else {
-                val aktif = s.getBoolean("aktif")
-                val jabatan = s.getString("jabatanApk") ?: ""
-                when {
-                    aktif == false -> ""
-                    jabatan.isNotBlank() && jabatan != "tidak ada" -> jabatan
-                    else -> s.getString("role") ?: ""
+    /**
+     * Jabatan akun ini di APK: manager, admin, seller, staf, atau kosong.
+     *
+     * Dibaca dari tiga sumber berurutan supaya panel tetap muncul walau email
+     * akun belum terisi:
+     *   1. koleksi "stafApk" dengan id = UID (cara paling langsung, dari panel)
+     *   2. koleksi "panelAdmins" id = email
+     *   3. koleksi "panelAdmins" yang punya field uid = UID ini
+     */
+    suspend fun roleOf(email: String, uid: String): String {
+        if (uid.isNotBlank()) {
+            try {
+                val s = kotlinx.coroutines.withTimeoutOrNull(6000L) {
+                    db().collection("stafApk").document(uid).get().await()
                 }
-            }
-        } catch (e: Exception) {
-            if (e is kotlinx.coroutines.CancellationException) throw e
-            ""
+                bacaJabatan(s)?.let { if (it.isNotBlank()) return it }
+            } catch (e: Exception) { if (e is kotlinx.coroutines.CancellationException) throw e }
         }
+        if (email.isNotBlank()) {
+            try {
+                val s = kotlinx.coroutines.withTimeoutOrNull(6000L) {
+                    db().collection("panelAdmins").document(email.lowercase()).get().await()
+                }
+                bacaJabatan(s)?.let { if (it.isNotBlank()) return it }
+            } catch (e: Exception) { if (e is kotlinx.coroutines.CancellationException) throw e }
+        }
+        if (uid.isNotBlank()) {
+            try {
+                val q = kotlinx.coroutines.withTimeoutOrNull(6000L) {
+                    db().collection("panelAdmins").whereEqualTo("uid", uid).limit(1).get().await()
+                }
+                bacaJabatan(q?.documents?.firstOrNull())?.let { if (it.isNotBlank()) return it }
+            } catch (e: Exception) { if (e is kotlinx.coroutines.CancellationException) throw e }
+        }
+        return ""
+    }
+
+    /** Ambil jabatan dari satu dokumen; null kalau dokumen tidak ada. */
+    private fun bacaJabatan(s: com.google.firebase.firestore.DocumentSnapshot?): String? {
+        if (s == null || !s.exists()) return null
+        if (s.getBoolean("aktif") == false) return ""
+        val jabatan = s.getString("jabatanApk") ?: s.getString("jabatan") ?: ""
+        if (jabatan.isNotBlank() && jabatan != "tidak ada") return jabatan
+        return s.getString("role") ?: ""
     }
 
     /** Terima ID angka, ID unik, atau UID. */

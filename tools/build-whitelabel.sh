@@ -46,6 +46,25 @@ if [ -n "$SISA" ]; then
 fi
 echo "3b) Bersih: tidak ada lagi jejak Rezo di sumber"
 
+# Kunci rilis sendiri: APK ditandatangani dengan kunci ini, bukan kunci debug
+# yang ikut tersebar bersama repo.
+if [ -n "${VIZA_KEYSTORE:-}" ]; then
+  cp "$VIZA_KEYSTORE" "$KERJA/app/rilis.keystore"
+  python3 "$AKAR/tools/sign_prep.py" "$KERJA/app/build.gradle.kts"
+  echo "3a) Ditandatangani dengan kunci rilis sendiri"
+fi
+
+# Ikon: logo Rezo diganti ikon netral supaya pembeli tidak membawa kelinci Rezo Star.
+if [ -n "${IKON:-}" ] && [ -f "$IKON" ]; then
+  cp "$IKON" "$KERJA/app/src/main/res/drawable/ic_launcher_logo.png"
+  echo "3c) Ikon diganti dengan $IKON"
+fi
+
+# Versi dimulai dari nol untuk produk baru, bukan ikut nomor build Rezo.
+sed -i 's/?: "1015")/?: "0")/' "$KERJA/app/build.gradle.kts"
+sed -i 's/"1." + (nomorBuild \/ 1000) + "." + (nomorBuild % 1000)/"1.0." + nomorBuild/' "$KERJA/app/build.gradle.kts"
+echo "3d) Versi dimulai dari 1.0.x"
+
 echo "4) Mengatur nama aplikasi dan alamat database"
 sed -i "s#<string name=\"app_name\">[^<]*</string>#<string name=\"app_name\">$NAMA</string>#" "$KERJA/app/src/main/res/values/strings.xml"
 cp "$GJ" "$KERJA/app/google-services.json"

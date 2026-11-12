@@ -68,21 +68,32 @@ unset GITHUB_RUN_NUMBER
 export KERJA
 bash "$AKAR/tools/build-whitelabel.sh" "$AKAR/firebase/google-services.json" "$NAMA" "$PAKET" "$NAMA" "$RTDB" "$GOOGLE_ID"
 
-APK="$(find "$KERJA" -name "app-arm64-v8a-release.apk" -print -quit)"
-[ -n "$APK" ] && [ -f "$APK" ] || { echo "APK tidak terbentuk"; exit 1; }
-cp "$APK" "$TMP/viza-chat-arm64.apk"
-python3 -c "import zipfile,sys; z=zipfile.ZipFile(sys.argv[1],'w',zipfile.ZIP_DEFLATED); z.write(sys.argv[2],'viza-chat-arm64.apk'); z.close()" "$TMP/viza-chat-arm64.zip" "$TMP/viza-chat-arm64.apk"
-ls -l "$TMP/viza-chat-arm64.zip"
+# Tiga APK: arm64 (HP modern), armv7 (HP lama), universal (cadangan, semua HP).
+ambil() {
+  local sumber="$1" tujuan="$2"
+  local f
+  f="$(find "$KERJA" -name "$sumber" -print -quit)"
+  [ -n "$f" ] && [ -f "$f" ] || { echo "APK $sumber tidak terbentuk"; exit 1; }
+  cp "$f" "$TMP/$tujuan"
+}
+ambil "app-arm64-v8a-release.apk"   "viza-chat-arm64.apk"
+ambil "app-armeabi-v7a-release.apk" "viza-chat-armv7.apk"
+ambil "app-universal-release.apk"   "viza-chat-universal.apk"
+for k in arm64 armv7 universal; do
+  python3 -c "import zipfile,sys; z=zipfile.ZipFile(sys.argv[1],'w',zipfile.ZIP_DEFLATED); z.write(sys.argv[2],sys.argv[3]); z.close()" \
+    "$TMP/viza-chat-$k.zip" "$TMP/viza-chat-$k.apk" "viza-chat-$k.apk"
+done
+ls -l "$TMP"/viza-chat-*.zip
 
 # 5) Release GitHub (dilewati kalau tidak ada token, mis. saat uji lokal)
 if [ -n "${GH_TOKEN:-}" ] && command -v gh > /dev/null 2>&1 && [ -z "${SKIP_RELEASE:-}" ]; then
   TAG="viza-1.0.$NOMOR"
   if gh release view "$TAG" > /dev/null 2>&1; then
-    gh release upload "$TAG" "$TMP/viza-chat-arm64.zip" --clobber
+    gh release upload "$TAG" "$TMP/viza-chat-arm64.zip" "$TMP/viza-chat-armv7.zip" "$TMP/viza-chat-universal.zip" --clobber
   else
-    gh release create "$TAG" "$TMP/viza-chat-arm64.zip" \
+    gh release create "$TAG" "$TMP/viza-chat-arm64.zip" "$TMP/viza-chat-armv7.zip" "$TMP/viza-chat-universal.zip" \
       --title "Viza Chat 1.0.$NOMOR" \
-      --notes "APK arm64 build otomatis. Paket $PAKET, ditandatangani kunci rilis Viza." \
+      --notes "APK arm64, armv7, dan universal build otomatis. Paket $PAKET, ditandatangani kunci rilis Viza." \
       --latest
   fi
   echo "Release: $TAG"

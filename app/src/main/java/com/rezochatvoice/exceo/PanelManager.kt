@@ -247,6 +247,12 @@ fun PanelManagerDialog(role: String, email: String, onClose: () -> Unit) {
     var stokAset by remember { mutableStateOf(0) }
 
     LaunchedEffect(Unit) {
+        // Tandai akun staf di Realtime Database supaya rules mengizinkan
+        // menulis ke tas user lain (kirim aset). Hanya untuk akun sendiri.
+        try {
+            val aku = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: ""
+            if (aku.isNotBlank()) Rtdb.ref("stafPanel/$aku").setValue(true).await()
+        } catch (e: Exception) { if (e is kotlinx.coroutines.CancellationException) throw e }
         daftar = PanelMgrViza.itemStore()
         val s = PanelMgrViza.stok(email)
         stokCoin = s.first

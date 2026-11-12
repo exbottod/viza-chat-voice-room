@@ -63,6 +63,8 @@ export VIZA_KEYSTORE VIZA_STORE_PASS VIZA_KEY_ALIAS
 # 4) Build
 export IKON="$AKAR/tools/ikon_viza.png"
 export REZO_BUILD="$NOMOR"
+# app/build.gradle.kts membaca GITHUB_RUN_NUMBER lebih dulu; dibuang supaya versi APK ikut REZO_BUILD.
+unset GITHUB_RUN_NUMBER
 export KERJA
 bash "$AKAR/tools/build-whitelabel.sh" "$AKAR/firebase/google-services.json" "$NAMA" "$PAKET" "$NAMA" "$RTDB" "$GOOGLE_ID"
 

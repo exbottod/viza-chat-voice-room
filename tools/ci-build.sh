@@ -10,8 +10,13 @@ NAMA="${NAMA_APP:-Viza Chat}"
 PAKET="${PAKET:-com.vizachatvoice.app}"
 RTDB="${RTDB_URL:-https://my-app-e7f8c-default-rtdb.asia-southeast1.firebasedatabase.app}"
 GOOGLE_ID="${GOOGLE_WEB_ID:-622104139221-bv44lfoephrjvim5qr30qr3ek8klj6qg.apps.googleusercontent.com}"
-# Nomor build mulai dari 1.0.4 supaya tidak turun di bawah versi yang sudah beredar (1.0.3).
-NOMOR="${REZO_BUILD:-$(( ${GITHUB_RUN_NUMBER:-1} + 3 ))}"
+# Nomor build selalu di atas rilis yang sudah ada supaya versi tidak pernah mundur.
+NOMOR="${REZO_BUILD:-}"
+if [ -z "$NOMOR" ] && [ -n "${GH_TOKEN:-}" ] && command -v gh > /dev/null 2>&1 && [ -n "${GITHUB_REPOSITORY:-}" ]; then
+  NOMOR=$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" \
+    --jq '[.[].tag_name | select(test("^viza-1\\.0\\.[0-9]+$")) | sub("viza-1\\.0\\."; "") | tonumber] | max + 1' 2>/dev/null || true)
+fi
+if [ -z "$NOMOR" ] || [ "$NOMOR" = "null" ]; then NOMOR=$(( ${GITHUB_RUN_NUMBER:-1} + 3 )); fi
 TMP="${RUNNER_TEMP:-/tmp}"
 KERJA="${KERJA:-$TMP/kerja}"
 

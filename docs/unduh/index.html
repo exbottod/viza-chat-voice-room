@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Unduh Viza Chat</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(circle at 50% 0%, #1d2b64, #0b1020 60%); color:#eef1f8; padding:24px; }
+  .kartu { width:100%; max-width:430px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12);
+    border-radius:22px; padding:28px 22px; text-align:center; backdrop-filter: blur(12px); }
+  .logo { width:76px; height:76px; margin:0 auto 16px; border-radius:22px; display:flex; align-items:center;
+    justify-content:center; font-size:38px; font-weight:700; color:#fff;
+    background:linear-gradient(135deg,#5b7cff,#9b5bff); box-shadow:0 10px 30px rgba(91,124,255,.35); }
+  h1 { font-size:22px; margin:0 0 6px; }
+  p.sub { margin:0 0 18px; color:#a9b3cc; font-size:14px; line-height:1.5; }
+  a.tombol { display:block; text-decoration:none; padding:15px; border-radius:14px; font-weight:600; font-size:16px;
+    color:#fff; background:linear-gradient(135deg,#4f7cff,#8a4dff); box-shadow:0 8px 24px rgba(79,124,255,.35); margin-top:10px; }
+  a.tombol.kecil { background:rgba(255,255,255,.08); box-shadow:none; font-weight:500; font-size:14px;
+    border:1px solid rgba(255,255,255,.15); }
+  .info { margin-top:18px; font-size:12px; color:#8b96b0; line-height:1.7; }
+  .badge { display:inline-block; padding:4px 10px; border-radius:999px; font-size:11px; letter-spacing:.4px;
+    background:rgba(91,124,255,.18); color:#b9c6ff; margin-bottom:14px; }
+  .catatan { margin-top:12px; font-size:12px; color:#98a3bd; line-height:1.6; text-align:left;
+    background:rgba(255,255,255,.04); border-radius:12px; padding:12px; }
+</style>
+</head>
+<body>
+  <main class="kartu">
+    <div class="logo">V</div>
+    <span class="badge" id="versi">VERSI TERBARU</span>
+    <h1>Viza Chat</h1>
+    <p class="sub">Voice chat, mic seat, room, VIP, dompet, dan Game Center dalam satu aplikasi.</p>
+    <div id="tombol"></div>
+    <div class="catatan" id="catatan" hidden></div>
+    <div class="info">
+      Untuk Android 7.0 ke atas.<br>
+      Izinkan "Instal dari sumber tidak dikenal" saat memasang. <br>
+      Unduhan kecil otomatis muncul di dalam aplikasi, tanpa memasang ulang.
+    </div>
+  </main>
+<script>
+const DASAR = "https://github.com/exbottod/viza-chat-voice-room/releases/latest/download";
+const JENIS = [
+  ["arm64", "Unduh APK (arm64, HP modern)"],
+  ["armv7", "Unduh APK armv7 (HP lama, kecil)"],
+  ["universal", "Unduh APK universal (semua HP)"]
+];
+function mb(n) { return (n / 1048576).toFixed(1) + " MB"; }
+async function utama() {
+  let info = null;
+  try {
+    const r = await fetch("build-info.json?t=" + Date.now(), { cache: "no-store" });
+    if (r.ok) info = await r.json();
+  } catch (e) {}
+  const versi = info && info.versi ? info.versi : "";
+  if (versi) document.getElementById("versi").textContent = "VERSI " + versi;
+  const abis = info && info.abis ? info.abis : {};
+  const kotak = document.getElementById("tombol");
+  JENIS.forEach(([kunci, label], i) => {
+    if (kunci !== "arm64" && !abis[kunci]) return;
+    const a = document.createElement("a");
+    a.className = "tombol" + (i ? " kecil" : "");
+    a.href = DASAR + "/viza-chat-" + kunci + ".apk";
+    a.textContent = label + (abis[kunci] ? " · " + mb(abis[kunci].ukuran) : "");
+    kotak.appendChild(a);
+  });
+  if (info && info.catatan) {
+    const c = document.getElementById("catatan");
+    c.textContent = info.catatan;
+    c.hidden = false;
+  }
+}
+utama();
+</script>
+</body>
+</html>

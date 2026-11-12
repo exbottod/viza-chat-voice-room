@@ -56,15 +56,15 @@ import java.net.URL
  * periksa sidik jari, lalu pasang. Gagal di tengah jalan -> unduh APK penuh.
  */
 object AppUpdate {
-    private const val INFO_URL = "https://exbottod.github.io/viza-chat-unduh/build-info.json"
-    private const val NOTE_URL = "https://exbottod.github.io/viza-chat-unduh/update-note.txt"
-    private const val REL = "https://exbottod.github.io/viza-chat-unduh/patch/"
+    private const val INFO_URL = "https://exbottod.github.io/viza-chat-voice-room/unduh/build-info.json"
+    private const val NOTE_URL = "https://exbottod.github.io/viza-chat-voice-room/unduh/update-note.txt"
+    private const val REL = "https://exbottod.github.io/viza-chat-voice-room/unduh/patch/"
     /**
      * APK penuh disajikan VPS sendiri (tanpa login, unduhan lebih ringan
      * karena hanya untuk jenis HP yang dipakai). GitHub dipakai sebagai
      * cadangan kalau APK di VPS tertinggal dari versi yang diumumkan.
      */
-    private const val VPS_UNDUH = "https://github.com/exbottod/viza-chat-unduh/releases/latest/download"
+    private const val VPS_UNDUH = "https://github.com/exbottod/viza-chat-voice-room/releases/latest/download"
     private const val APK_CADANGAN = "$VPS_UNDUH/viza-chat-arm64.apk"
 
     /** Alamat APK penuh sesuai prosesor HP: arm64, armv7, atau universal. */
@@ -87,7 +87,7 @@ object AppUpdate {
         }
         kode(baru) > kode(lama)
     } catch (e: Exception) { false }
-    private const val PATCH_URL = "https://exbottod.github.io/viza-chat-unduh/patch-info.json"
+    private const val PATCH_URL = "https://exbottod.github.io/viza-chat-voice-room/unduh/patch-info.json"
 
     class Info(val version: String, val notes: String, val url: String, val patch: Patch? = null)
 

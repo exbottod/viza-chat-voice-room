@@ -28,3 +28,19 @@ server Rezo.
 ## Yang belum termasuk
 Voice room butuh server token Agora, dompet butuh server dompet sendiri, dan
 game Wave butuh appKey dari akun Wave pembeli.
+
+## Contoh build yang sudah jadi: Viza 1.0.0
+
+Merek Viza, paket `com.vizachatvoice.app`, Firebase project `my-app-e7f8c`.
+Hasilnya ada di halaman rilis:
+https://github.com/exbottod/rezo-whitelabel/releases/tag/viza-1.0.0
+
+Perintah yang dipakai (jalankan dari folder induk repo, sesuaikan nama berkas):
+
+```bash
+./tools/build-whitelabel.sh ~/google-services.json "Viza Chat" com.vizachatvoice.app "Viza Chat"
+```
+
+Skrip menolak jalan kalau paket sama dengan paket Rezo, dan berhenti sendiri
+kalau masih ada satu saja jejak nama Rezo di sumber. Hasil build ada di
+`build-wl/<slug>/app/build/outputs/apk/release/`.

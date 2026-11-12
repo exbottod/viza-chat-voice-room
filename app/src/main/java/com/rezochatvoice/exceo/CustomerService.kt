@@ -220,6 +220,7 @@ object AnnRepo {
         val body: String,
         val at: Long,
         val pinned: Boolean,
+        val img: String = "",
     )
 
     private fun sp(ctx: Context) = ctx.getSharedPreferences("pengumuman", Context.MODE_PRIVATE)
@@ -243,13 +244,15 @@ object AnnRepo {
                 if (!aktif) return@mapNotNull null
                 val judul = c.child("title").getValue(String::class.java) ?: ""
                 val isi = c.child("body").getValue(String::class.java) ?: ""
-                if (judul.isBlank() && isi.isBlank()) return@mapNotNull null
+                val gambar = c.child("img").getValue(String::class.java) ?: ""
+                if (judul.isBlank() && isi.isBlank() && gambar.isBlank()) return@mapNotNull null
                 Ann(
                     id = c.key ?: return@mapNotNull null,
                     title = judul.ifBlank { "Pengumuman" },
                     body = isi,
                     at = c.child("at").getValue(Long::class.java) ?: 0L,
                     pinned = c.child("pinned").getValue(Boolean::class.java) ?: false,
+                    img = gambar,
                 )
             }.sortedWith(compareByDescending<Ann> { it.pinned }.thenByDescending { it.at })
             onChange(list)
@@ -315,6 +318,18 @@ fun AnnouncementScreen(list: List<AnnRepo.Ann>, onBack: () -> Unit) {
                         if (a.body.isNotBlank()) {
                             Spacer(Modifier.height(6.dp))
                             Text(a.body, color = Color(0xFFE0E0E0), fontSize = 14.sp)
+                        }
+                        if (a.img.isNotBlank()) {
+                            Spacer(Modifier.height(8.dp))
+                            AsyncImage(
+                                model = a.img,
+                                contentDescription = a.title,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(max = 420.dp)
+                                    .clip(RoundedCornerShape(12.dp)),
+                                contentScale = androidx.compose.ui.layout.ContentScale.FillWidth,
+                            )
                         }
                     }
                 }

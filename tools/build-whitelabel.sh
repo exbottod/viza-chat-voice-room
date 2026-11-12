@@ -1,50 +1,72 @@
 #!/usr/bin/env bash
-# Bangun APK white-label untuk pembeli.
+# Bangun APK white-label untuk pembeli, terpisah penuh dari merek Rezo.
 #
-#   ./build-whitelabel.sh <google-services.json> <nama-app> <paket-pembeli>
+#   ./build-whitelabel.sh <google-services.json> "<Nama Aplikasi>" <paket> "<Merek>" [url-rtdb]
 #
-# Contoh:
-#   ./build-whitelabel.sh ~/google-services.json "Room Bintang" com.roombintang.app
-#
-# Paket wajib berbeda dari com.rezochatvoice.exceo, karena applicationId yang
-# sama membuat APK pembeli dianggap aplikasi Rezo yang sama: tidak bisa dipasang
-# berdampingan, dan pemasangannya menimpa aplikasi Rezo.
+# Sumber asli tidak pernah diubah: tiap build memakai salinan baru, lalu nama
+# Rezo dibersihkan dan diganti merek pembeli.
 set -e
-SRC="${SRC:-/app/conversations/6acfa289d02a5b1eed769154/wl}"
+AKAR="/app/conversations/6acfa289d02a5b1eed769154"
+SUMBER="$AKAR/repo-whitelabel"
 PAKET_REZO="com.rezochatvoice.exceo"
-GJ="${1:-}"; NAMA="${2:-}"; PAKET="${3:-}"
+GJ="${1:-}"; NAMA="${2:-}"; PAKET="${3:-}"; MEREK="${4:-}"; RTDB="${5:-}"; GOOGLE_ID="${6:-}"
 
-[ -f "$GJ" ] || { echo "Berkas google-services.json tidak ditemukan: $GJ"; exit 1; }
-[ -n "$PAKET" ] || { echo "Nama paket pembeli wajib diisi. Contoh: com.namabrand.app"; exit 1; }
+[ -f "$GJ" ] || { echo "google-services.json tidak ditemukan: $GJ"; exit 1; }
+[ -n "$PAKET" ] || { echo "Nama paket wajib diisi, contoh com.namabrand.app"; exit 1; }
+[ -n "$MEREK" ] || { echo "Nama merek wajib diisi, contoh \"Viza Chat\""; exit 1; }
 case "$PAKET" in
-  "$PAKET_REZO") echo "Paket tidak boleh sama dengan paket Rezo ($PAKET_REZO)."; exit 1 ;;
+  "$PAKET_REZO") echo "Paket tidak boleh sama dengan paket Rezo."; exit 1 ;;
   *.*) : ;;
-  *) echo "Nama paket harus berbentuk domain terbalik, misalnya com.namabrand.app"; exit 1 ;;
+  *) echo "Nama paket harus berbentuk com.namabrand.app"; exit 1 ;;
 esac
 
-echo "1) Menyalin google-services.json pembeli"
-cp "$GJ" "$SRC/app/google-services.json"
+SLUG=$(printf '%s' "$MEREK" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9')
+KERJA="$AKAR/build-wl/$SLUG"
+echo "1) Menyiapkan salinan bersih di $KERJA"
+mkdir -p "$AKAR/build-wl"
+if [ -d "$KERJA" ]; then find "$KERJA" -mindepth 1 -delete; else mkdir -p "$KERJA"; fi
+tar -C "$SUMBER" --exclude=.git --exclude=build --exclude=.gradle -cf - . | tar -C "$KERJA" -xf -
 
-echo "2) Mengganti paket aplikasi menjadi $PAKET"
-sed -i "s#namespace = \"$PAKET_REZO\"#namespace = \"$PAKET\"#" "$SRC/app/build.gradle.kts"
-sed -i "s#applicationId = \"$PAKET_REZO\"#applicationId = \"$PAKET\"#" "$SRC/app/build.gradle.kts"
-sed -i "s#\"package_name\": *\"[^\"]*\"#\"package_name\": \"$PAKET\"#" "$SRC/app/google-services.json" || true
-# Berkas lain yang masih menyebut paket Rezo (provider, deep link, dan sejenisnya)
-grep -rl "$PAKET_REZO" "$SRC/app/src/main" 2>/dev/null | while read -r f; do
+echo "2) Mengganti paket menjadi $PAKET"
+sed -i "s#namespace = \"$PAKET_REZO\"#namespace = \"$PAKET\"#" "$KERJA/app/build.gradle.kts"
+sed -i "s#applicationId = \"$PAKET_REZO\"#applicationId = \"$PAKET\"#" "$KERJA/app/build.gradle.kts"
+sed -i "s#\"package_name\": *\"[^\"]*\"#\"package_name\": \"$PAKET\"#" "$GJ"
+grep -rl "$PAKET_REZO" "$KERJA/app/src/main" 2>/dev/null | while read -r f; do
   sed -i "s#$PAKET_REZO#$PAKET#g" "$f"
 done
 
-if [ -n "$NAMA" ]; then
-  echo "3) Nama aplikasi menjadi $NAMA"
-  sed -i "s#<string name=\"app_name\">[^<]*</string>#<string name=\"app_name\">$NAMA</string>#" "$SRC/app/src/main/res/values/strings.xml" || true
+echo "3) Membersihkan merek Rezo, diganti $MEREK"
+python3 "$AKAR/tools/debrand.py" "$KERJA" "$MEREK" "$SLUG"
+
+SISA=$(grep -ril "rezo" "$KERJA/app/src/main" "$KERJA/gradle.properties" 2>/dev/null | head -5)
+if [ -n "$SISA" ]; then
+  echo "Masih ada jejak Rezo, build dihentikan:"; echo "$SISA"; exit 1
+fi
+echo "3b) Bersih: tidak ada lagi jejak Rezo di sumber"
+
+echo "4) Mengatur nama aplikasi dan alamat database"
+sed -i "s#<string name=\"app_name\">[^<]*</string>#<string name=\"app_name\">$NAMA</string>#" "$KERJA/app/src/main/res/values/strings.xml"
+cp "$GJ" "$KERJA/app/google-services.json"
+if [ -n "$RTDB" ]; then
+  python3 - "$KERJA" "$RTDB" <<'PY'
+import sys, pathlib, re
+akar, url = pathlib.Path(sys.argv[1]), sys.argv[2]
+for f in akar.rglob("Rtdb.kt"):
+    t = f.read_text()
+    f.write_text(re.sub(r'const val RTDB_URL = "[^"]*"', f'const val RTDB_URL = "{url}"', t))
+PY
+fi
+
+if [ -n "$GOOGLE_ID" ]; then
+  sed -i "s#^googleWebClientId=.*#googleWebClientId=$GOOGLE_ID#" "$KERJA/gradle.properties"
 fi
 
 export JAVA_HOME=/opt/jdk PATH=/opt/jdk/bin:$PATH ANDROID_HOME=/opt/android-sdk ANDROID_SDK_ROOT=/opt/android-sdk
-echo "4) Membangun APK"
-cd "$SRC" && /opt/gradle/gradle-8.9/bin/gradle assembleRelease --no-daemon --console=plain | tail -4
+echo "5) Membangun APK"
+cd "$KERJA" && /opt/gradle/gradle-8.9/bin/gradle assembleRelease --no-daemon --console=plain | tail -4
 
-APK="$SRC/app/build/outputs/apk/release/app-arm64-v8a-release.apk"
+APK="$KERJA/app/build/outputs/apk/release/app-arm64-v8a-release.apk"
 [ -f "$APK" ] || { echo "APK tidak terbentuk"; exit 1; }
-echo "5) Memeriksa paket di dalam APK"
-/opt/android-sdk/cmdline-tools/latest/bin/apkanalyzer manifest application-id "$APK" 2>/dev/null || true
-echo "Selesai: $APK"
+echo "6) Memeriksa hasil"
+/opt/android-sdk/cmdline-tools/latest/bin/apkanalyzer manifest application-id "$APK"
+echo "APK: $APK"

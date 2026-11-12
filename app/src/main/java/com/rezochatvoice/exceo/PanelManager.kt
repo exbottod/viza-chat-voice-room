@@ -288,7 +288,7 @@ fun PanelManagerDialog(role: String, email: String, onClose: () -> Unit) {
             if (pesan.isNotBlank()) {
                 Text(pesan, color = Color(0xFF9AE6B4), fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
             }
-            PmField("ID user (ID angka, ID unik, atau UID)", idUser) { idUser = it }
+            PmField("ID user (ID angka, ID unik, atau UID)", idUser, onChange = { idUser = it })
 
             PmSection("Kirim coin ke user") {
                 PmField("Jumlah coin", coin, { coin = it }, angka = true)
@@ -305,7 +305,7 @@ fun PanelManagerDialog(role: String, email: String, onClose: () -> Unit) {
             }
 
             PmSection("Blokir / buka blokir user") {
-                PmField("Alasan blokir (opsional)", alasan) { alasan = it }
+                PmField("Alasan blokir (opsional)", alasan, onChange = { alasan = it })
                 PmAction(if (sibuk) "Memproses..." else "Blokir user", aktif = !sibuk) {
                     jalankan("Memblokir...") {
                         val uid = PanelMgrViza.uidDari(idUser) ?: return@jalankan "ID user tidak ditemukan"

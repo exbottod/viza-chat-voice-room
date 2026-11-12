@@ -29,6 +29,12 @@ jobs:
           REZO_BUILD: ${{ github.event.inputs.nomor_build }}
         run: bash tools/ci-build.sh
 
+      - name: Perbarui halaman unduh dan patch kecil
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          UNDUH_TOKEN: ${{ secrets.UNDUH_TOKEN }}
+        run: python3 tools/ci-unduh.py
+
       - name: Simpan artifact
         uses: actions/upload-artifact@v4
         with:

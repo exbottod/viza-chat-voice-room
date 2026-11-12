@@ -40,6 +40,7 @@ else
       python3 -c "import zipfile,sys; zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])" "$TMP/gradle.zip" "$TMP"
     fi
   fi
+  chmod +x "$TMP/gradle-8.9/bin/gradle" 2>/dev/null || true
   GRADLE_BIN="$TMP/gradle-8.9/bin/gradle"
 fi
 [ -x "$GRADLE_BIN" ] || { echo "Gradle tidak ditemukan di $GRADLE_BIN"; exit 1; }
@@ -62,7 +63,7 @@ bash "$AKAR/tools/build-whitelabel.sh" "$AKAR/firebase/google-services.json" "$N
 APK="$(find "$KERJA" -name "app-arm64-v8a-release.apk" -print -quit)"
 [ -n "$APK" ] && [ -f "$APK" ] || { echo "APK tidak terbentuk"; exit 1; }
 cp "$APK" "$TMP/viza-chat-arm64.apk"
-(cd "$TMP" && zip -q -o viza-chat-arm64.zip viza-chat-arm64.apk)
+python3 -c "import zipfile,sys; z=zipfile.ZipFile(sys.argv[1],'w',zipfile.ZIP_DEFLATED); z.write(sys.argv[2],'viza-chat-arm64.apk'); z.close()" "$TMP/viza-chat-arm64.zip" "$TMP/viza-chat-arm64.apk"
 ls -l "$TMP/viza-chat-arm64.zip"
 
 # 5) Release GitHub (dilewati kalau tidak ada token, mis. saat uji lokal)

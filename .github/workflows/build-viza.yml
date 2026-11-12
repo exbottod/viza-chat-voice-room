@@ -1,0 +1,37 @@
+name: Build APK Viza
+
+# Build APK white-label Viza. Semua langkah ada di tools/ci-build.sh.
+# Hasil: APK di artifact dan release viza-1.0.<nomor run>.
+on:
+  workflow_dispatch:
+    inputs:
+      nomor_build:
+        description: "Nomor build (jadi versi 1.0.N). Kosongkan untuk memakai nomor run."
+        required: false
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build APK
+        env:
+          VIZA_KEYSTORE_BASE64: ${{ secrets.VIZA_KEYSTORE_BASE64 }}
+          VIZA_STORE_PASS: ${{ secrets.VIZA_STORE_PASS }}
+          VIZA_KEY_ALIAS: ${{ secrets.VIZA_KEY_ALIAS }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REZO_BUILD: ${{ github.event.inputs.nomor_build }}
+        run: bash tools/ci-build.sh
+
+      - name: Simpan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: viza-chat-arm64
+          path: ${{ runner.temp }}/viza-chat-arm64.zip
+          retention-days: 30

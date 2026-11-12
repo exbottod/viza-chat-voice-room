@@ -174,15 +174,6 @@ fun ProfileTab(
     var panelAktif by remember { mutableStateOf<PanelInfo?>(null) }
     // Panel seller: hanya untuk akun yang didaftarkan developer sebagai coin seller.
     var sellerAktif by remember { mutableStateOf(false) }
-    // Panel manager/staf di dalam aplikasi: peran dibaca dari Firestore panelAdmins.
-    var panelMgrRole by remember { mutableStateOf("") }
-    var panelMgrBuka by remember { mutableStateOf(false) }
-    LaunchedEffect(userId) {
-        panelMgrRole = try {
-            val fuser = FirebaseAuth.getInstance().currentUser
-            PanelMgrViza.roleOf(fuser?.email ?: "", fuser?.uid ?: userId)
-        } catch (e: Exception) { "" }
-    }
     LaunchedEffect(userId) {
         sellerAktif = try {
             if (userId.isBlank()) false else SellerRepo.me() != null
@@ -424,12 +415,6 @@ fun ProfileTab(
                 MenuItem("🧰", tr("Alat peraga")) { onPropsClick() }
                 MenuItem("🏰", tr("Family"), trailing = tr("Liga Peringkat Fam"), icon = R.drawable.ic_family_saya) { onFamilyClick() }
                 MenuItem("🏠", tr("CP house")) { soon(tr("CP house")) }
-                if (panelMgrRole.isNotBlank()) {
-                    MenuItem(
-                        "\uD83D\uDEE1",
-                        "Panel " + panelMgrRole.replaceFirstChar { it.uppercase() },
-                    ) { panelMgrBuka = true }
-                }
                 panelList.forEach { pi ->
                     MenuItem(
                         if (pi.isManager) "\uD83E\uDDD1\u200D\uD83D\uDCBC" else "\uD83D\uDEE1",
@@ -450,7 +435,5 @@ fun ProfileTab(
     panelAktif?.let { pi ->
         PanelStafDialog(pi) { panelAktif = null }
     }
-    if (panelMgrBuka) {
-        PanelManagerDialog(panelMgrRole, FirebaseAuth.getInstance().currentUser?.email ?: "") { panelMgrBuka = false }
-    }
+
 }

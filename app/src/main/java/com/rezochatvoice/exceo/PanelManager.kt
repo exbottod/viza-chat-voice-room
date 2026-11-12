@@ -62,7 +62,12 @@ object PanelMgrViza {
             } ?: return ""
             if (!s.exists()) "" else {
                 val aktif = s.getBoolean("aktif")
-                if (aktif == false) "" else (s.getString("role") ?: "staf")
+                val jabatan = s.getString("jabatanApk") ?: ""
+                when {
+                    aktif == false -> ""
+                    jabatan.isNotBlank() && jabatan != "tidak ada" -> jabatan
+                    else -> s.getString("role") ?: ""
+                }
             }
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e

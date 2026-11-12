@@ -10,7 +10,8 @@ NAMA="${NAMA_APP:-Viza Chat}"
 PAKET="${PAKET:-com.vizachatvoice.app}"
 RTDB="${RTDB_URL:-https://my-app-e7f8c-default-rtdb.asia-southeast1.firebasedatabase.app}"
 GOOGLE_ID="${GOOGLE_WEB_ID:-622104139221-bv44lfoephrjvim5qr30qr3ek8klj6qg.apps.googleusercontent.com}"
-NOMOR="${REZO_BUILD:-${GITHUB_RUN_NUMBER:-1}}"
+# Nomor build mulai dari 1.0.4 supaya tidak turun di bawah versi yang sudah beredar (1.0.3).
+NOMOR="${REZO_BUILD:-$(( ${GITHUB_RUN_NUMBER:-1} + 3 ))}"
 TMP="${RUNNER_TEMP:-/tmp}"
 KERJA="${KERJA:-$TMP/kerja}"
 

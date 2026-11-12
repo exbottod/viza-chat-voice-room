@@ -89,9 +89,9 @@ ls -l "$TMP"/viza-chat-*.zip
 if [ -n "${GH_TOKEN:-}" ] && command -v gh > /dev/null 2>&1 && [ -z "${SKIP_RELEASE:-}" ]; then
   TAG="viza-1.0.$NOMOR"
   if gh release view "$TAG" > /dev/null 2>&1; then
-    gh release upload "$TAG" "$TMP/viza-chat-arm64.zip" "$TMP/viza-chat-armv7.zip" "$TMP/viza-chat-universal.zip" --clobber
+    gh release upload "$TAG" "$TMP"/viza-chat-arm64.apk "$TMP"/viza-chat-armv7.apk "$TMP"/viza-chat-universal.apk "$TMP"/viza-chat-arm64.zip "$TMP"/viza-chat-armv7.zip "$TMP"/viza-chat-universal.zip --clobber
   else
-    gh release create "$TAG" "$TMP/viza-chat-arm64.zip" "$TMP/viza-chat-armv7.zip" "$TMP/viza-chat-universal.zip" \
+    gh release create "$TAG" "$TMP"/viza-chat-arm64.apk "$TMP"/viza-chat-armv7.apk "$TMP"/viza-chat-universal.apk "$TMP"/viza-chat-arm64.zip "$TMP"/viza-chat-armv7.zip "$TMP"/viza-chat-universal.zip \
       --title "Viza Chat 1.0.$NOMOR" \
       --notes "APK arm64, armv7, dan universal build otomatis. Paket $PAKET, ditandatangani kunci rilis Viza." \
       --latest

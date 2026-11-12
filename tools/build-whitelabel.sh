@@ -30,7 +30,9 @@ tar -C "$SUMBER" --exclude=.git --exclude=build --exclude=.gradle -cf - . | tar 
 echo "2) Mengganti paket menjadi $PAKET"
 sed -i "s#namespace = \"$PAKET_REZO\"#namespace = \"$PAKET\"#" "$KERJA/app/build.gradle.kts"
 sed -i "s#applicationId = \"$PAKET_REZO\"#applicationId = \"$PAKET\"#" "$KERJA/app/build.gradle.kts"
-sed -i "s#\"package_name\": *\"[^\"]*\"#\"package_name\": \"$PAKET\"#" "$GJ"
+GJ_BERSIH="$KERJA/google-services-bersih.json"
+python3 "$AKAR/tools/gj_prep.py" "$GJ" "$GJ_BERSIH" "$PAKET"
+GJ="$GJ_BERSIH"
 grep -rl "$PAKET_REZO" "$KERJA/app/src/main" 2>/dev/null | while read -r f; do
   sed -i "s#$PAKET_REZO#$PAKET#g" "$f"
 done

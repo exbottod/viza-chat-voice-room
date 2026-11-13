@@ -51,15 +51,20 @@ def nomor(rilis):
 
 
 def ambil_apk(rilis, jenis, tmp):
+    """Ambil APK satu rilis. Nama berkas memuat nomor versi supaya APK rilis
+    lama tidak menimpa APK rilis baru di folder sementara. Dulu nama berkasnya
+    sama, akibatnya pembuat patch melihat dua berkas yang identik dan tidak
+    pernah membuat patch baru."""
     aset = [a for a in rilis.get("assets", []) if a["name"] == f"viza-chat-{jenis}.zip"]
     if not aset:
         return None
-    zpath = os.path.join(tmp, f"{jenis}.zip")
+    v = rilis["tag_name"].replace("viza-", "")
+    zpath = os.path.join(tmp, f"{jenis}-{v}.zip")
     open(zpath, "wb").write(unduh(aset[0]["url"]))
     with zipfile.ZipFile(zpath) as z:
         nama = [n for n in z.namelist() if n.endswith(".apk")][0]
         data = z.read(nama)
-    apath = os.path.join(tmp, f"{jenis}.apk")
+    apath = os.path.join(tmp, f"{jenis}-{v}.apk")
     open(apath, "wb").write(data)
     return apath, data
 
@@ -105,27 +110,38 @@ def main():
         daftar = json.load(open(f"{TARGET}/patch-info.json"))["patch"]
     except Exception:
         daftar = []
-    if lama:
-        hasil = ambil_apk(lama, "arm64", tmp)
-        if hasil:
-            apk_lama = hasil[0]
-            keluar = os.path.join(tmp, "keluar")
-            rc = subprocess.run([sys.executable, "tools/buat-patch.py", "--lama", apk_lama,
-                                 "--baru", apk_utama, "--dari", v_lama, "--ke", v_baru,
-                                 "--kunci", "arm64", "--keluaran", keluar]).returncode
-            if rc == 0:
-                os.makedirs(f"{TARGET}/patch", exist_ok=True)
-                nama_patch = f"patch-{v_lama}-{v_baru}-arm64.bsdiff"
-                src = os.path.join(keluar, "patch", nama_patch)
-                if os.path.exists(src):
-                    open(f"{TARGET}/patch/{nama_patch}", "wb").write(open(src, "rb").read())
-                    entri = json.load(open(os.path.join(keluar, "patch-info.json")))["patch"]
-                    kunci = {(x["dari"], x["ke"]) for x in daftar}
-                    daftar += [x for x in entri if (x["dari"], x["ke"]) not in kunci]
-                else:
-                    print("Berkas patch tidak ditemukan:", src)
-            else:
-                print("Patch gagal dibuat")
+    # Patch dibuat dari beberapa versi dasar sekaligus: rilis tepat sebelumnya
+    # plus beberapa rilis terakhir, supaya pengguna yang melewatkan satu dua
+    # versi tetap dapat unduhan kecil (aplikasi merangkai rantai patchnya).
+    dasar = [r for r in rilis[1:1 + 4]]
+    sudah = {(x["dari"], x["ke"]) for x in daftar}
+    for r_lama in dasar:
+        v_l = r_lama["tag_name"].replace("viza-", "")
+        if (v_l, v_baru) in sudah:
+            continue
+        hasil = ambil_apk(r_lama, "arm64", tmp)
+        if not hasil:
+            print(f"APK {v_l} tidak ada, lewati")
+            continue
+        apk_lama = hasil[0]
+        keluar = os.path.join(tmp, f"keluar-{v_l}")
+        rc = subprocess.run([sys.executable, "tools/buat-patch.py", "--lama", apk_lama,
+                             "--baru", apk_utama, "--dari", v_l, "--ke", v_baru,
+                             "--kunci", "arm64", "--keluaran", keluar]).returncode
+        if rc != 0:
+            print(f"Patch {v_l}->{v_baru} gagal")
+            continue
+        os.makedirs(f"{TARGET}/patch", exist_ok=True)
+        nama_patch = f"patch-{v_l}-{v_baru}-arm64.bsdiff"
+        src = os.path.join(keluar, "patch", nama_patch)
+        if os.path.exists(src):
+            open(f"{TARGET}/patch/{nama_patch}", "wb").write(open(src, "rb").read())
+            entri = json.load(open(os.path.join(keluar, "patch-info.json")))["patch"]
+            daftar += [x for x in entri if (x["dari"], x["ke"]) not in sudah]
+            sudah.add((v_l, v_baru))
+            print(f"Patch {v_l}->{v_baru} dibuat")
+        else:
+            print("Berkas patch tidak ditemukan:", src)
 
     def angka(v):
         return tuple(int(i) for i in v.split("."))

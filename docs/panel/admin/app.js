@@ -67,18 +67,33 @@ async function simpanVip(id, data) {
   try { await setDoc(doc(db, "vipConfig", id), data, { merge: true }); } catch (e) { galat = e; }
   try { await dUpdate(dRef(rtdb, "vipCfg/" + kunciVip(id)), data); galat = null; } catch (e) { if (galat) throw e; }
 }
-async function hapusVip(id) {
+async function hapusVip(id, kunci) {
   let ok = false, galat = null;
   try { await deleteDoc(doc(db, "vipConfig", id)); ok = true; } catch (e) { galat = e; }
-  try { await dRemove(dRef(rtdb, "vipCfg/" + kunciVip(id))); ok = true; } catch (e) { if (!ok) galat = e; }
+  try { await dRemove(dRef(rtdb, "vipCfg/" + (kunci || kunciVip(id)))); ok = true; } catch (e) { if (!ok) galat = e; }
   if (!ok) throw galat || new Error("gagal");
 }
+/** Jual atau tarik item dari Store tanpa menghapus berkasnya. */
+async function setStoreVip(item, jual) {
+  await simpanVip(item.id, { store: jual, updatedAt: Date.now() });
+  if (item._kunci && item._kunci !== item.id) {
+    try { await dUpdate(dRef(rtdb, "vipCfg/" + item._kunci), { store: jual, updatedAt: Date.now() }); } catch (e) { /* sudah ditulis di simpanVip */ }
+  }
+}
 async function ambilSemuaVip(batas = 400) {
+  // Satu aset bisa ada di Firestore (vipConfig/<id>) dan RTDB (vipCfg/<kunci>).
+  // Digabung berdasarkan id aset supaya tidak tampil sebagai baris ganda.
   const peta = new Map();
-  try { (await ambilSemua("vipConfig", batas)).forEach((d) => peta.set(d.id, d)); } catch (e) { /* Firestore cadangan */ }
+  const simpan = (obj, kunci) => {
+    const id = String(obj.id || kunci || "");
+    if (!id) return;
+    const lama = peta.get(id) || {};
+    peta.set(id, { ...lama, ...obj, id, _kunci: kunci || lama._kunci || kunciVip(id) });
+  };
+  try { (await ambilSemua("vipConfig", batas)).forEach((d) => simpan(d, d.id)); } catch (e) { /* Firestore cadangan */ }
   try {
     const sn = await dGet(dRef(rtdb, "vipCfg"));
-    if (sn.exists()) sn.forEach((c) => { peta.set(c.key, { ...(peta.get(c.key) || {}), ...c.val(), id: c.val().id || c.key, _kunci: c.key }); });
+    if (sn.exists()) sn.forEach((c) => simpan(c.val() || {}, c.key));
   } catch (e) { /* RTDB gagal: tetap pakai Firestore */ }
   return [...peta.values()];
 }
@@ -1856,38 +1871,43 @@ async function gambarAset() {
     <div class="panel">
       <div class="panelAtas"><h3>Aset VIP 1-9</h3><div class="sub">vipConfig · meta=true · n dan slot</div>
         <div class="filter"><div class="pil on">${asetVip.length} aset</div></div></div>
-      ${asetVip.length ? `<table>
-        <tr><th>PRATINJAU</th><th>TIER</th><th>SLOT</th><th>JENIS</th><th>TAUTAN</th><th>AKSI</th></tr>
-        ${asetVip.sort((x, y) => (Number(x.n) - Number(y.n)) || namaSlot(x.slot).localeCompare(namaSlot(y.slot))).map((d) => `<tr>
-          <td>${pratinjauAset(d.url)}</td>
-          <td class="vip">VIP ${Number(d.n)}</td>
-          <td>${aman(namaSlot(d.slot))}</td>
-          <td>${aman(d.kind || jenisDariUrl(d.url))}</td>
-          <td><span class="kodekecil" title="${aman(d.url)}">${aman(d.url)}</span></td>
-          <td><button class="aksi" data-salin="${aman(d.url)}">Salin</button> ·
-            <button class="aksi" data-vedit="${aman(d.id)}">Edit</button> ·
-            <button class="aksi" data-vhapus="${aman(d.id)}">Hapus</button></td>
-        </tr>`).join("")}</table>` : '<div class="kosong">Belum ada aset VIP. Tekan + Aset VIP.</div>'}
+      ${asetVip.length ? `<div class="gulirTabel"><table class="tabelKartu">
+        <thead><tr><th>PRATINJAU</th><th>TIER</th><th>SLOT</th><th>JENIS</th><th>TAUTAN</th><th>AKSI</th></tr></thead>
+        <tbody>${asetVip.sort((x, y) => (Number(x.n) - Number(y.n)) || namaSlot(x.slot).localeCompare(namaSlot(y.slot))).map((d) => `<tr>
+          <td data-l="Pratinjau">${pratinjauAset(d.url)}</td>
+          <td data-l="Tier" class="vip">VIP ${Number(d.n)}</td>
+          <td data-l="Slot">${aman(namaSlot(d.slot))}</td>
+          <td data-l="Jenis">${aman(d.kind || jenisDariUrl(d.url))}</td>
+          <td data-l="Tautan"><span class="kodekecil" title="${aman(d.url)}">${aman(d.url)}</span></td>
+          <td data-l="Aksi" data-aksi>
+            <button class="tombolKecil" data-vedit="${aman(d.id)}">Edit</button>
+            <button class="tombolKecil" data-salin="${aman(d.url)}">Salin</button>
+            <button class="tombolKecil bahaya" data-vhapus="${aman(d.id)}" data-kunci="${aman(d._kunci || "")}">Hapus</button>
+          </td>
+        </tr>`).join("")}</tbody></table></div>` : '<div class="kosong">Belum ada aset VIP. Tekan + Aset VIP.</div>'}
     </div>
 
     <div class="panel">
       <div class="panelAtas"><h3>Item toko, frame, efek, dan ID unik</h3><div class="sub">vipConfig · dijual di Store atau dikirim ke akun</div>
         <div class="filter"><div class="pil on">${itemToko.length} item</div></div></div>
-      ${itemToko.length ? `<table>
-        <tr><th>PRATINJAU</th><th>NAMA</th><th>SLOT</th><th>HARGA</th><th>HARI</th><th>ID UNIK</th><th>KUNCI AKUN</th><th>JUAL</th><th>AKSI</th></tr>
-        ${itemToko.sort((x, y) => (Number(x.order) || 0) - (Number(y.order) || 0)).map((d) => `<tr>
-          <td>${pratinjauAset(d.url)}</td>
-          <td>${aman(d.name || d.id)}</td>
-          <td>${aman(namaSlot(d.slot))}</td>
-          <td>${Number(d.price) ? rupiah(d.price) + " koin" : "gratis"}</td>
-          <td>${Number(d.days) || 7}</td>
-          <td>${d.customId ? aman(d.customId) : "—"}</td>
-          <td>${d.targetUid ? aman(d.targetUid) : "—"}</td>
-          <td>${d.store === false ? '<span class="tag blokir">kiriman</span>' : '<span class="tag aktif">dijual</span>'}</td>
-          <td><button class="aksi" data-salin="${aman(d.url)}">Salin</button> ·
-            <button class="aksi" data-iedit="${aman(d.id)}">Edit</button> ·
-            <button class="aksi" data-ihapus="${aman(d.id)}">Hapus</button></td>
-        </tr>`).join("")}</table>` : '<div class="kosong">Belum ada item toko.</div>'}
+      ${itemToko.length ? `<div class="gulirTabel"><table class="tabelKartu">
+        <thead><tr><th>PRATINJAU</th><th>NAMA</th><th>SLOT</th><th>HARGA</th><th>HARI</th><th>ID UNIK</th><th>KUNCI AKUN</th><th>JUAL</th><th>AKSI</th></tr></thead>
+        <tbody>${itemToko.sort((x, y) => (Number(x.order) || 0) - (Number(y.order) || 0)).map((d) => `<tr>
+          <td data-l="Pratinjau">${pratinjauAset(d.url)}</td>
+          <td data-l="Nama"><b>${aman(d.name || d.id)}</b></td>
+          <td data-l="Slot">${aman(namaSlot(d.slot))}</td>
+          <td data-l="Harga">${Number(d.price) ? rupiah(d.price) + " koin" : "gratis"}</td>
+          <td data-l="Hari">${Number(d.days) || 7}</td>
+          <td data-l="ID unik">${d.customId ? aman(d.customId) : "—"}</td>
+          <td data-l="Kunci akun">${d.targetUid ? aman(d.targetUid) : "—"}</td>
+          <td data-l="Jual">${d.store === false ? '<span class="tag blokir">kiriman</span>' : '<span class="tag aktif">dijual</span>'}</td>
+          <td data-l="Aksi" data-aksi>
+            <button class="tombolKecil" data-iedit="${aman(d.id)}">Edit</button>
+            <button class="tombolKecil" data-tarik="${aman(d.id)}">${d.store === false ? "Jual lagi" : "Tarik dari Store"}</button>
+            <button class="tombolKecil" data-salin="${aman(d.url)}">Salin</button>
+            <button class="tombolKecil bahaya" data-ihapus="${aman(d.id)}" data-kunci="${aman(d._kunci || "")}">Hapus</button>
+          </td>
+        </tr>`).join("")}</tbody></table></div>` : '<div class="kosong">Belum ada item toko.</div>'}
       <div class="catatan" style="padding:0 14px 14px">
         Item dengan ID unik memakai kolom customId, dan bisa dikunci ke satu akun lewat kolom kunci akun (UID atau ID angka user).
         Jenis berkas yang didukung: PNG, WEBP, GIF, MP4, dan animasi SVGA. Unggahan disimpan di Firebase Storage folder aset/&lt;slot&gt;.
@@ -1900,14 +1920,36 @@ async function gambarAset() {
   }));
   $("isiHal").querySelectorAll("[data-vedit]").forEach((b) => (b.onclick = () => formAsetVip(semua.find((x) => x.id === b.dataset.vedit))));
   $("isiHal").querySelectorAll("[data-iedit]").forEach((b) => (b.onclick = () => formItemToko(semua.find((x) => x.id === b.dataset.iedit))));
-  const hapusAset = async (id) => {
-    if (!confirm("Hapus aset ini? Aplikasi akan kehilangan gambar untuk slot tersebut.")) return;
-    await hapusVip(id)
-      .then(() => { catatLog("Hapus aset vipConfig", id); toast("Aset dihapus"); gambarAset(); })
-      .catch((e) => toast("Gagal: " + (e.code || e.message), true));
+  const hapusAset = async (id, kunci, pesan) => {
+    if (!confirm(pesan)) return;
+    try {
+      await hapusVip(id, kunci || undefined);
+      catatLog("Hapus aset vipConfig", id);
+      toast("Dihapus dari Store dan aplikasi");
+      gambarAset();
+    } catch (e) { toast("Gagal: " + (e.code || e.message), true); }
   };
-  $("isiHal").querySelectorAll("[data-vhapus]").forEach((b) => (b.onclick = () => hapusAset(b.dataset.vhapus)));
-  $("isiHal").querySelectorAll("[data-ihapus]").forEach((b) => (b.onclick = () => hapusAset(b.dataset.ihapus)));
+  $("isiHal").querySelectorAll("[data-vhapus]").forEach((b) => (b.onclick = () => hapusAset(
+    b.dataset.vhapus, b.dataset.kunci,
+    "Hapus aset VIP ini? Gambar untuk slot tersebut akan hilang dari aplikasi.")));
+  $("isiHal").querySelectorAll("[data-ihapus]").forEach((b) => (b.onclick = () => hapusAset(
+    b.dataset.ihapus, b.dataset.kunci,
+    "Hapus item ini? Item hilang dari Store dan dari tas semua user yang memakainya.")));
+  $("isiHal").querySelectorAll("[data-tarik]").forEach((b) => (b.onclick = async () => {
+    const it = semua.find((x) => x.id === b.dataset.tarik);
+    if (!it) return;
+    const jual = it.store === false;
+    b.disabled = true; b.textContent = "Menyimpan…";
+    try {
+      await setStoreVip(it, jual);
+      catatLog(jual ? "Jual item di Store" : "Tarik item dari Store", it.name || it.id);
+      toast(jual ? "Item dijual lagi di Store" : "Item ditarik dari Store");
+      gambarAset();
+    } catch (e) {
+      b.disabled = false; b.textContent = jual ? "Jual lagi" : "Tarik dari Store";
+      toast("Gagal: " + (e.code || e.message), true);
+    }
+  }));
 }
 
 function formAsetVip(aset) {

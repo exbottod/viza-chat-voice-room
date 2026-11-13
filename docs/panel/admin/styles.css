@@ -270,3 +270,28 @@ tr:hover td { background: #0e141d; }
 .alasPratinjau { display: flex; gap: 6px; margin-top: 7px; }
 .alasPratinjau span { font-size: 9.5px; padding: 3px 9px; border-radius: 20px; background: #182030; color: #96a1b4; cursor: pointer; }
 .alasPratinjau span.on { background: #2a2550; color: var(--ungu3); }
+
+/* ---------- tabel dengan aksi (Aset & VIP) ---------- */
+.gulirTabel { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.tombolKecil {
+  font-size: 10.5px; padding: 6px 10px; border-radius: 8px; cursor: pointer;
+  background: #1b2230; border: 1px solid #2a3444; color: #c3ccdb; margin: 2px 4px 2px 0;
+}
+.tombolKecil:hover { border-color: var(--ungu3, #8b5cf6); color: #fff; }
+.tombolKecil:disabled { opacity: .6; cursor: default; }
+.tombolKecil.bahaya { background: #2c1520; border-color: #4a2130; color: var(--merah, #ff6b6b); }
+
+/* Di HP, tiap baris jadi kartu supaya tombol Edit/Hapus tidak terpotong. */
+@media (max-width: 860px) {
+  .tabelKartu thead { display: none; }
+  .tabelKartu, .tabelKartu tbody, .tabelKartu tr, .tabelKartu td { display: block; width: 100%; }
+  .tabelKartu tr { border-bottom: 1px solid #1b2230; padding: 10px 12px; }
+  .tabelKartu tr:last-child { border-bottom: none; }
+  .tabelKartu td { border: none; padding: 2px 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .tabelKartu td::before {
+    content: attr(data-l); color: #7d8798; font-size: 10.5px; min-width: 72px; flex: 0 0 auto;
+  }
+  .tabelKartu td[data-aksi] { margin-top: 8px; }
+  .tabelKartu td[data-aksi]::before { content: none; }
+  .tabelKartu td .kodekecil { max-width: 60vw; }
+}

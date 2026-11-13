@@ -36,9 +36,45 @@ object FirebaseSession {
         return result.user ?: error("User kosong")
     }
 
+    /** Domain email tersembunyi untuk akun nomor HP. */
+    private const val DOMAIN_NOMOR = "@phone.viza.app"
+    /** Domain lama (sebelum ganti merek) supaya akun nomor lama tetap bisa masuk. */
+    private const val DOMAIN_NOMOR_LAMA = "@phone.rezostar.app"
+
     /** Email tersembunyi untuk akun nomor HP, dipakai untuk login nomor + password. */
     fun emailDariNomor(nomorE164: String): String =
-        nomorE164.filter { it.isDigit() } + "@phone.rezostar.app"
+        nomorE164.filter { it.isDigit() } + DOMAIN_NOMOR
+
+    /** Email versi lama, hanya dipakai sebagai cadangan saat login. */
+    fun emailLamaDariNomor(nomorE164: String): String =
+        nomorE164.filter { it.isDigit() } + DOMAIN_NOMOR_LAMA
+
+    /** True kalau email ini email tersembunyi milik akun nomor HP. */
+    fun emailNomorTersembunyi(email: String?): Boolean {
+        val e = email?.trim().orEmpty()
+        return e.endsWith(DOMAIN_NOMOR) || e.endsWith(DOMAIN_NOMOR_LAMA) ||
+            e.endsWith("@phone.rezostar")
+    }
+
+    /**
+     * Login nomor + password. Akun baru memakai domain viza; kalau belum ada,
+     * dicoba domain lama supaya user lama tidak terkunci.
+     */
+    suspend fun signInNomor(nomorE164: String, password: String): FirebaseUser {
+        try {
+            return signInEmail(emailDariNomor(nomorE164), password)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            return try {
+                signInEmail(emailLamaDariNomor(nomorE164), password)
+            } catch (e2: kotlinx.coroutines.CancellationException) {
+                throw e2
+            } catch (e2: Exception) {
+                throw e
+            }
+        }
+    }
 
     /**
      * Setelah akun nomor dibuat lewat kode SMS, tautkan password agar login

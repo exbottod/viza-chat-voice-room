@@ -355,8 +355,8 @@ fun AppRoot() {
                 val profil = UserProfile(
                     name = fbUser.displayName?.takeIf { it.isNotBlank() }
                         ?: fbUser.phoneNumber ?: "Pengguna",
-                    email = fbUser.email?.takeIf { it.isNotBlank() && !it.endsWith("@phone.rezostar.app") }
-                        ?: ((fbUser.phoneNumber ?: fbUser.uid) + "@phone.rezostar"),
+                    email = fbUser.email?.takeIf { it.isNotBlank() && !FirebaseSession.emailNomorTersembunyi(it) }
+                        ?: ((fbUser.phoneNumber ?: fbUser.uid) + "@facebook.viza.app"),
                     photoUrl = fbUser.photoUrl?.toString(),
                     idToken = "",
                 )
@@ -488,7 +488,7 @@ fun AppRoot() {
         loading = true
         scope.launch {
             try {
-                val fb = FirebaseSession.signInEmail(FirebaseSession.emailDariNomor(nomor), password)
+                val fb = FirebaseSession.signInNomor(nomor, password)
                 NomorTerdaftar.daftarkan(nomor, fb.uid)
                 masukkanSesiNomor(fb)
             } catch (e: kotlinx.coroutines.CancellationException) {

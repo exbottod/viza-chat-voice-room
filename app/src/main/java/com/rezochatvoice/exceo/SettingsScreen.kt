@@ -375,6 +375,6 @@ fun PrivacyScreen(onBack: () -> Unit) {
 private fun labelAkun(email: String): String = when {
     email.isBlank() -> "Belum diatur"
     email.endsWith("@facebook.rezostar") -> "Login dengan Facebook"
-    email.endsWith("@phone.rezostar") || email.endsWith("@phone.rezostar.app") -> "Login dengan nomor HP"
+    FirebaseSession.emailNomorTersembunyi(email) -> "Login dengan nomor HP"
     else -> email
 }

@@ -13,7 +13,7 @@ import java.net.URL
  * Server VPS Helipod yang membuat 6 angka dan mengirimnya lewat gateway
  * WhatsApp, jadi pendaftaran nomor tidak memakan kuota SMS Firebase.
  * Setelah kode benar, aplikasi membuat akun email+password tersembunyi
- * (nomor@phone.rezostar.app) sehingga login berikutnya cukup nomor+password.
+ * (nomor@phone.viza.app) sehingga login berikutnya cukup nomor+password.
  */
 object OtpWhatsApp {
 

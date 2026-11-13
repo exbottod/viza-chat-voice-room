@@ -531,6 +531,7 @@ fun AppRoot() {
             }
             FirebaseSession.signOut()
             FbLogin.keluar()
+            PanelStaffRepo.lupakan()
             store.clear()
             user = null
         }

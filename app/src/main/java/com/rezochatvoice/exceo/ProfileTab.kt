@@ -187,8 +187,10 @@ fun ProfileTab(
     // kalau sinyal jelek saat app baru dibuka, hasilnya kosong dan menu panel
     // tidak muncul lagi sampai app ditutup dan dibuka ulang.
     LaunchedEffect(userId) {
+        // Ganti akun: kosongkan dulu supaya menu panel akun sebelumnya tidak tampil.
+        panelList = emptyList()
         if (userId.isBlank()) {
-            panelList = emptyList()
+            PanelStaffRepo.lupakan()
             return@LaunchedEffect
         }
         var jeda = 2_000L

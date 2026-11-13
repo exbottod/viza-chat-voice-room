@@ -85,8 +85,22 @@ object PanelStaffRepo {
         return out
     }
 
-    /** Hasil terakhir yang berhasil dibaca dari server: dipakai saat jaringan sedang jelek. */
+    /**
+     * Hasil terakhir yang berhasil dibaca dari server: dipakai saat jaringan sedang jelek.
+     * Selalu terikat pada UID pemiliknya. Dulu cache ini tidak punya pemilik, jadi
+     * akun baru yang kebetulan kena gangguan jaringan mewarisi panel akun sebelumnya.
+     */
     @Volatile private var terakhirBerhasil: List<PanelInfo>? = null
+    @Volatile private var terakhirUid: String = ""
+
+    private fun uidSaatIni(): String =
+        com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
+
+    /** Dipanggil saat keluar atau ganti akun: tidak ada hak panel yang boleh terbawa. */
+    fun lupakan() {
+        terakhirBerhasil = null
+        terakhirUid = ""
+    }
 
     /**
      * Semua panel milik akun ini. Satu akun bisa punya manager dan admin sekaligus.
@@ -98,6 +112,10 @@ object PanelStaffRepo {
      *    sehingga menu panel hilang sampai app dibuka ulang).
      */
     suspend fun panels(): List<PanelInfo> {
+        val uid = uidSaatIni()
+        if (uid.isBlank()) { lupakan(); return emptyList() }
+        // Akun berbeda dari pemilik cache: buang cache sebelum bertanya ke server.
+        if (terakhirUid != uid) lupakan()
         var o = SupaRepo.panelCall("me")
         var coba = 1
         while (!jawabanSah(o) && coba < 3) {
@@ -108,11 +126,16 @@ object PanelStaffRepo {
         if (!jawabanSah(o)) {
             // Server tidak menjawab sama sekali: pakai hasil terakhir yang pernah
             // berhasil kalau ada, kalau tidak ada beri tahu pemanggil lewat galat.
-            terakhirBerhasil?.let { return it }
+            // Cache hanya sah kalau milik akun yang sedang masuk.
+            if (terakhirUid == uid) terakhirBerhasil?.let { return it }
             throw java.io.IOException(o.optString("e", "Server panel tidak terjangkau"))
         }
+        // Akun bisa berganti selama permintaan berjalan: jangan simpan jawaban
+        // untuk akun yang sudah tidak aktif.
+        if (uidSaatIni() != uid) { lupakan(); return emptyList() }
         val hasil = bacaPanels(o)
         terakhirBerhasil = hasil
+        terakhirUid = uid
         return hasil
     }
 

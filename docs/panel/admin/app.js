@@ -67,11 +67,35 @@ async function simpanVip(id, data) {
   try { await setDoc(doc(db, "vipConfig", id), data, { merge: true }); } catch (e) { galat = e; }
   try { await dUpdate(dRef(rtdb, "vipCfg/" + kunciVip(id)), data); galat = null; } catch (e) { if (galat) throw e; }
 }
+/** Hapus aset dari SEMUA tempat: dokumen Firestore bernama sama, dokumen lain
+ *  yang membawa id yang sama, dan semua node RTDB dengan key atau id tersebut.
+ *  Sebelumnya hanya satu salinan yang terhapus, jadi barisnya muncul lagi. */
 async function hapusVip(id, kunci) {
-  let ok = false, galat = null;
-  try { await deleteDoc(doc(db, "vipConfig", id)); ok = true; } catch (e) { galat = e; }
-  try { await dRemove(dRef(rtdb, "vipCfg/" + (kunci || kunciVip(id)))); ok = true; } catch (e) { if (!ok) galat = e; }
-  if (!ok) throw galat || new Error("gagal");
+  const galat = [];
+  // 1) Firestore: dokumen vipConfig/<id> dan dokumen lain yang field id-nya sama.
+  try { await deleteDoc(doc(db, "vipConfig", id)); } catch (e) { galat.push("firestore: " + (e.code || e.message)); }
+  try {
+    const snap = await getDocs(query(kumpulan("vipConfig"), limit(500)));
+    for (const d of snap.docs) {
+      if (d.id !== id && (d.data() || {}).id !== id) continue;
+      try { await deleteDoc(d.ref); } catch (e) { galat.push("firestore " + d.id); }
+    }
+  } catch (e) { /* tanpa izin baca: cukup langkah 1 */ }
+  // 2) RTDB: semua node yang key atau field id-nya cocok.
+  try {
+    const sn = await dGet(dRef(rtdb, "vipCfg"));
+    if (sn.exists()) {
+      const sasaran = [];
+      sn.forEach((c) => {
+        const v = c.val() || {};
+        if (c.key === id || c.key === (kunci || "") || c.key === kunciVip(id) || v.id === id) sasaran.push(c.key);
+      });
+      for (const k of sasaran) {
+        try { await dRemove(dRef(rtdb, "vipCfg/" + k)); } catch (e) { galat.push("rtdb " + k); }
+      }
+    }
+  } catch (e) { galat.push("rtdb: " + (e.message || e)); }
+  if (galat.length) throw new Error(galat.slice(0, 2).join(" · "));
 }
 /** Jual atau tarik item dari Store tanpa menghapus berkasnya. */
 async function setStoreVip(item, jual) {
@@ -1920,21 +1944,28 @@ async function gambarAset() {
   }));
   $("isiHal").querySelectorAll("[data-vedit]").forEach((b) => (b.onclick = () => formAsetVip(semua.find((x) => x.id === b.dataset.vedit))));
   $("isiHal").querySelectorAll("[data-iedit]").forEach((b) => (b.onclick = () => formItemToko(semua.find((x) => x.id === b.dataset.iedit))));
-  const hapusAset = async (id, kunci, pesan) => {
+  const hapusAset = async (id, kunci, pesan, tombol) => {
     if (!confirm(pesan)) return;
+    const baris = tombol?.closest("tr");
+    if (tombol) { tombol.disabled = true; tombol.textContent = "Menghapus…"; }
+    // Hilangkan barisnya lebih dulu supaya langsung terlihat, lalu cocokkan ulang
+    // dengan isi server. Kalau gagal, gambarAset() memunculkannya kembali.
+    baris?.remove();
     try {
       await hapusVip(id, kunci || undefined);
       catatLog("Hapus aset vipConfig", id);
-      toast("Dihapus dari Store dan aplikasi");
-      gambarAset();
-    } catch (e) { toast("Gagal: " + (e.code || e.message), true); }
+      toast("Terhapus. Slotnya siap diisi ulang");
+    } catch (e) {
+      toast("Gagal menghapus: " + (e.code || e.message), true);
+    }
+    gambarAset();
   };
   $("isiHal").querySelectorAll("[data-vhapus]").forEach((b) => (b.onclick = () => hapusAset(
     b.dataset.vhapus, b.dataset.kunci,
-    "Hapus aset VIP ini? Gambar untuk slot tersebut akan hilang dari aplikasi.")));
+    "Hapus aset VIP ini? Gambar untuk slot tersebut akan hilang dari aplikasi.", b)));
   $("isiHal").querySelectorAll("[data-ihapus]").forEach((b) => (b.onclick = () => hapusAset(
     b.dataset.ihapus, b.dataset.kunci,
-    "Hapus item ini? Item hilang dari Store dan dari tas semua user yang memakainya.")));
+    "Hapus item ini? Item hilang dari Store dan dari tas semua user yang memakainya.", b)));
   $("isiHal").querySelectorAll("[data-tarik]").forEach((b) => (b.onclick = async () => {
     const it = semua.find((x) => x.id === b.dataset.tarik);
     if (!it) return;

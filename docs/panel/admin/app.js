@@ -1371,7 +1371,7 @@ async function walletAdmin(p) {
     body: JSON.stringify({ a: "admin", t, p })
   });
   let res = null, galat = "";
-  try { res = await kirim(WALLET_VPS); } catch (e) { galat = "VPS: " + (e.message || e); }
+  try { res = await kirim(WALLET_VPS); } catch (e) { galat = "VPS(" + WALLET_VPS + "): " + (e.message || e); }
   if (!res || !res.ok) {
     try { const cad = await kirim(WALLET_CAD); if (cad.ok || !res) res = cad; }
     catch (e) { galat += (galat ? " | " : "") + "cadangan: " + (e.message || e); }

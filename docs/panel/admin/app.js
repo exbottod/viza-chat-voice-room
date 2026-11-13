@@ -1355,8 +1355,11 @@ async function genderUser(uid) {
 }
 
 /* ================= dompet: coin, diamond, reset ================= */
-const WALLET_VPS = "https://viza.43-156-99-4.sslip.io/admin";
-const WALLET_CAD = "https://viza.43-156-99-4.sslip.io/admin";
+const DOMPET_ALAMAT = "https://viza.43-156-99-4.sslip.io/admin";
+// Kalau panel dibuka dari server dompet sendiri, pakai jalur senama supaya bebas CORS.
+const DOMPET_SEHOST = /^viza\.43-156-99-4\.sslip\.io$/i.test(location.hostname);
+const WALLET_VPS = DOMPET_SEHOST ? location.origin + "/admin" : DOMPET_ALAMAT;
+const WALLET_CAD = WALLET_VPS;
 const WALLET_KEY = "sb_publishable_4PxD2LedOsBgIJyHLkM47A_bImSQI2W";
 const OPS_TANPA_UID = ["reset_all", "reset_gem_all", "reset_all_assets", "delete_users", "manual_pending", "manual_all", "pay_get", "pay_set"];
 

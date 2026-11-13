@@ -101,6 +101,10 @@ WantedBy=multi-user.target
 EOF
 systemctl daemon-reload
 systemctl enable livekit >/dev/null 2>&1 || true
+# Buang livekit-server lama yang jalan di luar systemd (sisa percobaan sebelumnya),
+# karena proses itulah yang menahan port 7880/7881.
+pkill -f livekit-server >/dev/null 2>&1 || true
+sleep 2
 systemctl reset-failed livekit >/dev/null 2>&1 || true
 systemctl restart livekit
 sleep 4

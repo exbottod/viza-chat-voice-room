@@ -62,6 +62,24 @@
         "ukuran": 3805775,
         "sha256": "b57106c9af54ba6811c8764553a4b5b8a96411f0bf43e8c2082aeb12cd0afdd7"
       }
+    },
+    {
+      "dari": "1.0.20",
+      "ke": "1.0.22",
+      "arm64": {
+        "file": "patch-1.0.20-1.0.22-arm64.bsdiff",
+        "ukuran": 3879158,
+        "sha256": "94348ac3fe8af3895c3aca4f0ae34f78ba4a44f6d184a14c085847e522ec074c"
+      }
+    },
+    {
+      "dari": "1.0.21",
+      "ke": "1.0.22",
+      "arm64": {
+        "file": "patch-1.0.21-1.0.22-arm64.bsdiff",
+        "ukuran": 3886713,
+        "sha256": "45dc5340c8db20ca15bfb7c365a12dda4d9f6686a173d63d5841840e1b033483"
+      }
     }
   ]
 }

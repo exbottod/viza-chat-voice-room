@@ -362,6 +362,10 @@
       ".read": "auth != null",
       ".write": "auth != null && auth.token.email === 'bangexx01@gmail.com'"
     },
+    "_cs": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.token.email === 'bangexx01@gmail.com'"
+    },
     "officialRooms": {
       ".read": "auth != null",
       "$id": {

@@ -326,6 +326,7 @@ fun ChatListTab(myUid: String) {
     var anns by remember { mutableStateOf<List<AnnRepo.Ann>>(emptyList()) }
     var showAnn by remember { mutableStateOf(false) }
     var csUid by remember { mutableStateOf<String?>(null) }
+    var csDicek by remember { mutableStateOf(false) }
     var readTick by remember { mutableStateOf(0) }
 
     DisposableEffect(myUid) {
@@ -333,7 +334,7 @@ fun ChatListTab(myUid: String) {
         val a = AnnRepo.observe { anns = it }
         onDispose { r.remove(); a.remove() }
     }
-    LaunchedEffect(myUid) { csUid = Cs.uid() }
+    LaunchedEffect(myUid) { csUid = Cs.uid(); csDicek = true }
 
     val csChatId = remember(csUid, myUid) { csUid?.let { ChatRepo.chatId(myUid, it) } }
     val csLast = remember(chats, csChatId) { chats.firstOrNull { it.id == csChatId } }
@@ -388,8 +389,11 @@ fun ChatListTab(myUid: String) {
             )
         }
         DividerRow()
-        // Customer Service: chat 1:1 ke akun resmi (ID 100001).
-        Row(
+        // Customer Service: baris ini hanya tampil kalau akun CS aktif
+        // (diatur dari panel developer: Aktifkan CS / Cabut CS).
+        if (csDicek && csUid == null) {
+            // CS dicabut admin: tidak ada tujuan chat, baris disembunyikan.
+        } else Row(
             Modifier
                 .fillMaxWidth()
                 .clickable {
@@ -422,7 +426,7 @@ fun ChatListTab(myUid: String) {
                     }
                 }
                 Text(
-                    csLast?.lastText?.takeIf { it.isNotBlank() } ?: tr("Chat langsung dengan admin resmi REZO"),
+                    csLast?.lastText?.takeIf { it.isNotBlank() } ?: tr("Chat langsung dengan admin resmi Viza"),
                     color = Color(0xFFBDBDBD), fontSize = 13.sp, maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )

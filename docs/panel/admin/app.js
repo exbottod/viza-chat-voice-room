@@ -405,6 +405,7 @@ const daftarHal = {
   bet: { judul: "Bet game", crumb: "Dashboard / Game", gambar: gambarBet },
   database: { judul: "Database", crumb: "Dashboard / Data", gambar: gambarDatabase },
   latar: { judul: "Background tab", crumb: "Dashboard / Background tab", gambar: gambarLatar },
+  cs: { judul: "Customer Service", crumb: "Dashboard / Customer Service", gambar: gambarCs },
   pengumuman: { judul: "Pengumuman resmi", crumb: "Dashboard / Pengumuman resmi", gambar: gambarPengumuman },
   log: { judul: "Log admin", crumb: "Dashboard / Data", gambar: gambarLog },
   pengaturan: { judul: "Pengaturan", crumb: "Dashboard / Pengaturan", gambar: gambarPengaturan }
@@ -418,6 +419,7 @@ const keteranganHal = {
   frame: "Banner beranda dan bingkai profil",
   kirim: "Kirim lencana, medali, frame, efek, banner, ID unik ke akun user",
   staf: "Tambah staf dan seller yang boleh masuk panel",
+  cs: "Pilih akun yang menerima chat Customer Service, atau cabut",
   wallet: "Kirim coin, VIP, reset coin/diamond/exp, topup manual, reset nama dan foto",
   aset: "Kartu VIP, frame, efek masuk, gelembung chat, medali, ID unik",
   katalog: "Game yang sudah terpasang",
@@ -2099,6 +2101,100 @@ function formLatar(kunci, b) {
   ["ltMode", "ltC1", "ltC2", "ltUrl"].forEach((id) => document.getElementById(id)?.addEventListener("input", atur));
   document.getElementById("ltMode").addEventListener("change", atur);
   atur();
+}
+
+/* ================= customer service ================= */
+/* Akun CS disimpan di Realtime Database: _cs/{id,nama,uid,at}.
+   APK membaca _cs/uid lebih dulu, jadi berpindah akun tanpa build baru. */
+async function gambarCs() {
+  $("aksiTopbar").innerHTML = "";
+  let info = null;
+  try { const s = await dGet(dRef(rtdb, "_cs")); info = s.val() || null; }
+  catch (e) { toast("Gagal membaca data CS: " + (e.code || e.message), true); }
+
+  const aktif = info && info.uid && info.aktif !== false ? info : null;
+  const dimatikan = info && info.aktif === false;
+  const sejak = aktif && aktif.at ? new Date(Number(aktif.at)).toLocaleString("id-ID") : "";
+
+  $("isiHal").innerHTML = `
+    <div class="panel">
+      <div class="panelAtas"><h3>Akun Customer Service</h3>
+        <div class="sub">semua pesan dari tombol Customer Service di tab Pesan masuk ke akun ini</div></div>
+      <div style="padding:0 14px 14px">
+        <div class="kartu" style="padding:14px;border-radius:14px;background:${aktif ? "rgba(46,160,67,.12)" : "rgba(255,255,255,.05)"}">
+          <div style="font-size:13px;color:#9aa4b2">Status</div>
+          <div style="font-size:17px;font-weight:700;margin-top:4px">${aktif ? "AKTIF" : (dimatikan ? "DICABUT" : "BELUM DIATUR")}</div>
+          ${aktif ? `
+            <div style="margin-top:10px;font-size:14px;line-height:1.7">
+              Nama: <b>${aman(aktif.nama || "-")}</b><br>
+              ID user: <b>${aman(String(aktif.id || "-"))}</b><br>
+              UID: <span class="mono">${aman(String(aktif.uid))}</span>
+              ${sejak ? `<br>Diaktifkan: ${aman(sejak)}` : ""}
+            </div>` : `
+            <div style="margin-top:8px;font-size:13px;color:#9aa4b2">
+              Belum ada akun yang ditunjuk. Isi ID user di bawah lalu tekan Aktifkan CS.
+            </div>`}
+        </div>
+
+        <div class="isian" style="margin-top:14px">
+          <label>ID user yang dijadikan Customer Service</label>
+          <input id="csId" placeholder="mis. 100005 (ID angka atau UID)" value="${aktif ? aman(String(aktif.id || "")) : ""}">
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <button id="csAktif" class="utama">Aktifkan CS</button>
+          <button id="csCabut" class="polos">Cabut CS</button>
+          <button id="csMuat" class="polos">Muat ulang</button>
+        </div>
+        <div class="ket" style="margin-top:12px">
+          Aktifkan CS: chat Customer Service di aplikasi langsung tersambung ke akun itu, tanpa perlu build APK baru.
+          Cabut CS: tombol Customer Service dimatikan dan pesan user tidak lagi masuk ke akun tersebut.
+        </div>
+      </div>
+    </div>`;
+
+  $("csMuat").onclick = () => gambarCs();
+  $("csAktif").onclick = async () => {
+    const teks = String($("csId").value || "").trim();
+    if (!teks) return toast("Isi ID user dulu", true);
+    const tombol = $("csAktif");
+    tombol.disabled = true;
+    try {
+      const uid = await uidDariMasukan(teks);
+      if (!uid) { tombol.disabled = false; return toast("User dengan ID " + teks + " tidak ditemukan", true); }
+      let nama = "", idPakai = teks;
+      try {
+        const p = await getDoc(doc(db, "users", uid));
+        if (p.exists()) {
+          const d = p.data();
+          nama = d.name || d.nickname || "";
+          if (d.userId) idPakai = String(d.userId);
+        }
+      } catch (e) { }
+      await dSet(dRef(rtdb, "_cs"), {
+        uid, id: String(idPakai), nama, aktif: true, at: Date.now(),
+        oleh: auth.currentUser?.email || "?"
+      });
+      try { await dSet(dRef(rtdb, "ids/i/" + idPakai + "/uid"), uid); } catch (e) { }
+      catatLog("Aktifkan CS", "ID " + idPakai + (nama ? " · " + nama : ""));
+      toast("Customer Service aktif untuk ID " + idPakai);
+      gambarCs();
+    } catch (e) {
+      tombol.disabled = false;
+      toast("Gagal: " + (e.code || e.message), true);
+    }
+  };
+  $("csCabut").onclick = async () => {
+    if (!confirm("Cabut Customer Service? Chat CS tidak akan sampai ke akun mana pun.")) return;
+    try {
+      await dSet(dRef(rtdb, "_cs"), {
+        uid: null, id: aktif ? String(aktif.id || "") : "", nama: aktif ? (aktif.nama || "") : "",
+        aktif: false, at: Date.now(), oleh: auth.currentUser?.email || "?"
+      });
+      catatLog("Cabut CS", aktif ? "ID " + (aktif.id || "") : "");
+      toast("Customer Service dicabut");
+      gambarCs();
+    } catch (e) { toast("Gagal: " + (e.code || e.message), true); }
+  };
 }
 
 /* ================= pengumuman resmi ================= */

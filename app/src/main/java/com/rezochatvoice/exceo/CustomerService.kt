@@ -61,17 +61,45 @@ object Cs {
 
     @Volatile private var cachedUid: String? = null
 
-    fun isCs(u: PublicUser?): Boolean = u != null && u.userId.trim() == ID
+    /** UID akun CS yang sedang aktif (diisi saat [uid] dipanggil). */
+    @Volatile var uidAktif: String? = null
+        private set
+
+    fun isCsUid(uid: String?): Boolean {
+        val u = uid?.trim().orEmpty()
+        if (u.isEmpty()) return false
+        return u == uidAktif || u == cachedUid
+    }
+
+    fun isCs(u: PublicUser?): Boolean = u != null && (u.userId.trim() == ID || isCsUid(u.uid))
     fun isCsId(id: String?): Boolean = id != null && id.trim() == ID
 
     /** UID Firebase dari akun 100001 (dicari sekali lalu disimpan di memori). */
     suspend fun uid(): String? {
         cachedUid?.let { return it }
-        // 1) Penanda pemilik di database (_owner/uid), diisi dari panel.
-        // 2) Email pemilik di koleksi users.
-        // 3) Nomor ID 100001 hanya sebagai cadangan terakhir, karena nomor ini
+        // 1) Akun CS yang dipilih admin di panel (_cs/uid) - paling utama,
+        //    jadi CS bisa dipindah atau dicabut tanpa build APK baru.
+        // 2) Penanda pemilik di database (_owner/uid).
+        // 3) Email pemilik di koleksi users.
+        // 4) Nomor ID 100001 hanya cadangan terakhir, karena nomor ini
         //    diberikan menurut urutan pendaftaran, bukan milik pemilik otomatis.
         val u = try {
+            val nodeCs = kotlinx.coroutines.withTimeoutOrNull(4000L) {
+                com.google.firebase.database.FirebaseDatabase.getInstance()
+                    .getReference("_cs").get().await().value
+            }
+            var dariCs: String? = null
+            var csDimatikan = false
+            if (nodeCs is Map<*, *>) {
+                csDimatikan = (nodeCs["aktif"] as? Boolean) == false
+                dariCs = (nodeCs["uid"] as? String)?.takeIf { it.isNotBlank() }
+            }
+            if (csDimatikan) return null
+            if (dariCs != null) {
+                cachedUid = dariCs
+                uidAktif = dariCs
+                return dariCs
+            }
             val dariDb = kotlinx.coroutines.withTimeoutOrNull(4000L) {
                 com.google.firebase.database.FirebaseDatabase.getInstance()
                     .getReference("_owner/uid").get().await().value as? String
@@ -85,7 +113,10 @@ object Cs {
         } catch (e: Exception) {
             null
         }
-        if (u != null) cachedUid = u
+        if (u != null) {
+            cachedUid = u
+            uidAktif = u
+        }
         return u
     }
 

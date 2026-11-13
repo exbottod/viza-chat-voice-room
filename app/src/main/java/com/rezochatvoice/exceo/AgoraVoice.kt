@@ -44,7 +44,7 @@ import java.net.URL
  */
 object AgoraVoice {
     private const val TAG = "LiveKitVoice"
-    private const val TOKEN_URL = "https://GANTI-SERVER-ANDA/lktoken"
+    private const val TOKEN_URL = "https://viza.43-156-99-4.sslip.io/lktoken"
 
     /**
      * Penyetelan suara: peredam derau (noise suppression) dan filter nada

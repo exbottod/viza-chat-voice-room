@@ -538,6 +538,18 @@ function klaimUid(token) {
 }
 
 let sesiAlasan = "";
+// Token LiveKit buatan sendiri (HS256), tanpa paket tambahan.
+async function jwtLiveKit(klaim, rahasia) {
+  const b64u = (x) => Buffer.from(typeof x === "string" ? x : JSON.stringify(x)).toString("base64url");
+  const kepala = b64u({ alg: "HS256", typ: "JWT" });
+  const isi = b64u(klaim);
+  const data = kepala + "." + isi;
+  const enc = new TextEncoder();
+  const kunci = await globalThis.crypto.subtle.importKey("raw", enc.encode(rahasia), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await globalThis.crypto.subtle.sign("HMAC", kunci, enc.encode(data));
+  return data + "." + Buffer.from(sig).toString("base64url");
+}
+
 async function sesiDariToken(token) {
   try {
     const [h, c, s] = token.split(".");
@@ -3555,6 +3567,37 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
         });
       }
       return new Response(null, { status: 302, headers: { location: APK_ASLI } });
+    }
+    // Token suara room: LiveKit milik sendiri di VPS. App mengirim token login
+    // Firebase, server ini yang menandatangani token LiveKit berumur panjang
+    // supaya mikrofon tidak mati saat dipakai di tengah room.
+    if (url.pathname.toLowerCase() === "/lktoken") {
+      // Cukup izinkan dari app sendiri dan panel.
+      const kepalaLk = req.headers.get("authorization") || "";
+      const idLk = kepalaLk.toLowerCase().startsWith("bearer ") ? kepalaLk.slice(7).trim() : "";
+      const uidLk = idLk ? await uidDariToken(idLk) : null;
+      if (!uidLk) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
+      const kunciLk = String(env.LIVEKIT_API_KEY || "");
+      const rahasiaLk = String(env.LIVEKIT_API_SECRET || "");
+      const alamatLk = String(env.LIVEKIT_URL || "");
+      if (!kunciLk || !rahasiaLk || !alamatLk) {
+        return json({ ok: 0, e: "LiveKit belum diatur di server" }, 503);
+      }
+      let isiLk = {};
+      try { isiLk = await req.json(); } catch { isiLk = {}; }
+      const roomLk = (String(isiLk.room || url.searchParams.get("room") || "umum").replace(/[^0-9A-Za-z_.:-]/g, "") || "umum").slice(0, 64);
+      const namaLk = String(isiLk.name || "").slice(0, 40);
+      const kiniLk = Math.floor(Date.now() / 1000);
+      const klaimLk = {
+        iss: kunciLk, sub: uidLk, iat: kiniLk, nbf: kiniLk - 5, exp: kiniLk + 21600,
+        jti: uidLk + "-" + kiniLk,
+        video: { room: roomLk, roomJoin: true, canPublish: true, canSubscribe: true, canPublishData: true },
+      };
+      if (namaLk) klaimLk.name = namaLk;
+      let tokenLk = "";
+      try { tokenLk = await jwtLiveKit(klaimLk, rahasiaLk); }
+      catch (e) { return json({ ok: 0, e: "Token suara gagal dibuat" }, 500); }
+      return json({ ok: 1, token: tokenLk, url: alamatLk, exp: klaimLk.exp });
     }
     if (url.pathname === "/health") {
       // Sekaligus buktikan database masih bisa dibaca.

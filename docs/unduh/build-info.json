@@ -1,4 +1,5 @@
 {
+  "status": "ok",
   "versi": "1.0.23",
   "catatan": "APK arm64, armv7, dan universal build otomatis. Paket com.vizachatvoice.app, ditandatangani kunci rilis Viza.",
   "ukuran_apk": 49266890,

@@ -107,7 +107,10 @@ object Cs {
             val dariEmail = if (dariDb.isNullOrBlank()) {
                 UserDirectory.uidFromEmail(UserDirectory.EMAIL_PEMILIK)
             } else null
-            dariDb ?: dariEmail ?: UserDirectory.uidFromId(ID)
+            // Nomor ID 100001 sengaja TIDAK dipakai lagi sebagai cadangan:
+            // nomor itu dibagikan menurut urutan pendaftaran, jadi bisa
+            // menunjuk akun user biasa dan chat CS nyasar ke orang lain.
+            dariDb?.takeIf { it.isNotBlank() } ?: dariEmail
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {

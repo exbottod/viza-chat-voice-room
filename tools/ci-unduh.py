@@ -91,7 +91,8 @@ def main():
         apk_utama = os.path.join(tmp, "arm64.apk")
 
     catatan = (baru.get("body") or f"Viza Chat {v_baru}").strip().splitlines()[0][:220]
-    info = {"versi": v_baru, "catatan": catatan,
+    # "status": "ok" wajib: APK hanya menampilkan dialog pembaruan kalau kolom ini ada.
+    info = {"status": "ok", "versi": v_baru, "catatan": catatan,
             "ukuran_apk": abis.get("arm64", {}).get("ukuran", 0),
             "sha256_apk": abis.get("arm64", {}).get("sha256", ""),
             "abis": abis}

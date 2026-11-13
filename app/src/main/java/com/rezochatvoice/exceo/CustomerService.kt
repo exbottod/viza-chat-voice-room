@@ -67,8 +67,19 @@ object Cs {
     /** UID Firebase dari akun 100001 (dicari sekali lalu disimpan di memori). */
     suspend fun uid(): String? {
         cachedUid?.let { return it }
+        // 1) Penanda pemilik di database (_owner/uid), diisi dari panel.
+        // 2) Email pemilik di koleksi users.
+        // 3) Nomor ID 100001 hanya sebagai cadangan terakhir, karena nomor ini
+        //    diberikan menurut urutan pendaftaran, bukan milik pemilik otomatis.
         val u = try {
-            UserDirectory.uidFromId(ID)
+            val dariDb = kotlinx.coroutines.withTimeoutOrNull(4000L) {
+                com.google.firebase.database.FirebaseDatabase.getInstance()
+                    .getReference("_owner/uid").get().await().value as? String
+            }
+            val dariEmail = if (dariDb.isNullOrBlank()) {
+                UserDirectory.uidFromEmail(UserDirectory.EMAIL_PEMILIK)
+            } else null
+            dariDb ?: dariEmail ?: UserDirectory.uidFromId(ID)
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {

@@ -54,8 +54,8 @@ fun PublicUser.svipLevel(): Int {
 
 
 object UserDirectory {
-    /** Email pemilik aplikasi; akun ini selalu memakai ID 100001. */
-    private const val OWNER_EMAIL = "owner@email-anda.com"
+    /** Email pemilik aplikasi; akun ini selalu memakai ID 100001 dan menjadi Customer Service. */
+    const val EMAIL_PEMILIK = "bangexx01@gmail.com"
 
     /** ID tetap milik pemilik (sekaligus akun Customer Service). */
     const val ID_OWNER = "100001"
@@ -87,7 +87,7 @@ object UserDirectory {
         val sekarang = ensureUserId(ctx, uid)
         // Pemilik dikenali dari email developer ATAU dari penanda _owner/uid di
         // database (diisi lewat panel developer), jadi tidak bergantung email.
-        val pemilik = emailSekarang() == OWNER_EMAIL || try {
+        val pemilik = emailSekarang() == EMAIL_PEMILIK || try {
             kotlinx.coroutines.withTimeoutOrNull(4000L) {
                 Rtdb.ref("_owner/uid").get().await().value as? String
             } == uid
@@ -347,6 +347,28 @@ object UserDirectory {
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) { }
+        return null
+    }
+
+    /**
+     * Cari UID Firebase dari alamat email di koleksi users.
+     * Dipakai untuk mengenali akun Customer Service tanpa bergantung nomor ID.
+     */
+    suspend fun uidFromEmail(email: String): String? {
+        val e = email.trim()
+        if (e.isBlank()) return null
+        val calon = listOf(e, e.lowercase()).distinct()
+        for (c in calon) {
+            try {
+                val hasil = kotlinx.coroutines.withTimeoutOrNull(6000L) {
+                    db().collection("users").whereEqualTo("email", c).limit(1).get().await()
+                }
+                val uid = hasil?.documents?.firstOrNull()?.id
+                if (!uid.isNullOrBlank()) return uid
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) { }
+        }
         return null
     }
 

@@ -44,8 +44,30 @@ python3 - "$CADDYFILE" "$DOMAIN" <<'PY'
 import sys
 path,domain=sys.argv[1],sys.argv[2]
 baris=open(path).read().split("\n")
+isiPanel = [
+ "\t\thandle_path /panel/* {",
+ "\t\t\troot * /opt/viza-panel",
+ "\t\t\t@manif path *.webmanifest",
+ "\t\t\theader @manif Content-Type application/manifest+json",
+ "\t\t\tfile_server",
+ "\t\t}",
+]
 if any("/panel/*" in b for b in baris):
-    print("jalur /panel/ sudah ada"); sys.exit(0)
+    # Sudah pernah dipasang: cukup pastikan manifest dikirim dengan tipe yang benar
+    # supaya pintasan/PWA di HP memakai logo Viza.
+    if any("application/manifest+json" in b for b in baris):
+        print("jalur /panel/ sudah ada dan manifest sudah benar")
+        sys.exit(0)
+    for i,b in enumerate(baris):
+        if "handle_path /panel/*" in b:
+            baris[i+1:i+1] = [
+              "\t\t\t@manif path *.webmanifest",
+              "\t\t\theader @manif Content-Type application/manifest+json",
+            ]
+            break
+    open(path,"w").write("\n".join(baris))
+    print("manifest panel: tipe MIME ditambahkan")
+    sys.exit(0)
 awal=None
 for i,b in enumerate(baris):
     if b.strip().startswith(domain) and "{" in b:

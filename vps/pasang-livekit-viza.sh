@@ -27,8 +27,18 @@ case "$(uname -m)" in
   aarch64|arm64) ARCH=arm64 ;;
   *) echo "Arsitektur $(uname -m) tidak didukung"; exit 1 ;;
 esac
-API=https://api.github.com/repos/livekit/livekit/releases/latest
-JSON=$(curl -fsSL --retry 3 --retry-delay 2 "$API" || true)
+CADANGAN="https://github.com/livekit/livekit/releases/download/v1.13.11/livekit_1.13.11_linux_amd64.tar.gz"
+if [ -n "${LK_URL:-}" ]; then
+  URL_ASSET="$LK_URL"; TAG="(dari LK_URL)"
+else
+  API=https://api.github.com/repos/livekit/livekit/releases/latest
+  echo "   menanyakan versi terbaru ke GitHub (maks 25 detik)…"
+  JSON=$(curl -fsSL --max-time 25 --retry 1 "$API" 2>/dev/null || true)
+  TMP_TAG=$(printf '%s' "$JSON" | grep -m1 '"tag_name"' | cut -d'"' -f4)
+  TMP_URL=$(printf '%s' "$JSON" | grep -o '"browser_download_url":[^,]*' | cut -d'"' -f4 | grep "linux_${ARCH}\.tar\.gz" | head -1)
+  if [ -n "${TMP_URL:-}" ]; then URL_ASSET="$TMP_URL"; TAG="$TMP_TAG"; else URL_ASSET="$CADANGAN"; TAG="1.13.11 (cadangan)"; fi
+fi
+: "${TAG:=}"
 TAG=$(printf '%s' "$JSON" | grep -m1 '"tag_name"' | cut -d'"' -f4)
 VER="${TAG#v}"
 URL_ASSET=$(printf '%s' "$JSON" | grep -o '"browser_download_url":[^,]*' | cut -d'"' -f4 | grep "linux_${ARCH}\.tar\.gz" | head -1)

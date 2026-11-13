@@ -1736,6 +1736,48 @@ async function asetUpload(env, b) {
   return json({ ok: 1, url: "https://cdn.jsdelivr.net/gh/" + ASET_REPO + "@" + ASET_CABANG + "/" + path, path: path });
 }
 
+async function asetDaftar(env) {
+  const hasil = new Map();
+  try {
+    const fs = await asetFs();
+    const nama = await fs.readdir(ASET_DIR);
+    for (const n of nama) {
+      try {
+        const st = await fs.stat(ASET_DIR + "/" + n);
+        if (!st.isFile()) continue;
+        hasil.set(n, { nama: n, ukuran: Number(st.size), at: Number(st.mtimeMs) || 0, simpan: "disk", url: VPS_ASET + "/" + n });
+      } catch (e) { /* berkas lewat, abaikan */ }
+    }
+  } catch (e) { /* tanpa disk: lanjut baca dari database */ }
+  try {
+    await asetPastikan(env);
+    const r = await pipe(env, [
+      { sql: "select nama, mime, created, length(b64) as n from aset_file order by created desc limit 300" },
+    ]);
+    for (const row of r[0].rows) {
+      if (hasil.has(row.nama)) continue;
+      hasil.set(row.nama, { nama: row.nama, ukuran: Number(row.n) || 0, at: Number(row.created) || 0, simpan: "vps", url: VPS_ASET + "/" + row.nama });
+    }
+  } catch (e) { /* tabel belum ada: cukup dari disk */ }
+  return [...hasil.values()].sort((a, b) => (b.at || 0) - (a.at || 0)).slice(0, 300);
+}
+
+async function asetHapus(env, nama) {
+  let ada = false;
+  try {
+    const fs = await asetFs();
+    await fs.unlink(ASET_DIR + "/" + nama);
+    ada = true;
+  } catch (e) { /* mungkin hanya ada di database */ }
+  try {
+    await asetPastikan(env);
+    const r = await pipe(env, [{ sql: "delete from aset_file where nama = ?", args: [T(nama)] }]);
+    if (Number(r[0]?.rows?.length ?? 0) || true) ada = true;
+  } catch (e) { /* tabel belum ada */ }
+  if (!ada) throw new Error("Berkas tidak ditemukan");
+  return true;
+}
+
 async function panel(env, body) {
   const sesi = await sesiDariToken(body.t ?? "");
   if (!sesi) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
@@ -3252,6 +3294,24 @@ export default {
       if (!sesiA) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
       if (!adalahAdmin(sesiA)) return json({ ok: 0, e: "Hanya admin" }, 403);
       try { return await asetUpload(env, bA); }
+      catch (e) { return json({ ok: 0, e: String(e?.message ?? e) }, 502); }
+    }
+    if (url.pathname.toLowerCase() === "/aset-list") {
+      const sesiL = await sesiDariToken(url.searchParams.get("t") ?? "");
+      if (!sesiL) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
+      if (!adalahAdmin(sesiL)) return json({ ok: 0, e: "Hanya admin" }, 403);
+      try { return json({ ok: 1, list: await asetDaftar(env) }); }
+      catch (e) { return json({ ok: 0, e: String(e?.message ?? e) }, 502); }
+    }
+    if (url.pathname.toLowerCase() === "/aset-hapus") {
+      const bH = await req.json().catch(() => null);
+      if (!bH) return json({ ok: 0, e: "Body tidak valid" }, 400);
+      const sesiH = await sesiDariToken(bH.t ?? "");
+      if (!sesiH) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
+      if (!adalahAdmin(sesiH)) return json({ ok: 0, e: "Hanya admin" }, 403);
+      const nm = String(bH.nama ?? "").replace(/[^A-Za-z0-9._-]/g, "");
+      if (!nm) return json({ ok: 0, e: "Nama berkas kosong" }, 400);
+      try { await asetHapus(env, nm); return json({ ok: 1, nama: nm }); }
       catch (e) { return json({ ok: 0, e: String(e?.message ?? e) }, 502); }
     }
     if (url.pathname.toLowerCase() === "/chatimg") {

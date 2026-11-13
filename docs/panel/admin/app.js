@@ -434,6 +434,7 @@ const daftarHal = {
   staf: { judul: "Staf & seller", crumb: "Dashboard / Staf & seller", gambar: gambarStaf },
   wallet: { judul: "Coin, diamond & reset", crumb: "Dashboard / Coin, diamond & reset", gambar: gambarWallet },
   aset: { judul: "Aset & VIP", crumb: "Dashboard / Aset & VIP", gambar: gambarAset },
+  asetvps: { judul: "Aset di VPS", crumb: "Dashboard / Aset di VPS", gambar: gambarAsetVps },
   katalog: { judul: "Katalog game", crumb: "Dashboard / Game", gambar: gambarKatalog },
   pasang: { judul: "Pasang game", crumb: "Dashboard / Game", gambar: gambarPasang },
   bet: { judul: "Bet game", crumb: "Dashboard / Game", gambar: gambarBet },
@@ -1715,6 +1716,88 @@ const jenisDariUrl = (url) => {
   if (["mp4", "webm"].includes(ext)) return "video";
   return "image";
 };
+
+/** Halaman daftar aset yang sudah tersimpan di VPS dompet. */
+async function gambarAsetVps() {
+  $("aksiTopbar").innerHTML = "";
+  $("isiHal").innerHTML = `
+    <div class="panel">
+      <div class="panelAtas"><h3>Aset di VPS</h3>
+        <div class="sub">semua berkas hasil unggahan panel, disajikan langsung dari server Viza</div></div>
+      <div style="padding:0 14px 14px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+          <button class="tombolUtama" id="asetVpsMuat">Muat ulang</button>
+        </div>
+        <div id="asetVpsIsi" class="sub">Memuat…</div>
+      </div>
+    </div>`;
+
+  const kecil = (f) => {
+    const ext = String(f.nama).split(".").pop().toLowerCase();
+    if (["png", "jpg", "jpeg", "webp", "gif"].includes(ext)) {
+      return `<img src="${aman(f.url)}" alt="" style="width:52px;height:52px;object-fit:cover;border-radius:10px;background:#0d1117">`;
+    }
+    return `<code style="font-size:11px">${aman(ext)}</code>`;
+  };
+
+  const muat = async () => {
+    const kotak = $("asetVpsIsi");
+    kotak.className = "sub";
+    kotak.textContent = "Memuat…";
+    try {
+      const t = await auth.currentUser?.getIdToken();
+      const r = await fetch(DOMPET_BASE + "/aset-list?t=" + encodeURIComponent(t || ""), { method: "GET" });
+      const j = await r.json().catch(() => null);
+      if (!j || !j.ok) throw new Error((j && j.e) || ("HTTP " + r.status));
+      if (!j.list || !j.list.length) {
+        kotak.innerHTML = 'Belum ada aset. Unggah dulu dari halaman <b>Frame &amp; banner</b>, <b>Aset &amp; VIP</b>, atau <b>Kirim ke user</b>.';
+        return;
+      }
+      const total = j.list.reduce((n, f) => n + (Number(f.ukuran) || 0), 0);
+      kotak.className = "";
+      kotak.innerHTML = `
+        <div class="sub" style="margin-bottom:8px">${j.list.length} berkas · ${(total / 1024 / 1024).toFixed(1)} MB</div>
+        <table>
+          <thead><tr><th>Berkas</th><th>Ukuran</th><th>Disimpan di</th><th>Alamat</th><th></th></tr></thead>
+          <tbody>${j.list.map((f) => `<tr>
+            <td>${kecil(f)}</td>
+            <td>${Math.max(1, Math.round((Number(f.ukuran) || 0) / 1024))} KB</td>
+            <td>${f.simpan === "disk" ? "VPS berkas" : "VPS database"}</td>
+            <td><code style="font-size:11px;word-break:break-all">${aman(f.url)}</code></td>
+            <td style="white-space:nowrap">
+              <button class="tombolKecil" data-salin="${aman(f.url)}">Salin</button>
+              <button class="tombolKecil" data-hapusaset="${aman(f.nama)}">Hapus</button>
+            </td>
+          </tr>`).join("")}</tbody>
+        </table>`;
+      kotak.querySelectorAll("[data-salin]").forEach((b) => b.addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText(b.dataset.salin); toast("Alamat disalin"); }
+        catch (e) { toast(b.dataset.salin); }
+      }));
+      kotak.querySelectorAll("[data-hapusaset]").forEach((b) => b.addEventListener("click", async () => {
+        if (!confirm("Hapus berkas ini dari VPS?")) return;
+        try {
+          const t2 = await auth.currentUser?.getIdToken();
+          const r2 = await fetch(DOMPET_BASE + "/aset-hapus", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ t: t2, nama: b.dataset.hapusaset })
+          });
+          const j2 = await r2.json().catch(() => null);
+          if (!j2 || !j2.ok) throw new Error((j2 && j2.e) || ("HTTP " + r2.status));
+          toast("Berkas dihapus");
+          muat();
+        } catch (e) { toast("Gagal menghapus: " + (e?.message || e), true); }
+      }));
+    } catch (e) {
+      kotak.className = "sub";
+      kotak.innerHTML = `Gagal memuat daftar aset: ${aman(e?.message || e)}`;
+    }
+  };
+
+  $("asetVpsMuat").addEventListener("click", muat);
+  await muat();
+}
 
 async function gambarAset() {
   const semua = await ambilSemua("vipConfig", 400).catch(() => []);

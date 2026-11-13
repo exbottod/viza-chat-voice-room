@@ -7,6 +7,7 @@ DOMAIN="${DOMAIN:-viza.43-156-99-4.sslip.io}"
 LK_DOMAIN="${LK_DOMAIN:-livekit.43-156-99-4.sslip.io}"
 UDP_AWAL=50000
 UDP_AKHIR=50100
+TCP_PORT=7881
 LK_URL_DEFAULT="https://github.com/livekit/livekit/releases/download/v1.13.11/livekit_1.13.11_linux_amd64.tar.gz"
 
 say() { echo "== $*"; }
@@ -55,12 +56,17 @@ else
 fi
 
 say "3/7 Konfigurasi LiveKit"
+for kandidat in 7881 7882 7883 7884; do
+  if ! ss -lptn 2>/dev/null | grep -q ":${kandidat} "; then TCP_PORT="$kandidat"; break; fi
+done
+echo "   port TCP media: $TCP_PORT"
+ss -lptn 2>/dev/null | grep -q ":${TCP_PORT} " && { echo "   port $TCP_PORT tetap dipakai proses lain"; exit 1; }
 cat > /etc/livekit/livekit.yaml <<EOF
 port: 7880
 bind_addresses:
   - 127.0.0.1
 rtc:
-  tcp_port: 7881
+  tcp_port: $TCP_PORT
   port_range_start: $UDP_AWAL
   port_range_end: $UDP_AKHIR
   use_external_ip: true
@@ -100,14 +106,15 @@ if systemctl is-active --quiet livekit; then
   echo "   livekit aktif"
 else
   journalctl -u livekit -n 20 --no-pager
+  echo "   port yang dipakai:"; ss -lptn | grep -E ":(7880|7881|7882|7883|7884) " || true
   exit 1
 fi
 
 say "5/7 Firewall"
 if command -v ufw >/dev/null 2>&1 && ufw status | grep -qi active; then
-  ufw allow 7881/tcp >/dev/null 2>&1 || true
+  ufw allow "${TCP_PORT}/tcp" >/dev/null 2>&1 || true
   ufw allow "${UDP_AWAL}:${UDP_AKHIR}/udp" >/dev/null 2>&1 || true
-  echo "   ufw dibuka: 7881/tcp, ${UDP_AWAL}-${UDP_AKHIR}/udp"
+  echo "   ufw dibuka: ${TCP_PORT}/tcp, ${UDP_AWAL}-${UDP_AKHIR}/udp"
 else
   echo "   ufw tidak aktif"
 fi

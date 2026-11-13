@@ -10,7 +10,7 @@ Contoh:
       --dari 1.0.9 --ke 1.0.10 --kunci arm64 --keluaran keluar-patch
 
 Hasil di folder keluaran: berkas .bsdiff + patch-info.json + build-info.json +
-update-note.txt. Unggah semuanya ke repo halaman unduh (viza-chat-unduh).
+update-note.txt. Unggah semuanya ke docs/unduh di repo viza-chat-voice-room (satu repo).
 
 Berkas patch HARUS dibuat dari APK yang persis sama dengan yang terpasang di
 HP pengguna, karena bsdiff bekerja byte per byte.

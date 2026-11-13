@@ -403,6 +403,95 @@
       "$tab": {
         ".write": "auth != null && (auth.token.email === 'bangexx01@gmail.com' || root.child('stafPanel').child(auth.uid).val() === true)"
       }
+    },
+    "moments": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$mid": {
+        ".validate": "newData.hasChildren(['uid','createdAt'])",
+        "uid": {
+          ".validate": "newData.isString() && newData.val() == auth.uid"
+        },
+        "name": {
+          ".validate": "newData.isString() && newData.val().length <= 80"
+        },
+        "text": {
+          ".validate": "newData.isString() && newData.val().length <= 600"
+        },
+        "photoB64": {
+          ".validate": "newData.isString() && newData.val().length <= 8000000"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber()"
+        },
+        "likeCount": {
+          ".validate": "newData.isNumber()"
+        },
+        "commentCount": {
+          ".validate": "newData.isNumber()"
+        },
+        "likes": {
+          "$liker": {
+            ".validate": "newData.isNumber()"
+          }
+        },
+        "comments": {
+          "$cid": {
+            ".validate": "newData.hasChildren(['uid','text','at'])",
+            "uid": {
+              ".validate": "newData.isString() && newData.val() == auth.uid"
+            },
+            "name": {
+              ".validate": "newData.isString()"
+            },
+            "text": {
+              ".validate": "newData.isString() && newData.val().length <= 500"
+            },
+            "at": {
+              ".validate": "newData.isNumber()"
+            }
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "appCfg": {
+      ".read": "auth != null",
+      ".write": "auth != null && (auth.token.email === 'bangexx01@gmail.com')"
+    },
+    "gameCfg": {
+      ".read": "auth != null",
+      ".write": "auth != null && (auth.token.email === 'bangexx01@gmail.com')"
+    },
+    "roomsBg": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "roomMusic": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "roomsHidden": {
+      ".read": "auth != null",
+      ".write": "auth != null && (auth.token.email === 'bangexx01@gmail.com')"
+    },
+    "giftHidden": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "nameReset": {
+      ".read": "auth != null",
+      ".write": "auth != null && (auth.token.email === 'bangexx01@gmail.com')"
+    },
+    "rocketWin": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "rocketRankClaim": {
+      ".read": "auth != null",
+      ".write": "auth != null"
     }
   }
 }

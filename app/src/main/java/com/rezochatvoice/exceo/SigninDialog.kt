@@ -138,6 +138,9 @@ fun SigninDialog(
     LaunchedEffect(uid) {
         cfg = SigninRepo.loadCfg()
         st = SigninRepo.loadState(uid)
+        // Kalau ternyata hari ini sudah cek in, tutup sendiri: dialog hanya
+        // untuk hari yang belum diklaim, dan muncul lagi setelah pukul 00.00.
+        if (!SigninRepo.canClaim(st)) onClose()
     }
 
     // Setelah klaim, dialog menutup sendiri: muncul sekali sehari, besok lagi.

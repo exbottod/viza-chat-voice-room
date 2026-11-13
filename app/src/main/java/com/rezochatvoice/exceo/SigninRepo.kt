@@ -45,15 +45,22 @@ fun defaultDays(): List<SigninReward> = listOf(
 
 object SigninRepo {
     private const val CFG = "signinCfg"
-    private fun dayFmt() = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+    // Ganti hari tepat pukul 00.00 menurut zona waktu HP pengguna.
+    private fun dayFmt() = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply {
+        timeZone = java.util.TimeZone.getDefault()
+    }
     fun today(): String = dayFmt().format(Date())
 
     // Cadangan status cek-in di HP. Dipakai kalau database lambat/menolak,
     // supaya dialog "Sign in" tidak muncul lagi di hari yang sama.
     private fun sp(): android.content.SharedPreferences? = try {
-        val ctx = com.google.firebase.FirebaseApp.getInstance().applicationContext
-        ctx.getSharedPreferences("signin_local", android.content.Context.MODE_PRIVATE)
-    } catch (e: Exception) { null }
+        App.instance.getSharedPreferences("signin_local", android.content.Context.MODE_PRIVATE)
+    } catch (e: Exception) {
+        try {
+            com.google.firebase.FirebaseApp.getInstance().applicationContext
+                .getSharedPreferences("signin_local", android.content.Context.MODE_PRIVATE)
+        } catch (e2: Exception) { null }
+    }
 
     private fun localState(uid: String): SigninState = try {
         val p = sp()
@@ -70,7 +77,7 @@ object SigninRepo {
                 ?.putString("last_" + uid, st.last)
                 ?.putInt("day_" + uid, st.day)
                 ?.putInt("total_" + uid, st.total)
-                ?.apply()
+                ?.commit()
         } catch (e: Exception) { }
     }
 
@@ -100,23 +107,33 @@ object SigninRepo {
 
     suspend fun loadState(uid: String): SigninState {
         val local = localState(uid)
-        val remote = try {
-            val s = Rtdb.ref("signin/$uid").get().await()
-            SigninState(
-                last = s.child("last").getValue(String::class.java) ?: "",
-                day = (s.child("day").value as? Number)?.toInt() ?: 0,
-                total = (s.child("total").value as? Number)?.toInt() ?: 0,
-            )
+        // Baca database dengan batas waktu. Kalau gagal/lambat, status HP yang
+        // dipakai, jadi dialog tidak muncul lagi di hari yang sama.
+        val remote: SigninState? = try {
+            kotlinx.coroutines.withTimeoutOrNull(8_000L) {
+                val s = Rtdb.ref("signin/$uid").get().await()
+                SigninState(
+                    last = s.child("last").getValue(String::class.java) ?: "",
+                    day = (s.child("day").value as? Number)?.toInt() ?: 0,
+                    total = (s.child("total").value as? Number)?.toInt() ?: 0,
+                )
+            }
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {
-            SigninState()
+            null
         }
+        if (remote == null) return local
         // Ambil catatan yang paling baru, supaya status tidak pernah "mundur".
         val last = if (remote.last >= local.last) remote.last else local.last
         val day = if (remote.last >= local.last) remote.day else local.day
         val total = maxOf(remote.total, local.total)
-        return SigninState(last = last, day = day, total = total)
+        val gabung = SigninState(last = last, day = day, total = total)
+        // Salin ke HP supaya cadangan lokal selalu mengikuti database.
+        if (gabung.last != local.last || gabung.day != local.day || gabung.total != local.total) {
+            saveLocal(uid, gabung)
+        }
+        return gabung
     }
 
     fun canClaim(st: SigninState): Boolean = st.last != today()

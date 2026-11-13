@@ -13,8 +13,15 @@ import coil.decode.ImageDecoderDecoder
  * foto profil, dsb.) otomatis memutar GIF animasi.
  */
 class App : Application(), ImageLoaderFactory {
+    companion object {
+        /** Konteks aplikasi, dipakai untuk penyimpanan lokal yang harus selalu ada. */
+        @Volatile lateinit var instance: App
+            private set
+    }
+
     override fun onCreate() {
         super.onCreate()
+        instance = this
         QuotaGuard.init(this)
     }
 

@@ -125,7 +125,6 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
     }
     // ---- cek in harian: muncul otomatis sekali sehari sesudah tanggal berganti
     var showSignin by remember { mutableStateOf(false) }
-    var signinChecked by remember { mutableStateOf(false) }
     // Info kick saat user mencoba masuk room yang mem-blacklist dirinya.
     var kickNote by remember { mutableStateOf<RoomRepo.RoomBan?>(null) }
     // Layar pendaftaran (avatar, alias, ulang tahun, jenis kelamin, negara) untuk akun baru.
@@ -329,16 +328,26 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
     }
 
     // Cek in harian: kalau hari ini belum klaim, tampilkan dialog otomatis.
-    LaunchedEffect(uid, signinChecked) {
-        if (uid.isEmpty() || signinChecked) return@LaunchedEffect
-        try {
-            val cfg = SigninRepo.loadCfg()
-            val st = SigninRepo.loadState(uid)
-            if (cfg.enabled && SigninRepo.canClaim(st)) showSignin = true
-        } catch (e: kotlinx.coroutines.CancellationException) {
-            throw e
-        } catch (e: Exception) { }
-        signinChecked = true
+    // Diperiksa sekali per tanggal: sesudah klaim tidak muncul lagi sampai
+    // tanggal berganti (pukul 00.00), lalu muncul sekali untuk hari berikutnya.
+    var signinTanggal by remember { mutableStateOf("") }
+    LaunchedEffect(uid) {
+        if (uid.isEmpty()) return@LaunchedEffect
+        while (true) {
+            val hariIni = SigninRepo.today()
+            if (hariIni != signinTanggal) {
+                try {
+                    val cfg = SigninRepo.loadCfg()
+                    val st = SigninRepo.loadState(uid)
+                    if (cfg.enabled && SigninRepo.canClaim(st)) showSignin = true
+                    signinTanggal = hariIni
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) { }
+            }
+            // Cek tiap menit apakah tanggal sudah berganti (tengah malam).
+            kotlinx.coroutines.delay(60_000L)
+        }
     }
 
     // Muat profil dari Firestore, pastikan ID pengguna (mulai 100000) ada, lalu publikasikan.

@@ -41,7 +41,7 @@ sleep 1
 node --experimental-sqlite --input-type=module -e '
 import { DatabaseSync } from "node:sqlite";
 const db = new DatabaseSync("'"$DIR"'/data/viza.db");
-const t = db.prepare("select name from sqlite_master where type=%s order by name").all("table");
+const t = db.prepare("select name from sqlite_master where type = ? order by name").all("table");
 const nama = t.map(r => r.name);
 const wajib = ["panel_staf", "panel_stock", "panel_ban", "panel_log", "topup_manual", "pay_info"];
 const kurang = wajib.filter(w => !nama.includes(w));

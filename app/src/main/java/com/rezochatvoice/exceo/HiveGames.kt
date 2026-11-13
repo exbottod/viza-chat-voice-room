@@ -87,8 +87,8 @@ object HiveGames {
         // diblokir operator, sedangkan alamat ini selalu bisa dihubungi.
         "https://superagent-6187eafe.base44.app/functions/hiveCatalog",
         "https://GANTI-HALAMAN-ANDA/hivegames.json",
-        "https://rezo-wallet.bangexx01.workers.dev/hivecatalog",
-        "https://rezo-wallet.pages.dev/hivecatalog",
+        "https://viza.43-156-99-4.sslip.io/hivecatalog",
+        "https://viza.43-156-99-4.sslip.io/hivecatalog",
     )
 
     data class Game(

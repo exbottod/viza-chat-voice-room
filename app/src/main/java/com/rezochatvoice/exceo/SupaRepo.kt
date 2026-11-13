@@ -22,14 +22,14 @@ object SupaRepo {
     private const val GAME = "https://GANTI-SERVER-ANDA"
     // Dompet sekarang di Cloudflare Worker + Turso. Saldo, gift, topup, VIP,
     // store, level, dan hadiah roket dilayani dari sini.
-    private const val WAL = "https://rezo-wallet.bangexx01.workers.dev"
+    private const val WAL = "https://viza.43-156-99-4.sslip.io"
     // Jalur cadangan (alamat lain, server dan database sama). Dipakai kalau HP
     // tidak bisa menjangkau alamat utama, misalnya diblokir jaringan/ISP.
-    private const val WAL2 = "https://rezo-wallet.pages.dev"
+    private const val WAL2 = "https://viza.43-156-99-4.sslip.io"
     // Jalur utama baru: VPS Helipod (Singapore). Kuota Cloudflare gratis
     // sering habis karena callback game, jadi VPS dipakai lebih dulu dan
     // Cloudflare tinggal menjadi cadangan.
-    private const val VPS = "https://GANTI-SERVER-ANDA"
+    private const val VPS = "https://viza.43-156-99-4.sslip.io"
     // Baca saldo langsung dari Turso, tanpa lewat Cloudflare. Token di bawah
     // HARUS token baca-saja (read only), karena ikut tertanam di dalam APK.
     // Kalau kosong, app kembali memakai jalur worker seperti biasa.

@@ -1355,8 +1355,8 @@ async function genderUser(uid) {
 }
 
 /* ================= dompet: coin, diamond, reset ================= */
-const WALLET_VPS = "https://43-156-99-4.sslip.io/admin";
-const WALLET_CAD = "https://rezo-wallet.bangexx01.workers.dev/admin";
+const WALLET_VPS = "https://viza.43-156-99-4.sslip.io/admin";
+const WALLET_CAD = "https://viza.43-156-99-4.sslip.io/admin";
 const WALLET_KEY = "sb_publishable_4PxD2LedOsBgIJyHLkM47A_bImSQI2W";
 const OPS_TANPA_UID = ["reset_all", "reset_gem_all", "reset_all_assets", "delete_users", "manual_pending", "manual_all", "pay_get", "pay_set"];
 

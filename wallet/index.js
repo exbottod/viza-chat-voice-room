@@ -376,6 +376,31 @@ function pipeDi(db, stmts) {
 }
 
 
+// ---------- Pembuatan tabel yang belum ada ----------
+// Dompet Rezo sudah punya tabel-tabel ini dari dulu, sedangkan dompet Viza
+// dipasang baru di SQLite kosong. Tanpa blok ini setiap aksi panel berakhir
+// "server error" karena tabelnya tidak ada. Dibuat sekali per proses.
+let tabelSiap = false;
+async function siapTabel(env) {
+  if (tabelSiap) return;
+  await pipe(env, [
+    { sql: "create table if not exists panel_staf (uid text not null, role text not null, manager text, active integer not null default 1, created_at integer not null default 0, coins integer not null default 0, primary key (uid, role))" },
+    { sql: "create table if not exists panel_stock (owner_uid text not null, item_id text not null, kind text, name text, days integer not null default 0, created_at integer not null default 0, primary key (owner_uid, item_id))" },
+    { sql: "create table if not exists panel_ban (uid text primary key, oleh text, manager text, reason text, at integer)" },
+    { sql: "create table if not exists panel_log (id text primary key, oleh text, aksi text, target text, jumlah integer, at integer)" },
+    { sql: "create table if not exists pay_info (id integer primary key, dana text, nama text, gopay text, qris text, updated_at integer)" },
+    { sql: "create table if not exists topup_manual (id text primary key, uid text, coins integer, amount integer, payer text, method text, status text, created_at integer)" },
+    { sql: "create table if not exists money_tx (uid text, kind text, item_id text, amount integer, room_id text, created_at integer)" },
+    { sql: "create table if not exists exchange_req (req_id text primary key, uid text, at integer)" },
+    { sql: "create table if not exists gift_req (req_id text primary key, uid text, at integer)" },
+    { sql: "create table if not exists vip_req (req_id text primary key, uid text, at integer)" },
+    { sql: "create table if not exists topup_req (req_id text primary key, uid text, at integer)" },
+    { sql: "create table if not exists hive_order (order_id text primary key, uid text, kind text, amount integer, round_id text, game text, at integer)" },
+    { sql: "create table if not exists wave_players (uid text primary key, name text, avatar text, updated_at integer)" },
+  ]);
+  tabelSiap = true;
+}
+
 async function pipe(env, stmts) {
   let db;
   try {
@@ -3153,6 +3178,7 @@ export default {
   async fetch(req, env) {
     const url = new URL(req.url);
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
+    await siapTabel(env).catch(() => {});
     if (url.pathname === "/panel") {
       const b = await req.json().catch(() => null);
       if (!b) return json({ ok: 0, e: "Body tidak valid" }, 400);

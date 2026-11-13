@@ -295,3 +295,40 @@ tr:hover td { background: #0e141d; }
   .tabelKartu td[data-aksi]::before { content: none; }
   .tabelKartu td .kodekecil { max-width: 60vw; }
 }
+
+/* ---------- pemilih bahasa (globe di bar atas) ---------- */
+.kotakBahasa { position: relative; display: inline-flex; }
+/* Globe berdiri di baris atas, tepat di kiri tombol halaman. */
+.topbar > .kotakBahasa { margin-left: auto; }
+.topbar > .kananTopbar { margin-left: 8px; }
+.tombolBahasa {
+  width: 34px; height: 34px; border-radius: 10px; cursor: pointer; font-size: 16px;
+  background: #1b2230; border: 1px solid #2a3444; color: #dbe4f0; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.tombolBahasa:hover { border-color: var(--ungu3, #b9aeff); }
+.menuBahasa {
+  position: absolute; top: 40px; right: 0; z-index: 60; min-width: 168px;
+  background: #121824; border: 1px solid #263143; border-radius: 12px;
+  box-shadow: 0 16px 34px rgba(0,0,0,.55); padding: 6px; display: grid; gap: 2px;
+}
+.menuBahasa[hidden] { display: none; }
+.pilihBahasa {
+  display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
+  background: none; border: 0; color: #c3ccdb; font-size: 12.5px; padding: 9px 10px;
+  border-radius: 9px; cursor: pointer; font-family: inherit;
+}
+.pilihBahasa:hover { background: #1b2230; color: #fff; }
+.pilihBahasa.terpilih { background: #221b3a; color: #fff; }
+.kodeBahasa {
+  font-size: 9.5px; font-weight: 700; letter-spacing: .4px; color: #8c97ab;
+  background: #1b2230; border-radius: 6px; padding: 2px 5px; min-width: 24px; text-align: center;
+}
+[dir="rtl"] .kananTopbar { margin-left: 0; margin-right: auto; }
+[dir="rtl"] .menuBahasa { right: auto; left: 0; }
+[dir="rtl"] .pilihBahasa { text-align: right; }
+[dir="rtl"] .sidebar { direction: rtl; }
+[dir="rtl"] th, [dir="rtl"] td { text-align: right; }
+@media (max-width: 860px) {
+  .menuBahasa { min-width: 152px; top: 38px; }
+}

@@ -17,10 +17,13 @@ cp "$DIR/index.js" "$DIR/index.js.bak-$(date +%Y%m%d-%H%M%S)"
 ls -1t "$DIR"/index.js.bak-* 2>/dev/null | head -3
 
 echo "== 2/4 Unduh kode baru =="
-curl -fsSL "$SUMBER" -o "$DIR/index.js.baru" || { echo "unduh gagal"; exit 1; }
-node --check "$DIR/index.js.baru" || { echo "kode baru tidak sah, dibatalkan"; rm -f "$DIR/index.js.baru"; exit 1; }
-grep -q "async function siapTabel" "$DIR/index.js.baru" || { echo "kode baru tidak memuat siapTabel, dibatalkan"; rm -f "$DIR/index.js.baru"; exit 1; }
-mv "$DIR/index.js.baru" "$DIR/index.js"
+# Nama berkas sementara harus berakhiran .mjs supaya "node --check" mau memeriksanya
+# (Node menolak ekstensi .baru dengan ERR_UNKNOWN_FILE_EXTENSION).
+BARU="$DIR/.index-baru-$$.mjs"
+curl -fsSL "$SUMBER" -o "$BARU" || { echo "unduh gagal"; rm -f "$BARU"; exit 1; }
+node --check "$BARU" || { echo "kode baru tidak sah, dibatalkan"; rm -f "$BARU"; exit 1; }
+grep -q "async function siapTabel" "$BARU" || { echo "kode baru tidak memuat siapTabel, dibatalkan"; rm -f "$BARU"; exit 1; }
+mv "$BARU" "$DIR/index.js"
 echo "kode baru terpasang"
 
 echo "== 3/4 Jalankan ulang layanan =="

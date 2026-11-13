@@ -8,6 +8,7 @@
 set -uo pipefail
 DIR=/opt/viza-api
 SUMBER=https://raw.githubusercontent.com/exbottod/viza-chat-voice-room/main/wallet/index.js
+SUMBER_SRV=https://raw.githubusercontent.com/exbottod/viza-chat-voice-room/main/wallet/server.js
 
 [ "$(id -u)" = 0 ] || { echo "Jalankan sebagai root (sudo)"; exit 1; }
 [ -f "$DIR/index.js" ] || { echo "$DIR/index.js tidak ada, dompet Viza belum terpasang"; exit 1; }
@@ -24,6 +25,18 @@ curl -fsSL "$SUMBER" -o "$BARU" || { echo "unduh gagal"; rm -f "$BARU"; exit 1; 
 node --check "$BARU" || { echo "kode baru tidak sah, dibatalkan"; rm -f "$BARU"; exit 1; }
 grep -q "async function siapTabel" "$BARU" || { echo "kode baru tidak memuat siapTabel, dibatalkan"; rm -f "$BARU"; exit 1; }
 mv "$BARU" "$DIR/index.js"
+if [ -f "$DIR/server.js" ]; then
+  cp "$DIR/server.js" "$DIR/server.js.bak-$(date +%Y%m%d-%H%M%S)"
+  if curl -fsSL "$SUMBER_SRV?cb=$(date +%s)" -o "$DIR/server.js.baru"; then
+    if "$NODE" --check "$DIR/server.js.baru" 2>/dev/null; then
+      mv "$DIR/server.js.baru" "$DIR/server.js"; echo "server.js ikut diperbarui"
+    else
+      rm -f "$DIR/server.js.baru"; echo "server.js baru tidak valid, dibiarkan"
+    fi
+  else
+    rm -f "$DIR/server.js.baru"; echo "server.js gagal diunduh, dibiarkan"
+  fi
+fi
 echo "kode baru terpasang"
 
 echo "== 3/4 Jalankan ulang layanan =="

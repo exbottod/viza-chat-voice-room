@@ -17,12 +17,29 @@ case "$(uname -m)" in
   aarch64|arm64) ARCH=arm64 ;;
   *) echo "Arsitektur $(uname -m) tidak didukung"; exit 1 ;;
 esac
-TAG=$(curl -fsSL https://api.github.com/repos/livekit/livekit/releases/latest | grep -m1 '"tag_name"' | cut -d'"' -f4)
+API=https://api.github.com/repos/livekit/livekit/releases/latest
+JSON=/root/lk-release.json
+mkdir -p /root
+curl -fsSL --retry 3 --retry-delay 2 -o "$JSON" "$API"
+TAG=$(grep -m1 '"tag_name"' "$JSON" | cut -d'"' -f4)
 VER="${TAG#v}"
-curl -fsSL -o /tmp/lk.tar.gz "https://github.com/livekit/livekit/releases/download/${TAG}/livekit_${VER}_linux_${ARCH}.tar.gz"
-tar -xzf /tmp/lk.tar.gz -C /usr/local/bin livekit-server
+URL_ASSET=$(grep -o '"browser_download_url":[^,]*' "$JSON" | cut -d'"' -f4 | grep "linux_${ARCH}\.tar\.gz" | head -1)
+[ -n "${URL_ASSET:-}" ] || URL_ASSET="https://github.com/livekit/livekit/releases/download/${TAG}/livekit_${VER}_linux_${ARCH}.tar.gz"
+echo "   versi $TAG"
+echo "   aset  $URL_ASSET"
+df -h /root | tail -1
+if ! curl -fL --retry 3 --retry-delay 2 --progress-bar -o /root/lk.tar.gz "$URL_ASSET"; then
+  echo "   unduh langsung gagal, mencoba cara resmi LiveKit"
+  rm -f /root/lk.tar.gz
+  curl -fsSL https://get.livekit.io | bash || true
+fi
+if [ -s /root/lk.tar.gz ]; then
+  tar -xzf /root/lk.tar.gz -C /usr/local/bin livekit-server
+fi
+command -v livekit-server >/dev/null 2>&1 || { echo "livekit-server belum terpasang, hentikan."; exit 1; }
 chmod +x /usr/local/bin/livekit-server
-echo "   livekit-server ${TAG} terpasang"
+echo "   $(livekit-server --version 2>&1 | head -1) terpasang"
+
 
 say "2/7 Kunci API"
 mkdir -p /etc/livekit

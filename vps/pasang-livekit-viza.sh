@@ -7,7 +7,7 @@ DOMAIN="${DOMAIN:-viza.43-156-99-4.sslip.io}"
 LK_DOMAIN="${LK_DOMAIN:-livekit.43-156-99-4.sslip.io}"
 UDP_AWAL=50000
 UDP_AKHIR=50100
-TCP_PORT=7881
+TCP_PORT=7888
 LK_URL_DEFAULT="https://github.com/livekit/livekit/releases/download/v1.13.11/livekit_1.13.11_linux_amd64.tar.gz"
 
 say() { echo "== $*"; }
@@ -56,10 +56,11 @@ else
 fi
 
 say "3/7 Konfigurasi LiveKit"
-for kandidat in 7881 7882 7883 7884; do
+for kandidat in 7888 7889 7890 7891; do
   if ! ss -lptn 2>/dev/null | grep -q ":${kandidat} "; then TCP_PORT="$kandidat"; break; fi
 done
-echo "   port TCP media: $TCP_PORT"
+echo "   port TCP media dipilih: $TCP_PORT"
+ss -lptn 2>/dev/null | grep ":${TCP_PORT} " || echo "   port $TCP_PORT bebas"
 ss -lptn 2>/dev/null | grep -q ":${TCP_PORT} " && { echo "   port $TCP_PORT tetap dipakai proses lain"; exit 1; }
 cat > /etc/livekit/livekit.yaml <<EOF
 port: 7880
@@ -100,8 +101,9 @@ WantedBy=multi-user.target
 EOF
 systemctl daemon-reload
 systemctl enable livekit >/dev/null 2>&1 || true
+systemctl reset-failed livekit >/dev/null 2>&1 || true
 systemctl restart livekit
-sleep 3
+sleep 4
 if systemctl is-active --quiet livekit; then
   echo "   livekit aktif"
 else

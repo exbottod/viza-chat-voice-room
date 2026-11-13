@@ -140,7 +140,16 @@ def main():
         print("Tidak ada perubahan halaman unduh")
         return 0
     subprocess.run(["git", "commit", "-m", pesan], check=True)
-    subprocess.run(["git", "push"], check=True)
+    # Tarik dulu kalau ada commit lain, lalu coba push beberapa kali.
+    for coba in range(4):
+        subprocess.run(["git", "pull", "--rebase", "--autostash", "origin",
+                        os.environ.get("GITHUB_REF_NAME", "main")], check=False)
+        if subprocess.run(["git", "push"]).returncode == 0:
+            break
+        import time as _t
+        _t.sleep(5 * (coba + 1))
+    else:
+        print("Push halaman unduh tetap gagal")
     print(f"Selesai: halaman unduh {v_baru}, patch {v_lama}->{v_baru}")
     return 0
 

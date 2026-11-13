@@ -5,9 +5,10 @@ set -eo pipefail
 
 DOMAIN="${DOMAIN:-viza.43-156-99-4.sslip.io}"
 LK_DOMAIN="${LK_DOMAIN:-livekit.43-156-99-4.sslip.io}"
-UDP_AWAL=50000
-UDP_AKHIR=50100
+UDP_AWAL=50200
+UDP_AKHIR=50300
 TCP_PORT=7888
+HTTP_PORT=7890
 LK_URL_DEFAULT="https://github.com/livekit/livekit/releases/download/v1.13.11/livekit_1.13.11_linux_amd64.tar.gz"
 
 say() { echo "== $*"; }
@@ -30,16 +31,18 @@ case "$(uname -m)" in
 esac
 URL_ASSET="${LK_URL:-$LK_URL_DEFAULT}"
 echo "   aset: $URL_ASSET"
-if ! curl -fL --retry 2 --progress-bar "$URL_ASSET" | tar -xz -C /usr/local/bin livekit-server; then
+mkdir -p /opt/livekit-viza
+if ! curl -fL --retry 2 --progress-bar "$URL_ASSET" | tar -xz -C /opt/livekit-viza livekit-server; then
   echo "   aliran gagal, mencoba cara resmi LiveKit"
   curl -fsSL https://get.livekit.io | bash || true
+  [ -f /usr/local/bin/livekit-server ] && cp -f /usr/local/bin/livekit-server /opt/livekit-viza/livekit-server || true
 fi
-if ! command -v livekit-server >/dev/null 2>&1; then
-  echo "livekit-server belum terpasang. Hentikan."
+if [ ! -s /opt/livekit-viza/livekit-server ]; then
+  echo "biner LiveKit belum ada. Hentikan."
   exit 1
 fi
-chmod +x /usr/local/bin/livekit-server
-echo "   terpasang: $(/usr/local/bin/livekit-server --version 2>&1 | head -1)"
+install -m 755 /opt/livekit-viza/livekit-server /usr/local/bin/livekit-viza-server
+echo "   terpasang: $(/usr/local/bin/livekit-viza-server --version 2>&1 | head -1) (nama: livekit-viza-server)"
 
 say "2/7 Kunci API"
 mkdir -p /etc/livekit
@@ -56,14 +59,18 @@ else
 fi
 
 say "3/7 Konfigurasi LiveKit"
-for kandidat in 7888 7889 7890 7891; do
+for kandidat in 7890 7891 7892 7893; do
+  if ! ss -lptn 2>/dev/null | grep -q ":${kandidat} "; then HTTP_PORT="$kandidat"; break; fi
+done
+echo "   port HTTP/WS: $HTTP_PORT"
+for kandidat in 7888 7889 7894 7895; do
   if ! ss -lptn 2>/dev/null | grep -q ":${kandidat} "; then TCP_PORT="$kandidat"; break; fi
 done
 echo "   port TCP media dipilih: $TCP_PORT"
 ss -lptn 2>/dev/null | grep ":${TCP_PORT} " || echo "   port $TCP_PORT bebas"
 ss -lptn 2>/dev/null | grep -q ":${TCP_PORT} " && { echo "   port $TCP_PORT tetap dipakai proses lain"; exit 1; }
 cat > /etc/livekit/livekit.yaml <<EOF
-port: 7880
+port: $HTTP_PORT
 bind_addresses:
   - 127.0.0.1
 rtc:
@@ -91,7 +98,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/livekit-server --config /etc/livekit/livekit.yaml
+ExecStart=/usr/local/bin/livekit-viza-server --config /etc/livekit/livekit.yaml
 Restart=always
 RestartSec=3
 LimitNOFILE=65536
@@ -101,10 +108,8 @@ WantedBy=multi-user.target
 EOF
 systemctl daemon-reload
 systemctl enable livekit >/dev/null 2>&1 || true
-# Buang livekit-server lama yang jalan di luar systemd (sisa percobaan sebelumnya),
-# karena proses itulah yang menahan port 7880/7881.
-pkill -f livekit-server >/dev/null 2>&1 || true
-sleep 2
+# LiveKit Rezo memakai port 7880/7881 dan biner /usr/local/bin/livekit-server.
+# Milik Viza sengaja dipisah: biner livekit-viza-server, port HTTP $HTTP_PORT.
 systemctl reset-failed livekit >/dev/null 2>&1 || true
 systemctl restart livekit
 sleep 4
@@ -137,7 +142,7 @@ if [ -f "$CF" ] && grep -q "$LK_DOMAIN" "$CF"; then
   echo "   blok $LK_DOMAIN sudah ada di $CF"
 elif [ -f "$CF" ]; then
   cp "$CF" "${CF}.bak.$(date +%s)"
-  printf '\n%s {\n\treverse_proxy 127.0.0.1:7880\n}\n' "$LK_DOMAIN" >> "$CF"
+  printf '\n%s {\n\treverse_proxy 127.0.0.1:%s\n}\n' "$LK_DOMAIN" "$HTTP_PORT" >> "$CF"
   if caddy validate --config "$CF" --adapter caddyfile >/dev/null 2>&1; then
     systemctl reload caddy 2>/dev/null || true
     echo "   Caddy diperbarui ($CF)"
@@ -148,7 +153,7 @@ elif [ -f "$CF" ]; then
   fi
 else
   echo "   Caddyfile tidak ditemukan. Tambahkan manual:"
-  echo "   $LK_DOMAIN { reverse_proxy 127.0.0.1:7880 }"
+  echo "   $LK_DOMAIN { reverse_proxy 127.0.0.1:$HTTP_PORT }"
 fi
 
 say "7/7 Sambungkan dompet Viza"

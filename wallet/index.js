@@ -310,10 +310,54 @@ function rapikanStokBesar(db) {
   } catch (e) { /* tabel belum ada di instalasi baru: aman diabaikan */ }
 }
 
+/**
+ * Tabel inti dompet. Dompet Rezo sudah punya tabel ini sejak dulu, tapi dompet
+ * Viza dipasang di SQLite kosong, sehingga beli di Store, topup, dan game gagal
+ * dengan "no such table: wallets". Dibuat di sini supaya SEMUA rute aman, bukan
+ * hanya rute panel. Aman dijalankan berulang di database lama.
+ */
+function siapkanTabelInti(db) {
+  db.exec(`create table if not exists wallets (
+    uid text primary key,
+    coins integer not null default 0,
+    diamonds integer not null default 0,
+    exp integer not null default 0,
+    vip integer not null default 0,
+    vip_until integer not null default 0,
+    lv_claimed integer not null default 0,
+    inv text not null default '{}',
+    equip text not null default '{}',
+    updated_at integer not null default 0
+  )`);
+  db.exec(`create table if not exists money_tx (uid text, kind text, item_id text, amount integer, room_id text, created_at integer)`);
+  db.exec(`create table if not exists props (id text primary key, uid text, vip integer, days integer, src text, ts integer, used integer)`);
+  db.exec(`create table if not exists gift_req (req_id text primary key, uid text, at integer)`);
+  db.exec(`create table if not exists vip_req (req_id text primary key, uid text, at integer)`);
+  db.exec(`create table if not exists topup_req (req_id text primary key, uid text, at integer)`);
+  db.exec(`create table if not exists exchange_req (req_id text primary key, uid text, at integer)`);
+  // Kalau tabel sudah ada tapi kekurangan kolom, tambahkan satu per satu.
+  const ada = new Set(db.prepare("pragma table_info(wallets)").all().map((k) => k.name));
+  const wajib = {
+    coins: "integer not null default 0",
+    diamonds: "integer not null default 0",
+    exp: "integer not null default 0",
+    vip: "integer not null default 0",
+    vip_until: "integer not null default 0",
+    lv_claimed: "integer not null default 0",
+    inv: "text not null default '{}'",
+    equip: "text not null default '{}'",
+    updated_at: "integer not null default 0",
+  };
+  for (const [nama, def] of Object.entries(wajib)) {
+    if (!ada.has(nama)) db.exec(`alter table wallets add column ${nama} ${def}`);
+  }
+}
+
 async function dbLokal(env) {
   if (!dbSiap) {
     dbSiap = (async () => {
       const db = await bukaDbLokal();
+      siapkanTabelInti(db);
       rapikanStokBesar(db);
       return db;
     })().catch((e) => { dbSiap = null; dbGalat = String(e?.message ?? e); throw e; });

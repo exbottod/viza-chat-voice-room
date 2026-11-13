@@ -9,9 +9,16 @@
 import http from "node:http";
 import worker from "./index.js";
 
+// Semua variabel lingkungan diteruskan ke kode dompet, supaya kunci seperti
+// LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL, WA_OTP_URL ikut terbaca.
+// Tanpa ini, kode dompet hanya melihat dua variabel dan fitur baru balas 503.
 const env = {
+  ...process.env,
   RESEND_KEY: process.env.RESEND_KEY || "",
   RESEND_DARI: process.env.RESEND_DARI || "",
+  LIVEKIT_URL: process.env.LIVEKIT_URL || "",
+  LIVEKIT_API_KEY: process.env.LIVEKIT_API_KEY || "",
+  LIVEKIT_API_SECRET: process.env.LIVEKIT_API_SECRET || "",
 };
 const PORT = Number(process.env.PORT || 8091);
 const HOST = process.env.HOST || "127.0.0.1";

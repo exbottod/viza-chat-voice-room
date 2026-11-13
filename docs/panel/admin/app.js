@@ -98,20 +98,38 @@ async function unggahBerkas(berkas, folder, lapor) {
 
   // 1) Jalur utama: simpan di VPS dompet Viza. Tidak perlu Firebase Storage.
   try {
-    if (berkas.size > 8 * 1024 * 1024) throw new Error("Berkas lebih dari 8 MB");
-    if (lapor) lapor(15);
+    if (berkas.size > 8 * 1024 * 1024) throw new Error("Berkas lebih dari 8 MB, kecilkan dulu");
+    if (lapor) lapor(0);
     const t = await auth.currentUser?.getIdToken();
     if (!t) throw new Error("Sesi login tidak ada, muat ulang panel");
-    const b64 = await bacaB64(berkas);
-    if (lapor) lapor(65);
-    const r = await fetch(DOMPET_BASE + "/aset-upload", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ t, b64, name: folder + "-" + namaAman.replace(/\.[^.]+$/, ""), ext: ekstensi })
+    const dasar = folder + "-" + namaAman.replace(/\.[^.]+$/, "");
+    // Kirim biner mentah: tidak membengkak seperti base64, dan persentasenya asli.
+    const alamat = DOMPET_BASE + "/aset-upload?raw=1"
+      + "&t=" + encodeURIComponent(t)
+      + "&name=" + encodeURIComponent(dasar)
+      + "&ext=" + encodeURIComponent(ekstensi);
+    const j = await new Promise((selesai, gagal) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", alamat, true);
+      xhr.setRequestHeader("Content-Type", berkas.type || TIPE_BERKAS[ekstensi] || "application/octet-stream");
+      xhr.timeout = 180000;
+      xhr.upload.onprogress = (e) => {
+        if (!lapor) return;
+        if (e.lengthComputable) lapor(Math.min(99, Math.round((e.loaded / e.total) * 100)));
+        else lapor(50);
+      };
+      xhr.onload = () => {
+        let hasil = null;
+        try { hasil = JSON.parse(xhr.responseText || "null"); } catch (e) { /* bukan JSON */ }
+        if (hasil && hasil.ok && hasil.url) return selesai(hasil);
+        gagal(new Error((hasil && hasil.e) || ("HTTP " + xhr.status)));
+      };
+      xhr.onerror = () => gagal(new Error("Jaringan terputus saat mengunggah"));
+      xhr.ontimeout = () => gagal(new Error("Unggahan lebih dari 3 menit, coba lagi atau kecilkan berkas"));
+      xhr.send(berkas);
     });
-    const j = await r.json().catch(() => null);
-    if (j && j.ok && j.url) { if (lapor) lapor(100); return j.url; }
-    throw new Error((j && j.e) || ("HTTP " + r.status));
+    if (lapor) lapor(100);
+    return j.url;
   } catch (eVps) {
     if (lapor) lapor(0);
     window.__galatVps = String(eVps?.message || eVps);

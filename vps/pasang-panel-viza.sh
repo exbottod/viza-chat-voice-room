@@ -19,16 +19,21 @@ mkdir -p "$TUJUAN"
 python3 - "$REPO" "$CABANG" "$TUJUAN" <<'PY'
 import json,sys,urllib.request,os
 repo,branch,tujuan=sys.argv[1],sys.argv[2],sys.argv[3]
-api=f"https://api.github.com/repos/{repo}/contents/docs/panel/admin?ref={branch}"
-req=urllib.request.Request(api,headers={"User-Agent":"viza-panel"})
-daftar=json.load(urllib.request.urlopen(req,timeout=30))
-n=0
-for f in daftar:
-    if f["type"]!="file": continue
-    data=urllib.request.urlopen(f["download_url"],timeout=30).read()
-    open(os.path.join(tujuan,f["name"]),"wb").write(data)
-    n+=1
-print(f"{n} berkas panel tersimpan di {tujuan}")
+def unduh(jalur, ke, n=[0]):
+    api=f"https://api.github.com/repos/{repo}/contents/{jalur}?ref={branch}"
+    req=urllib.request.Request(api,headers={"User-Agent":"viza-panel"})
+    daftar=json.load(urllib.request.urlopen(req,timeout=30))
+    if isinstance(daftar,dict): daftar=[daftar]
+    for f in daftar:
+        if f["type"]=="dir":
+            sub=os.path.join(ke,f["name"]); os.makedirs(sub,exist_ok=True)
+            unduh(f["path"], sub)
+        elif f["type"]=="file":
+            data=urllib.request.urlopen(f["download_url"],timeout=30).read()
+            open(os.path.join(ke,f["name"]),"wb").write(data)
+            n[0]+=1
+    return n[0]
+print(f"{unduh('docs/panel/admin', tujuan)} berkas panel tersimpan di {tujuan}")
 PY
 [ -f "$TUJUAN/index.html" ] || { echo "index.html gagal diunduh"; exit 1; }
 

@@ -59,6 +59,30 @@ function toast(pesan, gagal = false) {
 }
 const kumpulan = (nama) => collection(db, nama);
 
+/** Aset VIP & item toko: APK membaca RTDB vipCfg lebih dulu (Firestore hanya cadangan),
+ *  jadi semua simpan/hapus harus menulis ke keduanya. Kunci RTDB tidak boleh memuat . # $ [ ] / */
+const kunciVip = (id) => String(id).replace(/[.#$\[\]/]/g, "_");
+async function simpanVip(id, data) {
+  let galat = null;
+  try { await setDoc(doc(db, "vipConfig", id), data, { merge: true }); } catch (e) { galat = e; }
+  try { await dUpdate(dRef(rtdb, "vipCfg/" + kunciVip(id)), data); galat = null; } catch (e) { if (galat) throw e; }
+}
+async function hapusVip(id) {
+  let ok = false, galat = null;
+  try { await deleteDoc(doc(db, "vipConfig", id)); ok = true; } catch (e) { galat = e; }
+  try { await dRemove(dRef(rtdb, "vipCfg/" + kunciVip(id))); ok = true; } catch (e) { if (!ok) galat = e; }
+  if (!ok) throw galat || new Error("gagal");
+}
+async function ambilSemuaVip(batas = 400) {
+  const peta = new Map();
+  try { (await ambilSemua("vipConfig", batas)).forEach((d) => peta.set(d.id, d)); } catch (e) { /* Firestore cadangan */ }
+  try {
+    const sn = await dGet(dRef(rtdb, "vipCfg"));
+    if (sn.exists()) sn.forEach((c) => { peta.set(c.key, { ...(peta.get(c.key) || {}), ...c.val(), id: c.val().id || c.key, _kunci: c.key }); });
+  } catch (e) { /* RTDB gagal: tetap pakai Firestore */ }
+  return [...peta.values()];
+}
+
 async function ambilSemua(nama, batas = 500) {
   const snap = await getDocs(query(kumpulan(nama), limit(batas)));
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -1665,14 +1689,14 @@ async function gambarKirim() {
       const slot = $("lncSlot").value;
       const hari = Number($("lncHari").value) || 30;
       const idItem = "lnc_" + Date.now().toString(36);
-      await setDoc(doc(db, "vipConfig", "item_" + idItem), {
+      await simpanVip("item_" + idItem, {
         id: idItem, slot, name: nama,
         price: Number($("lncHarga").value) || 0,
         days: hari, order: 0, kind: cabangBerkas(url), url,
         hasData: false, updatedAt: Date.now(), chunks: 0,
         store: $("lncToko").classList.contains("on"),
         dibuatOleh: (auth.currentUser && auth.currentUser.email) || "", dibuat: Date.now()
-      }, { merge: true });
+      });
       await dSet(dRef(rtdb, `pub/${uid}/svipInv/sx_${idItem}`), Date.now() + hari * 86400000);
       hasil.textContent = "Lencana " + nama + " terkirim, berlaku " + hari + " hari.";
       catatLog("Kirim lencana", nama + " ke " + $("lncUser").value.trim());
@@ -1818,7 +1842,7 @@ async function gambarAsetVps() {
 }
 
 async function gambarAset() {
-  const semua = await ambilSemua("vipConfig", 400).catch(() => []);
+  const semua = await ambilSemuaVip(400).catch(() => []);
   const asetVip = semua.filter((d) => d.meta === true && Number(d.n) >= 1 && Number(d.n) <= 9);
   const itemToko = semua.filter((d) => d.id && d.slot && !d.meta);
 
@@ -1878,7 +1902,7 @@ async function gambarAset() {
   $("isiHal").querySelectorAll("[data-iedit]").forEach((b) => (b.onclick = () => formItemToko(semua.find((x) => x.id === b.dataset.iedit))));
   const hapusAset = async (id) => {
     if (!confirm("Hapus aset ini? Aplikasi akan kehilangan gambar untuk slot tersebut.")) return;
-    await deleteDoc(doc(db, "vipConfig", id))
+    await hapusVip(id)
       .then(() => { catatLog("Hapus aset vipConfig", id); toast("Aset dihapus"); gambarAset(); })
       .catch((e) => toast("Gagal: " + (e.code || e.message), true));
   };
@@ -1904,10 +1928,10 @@ function formAsetVip(aset) {
       const slot = $("vSlot").value;
       const url = await urlDariSumber("v", `vip${n}`);
       if (!url) return toast("Pilih berkas atau isi tautan", true);
-      await setDoc(doc(db, "vipConfig", `vip_${n}_${slot}`), {
-        n, slot, kind: jenisDariUrl(url), url, meta: true, hasData: false,
+      await simpanVip(`vip_${n}_${slot}`, {
+        id: `vip_${n}_${slot}`, n, slot, kind: jenisDariUrl(url), url, meta: true, hasData: false,
         updatedAt: Date.now(), chunks: 0
-      }, { merge: true });
+      });
       catatLog("Simpan aset VIP", `VIP ${n} · ${namaSlot(slot)}`);
       toast("Aset VIP disimpan");
       gambarAset();
@@ -1942,7 +1966,7 @@ function formItemToko(item) {
       const url = await urlDariSumber("i", "item");
       if (!url) return toast("Pilih berkas atau isi tautan", true);
       const idItem = item?.id || (nama.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 20) + "_" + Date.now().toString().slice(-4));
-      await setDoc(doc(db, "vipConfig", `item_${idItem}`), {
+      await simpanVip(`item_${idItem}`, {
         id: idItem, slot: $("iSlot").value, name: nama,
         price: Number($("iHarga").value) || 0,
         days: Number($("iHari").value) || 7,
@@ -1950,7 +1974,7 @@ function formItemToko(item) {
         kind: jenisDariUrl(url), url, hasData: false, updatedAt: Date.now(), chunks: 0,
         targetUid: $("iTarget").value.trim(), customId: $("iCustom").value.trim(),
         store: $("iToko").classList.contains("on")
-      }, { merge: true });
+      });
       catatLog(item ? "Edit item toko" : "Tambah item toko", nama);
       toast("Item disimpan");
       gambarAset();

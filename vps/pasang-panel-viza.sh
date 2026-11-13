@@ -52,21 +52,24 @@ isiPanel = [
  "\t\t\tfile_server",
  "\t\t}",
 ]
+tambah = []
+if not any("application/manifest+json" in b for b in baris):
+    tambah += ["\t\t\t@manif path *.webmanifest",
+               "\t\t\theader @manif Content-Type application/manifest+json"]
+if not any("no-cache, must-revalidate" in b for b in baris):
+    # Panel sering diperbarui: jangan sampai HP menyimpan index.html lama,
+    # karena itu membuat berkas app.js versi baru tidak pernah terpakai.
+    tambah += ["\t\t\theader Cache-Control \"no-cache, must-revalidate\""]
 if any("/panel/*" in b for b in baris):
-    # Sudah pernah dipasang: cukup pastikan manifest dikirim dengan tipe yang benar
-    # supaya pintasan/PWA di HP memakai logo Viza.
-    if any("application/manifest+json" in b for b in baris):
-        print("jalur /panel/ sudah ada dan manifest sudah benar")
+    if not tambah:
+        print("jalur /panel/ sudah lengkap (manifest + anti-cache)")
         sys.exit(0)
-    for i,b in enumerate(baris):
+    for k, b in enumerate(baris):
         if "handle_path /panel/*" in b:
-            baris[i+1:i+1] = [
-              "\t\t\t@manif path *.webmanifest",
-              "\t\t\theader @manif Content-Type application/manifest+json",
-            ]
+            baris[k+1:k+1] = tambah
             break
-    open(path,"w").write("\n".join(baris))
-    print("manifest panel: tipe MIME ditambahkan")
+    open(path, "w").write("\n".join(baris))
+    print("panel: aturan tambahan dipasang ->", ", ".join(t.strip() for t in tambah))
     sys.exit(0)
 awal=None
 for i,b in enumerate(baris):

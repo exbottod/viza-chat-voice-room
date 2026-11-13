@@ -856,7 +856,19 @@ const terjemah = (teks) => {
   }
   // Pola juga dipakai untuk Arab/China supaya tidak ada teks Indonesia tersisa.
   for (const [cocok, ganti] of POLA) {
-    if (cocok.test(t)) return t.replace(cocok, ganti);
+    const m = t.match(cocok);
+    if (!m) continue;
+    let hasil = ganti;
+    m.slice(1).forEach((bagian, i) => {
+      const isi = bagian && terjemahKata(bagian);
+      hasil = hasil.split("$" + (i + 1)).join(isi || bagian || "");
+    });
+    return hasil;
+  }
+  // Lapis terakhir: teks campuran yang tidak ada di kamus mana pun.
+  if (!/[@:\/]{2}|@|https?:/.test(t)) {
+    const kata = terjemahKata(t);
+    if (kata) return kata;
   }
   return null;
 };
@@ -1104,14 +1116,190 @@ const POLA = [
   [/^Background (.+)$/, "Background $1"],
   [/^Cabut panel (.+)\?$/, "Revoke panel for $1?"],
   [/^· stok (.+)$/, "· stock $1"],
-  [/^· akun login: (.+)$/, "· login account: $1"],
-  [/^(.+)\?$/, "$1?"]
+  [/^· akun login: (.+)$/, "· login account: $1"]
 ];
 
 /* Cari padanan: kamus bahasa aktif, lalu kamus Inggris sebagai cadangan,
    lalu pola. Huruf besar-kecil dan spasi berlebih diabaikan. */
 const normal = (t) => String(t).replace(/\s+/g, " ").trim().toLowerCase();
 const PETA_NORMAL = {};
+Object.keys(KAMUS).forEach((b) => {
+  PETA_NORMAL[b] = {};
+  Object.keys(KAMUS[b]).forEach((k) => { PETA_NORMAL[b][normal(k)] = KAMUS[b][k]; });
+});
+
+
+/* ====== Tambahan ketiga: kalimat sisa + penerjemah per kata ====== */
+Object.assign(KAMUS.en, {
+  "Admin terdaftar. Dia bisa langsung masuk dengan email dan password itu.": "Admin registered. They can sign in right away with that email and password.",
+  "Langsung hilang dari aplikasi.": "Removed from the app immediately.",
+  "Belum ada pengaturan bet": "No bet settings yet",
+  "Gagal memuat daftar seller": "Failed to load the seller list",
+  "Gagal memuat roomsPub": "Failed to load roomsPub",
+  "Game terdaftar:": "Registered games:",
+  "tanpa judul": "untitled",
+  "tanpa nama": "unnamed",
+  "Diaktifkan": "Enabled",
+  "dipasang": "installed",
+  "gagal": "failed",
+  "tersimpan": "saved",
+  "koin": "coins",
+  "sekarang": "now",
+  "terkirim, berlaku": "sent, valid",
+  "hari.": "days.",
+  "· stok": "· stock",
+  "· akun login:": "· login account:",
+  "✅ (muncul di tab Saya)": "✅ (appears on the My tab)",
+  "foto yang dibaca profil publik,": "the photo the public profile reads,",
+  "stok coin ditambahkan": "coin stock added",
+  "main yang dibaca aplikasi": "main one read by the app",
+  "Masuk sebagai": "Signed in as",
+  "Tambahkan": "Add",
+  "Hapus semua": "Delete all",
+  "Salin tautan": "Copy link",
+  "Unggah": "Upload",
+  "Pilih": "Choose",
+  "Kirim ke": "Send to",
+  "Ubah peran": "Change role",
+  "Belum ada data.": "No data yet.",
+  "Tidak ada": "None",
+  "Selesai": "Done",
+  "Berhasil": "Success",
+  "Periksa lagi": "Check again",
+  "Masa aktif": "Duration",
+  "Berlaku": "Valid",
+  "Selesai pada": "Ends on",
+  "Tidak aktif": "Inactive",
+  "Ya": "Yes",
+  "Tidak": "No",
+  "Buka": "Open",
+  "Kembali": "Back",
+  "Lanjut": "Continue",
+  "Pilih semua": "Select all",
+  "Hapus pilihan": "Delete selection",
+  "Kirim ulang": "Resend",
+  "Atur ulang": "Reset",
+  "Nama lengkap": "Full name",
+  "Nomor WhatsApp": "WhatsApp number",
+  "Jumlah": "Amount",
+  "Harga jual": "Selling price",
+  "Peran panel": "Panel role",
+  "Jabatan di APK": "Position in the APK",
+  "Tidak ada jabatan": "No position",
+  "Coin awal": "Starting coins",
+  "Stok item": "Item stock",
+  "Stok coin": "Coin stock",
+  "Reset stok": "Reset stock",
+  "Status akun": "Account status",
+  "Terakhir masuk": "Last sign-in",
+  "Dibuat": "Created",
+  "Diperbarui": "Updated",
+  "Pemilik": "Owner",
+  "Pengelola": "Manager",
+  "Penjual": "Seller",
+  "Staf": "Staff",
+  "Latar": "Background",
+  "Katalog": "Catalogue",
+  "Riwayat": "History",
+  "Akun": "Account",
+  "Keluar dari panel": "Sign out of the panel",
+  "Masuk ke panel": "Sign in to the panel",
+  "Alamat email": "Email address",
+  "Kata sandi": "Password",
+  "Lupa kata sandi?": "Forgot password?",
+  "Belum punya akun?": "No account yet?",
+  "Nyala": "On",
+  "Mati": "Off",
+  "Disembunyikan": "Hidden",
+  "Di sembunyikan": "Hidden",
+  "Semua user": "All users",
+  "Tanpa batas": "Unlimited",
+  "Tidak terbatas": "Unlimited",
+  "Hadiah hari ke": "Reward for day",
+  "Hari ke": "Day",
+  "Coin per hari": "Coins per day",
+  "Item per hari": "Item per day",
+  "VIP per hari": "VIP per day",
+  "Masa VIP": "VIP duration",
+  "Masa item": "Item duration",
+  "Target hari": "Target days",
+  "Hitungan hari": "Day count"
+});
+
+/* Kamus kata: dipakai saat sebuah teks mengandung nama atau angka sehingga
+   tidak pernah cocok persis. Kata yang tidak dikenal (nama orang, ID) dibiarkan. */
+const KATA = {"dan": "and","atau": "or","yang": "that","ini": "this","itu": "that","sudah": "already","belum": "not yet","akan": "will","ke": "to","dari": "from","di": "in","untuk": "for","dengan": "with","tidak": "not","semua": "all","lagi": "again","baru": "new","bisa": "can","ada": "available","juga": "also","saja": "only","hari": "day","jam": "hour","menit": "minute","koin": "coins","coin": "coin","user": "user","pengguna": "user","panel": "panel","stok": "stock","game": "game","hapus": "delete","kirim": "send","simpan": "save","tambah": "add","edit": "edit","atur": "set","aktif": "active","nonaktif": "inactive","cabut": "revoke","blokir": "block","pasang": "install","lihat": "view","cari": "search","muat": "load","gagal": "failed","berhasil": "successful","tersimpan": "saved","disimpan": "saved","dihapus": "deleted","diubah": "changed","diaktifkan": "enabled","dinonaktifkan": "disabled","dicabut": "revoked","dipasang": "installed","dikirim": "sent","dibuat": "created","diperbarui": "updated","dibaca": "read","dirubah": "changed","nama": "name","alamat": "address","email": "email","sandi": "password","nomor": "number","jumlah": "amount","harga": "price","masa": "duration","berlaku": "valid","sampai": "until","mulai": "start","akhir": "end","status": "status","peran": "role","jabatan": "position","akun": "account","login": "login","masuk": "sign in","keluar": "sign out","daftar": "list","riwayat": "history","log": "log","data": "data","dokumen": "document","berkas": "file","gambar": "image","video": "video","tautan": "link","ukuran": "size","jenis": "type","urutan": "order","slot": "slot","target": "target","hadiah": "reward","minggu": "week","bulan": "month","tahun": "year","kali": "times","sekali": "once","selesai": "finished","proses": "process","memproses": "processing","memuat": "loading","mengirim": "sending","menjalankan": "running","memeriksa": "checking","membuka": "opening","menunggu": "waiting","pilih": "choose","isi": "enter","kosong": "empty","penuh": "full","benar": "correct","salah": "wrong","wajib": "required","opsional": "optional","lama": "old","kecil": "small","besar": "large","utama": "main","kedua": "second","pertama": "first","terakhir": "last","selanjutnya": "next","sebelumnya": "previous","atas": "top","bawah": "bottom","kiri": "left","kanan": "right","depan": "front","belakang": "background","tengah": "center","terang": "light","gelap": "dark","warna": "colour","tulisan": "text","teks": "text","pesan": "message","info": "info","catatan": "note","keterangan": "description","kunci": "key","nilai": "value","hasil": "result","total": "total","persen": "percent","progres": "progress","antre": "queue","antrian": "queue","room": "room","ruang": "room","gift": "gift","bingkai": "frame","lencana": "badge","medali": "medal","banner": "banner","efek": "effect","gelembung": "bubble","kartu": "card","aset": "asset","toko": "store","katalog": "catalogue","pengumuman": "announcement","latar": "background","tab": "tab","seller": "seller","staf": "staff","pemilik": "owner","pengelola": "manager","penjual": "seller","admin": "admin","developer": "developer","pelanggan": "customer","layanan": "service","bantuan": "help","pengaturan": "settings","sistem": "system","server": "server","jaringan": "network","koneksi": "connection","domain": "domain","izin": "permission","akses": "access","password": "password","kode": "code","api": "api","proyek": "project","basis": "base","koleksi": "collection","tabel": "table","tombol": "button","menu": "menu","halaman": "page","judul": "title","subjudul": "subtitle","baris": "row","kolom": "column","pilihan": "option","opsi": "option","tanggal": "date","waktu": "time","durasi": "duration","detik": "second","selamanya": "forever","buka": "open","tutup": "close","batal": "cancel","salin": "copy","tempel": "paste","unduh": "download","unggah": "upload","perbarui": "update","segarkan": "refresh","reset": "reset","bersihkan": "clear","kosongkan": "empty","tampilkan": "show","sembunyikan": "hide","aktifkan": "enable","nonaktifkan": "disable","izinkan": "allow","tolak": "decline","setujui": "approve","verifikasi": "verify","terima": "receive","beli": "buy","jual": "sell","bayar": "pay","topup": "top up","tarik": "pull","kurangi": "reduce","ubah": "change","ganti": "replace","pindah": "move","cetak": "print","coba": "try","periksa": "check","pastikan": "make sure","gunakan": "use","pakai": "use","butuh": "need","perlu": "need","harus": "must","dapat": "can","mau": "want","ingin": "want","suka": "like","boleh": "may","mudah": "easy","sulit": "hard","cepat": "fast","lambat": "slow","banyak": "many","sedikit": "few","kurang": "less","lebih": "more","sama": "same","berbeda": "different","penting": "important","aman": "safe","bahaya": "danger","bagus": "good","jelek": "bad","kualitas": "quality","contoh": "example","misal": "e.g.","lain": "other","lainnya": "others","tersebut": "the","secara": "by","tanpa": "without","antara": "between","setiap": "every","masing": "each","beberapa": "several","sebuah": "a","para": "the","anda": "you","kamu": "you","kami": "we","kita": "we","mereka": "they","dia": "they","saya": "I","apakah": "is","bagaimana": "how","kapan": "when","dimana": "where","mengapa": "why","berapa": "how many","siapa": "who","mana": "which","sedang": "currently","masih": "still","pernah": "ever","hanya": "only","pula": "too","bahkan": "even","sangat": "very","sekitar": "about","kira": "about","paling": "most","terlalu": "too","hampir": "almost"};
+
+
+/* Frasa pendek yang sering menempel pada nama/angka, dirapikan lebih dulu
+   supaya susunan katanya enak dibaca. */
+const GANTI_FRASA = [
+  [/\bke user ini\b/gi, "to this user"],
+  [/\buntuk user ini\b/gi, "for this user"],
+  [/\buntuk akun ini\b/gi, "for this account"],
+  [/\bdi aplikasi\b/gi, "in the app"],
+  [/\bke aplikasi\b/gi, "to the app"],
+  [/\bdari aplikasi\b/gi, "from the app"],
+  [/\bsudah disimpan\b/gi, "saved"],
+  [/\bsudah dikirim\b/gi, "sent"],
+  [/\bbelum ada\b/gi, "no"],
+  [/\bsemua user\b/gi, "all users"],
+  [/\bdi tab\b/gi, "on the tab"],
+  [/\bhari ini\b/gi, "today"],
+  [/\bjam lalu\b/gi, "hours ago"],
+  [/\bhari lalu\b/gi, "days ago"],
+  [/\bmenit lalu\b/gi, "minutes ago"],
+  [/\bpengumuman resmi\b/gi, "official announcements"],
+  [/\bseller baru\b/gi, "new seller"],
+  [/\bstaf baru\b/gi, "new staff"],
+  [/\bgame baru\b/gi, "new game"],
+  [/\buser baru\b/gi, "new user"],
+  [/\bakun baru\b/gi, "new account"],
+  [/\blencana baru\b/gi, "new badge"],
+  [/\broom baru\b/gi, "new room"],
+  [/\bgift baru\b/gi, "new gift"],
+  [/\bframe baru\b/gi, "new frame"],
+  [/\bitem baru\b/gi, "new item"],
+  [/\btab Party\b/gi, "Party tab"],
+  [/\btab Moment\b/gi, "Moment tab"],
+  [/\btab Family\b/gi, "Family tab"],
+  [/\bcek in harian\b/gi, "daily check-in"],
+  [/\bstok coin\b/gi, "coin stock"],
+  [/\bjumlah coin\b/gi, "coin amount"],
+  [/\bakun login\b/gi, "sign-in account"]
+];
+
+Object.assign(KATA, {"to": "to", "the": "the", "this": "this", "that": "that", "for": "for", "in": "in", "of": "of", "and": "and", "or": "or", "is": "is", "are": "are", "not": "not", "all": "all", "new": "new", "saved": "saved", "sent": "sent", "no": "no", "today": "today", "official": "official", "announcement": "announcement", "announcements": "announcements", "user": "user", "users": "users", "stock": "stock", "coin": "coin", "coins": "coins", "panel": "panel", "send": "send", "delete": "delete", "edit": "edit", "save": "save", "add": "add", "set": "set", "day": "day", "days": "days", "reward": "reward", "active": "active", "revoked": "revoked", "enabled": "enabled", "failed": "failed", "none": "none", "copy": "copy", "upload": "upload", "download": "download", "search": "search", "view": "view", "open": "open", "close": "close", "cancel": "cancel", "back": "back", "continue": "continue", "yes": "yes", "block": "block", "unblock": "unblock", "revoke": "revoke", "install": "install", "pin": "pin", "unpin": "unpin", "hide": "hide", "show": "show", "enable": "enable", "disable": "disable", "reset": "reset", "role": "role", "position": "position", "account": "account", "amount": "amount", "price": "price", "duration": "duration", "status": "status", "name": "name", "email": "email", "password": "password", "number": "number", "link": "link", "file": "file", "image": "image", "video": "video", "size": "size", "type": "type", "order": "order", "target": "target", "owner": "owner", "manager": "manager", "seller": "seller", "staff": "staff", "admin": "admin", "badge": "badge", "frame": "frame", "gift": "gift", "games": "games", "rooms": "rooms", "room": "room", "store": "store", "background": "background", "settings": "settings", "history": "history", "log": "log", "data": "data", "document": "document", "customer": "customer", "service": "service", "access": "access", "permission": "permission", "code": "code", "key": "key", "value": "value", "result": "result", "total": "total", "progress": "progress", "date": "date", "time": "time", "since": "since", "until": "until", "with": "with", "without": "without", "from": "from", "by": "by", "only": "only", "more": "more", "less": "less", "again": "again", "still": "still", "already": "already"}, {"manager": "manager", "seller": "seller", "owner": "owner", "staff": "staff", "admin2": "admin", "vip": "VIP", "id": "ID", "cs": "CS", "party": "Party", "moment": "Moment", "family": "Family", "svga": "SVGA", "webp": "WebP", "apk": "APK", "firebase": "Firebase", "rtdb": "RTDB", "vps": "VPS", "whatsapp": "WhatsApp", "google": "Google", "facebook": "Facebook", "telegram": "Telegram", "ios": "iOS", "android": "Android", "apk2": "APK", "play": "Play", "store2": "Store", "langsung": "directly", "terdaftar": "registered", "resmi": "official", "awal": "initial", "baru": "new", "aktif2": "active", "kembali": "back", "belum": "not yet", "lagi2": "more", "total2": "total", "terakhir2": "last", "pertama2": "first", "kedua2": "second", "semua3": "all", "sendiri": "only", "otomatis": "automatically", "manual": "manual", "khusus": "special", "umum": "general", "pribadi": "private", "tetap": "still", "saja2": "only", "juga3": "also", "punya": "has", "milik": "owned by", "sesuai": "according to", "berdasarkan": "based on", "melalui": "through", "selama": "during", "sejak": "since", "hingga": "until", "kecuali": "except", "termasuk": "including", "misalnya": "for example", "yaitu": "which is", "adalah": "is", "telah": "already", "sedang2": "currently", "akan2": "will", "bisa2": "can", "dapat2": "can", "mungkin": "maybe", "pasti": "sure", "cukup": "enough", "hanya2": "only", "sangat3": "very", "terlalu2": "too", "lagi3": "again", "dulu": "previously", "nanti": "later", "segera": "soon", "kini": "now", "tadi": "just now", "besok": "tomorrow", "kemarin": "yesterday", "terbaru": "latest", "lama2": "old", "lengkap": "complete", "ringkas": "brief", "detail": "detail", "panjang": "long", "pendek": "short", "tinggi": "high", "rendah": "low", "mahal": "expensive", "murah": "cheap", "gratis": "free", "bayar2": "pay", "terima2": "accept", "tolak2": "decline", "setuju": "agree", "yakin": "sure", "ragu": "unsure", "mohon": "please", "terima3": "thanks", "maaf": "sorry", "selamat": "congrats", "semoga": "hopefully", "silahkan": "please", "mari": "let's", "jangan": "do not", "harap": "please", "ulangi": "repeat", "lanjutkan": "continue", "hentikan": "stop", "mulai2": "start", "selesaikan": "finish", "pindai": "scan", "unggah2": "upload", "unduh2": "download", "pasang2": "install", "lepas": "detach", "sematkan": "pin", "semat": "pin", "lepas2": "unpin", "official2": "official", "tag": "tag", "tags": "tags"});
+
+function terjemahKata(t) {
+  const besarAwal = /^[A-Z\u00C0-\u00DE]/.test(t);
+  let teks = t;
+  for (const [cocok, ganti] of GANTI_FRASA) teks = teks.replace(cocok, ganti);
+  t = teks;
+  const bagian = t.split(/(\s+)/);
+  let total = 0, kena = 0;
+  const hasil = bagian.map((b) => {
+    if (/^\s+$/.test(b) || !b) return b;
+    const m = b.match(/^([^\p{L}]*)(\p{L}+)([^\p{L}]*)$/u);
+    if (!m) return b;
+    total++;
+    const g = KATA[m[2].toLowerCase()];
+    if (g) { kena++; return m[1] + g + m[3]; }
+    return b;
+  });
+  // Butuh minimal dua kata dan 60% dikenal, supaya nama user/ID tidak ikut diubah.
+  const banyakBagian = t.split(/\s+/).filter(Boolean).length;
+  // Satu kata dikenal masih boleh kalau teks aslinya memuat angka atau nama
+  // (mis. "100000 sudah disimpan" -> "100000 saved").
+  const cukupKata = total >= 2 || (total >= 1 && banyakBagian >= 2);
+  if (!cukupKata || kena / total < 0.6) return null;
+  let jadi = hasil.join("");
+  // Pertahankan huruf besar di awal kalimat.
+  if (besarAwal && /^[a-z]/.test(jadi)) jadi = jadi[0].toUpperCase() + jadi.slice(1);
+  return jadi;
+}
+
+/* Indeks kamus disusun ulang di sini supaya semua tambahan di atas ikut terbaca. */
 Object.keys(KAMUS).forEach((b) => {
   PETA_NORMAL[b] = {};
   Object.keys(KAMUS[b]).forEach((k) => { PETA_NORMAL[b][normal(k)] = KAMUS[b][k]; });

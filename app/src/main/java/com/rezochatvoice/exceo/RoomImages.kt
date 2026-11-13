@@ -20,13 +20,9 @@ import java.net.URL
  * Bucket dan izinnya dibuat lewat supabase/room-image.sql.
  */
 object RoomImages {
-    private const val BASE = "https://GANTI-PROJECT-ANDA.supabase.co"
     // Server REZO sendiri: gambar disimpan di sini karena Supabase menolak
     // unggahan (402: layanan project dibatasi).
-    private const val VPS = "https://GANTI-SERVER-ANDA"
-    // Kunci publishable, sama seperti yang dipakai SupaRepo (aman ada di app).
-    private const val KEY = "GANTI_SUPABASE_KEY"
-    private const val BUCKET = "chatimg"
+    private const val VPS = "https://viza.43-156-99-4.sslip.io"
     private const val MAX_DIM = 1080
     private const val MAX_BYTES = 2_000_000
 
@@ -87,23 +83,9 @@ object RoomImages {
                 } catch (e: Exception) {
                     // Server sendiri belum bisa: lanjut ke Supabase di bawah.
                 }
-                val path = "$uid/${System.currentTimeMillis()}.jpg"
-                val conn = (URL("$BASE/storage/v1/object/$BUCKET/$path").openConnection() as HttpURLConnection).apply {
-                    requestMethod = "POST"
-                    connectTimeout = 15000
-                    readTimeout = 60000
-                    doOutput = true
-                    setRequestProperty("apikey", KEY)
-                    setRequestProperty("Authorization", "Bearer $KEY")
-                    setRequestProperty("Content-Type", "image/jpeg")
-                }
-                conn.outputStream.use { it.write(bytes) }
-                val code = conn.responseCode
-                if (code !in 200..299) {
-                    val body = conn.errorStream?.bufferedReader()?.use { it.readText() }.orEmpty()
-                    return@withContext null to "Upload gagal ($code) ${body.take(100)}"
-                }
-                "$BASE/storage/v1/object/public/$BUCKET/$path" to null
+                // Sesuai arahan: tidak memakai Supabase. Kalau server sendiri gagal,
+                // tampilkan galat supaya jelas, bukan diam-diam beralih ke layanan lain.
+                return@withContext null to "Gagal mengirim foto ke server. Coba lagi."
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

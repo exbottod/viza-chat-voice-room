@@ -830,9 +830,292 @@ const terjemah = (teks) => {
   if (bahasa === "id") return null;
   const t = String(teks).trim();
   if (!t) return null;
-  const k = KAMUS[bahasa];
-  return Object.prototype.hasOwnProperty.call(k, t) ? k[t] : null;
+  const pas = (b) => {
+    const peta = PETA_NORMAL[b] || {};
+    const n = normal(t);
+    return Object.prototype.hasOwnProperty.call(peta, n) ? peta[n] : null;
+  };
+  // Remah judul "Dashboard / Cek in harian": terjemahkan bagian sesudah garis miring.
+  const remah = t.match(/^Dashboard \/ (.+)$/);
+  if (remah) {
+    const ekor = String(remah[1]).trim();
+    const cari = (b) => {
+      const peta = PETA_NORMAL[b] || {};
+      return Object.prototype.hasOwnProperty.call(peta, normal(ekor)) ? peta[normal(ekor)] : null;
+    };
+    const ekorTerj = cari(bahasa) || (bahasa !== "en" ? cari("en") : null);
+    if (ekorTerj) return "Dashboard / " + ekorTerj;
+  }
+  const utama = pas(bahasa);
+  if (utama) return utama;
+  // Bahasa Arab dan China belum lengkap: pakai padanan Inggris daripada
+  // membiarkan teks Indonesia.
+  if (bahasa !== "en") {
+    const ing = pas("en");
+    if (ing) return ing;
+  }
+  // Pola juga dipakai untuk Arab/China supaya tidak ada teks Indonesia tersisa.
+  for (const [cocok, ganti] of POLA) {
+    if (cocok.test(t)) return t.replace(cocok, ganti);
+  }
+  return null;
 };
+
+
+/* ====== Tambahan kamus (halaman Cek in harian dan teks yang dulu terlewat) ====== */
+const TAMBAHAN = {
+"en": {
+"dicabut ✅": "revoked ✅",
+"tidak ditemukan": "not found",
+"· akun login dibuat": "· login account created",
+"AKTIF": "ACTIVE",
+"Admin dihapus": "Admin removed",
+"Akses diaktifkan": "Access enabled",
+"Akses dicabut": "Access revoked",
+"Akses dihapus": "Access removed",
+"Aktifkan admin": "Enable admin",
+"Alamat disalin": "Address copied",
+"Aset VIP disimpan": "VIP asset saved",
+"Atur bet": "Set bet",
+"Atur hadiah cek in harian hari 1 sampai 7 yang tampil di aplikasi": "Set the daily check-in rewards for days 1 to 7 shown in the app",
+"Atur nilai bet tiap game": "Set the bet value for each game",
+"BELUM DIATUR": "NOT SET",
+"Banner beranda dan bingkai profil": "Home banner and profile frame",
+"Banner disimpan": "Banner saved",
+"Banner masuk": "Entry banner",
+"Belum ada berkas yang dipilih": "No file chosen yet",
+"Belum ada staf. Kirim panel ke user di atas.": "No staff yet. Send the panel to a user above.",
+"Belum login": "Not signed in",
+"Berkas dihapus": "File deleted",
+"Berkas tidak bisa dibaca": "File cannot be read",
+"Bilah bawah": "Bottom bar",
+"Buat & kirim ke user": "Create & send to user",
+"Buka menu": "Open menu",
+"Cabut Customer Service? Chat CS tidak akan sampai ke akun mana pun.": "Revoke Customer Service? CS chats will reach no account.",
+"Cabut admin": "Revoke admin",
+"Cabut panel": "Revoke panel",
+"Cabut panel user ini?": "Revoke this user's panel?",
+"Cek in harian": "Daily check-in",
+"Cek in harian tersimpan": "Daily check-in saved",
+"Customer Service dicabut": "Customer Service revoked",
+"Daftar room aktif dan tombol tutup room": "Active rooms with close-room buttons",
+"Daftarkan admin panel dan atur aksesnya": "Register panel admins and manage their access",
+"Dokumen dihapus": "Document deleted",
+"Dokumen disimpan": "Document saved",
+"Domain panel ini belum diizinkan di Firebase Authentication.": "This panel domain is not yet allowed in Firebase Authentication.",
+"Edit aset VIP": "Edit VIP asset",
+"Edit banner": "Edit banner",
+"Edit frame": "Edit frame",
+"Edit gift": "Edit gift",
+"Edit item": "Edit item",
+"Edit item toko": "Edit store item",
+"Edit pengumuman": "Edit announcement",
+"Edit seller": "Edit seller",
+"Edit staf": "Edit staff",
+"Efek masuk room": "Room entry effect",
+"Email atau password salah.": "Wrong email or password.",
+"Frame dihapus": "Frame deleted",
+"Frame disimpan": "Frame saved",
+"Gagal masuk.": "Sign-in failed.",
+"Game dihapus": "Game deleted",
+"Game yang sudah terpasang": "Installed games",
+"Gelar": "Title",
+"Gelembung chat": "Chat bubble",
+"Hapus admin": "Remove admin",
+"Hapus akses web panel untuk akun ini?": "Remove web panel access for this account?",
+"Hapus berkas ini dari VPS?": "Delete this file from the VPS?",
+"Hapus frame ini?": "Delete this frame?",
+"Hapus game": "Delete game",
+"Hapus game ini dari daftar?": "Delete this game from the list?",
+"Hapus pengaturan bet ini?": "Delete this bet setting?",
+"Hapus pengumuman": "Delete announcement",
+"Hapus seller": "Remove seller",
+"Hapus seller ini dari daftar dompet?": "Remove this seller from the wallet list?",
+"Hapus staf panel": "Remove panel staff",
+"Isi email dan password dulu.": "Fill in email and password first.",
+"Isi jumlah coin": "Enter the coin amount",
+"Item dijual lagi di Store": "Item sold in the Store again",
+"Item disimpan": "Item saved",
+"Item ditarik dari Store": "Item pulled from the Store",
+"Item terkirim": "Item sent",
+"JSON tidak valid": "Invalid JSON",
+"Jaringan terputus saat mengunggah": "Connection lost while uploading",
+"Jual item di Store": "Sell item in the Store",
+"Katalog gift yang tampil di aplikasi": "Gift catalogue shown in the app",
+"Kelola gift": "Manage gifts",
+"Kelola room": "Manage rooms",
+"Kelola user": "Manage users",
+"Kirim item": "Send item",
+"Kirim lencana": "Send badge",
+"Lencana dibuat dan dikirim": "Badge created and sent",
+"Lepas official": "Remove official tag",
+"Lepas semat": "Unpin",
+"Lepas semat room": "Unpin room",
+"Membuka Google…": "Opening Google…",
+"Memeriksa…": "Checking…",
+"Memproses…": "Processing…",
+"Memuat stok…": "Loading stock…",
+"Mengirim…": "Sending…",
+"Menjalankan…": "Running…",
+"Nama dan alamat game wajib diisi": "Game name and address are required",
+"Nama diganti menjadi Unknown.": "Name changed to Unknown.",
+"Nama game wajib diisi": "Game name is required",
+"Nama item wajib diisi": "Item name is required",
+"Nama lencana wajib diisi": "Badge name is required",
+"Nolkan stok coin staf ini?": "Reset this staff member's coin stock to zero?",
+"Nonaktifkan": "Deactivate",
+"Pengaturan bet disimpan": "Bet setting saved",
+"Pengguna tanpa nama": "Unnamed user",
+"Pengumuman baru": "New announcement",
+"Pengumuman dihapus": "Announcement deleted",
+"Pengumuman disimpan": "Announcement saved",
+"Periksa koneksi lalu muat ulang.": "Check your connection and reload.",
+"Perintah dijalankan": "Command executed",
+"Pilih berkas atau isi tautan dulu": "Choose a file or enter a link first",
+"Pilih gambar atau isi tautan dulu": "Choose an image or enter a link first",
+"Popup diblokir browser. Izinkan popup lalu coba lagi.": "Popup blocked by the browser. Allow popups and try again.",
+"Progres": "Progress",
+"Reset foto": "Reset photo",
+"Reset nama": "Reset name",
+"Riwayat aksi yang dilakukan admin": "History of actions taken by admins",
+"Room disematkan paling atas": "Room pinned to the top",
+"Seller dihapus": "Seller removed",
+"Seller disimpan": "Seller saved",
+"Semat dilepas": "Pin removed",
+"Sematkan": "Pin",
+"Sematkan room": "Pin room",
+"Sembunyikan": "Hide",
+"Sembunyikan yang sudah dicabut": "Hide revoked ones",
+"Semua staf sudah dicabut.": "All staff revoked.",
+"Simpan aset VIP": "Save VIP asset",
+"Staf disimpan": "Staff saved",
+"Status seller diubah": "Seller status changed",
+"Stok coin seller": "Seller coin stock",
+"Stok disimpan": "Stock saved",
+"Stok item staf": "Staff item stock",
+"Stok seller": "Seller stock",
+"Stok seller diperbarui": "Seller stock updated",
+"Stok staf ini masih kosong.": "This staff member's stock is still empty.",
+"Tab Family": "Family tab",
+"Tab Moment": "Moment tab",
+"Tab Party": "Party tab",
+"Tab Saya": "My tab",
+"Tag official": "Official tag",
+"Tag official dilepas": "Official tag removed",
+"Tag official dipasang": "Official tag added",
+"Tambah aset VIP": "Add VIP asset",
+"Tambah frame": "Add frame",
+"Tambah game baru dengan alamat dan key production": "Add a new game with its address and production key",
+"Tambah item toko": "Add store item",
+"Tambah staf": "Add staff",
+"Tambah staf dan seller yang boleh masuk panel": "Add staff and sellers allowed into the panel",
+"Tampilkan yang sudah dicabut": "Show revoked ones",
+"Tarik item dari Store": "Pull item from the Store",
+"Tautan disalin": "Link copied",
+"Terlalu banyak percobaan. Tunggu beberapa menit.": "Too many attempts. Wait a few minutes.",
+"Toko Coin Contoh": "Sample Coin Shop",
+"Ubah dokumen": "Edit document",
+"diblokir admin panel": "blocked by admin panel",
+"latar menu tab di bagian bawah": "bottom tab bar background",
+"layar belakang Family": "Family screen background",
+"layar belakang Moment": "Moment screen background",
+"layar belakang beranda Party": "Party home background",
+"layar belakang daftar chat": "chat list background",
+"layar belakang profil Saya": "My profile background",
+"mis. frame-fox": "e.g. frame-fox",
+"minimal 6 karakter": "at least 6 characters",
+"semua user": "all users",
+"tidak ada": "none",
+"tidak ada jawaban": "no answer",
+"tidak diizinkan rules": "not allowed by the rules",
+"tidak diketahui": "unknown",
+"tag aktif": "active",
+"tag blokir": "block",
+"DICABUT": "REVOKED",
+"Manager": "Manager",
+"Avatar": "Avatar",
+"Pra": "Pre",
+"Siap": "Ready",
+"Viza Panel siap · project": "Viza Panel ready · project",
+"Jabatan": "Position",
+"Julukan": "Nickname",
+"Mawar": "Rose",
+"ID": "ID",
+"Coin": "Coin",
+"Item": "Item",
+"Hadiah": "Reward",
+"Tutup": "Close",
+"Kirim": "Send",
+"Ubah": "Edit",
+"Cari": "Search",
+"Tanggal": "Date",
+"Catatan": "Note"
+}
+};
+
+Object.keys(TAMBAHAN).forEach((b) => {
+  KAMUS[b] = Object.assign({}, KAMUS[b] || {}, TAMBAHAN[b]);
+});
+/* Tambahan kedua: sisa teks panel yang belum punya padanan. */
+Object.assign(KAMUS.en, {
+  "VPS berkas": "VPS files",
+  "VPS database": "VPS database",
+  "Hapus aset vipConfig": "Delete vipConfig asset",
+  "pemutar SVGA gagal dimuat": "SVGA player failed to load",
+  "mengunggah 0%": "uploading 0%",
+  "selesai diunggah": "upload finished",
+  "pesan info": "info message",
+  "milik user ini?": "belonging to this user?",
+  "lepas semat ": "unpin ",
+  "dikirim ke ID ": "sent to ID ",
+  "Hadiah hari ": "Day ",
+  "Kirim panel ": "Send panel ",
+  "Panel ID ": "Panel ID ",
+  "Stok coin ID ": "Coin stock ID ",
+  "Stok panel ": "Panel stock ",
+  "User dengan ID ": "User with ID ",
+  "Customer Service aktif untuk ID ": "Customer Service active for ID ",
+  "Item masuk ke stok ID ": "Item added to stock ID ",
+  "Foto profil diganti ke foto bawaan ": "Profile photo reset to the default ",
+  "Background · ": "Background · ",
+  "Cabut panel ": "Revoke panel ",
+  "· stok ": "· stock ",
+  "· akun login dibuat": "· login account created"
+});
+
+
+/* Teks yang mengandung angka atau nama tidak bisa dicocokkan persis,
+   jadi diterjemahkan lewat pola. */
+const POLA = [
+  [/^Hadiah hari (\d+)$/, "Day $1 reward"],
+  [/^Hari (\d+)$/, "Day $1"],
+  [/^Lencana (.+)$/, "Badge $1"],
+  [/^Stok coin ID (.+)$/, "Coin stock ID $1"],
+  [/^Stok coin (.+)$/, "Coin stock $1"],
+  [/^Stok panel (.+)$/, "Panel stock $1"],
+  [/^Panel ID (.+)$/, "Panel ID $1"],
+  [/^Kirim panel (.+)$/, "Send panel $1"],
+  [/^Item masuk ke stok ID (.+)$/, "Item added to stock ID $1"],
+  [/^Customer Service aktif untuk ID (.+)$/, "Customer Service active for ID $1"],
+  [/^dikirim ke ID (.+)$/, "sent to ID $1"],
+  [/^User dengan ID (.+)$/, "User with ID $1"],
+  [/^Foto profil diganti ke foto bawaan (.+)$/, "Profile photo reset to the default $1"],
+  [/^Wallet (.+)$/, "Wallet $1"],
+  [/^Background (.+)$/, "Background $1"],
+  [/^Cabut panel (.+)\?$/, "Revoke panel for $1?"],
+  [/^· stok (.+)$/, "· stock $1"],
+  [/^· akun login: (.+)$/, "· login account: $1"],
+  [/^(.+)\?$/, "$1?"]
+];
+
+/* Cari padanan: kamus bahasa aktif, lalu kamus Inggris sebagai cadangan,
+   lalu pola. Huruf besar-kecil dan spasi berlebih diabaikan. */
+const normal = (t) => String(t).replace(/\s+/g, " ").trim().toLowerCase();
+const PETA_NORMAL = {};
+Object.keys(KAMUS).forEach((b) => {
+  PETA_NORMAL[b] = {};
+  Object.keys(KAMUS[b]).forEach((k) => { PETA_NORMAL[b][normal(k)] = KAMUS[b][k]; });
+});
 
 /* Teks di dalam elemen ini tidak pernah diterjemahkan: kolom isian,
    blok kode, dan apa pun yang ditandai data-jangan-terjemah. */

@@ -11,30 +11,33 @@ UDP_AWAL=50000; UDP_AKHIR=50100
 [ "$(id -u)" = "0" ] || { echo "Jalankan dengan sudo."; exit 1; }
 say() { echo "== $*"; }
 
-say "1/7 Unduh livekit-server"
+say "0/7 Cek tulis disk"
+df -h / /tmp 2>/dev/null | tail -2 || true
+TMPDIR="${TMPDIR:-/var/tmp}"; export TMPDIR
+PROBE="/var/tmp/.lk-probe.$$"
+if dd if=/dev/zero of="$PROBE" bs=1M count=2 status=none 2>/dev/null; then
+  echo "   tulis 2 MB ke /var/tmp: OK"; rm -f "$PROBE"
+else
+  echo "   /var/tmp tidak bisa ditulis, pakai /root"; TMPDIR=/root
+fi
+
+say "1/7 Unduh livekit-server (tanpa menyimpan file besar)"
 case "$(uname -m)" in
   x86_64|amd64) ARCH=amd64 ;;
   aarch64|arm64) ARCH=arm64 ;;
   *) echo "Arsitektur $(uname -m) tidak didukung"; exit 1 ;;
 esac
 API=https://api.github.com/repos/livekit/livekit/releases/latest
-JSON=/root/lk-release.json
-mkdir -p /root
-curl -fsSL --retry 3 --retry-delay 2 -o "$JSON" "$API"
-TAG=$(grep -m1 '"tag_name"' "$JSON" | cut -d'"' -f4)
+JSON=$(curl -fsSL --retry 3 --retry-delay 2 "$API" || true)
+TAG=$(printf '%s' "$JSON" | grep -m1 '"tag_name"' | cut -d'"' -f4)
 VER="${TAG#v}"
-URL_ASSET=$(grep -o '"browser_download_url":[^,]*' "$JSON" | cut -d'"' -f4 | grep "linux_${ARCH}\.tar\.gz" | head -1)
+URL_ASSET=$(printf '%s' "$JSON" | grep -o '"browser_download_url":[^,]*' | cut -d'"' -f4 | grep "linux_${ARCH}\.tar\.gz" | head -1)
 [ -n "${URL_ASSET:-}" ] || URL_ASSET="https://github.com/livekit/livekit/releases/download/${TAG}/livekit_${VER}_linux_${ARCH}.tar.gz"
 echo "   versi $TAG"
 echo "   aset  $URL_ASSET"
-df -h /root | tail -1
-if ! curl -fL --retry 3 --retry-delay 2 --progress-bar -o /root/lk.tar.gz "$URL_ASSET"; then
-  echo "   unduh langsung gagal, mencoba cara resmi LiveKit"
-  rm -f /root/lk.tar.gz
+if ! curl -fL --retry 3 --retry-delay 2 "$URL_ASSET" | tar -xz -C /usr/local/bin livekit-server; then
+  echo "   aliran gagal, mencoba cara resmi LiveKit"
   curl -fsSL https://get.livekit.io | bash || true
-fi
-if [ -s /root/lk.tar.gz ]; then
-  tar -xzf /root/lk.tar.gz -C /usr/local/bin livekit-server
 fi
 command -v livekit-server >/dev/null 2>&1 || { echo "livekit-server belum terpasang, hentikan."; exit 1; }
 chmod +x /usr/local/bin/livekit-server

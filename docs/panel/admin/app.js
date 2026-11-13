@@ -81,9 +81,43 @@ const TIPE_BERKAS = {
 };
 const TERIMA_BERKAS = ".png,.jpg,.jpeg,.webp,.gif,.svga,.json,.mp4,.webm,.mp3,.ogg";
 
+/** Baca berkas jadi base64 tanpa awalan data URL. */
+async function bacaB64(berkas) {
+  const data = await new Promise((ok, gagal) => {
+    const fr = new FileReader();
+    fr.onload = () => ok(String(fr.result || ""));
+    fr.onerror = () => gagal(new Error("Berkas tidak bisa dibaca"));
+    fr.readAsDataURL(berkas);
+  });
+  return data.replace(/^data:[^,]+,/, "");
+}
+
 async function unggahBerkas(berkas, folder, lapor) {
   const namaAman = String(berkas.name || "aset").replace(/[^a-zA-Z0-9._-]/g, "_");
   const ekstensi = namaAman.split(".").pop().toLowerCase();
+
+  // 1) Jalur utama: simpan di VPS dompet Viza. Tidak perlu Firebase Storage.
+  try {
+    if (berkas.size > 8 * 1024 * 1024) throw new Error("Berkas lebih dari 8 MB");
+    if (lapor) lapor(15);
+    const t = await auth.currentUser?.getIdToken();
+    if (!t) throw new Error("Sesi login tidak ada, muat ulang panel");
+    const b64 = await bacaB64(berkas);
+    if (lapor) lapor(65);
+    const r = await fetch(DOMPET_BASE + "/aset-upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ t, b64, name: folder + "-" + namaAman.replace(/\.[^.]+$/, ""), ext: ekstensi })
+    });
+    const j = await r.json().catch(() => null);
+    if (j && j.ok && j.url) { if (lapor) lapor(100); return j.url; }
+    throw new Error((j && j.e) || ("HTTP " + r.status));
+  } catch (eVps) {
+    if (lapor) lapor(0);
+    window.__galatVps = String(eVps?.message || eVps);
+  }
+
+  // 2) Cadangan: Firebase Storage, hanya kalau VPS menolak.
   const jalur = `aset/${folder}/${Date.now()}-${namaAman}`;
   const rujukan = sRef(storage, jalur);
   const tugas = uploadBytesResumable(rujukan, berkas, {
@@ -264,7 +298,7 @@ async function urlDariSumber(id, folder) {
   } catch (e) {
     if (progres) progres.textContent = e?.code === "storage/unauthorized"
       ? "ditolak: Storage belum aktif atau aturan Storage belum dipasang"
-      : "gagal mengunggah: " + (e?.code || e?.message || "");
+      : "gagal mengunggah: " + (window.__galatVps || e?.code || e?.message || "");
     throw e;
   }
 }
@@ -1360,6 +1394,8 @@ const DOMPET_ALAMAT = "https://viza.43-156-99-4.sslip.io/admin";
 const DOMPET_SEHOST = /^viza\.43-156-99-4\.sslip\.io$/i.test(location.hostname);
 const WALLET_VPS = DOMPET_SEHOST ? location.origin + "/admin" : DOMPET_ALAMAT;
 const WALLET_CAD = WALLET_VPS;
+/** Alamat asas dompet, dipakai untuk unggah aset ke VPS. */
+const DOMPET_BASE = DOMPET_SEHOST ? location.origin : "https://viza.43-156-99-4.sslip.io";
 const WALLET_KEY = "sb_publishable_4PxD2LedOsBgIJyHLkM47A_bImSQI2W";
 const OPS_TANPA_UID = ["reset_all", "reset_gem_all", "reset_all_assets", "delete_users", "manual_pending", "manual_all", "pay_get", "pay_set"];
 

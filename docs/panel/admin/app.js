@@ -514,6 +514,7 @@ const daftarHal = {
   kirim: { judul: "Kirim ke user", crumb: "Dashboard / Kirim ke user", gambar: gambarKirim },
   staf: { judul: "Staf & seller", crumb: "Dashboard / Staf & seller", gambar: gambarStaf },
   wallet: { judul: "Coin, diamond & reset", crumb: "Dashboard / Coin, diamond & reset", gambar: gambarWallet },
+  cekin: { judul: "Cek in harian", crumb: "Dashboard / Cek in harian", gambar: gambarCekIn },
   aset: { judul: "Aset & VIP", crumb: "Dashboard / Aset & VIP", gambar: gambarAset },
   asetvps: { judul: "Aset di VPS", crumb: "Dashboard / Aset di VPS", gambar: gambarAsetVps },
   katalog: { judul: "Katalog game", crumb: "Dashboard / Game", gambar: gambarKatalog },
@@ -537,6 +538,7 @@ const keteranganHal = {
   staf: "Tambah staf dan seller yang boleh masuk panel",
   cs: "Pilih akun yang menerima chat Customer Service, atau cabut",
   wallet: "Kirim coin, VIP, reset coin/diamond/exp, topup manual, reset nama dan foto",
+  cekin: "Atur hadiah cek in harian hari 1 sampai 7 yang tampil di aplikasi",
   aset: "Kartu VIP, frame, efek masuk, gelembung chat, medali, ID unik",
   katalog: "Game yang sudah terpasang",
   pasang: "Tambah game baru dengan alamat dan key production",
@@ -2660,4 +2662,120 @@ console.log("Viza Panel siap · project", firebaseConfig.projectId);
 /* pasang sebagai aplikasi */
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+
+/* ================= cek in harian ================= */
+/* APK membaca RTDB signinCfg: { enabled, target, days/{1..7}{coins,item,itemDays,vip,vipDays} }.
+   Jadi hadiah cek in bisa diubah dari sini tanpa membangun ulang APK. */
+const BAWAAN_CEKIN = [
+  { coins: 10_000_000, item: "", itemDays: 3, vip: 0, vipDays: 0 },
+  { coins: 40_000_000, item: "", itemDays: 3, vip: 0, vipDays: 0 },
+  { coins: 80_000_000, item: "", itemDays: 3, vip: 0, vipDays: 0 },
+  { coins: 10_000_000, item: "", itemDays: 3, vip: 0, vipDays: 0 },
+  { coins: 20_000_000, item: "", itemDays: 3, vip: 0, vipDays: 0 },
+  { coins: 50_000_000, item: "", itemDays: 3, vip: 0, vipDays: 0 },
+  { coins: 100_000_000, item: "", itemDays: 3, vip: 1, vipDays: 0 }
+];
+
+function hariCekIn(cfg) {
+  const d = (cfg && cfg.days) || {};
+  return BAWAAN_CEKIN.map((b, i) => {
+    const x = d[String(i + 1)] || {};
+    return {
+      coins: Number(x.coins ?? b.coins),
+      item: String(x.item ?? b.item ?? ""),
+      itemDays: Number(x.itemDays ?? b.itemDays ?? 3),
+      vip: Number(x.vip ?? b.vip ?? 0),
+      vipDays: Number(x.vipDays ?? b.vipDays ?? 0)
+    };
+  });
+}
+
+async function bacaCekIn() {
+  const s = await dGet(dRef(rtdb, "signinCfg"));
+  return s.exists() ? (s.val() || {}) : {};
+}
+
+/* Daftar kunci aset di Store, untuk saran kolom item. */
+async function kunciAsetStore() {
+  try {
+    const s = await dGet(dRef(rtdb, "vipCfg"));
+    return s.exists() ? Object.keys(s.val() || {}) : [];
+  } catch (e) { return []; }
+}
+
+async function gambarCekIn() {
+  const cfg = await bacaCekIn();
+  const hari = hariCekIn(cfg);
+  const aktif = cfg.enabled === false ? false : true;
+  const target = Number(cfg.target ?? 18);
+  const kunci = await kunciAsetStore();
+  const daftarKunci = kunci.map((k) => `<option value="${aman(k)}"></option>`).join("");
+  $("aksiTopbar").innerHTML = "";
+  $("isiHal").innerHTML = `
+    <div class="panel">
+      <div class="panelAtas"><h3>Cek in harian</h3><div class="sub">hadiah hari 1 sampai 7, dibaca aplikasi langsung dari database</div></div>
+      <div style="padding:12px 14px;display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end">
+        <div class="isian" style="min-width:170px;margin:0"><label>Cek in harian</label>
+          <select id="ciAktif">
+            <option value="1" ${aktif ? "selected" : ""}>Aktif</option>
+            <option value="0" ${aktif ? "" : "selected"}>Nonaktif</option>
+          </select>
+        </div>
+        <div class="isian" style="min-width:170px;margin:0"><label>Target hari (teks di aplikasi)</label>
+          <input id="ciTarget" type="number" min="1" max="365" value="${target}">
+        </div>
+        <button class="utama" id="ciSimpanAtas">Simpan</button>
+      </div>
+      <table><tr><th>HARI</th><th>COIN</th><th>ITEM</th><th>VIP</th><th>AKSI</th></tr>
+        ${hari.map((h, i) => `<tr>
+          <td><b>Hari ${i + 1}</b></td>
+          <td>${rupiah(h.coins)}</td>
+          <td>${h.item ? aman(h.item) + (h.itemDays ? ` · ${h.itemDays} hari` : "") : "<span style='opacity:.6'>tidak ada</span>"}</td>
+          <td>${h.vip ? `VIP ${h.vip}` + (h.vipDays ? ` · ${h.vipDays} hari` : "") : "<span style='opacity:.6'>tidak ada</span>"}</td>
+          <td><button class="aksi" data-hari="${i + 1}">Edit</button></td>
+        </tr>`).join("")}
+      </table>
+      <div class="catatan" style="padding:0 14px 14px">Coin dikirim langsung ke dompet user. Kolom item bisa diisi kunci aset Store (mis. frame atau badge) atau dibiarkan kosong. Perubahan berlaku begitu user membuka aplikasi lagi; status klaim tiap user tidak terpengaruh.</div>
+      <datalist id="ciAset">${daftarKunci}</datalist>
+    </div>`;
+  $("ciSimpanAtas").onclick = async () => {
+    try {
+      await dUpdate(dRef(rtdb, "signinCfg"), {
+        enabled: $("ciAktif").value === "1",
+        target: Math.max(1, Math.trunc(Number($("ciTarget").value) || 18))
+      });
+      toast("Cek in harian tersimpan");
+      gambarCekIn();
+    } catch (e) { toast("Gagal menyimpan: " + (e.code || e.message), "gagal"); }
+  };
+  $("isiHal").querySelectorAll("[data-hari]").forEach((b) => {
+    b.onclick = () => formCekIn(Number(b.dataset.hari), hari[Number(b.dataset.hari) - 1]);
+  });
+}
+
+function formCekIn(nomor, h) {
+  modal("Hadiah hari " + nomor, `
+    <div class="isian"><label>Coin</label><input id="ciCoin" type="number" min="0" step="1000" value="${h.coins}"></div>
+    <div class="isian"><label>Item Store (kunci aset, boleh kosong)</label>
+      <input id="ciItem" list="ciAset2" value="${aman(h.item)}" placeholder="mis. frame-fox">
+      <datalist id="ciAset2">${Array.from(document.querySelectorAll("#ciAset option")).map((o) => `<option value="${aman(o.value)}"></option>`).join("")}</datalist>
+    </div>
+    <div class="isian"><label>Masa item (hari)</label><input id="ciItemHari" type="number" min="0" value="${h.itemDays}"></div>
+    <div class="isian"><label>VIP (0 = tidak ada)</label><input id="ciVip" type="number" min="0" max="9" value="${h.vip}"></div>
+    <div class="isian"><label>Masa VIP (hari)</label><input id="ciVipHari" type="number" min="0" value="${h.vipDays}"></div>
+  `, async () => {
+    const isi = {
+      coins: Math.max(0, Math.trunc(Number($("ciCoin").value) || 0)),
+      item: $("ciItem").value.trim(),
+      itemDays: Math.max(0, Math.trunc(Number($("ciItemHari").value) || 0)),
+      vip: Math.min(9, Math.max(0, Math.trunc(Number($("ciVip").value) || 0))),
+      vipDays: Math.max(0, Math.trunc(Number($("ciVipHari").value) || 0))
+    };
+    try {
+      await dSet(dRef(rtdb, "signinCfg/days/" + nomor), isi);
+      toast("Hari " + nomor + " tersimpan");
+      gambarCekIn();
+    } catch (e) { toast("Gagal menyimpan: " + (e.code || e.message), "gagal"); }
+  });
 }

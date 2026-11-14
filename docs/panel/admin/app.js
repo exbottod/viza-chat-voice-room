@@ -1702,6 +1702,20 @@ async function gambarWallet() {
         <div class="catatan" style="margin-top:10px">Nomor dan QRIS ini yang dilihat user saat mengajukan topup manual di aplikasi. Kosongkan salah satu kalau tidak dipakai.</div>
       </div>
       <div id="payDaftar" style="padding:0 12px 12px"></div>
+    </div>
+
+    <div class="panel" style="margin-top:14px">
+      <div class="panelAtas"><h3>Paket coin (jumlah dan harga)</h3>
+        <div class="filter"><div class="pil on" id="paketTambah">Tambah paket</div></div>
+      </div>
+      <div style="padding:12px">
+        <div id="paketTabel"></div>
+        <div style="display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap">
+          <button class="tombolUtama" id="paketSimpan">Simpan paket</button>
+          <span class="catatan" id="paketHasil" style="padding:0"></span>
+        </div>
+        <div class="catatan" style="margin-top:10px">Isi coin dalam angka, contoh 1000000. Harga dalam rupiah tanpa titik, contoh 6000. Paket yang tampil di aplikasi adalah paket yang dicentang aktif.</div>
+      </div>
     </div>`;
 
   let opTerpilih = "add";
@@ -1897,6 +1911,87 @@ async function gambarWallet() {
 
   muatInfoBayar();
   muatPengajuan();
+
+  /* ---------- paket coin: jumlah dan harga bisa diubah ---------- */
+  let paketBaris = [];
+
+  function rupiahTeks(n) {
+    return "Rp " + Number(n || 0).toLocaleString("id-ID");
+  }
+
+  function gambarPaket() {
+    const kotak = $("paketTabel");
+    if (!kotak) return;
+    if (!paketBaris.length) { kotak.innerHTML = '<div class="kosong">Belum ada paket. Tekan Tambah paket.</div>'; return; }
+    kotak.innerHTML = `<table>
+      <tr><th>COIN</th><th>HARGA (Rp)</th><th>TAMPIL DI APP</th><th>AKSI</th></tr>
+      ${paketBaris.map((x, i) => `<tr>
+        <td><input type="number" data-paket-coin="${i}" value="${aman(String(x.coins))}" style="width:130px"></td>
+        <td><input type="number" data-paket-harga="${i}" value="${aman(String(x.harga))}" style="width:110px"></td>
+        <td><input type="checkbox" data-paket-aktif="${i}" ${Number(x.aktif) ? "checked" : ""}></td>
+        <td><button class="aksi" data-paket-hapus="${i}">Hapus</button></td>
+      </tr>`).join("")}
+    </table><div class="kaki">${paketBaris.length} paket · harga tampil ${paketBaris.filter((x) => Number(x.aktif)).map((x) => rupiahTeks(x.harga)).join(", ") || "—"}</div>`;
+
+    kotak.querySelectorAll("[data-paket-coin]").forEach((inp) => (inp.oninput = () => {
+      paketBaris[Number(inp.dataset.paketCoin)].coins = Number(inp.value) || 0; gambarPaket();
+    }));
+    kotak.querySelectorAll("[data-paket-harga]").forEach((inp) => (inp.oninput = () => {
+      paketBaris[Number(inp.dataset.paketHarga)].harga = Number(inp.value) || 0; gambarPaket();
+    }));
+    kotak.querySelectorAll("[data-paket-aktif]").forEach((inp) => (inp.onchange = () => {
+      paketBaris[Number(inp.dataset.paketAktif)].aktif = inp.checked ? 1 : 0; gambarPaket();
+    }));
+    kotak.querySelectorAll("[data-paket-hapus]").forEach((b) => (b.onclick = () => {
+      paketBaris.splice(Number(b.dataset.paketHapus), 1); gambarPaket();
+    }));
+  }
+
+  async function muatPaket() {
+    try {
+      const out = await walletAdmin({ op: "paket_get" });
+      paketBaris = (out.paket || []).map((x) => ({ coins: Number(x.coins), harga: Number(x.harga), aktif: Number(x.aktif) }));
+      gambarPaket();
+    } catch (e) {
+      $("paketTabel").innerHTML = `<div class="kosong">${aman(e.message || "Gagal memuat paket")}</div>`;
+    }
+  }
+
+  $("paketTambah").onclick = () => {
+    paketBaris.push({ coins: 0, harga: 0, aktif: 1 });
+    gambarPaket();
+  };
+
+  $("paketSimpan").onclick = async () => {
+    const tombol = $("paketSimpan");
+    const paket = paketBaris.filter((x) => Number(x.coins) > 0 && Number(x.harga) >= 0)
+      .map((x) => ({ coins: Number(x.coins), harga: Number(x.harga), aktif: Number(x.aktif) }));
+    if (!paket.length) return toast("Isi dulu jumlah coin dan harganya", true);
+    tombol.disabled = true;
+    try {
+      await walletAdmin({ op: "paket_set", paket });
+      // Aplikasi membaca daftar ini dari Firestore, dengan cermin di Realtime Database.
+      const isi = paket.filter((x) => x.aktif).map((x) => ({ coins: x.coins, price: rupiahTeks(x.harga) }));
+      try {
+        await setDoc(doc(db, "vipConfig", "topupPacks"), { packs: isi, updated: Date.now() }, { merge: true });
+      } catch (e) { console.warn("Firestore paket:", e.code || e.message); }
+      try {
+        const peta = {};
+        isi.forEach((x, i) => { peta[String(i + 1)] = { coins: x.coins, price: x.price }; });
+        await dSet(dRef(rtdb, "rocketCfg/topupPacks"), peta);
+      } catch (e) { console.warn("RTDB paket:", e.code || e.message); }
+      $("paketHasil").textContent = "Paket tersimpan: " + isi.length + " tampil di aplikasi.";
+      catatLog("Paket coin", isi.map((x) => x.coins + "=" + x.price).join(", "));
+      toast("Paket coin disimpan");
+    } catch (e) {
+      $("paketHasil").textContent = "";
+      toast("Gagal menyimpan paket: " + (e.message || e), true);
+    } finally {
+      tombol.disabled = false;
+    }
+  };
+
+  muatPaket();
 }
 
 /* ================= kirim item ke user ================= */

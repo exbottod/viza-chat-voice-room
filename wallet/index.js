@@ -434,6 +434,8 @@ async function siapTabel(env) {
     { sql: "create table if not exists panel_log (id text primary key, oleh text, aksi text, target text, jumlah integer, at integer)" },
     { sql: "create table if not exists pay_info (id integer primary key, dana text, nama text, gopay text, qris text, updated_at integer)" },
     { sql: "create table if not exists topup_manual (id text primary key, uid text, coins integer, amount integer, payer text, method text, status text, created_at integer)" },
+    // Harga paket coin diatur dari panel developer, bukan ditulis mati di kode.
+    { sql: "create table if not exists coin_paket (coins integer primary key, harga integer, aktif integer, updated_at integer)" },
     { sql: "create table if not exists money_tx (uid text, kind text, item_id text, amount integer, room_id text, created_at integer)" },
     { sql: "create table if not exists exchange_req (req_id text primary key, uid text, at integer)" },
     { sql: "create table if not exists gift_req (req_id text primary key, uid text, at integer)" },
@@ -1610,13 +1612,35 @@ async function infoBayar(env) {
   return { dana: d.dana ?? "", name: d.nama ?? "", gopay: d.gopay ?? "", qris: d.qris ?? "" };
 }
 
-// Harga ditentukan server dari paket, bukan dari app, supaya tidak bisa dimurahkan.
+// Harga cadangan kalau panel belum pernah menyimpan daftar paket.
 const PAKET_TOPUP = { 1000000: 6000, 3000000: 18000, 10000000: 58000, 30000000: 170000 };
+
+/** Harga rupiah untuk sejumlah coin, diambil dari daftar paket di panel. */
+async function hargaPaket(env, coins) {
+  try {
+    const r = await pipe(env, [
+      { sql: "select harga from coin_paket where coins = ? and aktif = 1", args: [I(coins)] },
+    ]);
+    const h = Number(r[0].rows[0]?.harga ?? 0);
+    if (h > 0) return h;
+  } catch (e) { /* tabel belum ada, pakai cadangan */ }
+  return PAKET_TOPUP[coins] || 0;
+}
+
+/** Daftar paket coin untuk panel. */
+async function daftarPaket(env) {
+  const r = await pipe(env, [
+    { sql: "select coins, harga, aktif from coin_paket order by coins" },
+  ]);
+  const baris = r[0].rows.map((x) => ({ coins: Number(x.coins), harga: Number(x.harga), aktif: Number(x.aktif) }));
+  if (baris.length) return baris;
+  return Object.entries(PAKET_TOPUP).map(([c, h]) => ({ coins: Number(c), harga: Number(h), aktif: 1 }));
+}
 
 async function topupManualBuat(env, uid, p) {
   const id = String(p.id ?? `TM${Date.now()}${Math.floor(Math.random() * 1000)}`);
   const coins = Math.trunc(Number(String(p.coins ?? "").replace(/[^0-9]/g, "")));
-  const amount = PAKET_TOPUP[coins];
+  const amount = await hargaPaket(env, coins);
   const payer = String(p.payer ?? "").trim().slice(0, 60);
   const method = String(p.method ?? "dana").trim() || "dana";
   if (!amount) return gagal("Paket coin tidak dikenal");
@@ -2512,6 +2536,28 @@ async function admin(env, body) {
       { sql: "select owner_uid, item_id, kind, name, days from panel_stock where owner_uid = ? order by created_at desc", args: [T(String(p.uid ?? ""))] },
     ]);
     return json({ ok: 1, list: r[0].rows });
+  }
+  if (op === "paket_get") return json({ ok: 1, paket: await daftarPaket(env) });
+  if (op === "paket_set") {
+    const daftar = Array.isArray(p.paket) ? p.paket : [];
+    const bersih = [];
+    for (const x of daftar) {
+      const c = Math.trunc(Number(x?.coins ?? 0));
+      const h = Math.trunc(Number(x?.harga ?? 0));
+      const a = x?.aktif === undefined ? 1 : (Number(x.aktif) ? 1 : 0);
+      if (!(c > 0) || !(h >= 0)) return gagal("Paket tidak sah: coin dan harga harus angka");
+      bersih.push({ c, h, a });
+    }
+    if (!bersih.length) return gagal("Daftar paket kosong");
+    const kini = Date.now();
+    await pipe(env, [
+      { sql: "delete from coin_paket" },
+      ...bersih.map((x) => ({
+        sql: "insert into coin_paket (coins, harga, aktif, updated_at) values (?, ?, ?, ?)",
+        args: [I(x.c), I(x.h), I(x.a), I(kini)],
+      })),
+    ]);
+    return json({ ok: 1, paket: await daftarPaket(env) });
   }
   if (op === "pay_get") return json({ ok: 1, pay: await infoBayar(env) });
   if (op === "pay_set") {

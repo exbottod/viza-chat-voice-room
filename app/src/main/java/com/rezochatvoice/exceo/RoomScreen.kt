@@ -194,7 +194,9 @@ fun RoomScreen(
     val seats = rawSeats.filterValues { it.uid in members }
     // Posisi avatar tiap kursi (untuk animasi gift terbang ke penerima).
     val seatPoints = remember { mutableStateMapOf<Int, Offset>() }
-    var messages by remember { mutableStateOf<List<RoomMsg>>(emptyList()) }
+    // Riwayat chat room disimpan di memori supaya tidak hilang saat aplikasi
+    // di-minimize; hanya bersih saat aplikasi ditutup.
+    var messages by remember(roomId) { mutableStateOf(RoomChatCache.ambil(roomId)) }
     var panel by remember { mutableStateOf(P_NONE) }
     var seatSheet by remember { mutableStateOf<Int?>(null) }
     var waveOpen by remember { mutableStateOf(false) }
@@ -247,7 +249,8 @@ fun RoomScreen(
     val emotSudahTampil = remember { mutableStateListOf<String>() }
     var customEmotes by remember { mutableStateOf<List<RoomEmote>>(emptyList()) }
     LaunchedEffect(roomId) { customEmotes = RoomEmotes.load() }
-    var draft by remember { mutableStateOf("") }
+    var draft by remember(roomId) { mutableStateOf(RoomChatCache.ambilDraf(roomId)) }
+    LaunchedEffect(roomId, draft) { RoomChatCache.simpanDraf(roomId, draft) }
     var profileUid by remember { mutableStateOf<String?>(null) }
     var clearedAt by remember { mutableStateOf(0L) }
     var sendTick by remember { mutableStateOf(0) }
@@ -294,7 +297,7 @@ fun RoomScreen(
                 (t.startsWith("\uD83C\uDF81") || t.startsWith("\uD83D\uDC8E")) &&
                     t.contains(myName, true)
             }
-            messages = baru
+            messages = RoomChatCache.satukan(roomId, baru)
             if (adaGift) {
                 val kini = System.currentTimeMillis()
                 if (kini - segarGift > 3000L) {

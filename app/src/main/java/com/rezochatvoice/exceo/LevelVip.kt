@@ -76,7 +76,13 @@ private val VIP_COLORS = listOf(
     0xFF9B59F5, 0xFFE91E8C, 0xFFE53935, 0xFFFF9800,
 )
 
-fun vipPrice(n: Int): Long = VIP_PRICES[(n - 1).coerceIn(0, 8)]
+/** Penanda perubahan harga supaya layar VIP digambar ulang setelah harga baru tiba. */
+private val hargaVipVersi = androidx.compose.runtime.mutableStateOf(0)
+
+fun vipPrice(n: Int): Long {
+    hargaVipVersi.value // dibaca agar layar ikut berubah saat harga baru diambil dari server
+    return VIP_PRICES[(n - 1).coerceIn(0, 8)]
+}
 
 /**
  * Ambil harga VIP terbaru dari server dompet. Harga diatur dari panel developer,
@@ -96,6 +102,7 @@ fun segarkanHargaVip() {
         val arr = org.json.JSONObject(teks).optJSONArray("harga") ?: return
         if (arr.length() == 9) {
             VIP_PRICES = (0 until 9).map { i -> arr.optLong(i, VIP_PRICES[i]) }
+            hargaVipVersi.value = hargaVipVersi.value + 1
         }
     } catch (e: Exception) { /* pakai harga bawaan */ }
 }
@@ -611,6 +618,11 @@ fun VipScreen(uid: String, wallet: Wallet, onBack: () -> Unit) {
     val own = wallet.inv.keys.count { id -> vipItems(sel).any { it.id == id && it.slot in tampil } }
     val higher = active && wallet.vip > sel
     val sameTier = active && wallet.vip == sel
+    // Harga bisa diubah dari panel developer; segarkan setiap layar VIP dibuka
+    // supaya angka di layar tidak menunggu aplikasi ditutup dulu.
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { segarkanHargaVip() }
+    }
     val price = vipPrice(sel)
 
     Box(

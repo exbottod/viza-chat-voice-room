@@ -268,7 +268,6 @@ fun FamilyHomeScreen(f: Family, myUid: String, myName: String, myAvatar: String?
                     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0x66000000), Color(0xCC2A0A33)))))
                 }
                 Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(42.dp).clip(RoundedCornerShape(14.dp)).background(Color(0x44000000)).border(1.dp, Color(0x55FFFFFF), RoundedCornerShape(14.dp)).clickable { /* kembali ditangani tab */ }, contentAlignment = Alignment.Center) { FmIcon("back", 22.dp) }
                     Spacer(Modifier.weight(1f))
                     if (isAdmin) Box(
                         Modifier.size(42.dp).clip(RoundedCornerShape(14.dp)).background(Brush.verticalGradient(listOf(Color(0xFFFFE680), FM_GOLD)))

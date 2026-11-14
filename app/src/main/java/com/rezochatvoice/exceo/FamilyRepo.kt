@@ -388,20 +388,18 @@ object FamilyRepo {
         })
     }
 
-    /** Buat family. Harga dipotong di server (diatur dari panel developer). */
+    /** Buat family. Data disimpan dulu, baru coin dipotong di server.
+     *  Kalau pembayaran gagal, data family yang terlanjur tersimpan dihapus lagi
+     *  supaya coin user tidak hangus dan tidak ada family menggantung. */
     suspend fun create(
         uid: String, myName: String, myAvatar: String?, name: String, label: String,
         logoB64: String?, coverB64: String?, country: String, needApproval: Boolean,
     ): String? {
         try {
             if (!myFamilyId(uid).isNullOrBlank()) return "Kamu sudah punya family"
-            // Ambil nomor dulu: kalau gagal, coin belum terpotong.
             var num = -1L
             repeat(3) { if (num < 0) num = nextNum() }
             if (num < 0) return "Gagal membuat ID family, coba lagi"
-            // Bayar di server. Gagal = berhenti, tidak ada family yang dibuat.
-            val bayar = SupaRepo.famBayarBuat(uid)
-            if (bayar != null) return bayar
             val now = System.currentTimeMillis()
             val fid = Rtdb.ref("fm").push().key ?: "f$now"
             val data = hashMapOf<String, Any?>(
@@ -416,8 +414,19 @@ object FamilyRepo {
                 "fm/$fid/members/$uid/joinedAt" to now,
                 "fmUser/$uid" to fid,
             )
-            kotlinx.coroutines.withTimeout(10000L) { Rtdb.root().updateChildren(data).await() }
+            kotlinx.coroutines.withTimeout(15000L) { Rtdb.root().updateChildren(data).await() }
+            // Bayar setelah data tersimpan: kalau gagal, data dibatalkan.
+            val bayar = SupaRepo.famBayarBuat(uid)
+            if (bayar != null) {
+                try {
+                    kotlinx.coroutines.withTimeoutOrNull(10000L) {
+                        Rtdb.root().updateChildren(hashMapOf("fm/$fid" to null, "fmUser/$uid" to null)).await()
+                    }
+                } catch (e: Exception) { }
+                return bayar
+            }
             UserDirectory.setFam(uid, name)
+            catat(fid, "Family $name dibuat oleh $myName")
             return null
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e

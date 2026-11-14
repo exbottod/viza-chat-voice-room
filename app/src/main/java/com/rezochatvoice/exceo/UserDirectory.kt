@@ -584,7 +584,14 @@ object UserDirectory {
         val key = id.trim()
         try {
             val s = kotlinx.coroutines.withTimeoutOrNull(4000L) { Rtdb.ref("ids/i/$key").get().await() }
-            if (s != null && s.exists()) return rtdbToPublic(key, s)
+            if (s != null && s.exists()) {
+                val calon = rtdbToPublic(key, s)
+                // Indeks bisa basi: kalau akun sudah punya ID baru, ids/i/<ID lama>
+                // masih menunjuk ke akun itu dan pencarian memunculkan akun lain.
+                // Jadi ID sekarang dicocokkan dulu sebelum dipakai.
+                val idSekarang = if (calon.uid.isNotBlank()) rtdbIdOf(calon.uid) else null
+                if (idSekarang == null || idSekarang == key) return calon
+            }
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) { }
@@ -601,6 +608,13 @@ object UserDirectory {
         } catch (e: Exception) { }
         val doc = db().collection("userIds").document(key).get().await()
         if (!doc.exists()) return null
+        // Dokumen userIds juga bisa tertinggal di ID lama; tolak kalau ID akun
+        // sekarang sudah berbeda, supaya tidak membuka akun tetangga.
+        val uidDoc = doc.getString("uid") ?: ""
+        if (uidDoc.isNotBlank()) {
+            val idSekarang = rtdbIdOf(uidDoc)
+            if (idSekarang != null && idSekarang != key) return null
+        }
         return PublicUser(
             userId = doc.id,
             uid = doc.getString("uid") ?: "",

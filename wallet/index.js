@@ -1718,7 +1718,7 @@ function barisTier(cfg, value) {
     if (!node || typeof node !== "object") continue;
     const min = Math.floor(Number(node.min ?? 0));
     const rows = (Array.isArray(node.rows) ? node.rows : [])
-      .map((r) => ({ v: Math.max(0, Math.floor(Number(r?.v ?? 0))), w: Math.max(0, Number(r?.w ?? 0)) }))
+      .map((r) => ({ v: Math.max(0, Number(r?.v ?? 0)), w: Math.max(0, Number(r?.w ?? 0)) }))
       .filter((r) => r.w > 0);
     if (!rows.length) continue;
     if (value >= min && min >= minBest) { best = rows; minBest = min; }
@@ -1732,7 +1732,7 @@ function barisTier(cfg, value) {
 // tidak pernah muncul di layar.
 const CB_DEFAULT = {
   on: true,
-  t1: { min: 0, rows: [{ v: 1, w: 60 }, { v: 2, w: 25 }, { v: 3, w: 10 }, { v: 5, w: 5 }] },
+  t1: { min: 0, rows: [{ v: 10, w: 5 }, { v: 1, w: 20 }, { v: 0.2, w: 35 }, { v: 0, w: 40 }] },
   recvPct: 5,
   jpMin: 1000,
 };
@@ -1748,11 +1748,12 @@ async function cashbackGift(env, uid, p) {
   if (nilai <= 0) return gagal("Nilai gift tidak valid");
 
   const baris = undiBaris(barisTier(cfg, nilai));
-  const mult = Math.max(0, Math.min(500, Math.floor(baris.v)));
+  // Pengali boleh pecahan, mis. 0,2 berarti cashback 20% dari harga gift.
+  const mult = Math.max(0, Math.min(500, Number(baris.v) || 0));
   // Total cashback = harga gift x pengali dari panel, TANPA dipotong.
   // Pecahan hanya untuk animasi (aset angka maksimal 10.000), jadi isinya
   // potongan dari total dan jumlah akhirnya tetap total penuh.
-  const target = Math.max(0, nilai * mult);
+  const target = Math.max(0, Math.round(nilai * mult));
   const parts = pecahCashback(target);
   const amount = target;
 
@@ -1762,7 +1763,9 @@ async function cashbackGift(env, uid, p) {
   const bonus = to ? Math.floor((nilai * pct) / 100) : 0;
   const recv = bonus > 0 && to !== uid ? await beriCoin(env, to, bonus, "cashback_recv", null) : 0;
   const jpMin = Math.max(0, Math.floor(Number(cfg.jpMin ?? 1000)));
-  return json({ ok: 1, amount: paid, mult, parts: parts.slice(0, 5), pecahan: parts[0] ?? baris.v,
+  // mult bulat dipakai aplikasi untuk bola pengali; multF nilai asli (boleh pecahan).
+  return json({ ok: 1, amount: paid, mult: Math.floor(mult), multF: mult,
+    parts: parts.slice(0, 5), pecahan: parts[0] ?? 0,
     recv, jp: paid >= jpMin ? 1 : 0, asset: "" });
 }
 

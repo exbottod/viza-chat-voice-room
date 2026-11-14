@@ -15,6 +15,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.*
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
@@ -310,6 +311,9 @@ private fun ChatRow(c: ChatSummary) {
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(u?.name ?: c.otherName, color = GoldLight, fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 1)
+            if (c.otherId.isNotBlank()) {
+                Text("ID " + c.otherId, color = Color(0xFF9A9A9A), fontSize = 11.sp, maxLines = 1)
+            }
             Text(ringkasPesan(c.lastText), color = Color(0xFFBDBDBD), fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Text(timeAgo(c.lastAt), color = Color(0xFF8A8A8A), fontSize = 11.sp)
@@ -328,6 +332,8 @@ fun ChatListTab(myUid: String) {
     var csUid by remember { mutableStateOf<String?>(null) }
     var csDicek by remember { mutableStateOf(false) }
     var readTick by remember { mutableStateOf(0) }
+    // Pencarian chat pribadi menurut ID pengguna atau nama.
+    var cari by remember { mutableStateOf("") }
 
     DisposableEffect(myUid) {
         val r = ChatRepo.observeChats(myUid) { chats = it }
@@ -437,6 +443,38 @@ fun ChatListTab(myUid: String) {
             )
         }
         DividerRow()
+        if (chats.isNotEmpty()) {
+            OutlinedTextField(
+                value = cari,
+                onValueChange = { cari = it },
+                singleLine = true,
+                placeholder = { Text(tr("Cari ID atau nama"), color = Color(0xFF8A8A8A), fontSize = 14.sp) },
+                leadingIcon = { Text("\uD83D\uDD0E", fontSize = 15.sp) },
+                trailingIcon = {
+                    if (cari.isNotBlank()) {
+                        IconButton(onClick = { cari = "" }) {
+                            Icon(Icons.Filled.Close, tr("Hapus"), tint = Color(0xFF8A8A8A))
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Gold,
+                    unfocusedBorderColor = Color(0xFF2A2A2A),
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    cursorColor = Gold,
+                ),
+            )
+        }
+        val chatsSaring = remember(chats, cari) {
+            val q = cari.trim().lowercase()
+            if (q.isEmpty()) chats else chats.filter {
+                it.otherId.lowercase().contains(q) ||
+                    it.otherName.lowercase().contains(q) ||
+                    it.otherUid.lowercase().contains(q)
+            }
+        }
         if (chats.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
@@ -444,9 +482,16 @@ fun ChatListTab(myUid: String) {
                     color = Color(0xFF8A8A8A), textAlign = TextAlign.Center,
                 )
             }
+        } else if (chatsSaring.isEmpty()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(
+                    tr("Tidak ada chat dengan ID atau nama itu"),
+                    color = Color(0xFF8A8A8A), textAlign = TextAlign.Center,
+                )
+            }
         } else {
             LazyColumn(Modifier.fillMaxSize()) {
-                items(chats, key = { it.id }) { c -> ChatRow(c) }
+                items(chatsSaring, key = { it.id }) { c -> ChatRow(c) }
             }
         }
     }

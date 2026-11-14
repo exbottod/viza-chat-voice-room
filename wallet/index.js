@@ -194,7 +194,14 @@ async function greedyPlay(req, env, h) {
     await siap();
     const round = Math.trunc(Number(b.round || 0));
     if (!(round > 0)) return gagal("Nomor putaran tidak valid");
-    if (round >= roundKini) return gagal("Putaran belum selesai");
+    // Aplikasi meminta hasil saat fase hasil (detik 35-40 pada ronde yang sama),
+    // jadi ronde berjalan harus boleh diselesaikan begitu taruhan ditutup.
+    // Dulu syaratnya round >= roundKini selalu ditolak, akibatnya dialog
+    // kemenangan dan pola hasil tidak pernah muncul.
+    const dalamHasil = (sekarang % ROUND_MS) >= 33000;
+    if (round > roundKini || (round === roundKini && !dalamHasil)) {
+      return gagal("Putaran belum selesai");
+    }
 
     const ada = await pipe(env, [
       { sql: "select result from greedy_settle where round = ?", args: [I(round)] },

@@ -40,24 +40,31 @@ const val DANA_QR_IMG = "https://GANTI-HALAMAN-ANDA/dana-qr.png"
  * lama di kode mengunci penerima ke akun yang salah. Nomor yang diisi admin di
  * panel ditampilkan di layar untuk disalin user.
  */
-private fun bukaAplikasi(ctx: android.content.Context, paket: String, cadangan: String, pesan: String) {
+private fun bukaAplikasi(ctx: android.content.Context, paketList: List<String>, pesan: String) {
     try {
-        val niat = ctx.packageManager.getLaunchIntentForPackage(paket)
-        if (niat != null) {
-            niat.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-            ctx.startActivity(niat)
-            return
+        for (paket in paketList) {
+            val niat = ctx.packageManager.getLaunchIntentForPackage(paket)
+            if (niat != null) {
+                niat.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                ctx.startActivity(niat)
+                return
+            }
         }
-        val i = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(cadangan))
+        // Aplikasi belum terpasang: buka halaman Play Store-nya, bukan web yang 404.
+        val i = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("market://details?id=${paketList.first()}"))
         i.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-        ctx.startActivity(i)
+        try { ctx.startActivity(i) } catch (e: Exception) {
+            val w = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://play.google.com/store/apps/details?id=${paketList.first()}"))
+            w.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            ctx.startActivity(w)
+        }
     } catch (e: Exception) {
         android.widget.Toast.makeText(ctx, pesan, android.widget.Toast.LENGTH_SHORT).show()
     }
 }
 
 private fun openDana(ctx: android.content.Context) =
-    bukaAplikasi(ctx, "com.dana.id", "https://m.dana.id", tr("Aplikasi DANA tidak bisa dibuka"))
+    bukaAplikasi(ctx, listOf("id.dana", "com.dana.id"), tr("Aplikasi DANA tidak bisa dibuka"))
 
 /** Nilai dari panel bisa berupa nomor HP atau tautan resmi DANA (http/https/dana:). */
 private fun tautanDana(nilai: String): String? {
@@ -85,7 +92,7 @@ private fun bayarKeDana(ctx: android.content.Context, nilai: String) {
             niat.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
             // Utamakan aplikasi DANA; kalau tidak ada, biarkan browser menanganinya.
             if (tautan.startsWith("dana:", true)) {
-                niat.setPackage("com.dana.id")
+                niat.setPackage("id.dana")
             }
             ctx.startActivity(niat)
             return
@@ -106,7 +113,7 @@ private fun bayarKeDana(ctx: android.content.Context, nilai: String) {
 }
 
 private fun openGopay(ctx: android.content.Context) =
-    bukaAplikasi(ctx, "com.gojek.app", "https://gojek.link", tr("Aplikasi GoPay tidak bisa dibuka"))
+    bukaAplikasi(ctx, listOf("com.gojek.app", "com.gojek.gopay"), tr("Aplikasi GoPay tidak bisa dibuka"))
 
 /** Salin teks ke clipboard supaya user tidak salah ketik nomor tujuan. */
 private fun salinTeks(ctx: android.content.Context, teks: String) {

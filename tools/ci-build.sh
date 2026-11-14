@@ -66,7 +66,32 @@ export REZO_BUILD="$NOMOR"
 # app/build.gradle.kts membaca GITHUB_RUN_NUMBER lebih dulu; dibuang supaya versi APK ikut REZO_BUILD.
 unset GITHUB_RUN_NUMBER
 export KERJA
-bash "$AKAR/tools/build-whitelabel.sh" "$AKAR/firebase/google-services.json" "$NAMA" "$PAKET" "$NAMA" "$RTDB" "$GOOGLE_ID"
+# Log build disimpan. Kalau gagal, log ikut dikirim ke branch "buildlog" supaya
+# penyebab galat compiler bisa dibaca tanpa membuka halaman Actions.
+LOG="$TMP/viza-build.log"
+set +e
+bash "$AKAR/tools/build-whitelabel.sh" "$AKAR/firebase/google-services.json" "$NAMA" "$PAKET" "$NAMA" "$RTDB" "$GOOGLE_ID" 2>&1 | tee "$LOG"
+HASIL_BUILD=${PIPESTATUS[0]}
+set -e
+if [ "$HASIL_BUILD" != "0" ]; then
+  echo "== Build gagal, menyimpan log ke branch buildlog =="
+  GALAT="$(mktemp -d)"
+  {
+    grep -E "^e: |error:|Unresolved reference|FAILURE|Execution failed|What went wrong" -A 3 "$LOG" | head -200
+    echo "---- 120 baris terakhir ----"
+    tail -120 "$LOG"
+  } > "$GALAT/galat.txt" 2>/dev/null || true
+  if [ -n "${GH_TOKEN:-}" ] && [ -n "${GITHUB_REPOSITORY:-}" ]; then
+    (
+      cd "$GALAT"
+      git init -q .
+      git -c user.email=ci@viza -c user.name=ci add galat.txt
+      git -c user.email=ci@viza -c user.name=ci commit -qm "log galat build"
+      git push -q --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:buildlog || true
+    )
+  fi
+  exit 1
+fi
 
 # Tiga APK: arm64 (HP modern), armv7 (HP lama), universal (cadangan, semua HP).
 ambil() {

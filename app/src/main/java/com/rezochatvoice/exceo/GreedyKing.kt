@@ -128,6 +128,10 @@ fun GreedyKingScreen(
                             "(KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
                         addJavascriptInterface(
                             object {
+                                // Tinggi layar nyata (px CSS) dari sisi native, untuk WebView yang
+                                // menganggap 100dvh dan innerHeight bernilai 0.
+                                @JavascriptInterface fun tinggi(): Int =
+                                    (c.resources.displayMetrics.heightPixels / c.resources.displayMetrics.density).toInt()
                                 @JavascriptInterface fun api() = GREEDY_API
                                 @JavascriptInterface fun token() = token
                                 @JavascriptInterface fun uid() = myUid
@@ -359,7 +363,7 @@ private const val SKRIP_UKUR = """
  * biasa, jadi tetap jalan. Hasilnya dikembalikan sebagai teks JSON.
  */
 private fun mintaDompet(metode: String, jalur: String, isi: String, token: String): String {
-    val dasar = "https://GANTI-SERVER-ANDA"
+    val dasar = "https://viza.43-156-99-4.sslip.io"
     val url = if (jalur.startsWith("http")) jalur else dasar + jalur
     return try {
         val c = java.net.URL(url).openConnection() as java.net.HttpURLConnection
@@ -382,7 +386,7 @@ private fun mintaDompet(metode: String, jalur: String, isi: String, token: Strin
     }
 }
 
-private const val GREEDY_API = "https://GANTI-SERVER-ANDA/greedy"
-private const val GREEDY_BAWAAN = "https://GANTI-HALAMAN-ANDA/greedy/"
+private const val GREEDY_API = "https://viza.43-156-99-4.sslip.io/greedy"
+private const val GREEDY_BAWAAN = "https://viza.43-156-99-4.sslip.io/greedy-play/index.html"
 private const val GREEDY_LOKAL = "https://appassets.androidplatform.net/assets/greedy/index.html"
-private const val GREEDY_SERVER = "https://GANTI-SERVER-ANDA/greedy-play/index.html"
+private const val GREEDY_SERVER = "https://viza.43-156-99-4.sslip.io/greedy-play/index.html"

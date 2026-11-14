@@ -13,7 +13,10 @@
       // nyata dipasang langsung sebagai piksel.
       (function () {
         function pasang() {
-          var h = window.innerHeight || document.documentElement.clientHeight || screen.height || 0;
+          // Tinggi dari WebView native (RezoBridge) dipakai kalau innerHeight bernilai 0.
+          var h = window.innerHeight || document.documentElement.clientHeight || 0;
+          try { if (h < 100 && window.RezoBridge && window.RezoBridge.tinggi) h = Number(window.RezoBridge.tinggi()) || 0; } catch (e) {}
+          if (h < 100) h = screen.height || 0;
           if (h < 100) return;
           var st = document.getElementById("gkTinggi");
           if (!st) {
@@ -24,8 +27,8 @@
           st.textContent =
             "html,body{height:" + h + "px!important}" +
             "#root{height:" + h + "px!important;min-height:" + h + "px!important}" +
-            ".h-dvh{height:" + h + "px!important}" +
-            ".min-h-dvh{min-height:" + h + "px!important}";
+            ".h-dvh,.h-svh,.h-screen{height:" + h + "px!important}" +
+            ".min-h-dvh,.min-h-svh,.min-h-screen{min-height:" + h + "px!important}";
         }
         pasang();
         var n = 0;

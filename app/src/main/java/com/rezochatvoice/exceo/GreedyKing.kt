@@ -258,8 +258,14 @@ fun GreedyKingScreen(
     }
 }
 
-/** Tinggi sheet game dibanding layar. 0,78 = 78% layar, sisanya room kelihatan. */
-private const val PECAHAN_SHEET = 0.78f
+/**
+ * Tinggi sheet game dibanding layar. 0,93 = 93% layar.
+ *
+ * Dulu 0,78: pola hasil ronde dan tombol bawah terpotong, jadi pemain tidak
+ * melihat makanan apa yang keluar. Dengan 93% seluruh papan permainan masuk,
+ * sementara pita tipis di atas masih memperlihatkan room di belakangnya.
+ */
+private const val PECAHAN_SHEET = 0.93f
 
 /** Tambahkan token, uid, dan nama ke alamat halaman game. */
 private fun denganToken(alamat: String, token: String, uid: String, nama: String): String {

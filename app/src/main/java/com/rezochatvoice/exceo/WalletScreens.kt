@@ -63,6 +63,40 @@ private fun bukaAplikasi(ctx: android.content.Context, paketList: List<String>, 
     }
 }
 
+/**
+ * Simpan gambar QR (dari panel) ke galeri supaya bisa diunggah lewat menu
+ * Scan QR -> Galeri di aplikasi DANA. Tanpa ini user harus punya gambar QR
+ * di HP lain, yang jelas tidak praktis.
+ */
+private fun simpanQrKeGaleri(ctx: android.content.Context, url: String, nama: String) {
+    if (url.isBlank()) return
+    Thread {
+        try {
+            val bmp = java.net.URL(url).openStream().use { android.graphics.BitmapFactory.decodeStream(it) }
+                ?: throw IllegalStateException("gambar kosong")
+            val namaBerkas = (nama.ifBlank { "qris" }.replace(Regex("[^A-Za-z0-9_-]"), "_")) + "_" + System.currentTimeMillis()
+            val nilai = android.content.ContentValues().apply {
+                put(android.provider.MediaStore.Images.Media.DISPLAY_NAME, "$namaBerkas.png")
+                put(android.provider.MediaStore.Images.Media.MIME_TYPE, "image/png")
+                if (android.os.Build.VERSION.SDK_INT >= 29) {
+                    put(android.provider.MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Viza")
+                }
+            }
+            val resolver = ctx.contentResolver
+            val uri = resolver.insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, nilai)
+                ?: throw IllegalStateException("galeri tidak bisa ditulis")
+            resolver.openOutputStream(uri)?.use { os -> bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, os) }
+            (ctx as? android.app.Activity)?.runOnUiThread {
+                android.widget.Toast.makeText(ctx, tr("QR tersimpan di galeri (folder Viza)"), android.widget.Toast.LENGTH_LONG).show()
+            }
+        } catch (e: Exception) {
+            (ctx as? android.app.Activity)?.runOnUiThread {
+                android.widget.Toast.makeText(ctx, tr("Gagal menyimpan QR: ") + (e.message ?: ""), android.widget.Toast.LENGTH_LONG).show()
+            }
+        }
+    }.start()
+}
+
 private fun openDana(ctx: android.content.Context) =
     bukaAplikasi(ctx, listOf("id.dana", "com.dana.id"), tr("Aplikasi DANA tidak bisa dibuka"))
 
@@ -1052,7 +1086,7 @@ fun WalletScreen(
                                 }
                             }
                             "qris" -> {
-                                Text(tr("Scan QRIS ini lalu bayar $harga:"))
+                                Text(tr("QRIS dari panel. Simpan gambarnya, lalu di DANA pilih Scan QR lalu ikon galeri dan pilih gambar ini."))
                                 Spacer(Modifier.height(8.dp))
                                 AsyncImage(
                                     model = payQris,
@@ -1060,6 +1094,30 @@ fun WalletScreen(
                                     modifier = Modifier.fillMaxWidth().height(220.dp),
                                     contentScale = ContentScale.Fit,
                                 )
+                                Spacer(Modifier.height(10.dp))
+                                Box(
+                                    Modifier.fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(WalRowBg)
+                                        .border(1.dp, Color(0xFFD9D9E3), RoundedCornerShape(12.dp))
+                                        .clickable { simpanQrKeGaleri(context, payQris, "qris") }
+                                        .padding(vertical = 12.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(tr("Simpan QR ke galeri"), color = WalNavy, fontWeight = FontWeight.Bold)
+                                }
+                                Spacer(Modifier.height(8.dp))
+                                Box(
+                                    Modifier.fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(WalRowBg)
+                                        .border(1.dp, Color(0xFFD9D9E3), RoundedCornerShape(12.dp))
+                                        .clickable { openDana(context) }
+                                        .padding(vertical = 12.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(tr("Buka DANA"), color = WalNavy, fontWeight = FontWeight.Bold)
+                                }
                             }
                             else -> {
                                 Text(tr("Transfer ke DANA:"))

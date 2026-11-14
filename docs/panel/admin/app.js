@@ -775,7 +775,8 @@ function lukisTabelUser(users, diblokir) {
         <td>${blok ? '<span class="tag blokir">diblokir</span>' : '<span class="tag aktif">aktif</span>'}</td>
         <td>
           <button class="aksi" data-lihat="${aman(uid)}">Detail</button> ·
-          <button class="aksi" data-ban="${aman(uid)}" data-nama="${aman(nama)}">${blok ? "Buka blokir" : "Blokir"}</button>
+          <button class="aksi" data-ban="${aman(uid)}" data-nama="${aman(nama)}">${blok ? "Buka blokir" : "Blokir"}</button> ·
+          <button class="aksi" data-hapus="${aman(uid)}" data-nama="${aman(nama)}">Hapus</button>
         </td>
       </tr>`;
     }).join("")}
@@ -783,6 +784,7 @@ function lukisTabelUser(users, diblokir) {
 
   kotak.querySelectorAll("[data-lihat]").forEach((b) => (b.onclick = () => detailUser(b.dataset.lihat)));
   kotak.querySelectorAll("[data-ban]").forEach((b) => (b.onclick = () => blokirUser(b.dataset.ban, b.dataset.nama, diblokir)));
+  kotak.querySelectorAll("[data-hapus]").forEach((b) => (b.onclick = () => hapusUser(b.dataset.hapus, b.dataset.nama)));
 }
 
 async function formTambahUser() {
@@ -854,6 +856,48 @@ async function detailUser(uid) {
   } catch (e) {
     modal("Detail user", `<div class="kosong">${aman(e.message)}</div>`);
   }
+}
+
+
+/** Hapus user sepenuhnya: dompet, profil Firestore, dan akun login Firebase. */
+async function hapusUser(uid, nama) {
+  modal("Hapus user permanen", `
+    <div class="isian"><label>User</label><input value="${aman(nama)} · ${aman(uid)}" readonly></div>
+    <div class="isian" style="margin-top:10px"><label>Ketik nama user untuk memastikan</label><input id="konfirHapus" placeholder="${aman(nama)}"></div>
+    <div class="catatan">Profil, dompet, dan akun login Firebase user ini dihapus. User tidak bisa masuk lagi dengan akun tersebut, dan datanya tidak bisa dikembalikan.
+      Saldo coin yang tersisa ikut hilang. Kalau hanya ingin menghentikan sementara, pakai Blokir.</div>`,
+    async () => {
+      const teks = ($("konfirHapus")?.value || "").trim().toLowerCase();
+      if (teks !== String(nama).trim().toLowerCase()) return toast("Nama belum sama", true);
+      const tutup = $("modalTutup");
+      try {
+        // 1) dompet + akun login Firebase (lewat server)
+        let authInfo = "";
+        try {
+          const r = await walletAdmin({ op: "delete_user", uid });
+          const baris = (r.hasil || [])[0] || {};
+          if (baris.lewat) { toast("Akun resmi tidak boleh dihapus", true); return; }
+          authInfo = baris.auth ? "akun login terhapus" : ("akun login belum terhapus: " + (baris.auth_alasan || "kunci layanan belum dipasang"));
+        } catch (e) {
+          authInfo = "dompet gagal dihapus: " + (e.message || e);
+        }
+
+        // 2) dokumen Firestore
+        await Promise.all([
+          deleteDoc(doc(db, "users", uid)).catch(() => {}),
+          deleteDoc(doc(db, "userIds", uid)).catch(() => {}),
+          deleteDoc(doc(db, "wallets", uid)).catch(() => {}),
+          deleteDoc(doc(db, "banned", uid)).catch(() => {})
+        ]);
+
+        catatLog("Hapus user", `${nama} · ${uid} · ${authInfo}`);
+        if (tutup) tutup.click();
+        toast("User dihapus · " + authInfo);
+        gambarUser();
+      } catch (e) {
+        toast("Gagal menghapus: " + (e.message || e), true);
+      }
+    });
 }
 
 async function blokirUser(uid, nama, diblokir) {

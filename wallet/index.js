@@ -2117,6 +2117,71 @@ async function panel(env, body) {
   return json({ ok: 0, e: "Aksi panel tidak dikenal: " + aksi });
 }
 
+
+/**
+ * Hapus akun login Firebase Auth.
+ *
+ * Butuh kunci service account di variabel lingkungan FIREBASE_SA_JSON
+ * (isi berkas JSON dari Firebase Console > Project settings > Service accounts).
+ * Tanpa kunci itu, akun login tidak bisa dihapus dari server.
+ */
+let saCache = { kunci: "", token: "", exp: 0 };
+
+async function tokenLayanan(env) {
+  const mentah = String(env.FIREBASE_SA_JSON || "").trim();
+  if (!mentah) return "";
+  if (saCache.kunci === mentah && saCache.token && Date.now() < saCache.exp - 60000) return saCache.token;
+  let sa;
+  try { sa = JSON.parse(mentah); } catch (e) { return ""; }
+  if (!sa.client_email || !sa.private_key) return "";
+  const b64u = (buf) => Buffer.from(buf).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const kepala = b64u(JSON.stringify({ alg: "RS256", typ: "JWT", kid: sa.private_key_id || undefined }));
+  const kini = Math.floor(Date.now() / 1000);
+  const isi = b64u(JSON.stringify({
+    iss: sa.client_email,
+    scope: "https://www.googleapis.com/auth/identitytoolkit https://www.googleapis.com/auth/firebase",
+    aud: "https://oauth2.googleapis.com/token",
+    iat: kini,
+    exp: kini + 3600,
+  }));
+  const data = kepala + "." + isi;
+  const kunci = await crypto.subtle.importKey(
+    "pkcs8",
+    Buffer.from(sa.private_key.replace(/-----[^-]+-----/g, "").replace(/\s+/g, ""), "base64"),
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const ttd = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", kunci, new TextEncoder().encode(data));
+  const jwt = data + "." + b64u(new Uint8Array(ttd));
+  const r = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: "grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=" + encodeURIComponent(jwt),
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!j.access_token) return "";
+  saCache = { kunci: mentah, token: j.access_token, exp: Date.now() + (Number(j.expires_in || 3600) * 1000) };
+  return j.access_token;
+}
+
+async function hapusAkunAuth(env, uid) {
+  const token = await tokenLayanan(env);
+  if (!token) return { ok: 0, alasan: "Kunci layanan belum dipasang" };
+  const proyek = String(env.FIREBASE_PROJECT || "my-app-e7f8c").trim();
+  const r = await fetch(`https://identitytoolkit.googleapis.com/v1/projects/${proyek}/accounts:delete`, {
+    method: "POST",
+    headers: { authorization: "Bearer " + token, "content-type": "application/json" },
+    body: JSON.stringify({ localId: uid }),
+  });
+  const j = await r.json().catch(() => ({}));
+  if (r.ok) return { ok: 1 };
+  const pesan = String(j?.error?.message || "");
+  // Akun yang memang sudah tidak ada dianggap berhasil.
+  if (pesan.includes("USER_NOT_FOUND") || pesan.includes("EMAIL_NOT_FOUND")) return { ok: 1 };
+  return { ok: 0, alasan: pesan || ("HTTP " + r.status) };
+}
+
 async function admin(env, body) {
   const sesi = await sesiDariToken(body.t ?? "");
   if (!sesi) return json({ ok: 0, e: "Token tidak valid" }, 401);
@@ -2552,7 +2617,9 @@ async function admin(env, body) {
         { sql: "delete from hive_order where uid = ?", args: [T(u)] },
         { sql: "delete from wallets where uid = ?", args: [T(u)] },
       ]);
-      hasil.push({ uid: u, hapus: 1 });
+      // Akun login Firebase ikut dihapus, bukan hanya data dompetnya.
+      const auth = await hapusAkunAuth(env, u).catch((e) => ({ ok: 0, alasan: String(e?.message ?? e) }));
+      hasil.push({ uid: u, hapus: 1, auth: auth.ok ? 1 : 0, auth_alasan: auth.alasan || "" });
     }
     return json({ ok: 1, hasil });
   }

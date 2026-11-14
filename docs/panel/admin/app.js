@@ -1676,6 +1676,32 @@ async function gambarWallet() {
           Tombol dengan tulisan "semua user" langsung mengosongkan data massal, jadi pastikan dulu sebelum menekan.
         </div>
       </div>
+    </div>
+
+    <div class="panel" style="margin-top:14px">
+      <div class="panelAtas"><h3>Topup manual (DANA / GoPay / QRIS)</h3>
+        <div class="filter"><div class="pil on" id="payMuat">Muat ulang</div></div>
+      </div>
+      <div style="padding:12px">
+        <div class="isian"><label>Nomor DANA</label><input id="payDana" placeholder="08xxxxxxxxxx"></div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <div class="isian" style="flex:1;min-width:140px"><label>Nama pemilik</label><input id="payNama" placeholder="Nama sesuai akun"></div>
+          <div class="isian" style="flex:1;min-width:140px"><label>Nomor GoPay</label><input id="payGopay" placeholder="08xxxxxxxxxx"></div>
+        </div>
+        <div class="isian" style="margin-top:10px"><label>Gambar QRIS</label>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <input id="payQris" placeholder="tautan gambar atau tekan Unggah" style="flex:1;min-width:160px">
+            <button class="tombolAtas" id="payUnggah">Unggah</button>
+          </div>
+          <div id="payQrisLihat" style="margin-top:8px"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap">
+          <button class="tombolUtama" id="paySimpan">Simpan info pembayaran</button>
+          <span class="catatan" id="payHasil" style="padding:0"></span>
+        </div>
+        <div class="catatan" style="margin-top:10px">Nomor dan QRIS ini yang dilihat user saat mengajukan topup manual di aplikasi. Kosongkan salah satu kalau tidak dipakai.</div>
+      </div>
+      <div id="payDaftar" style="padding:0 12px 12px"></div>
     </div>`;
 
   let opTerpilih = "add";
@@ -1749,6 +1775,128 @@ async function gambarWallet() {
       t.disabled = false; t.textContent = "Jalankan";
     }
   };
+
+  /* ---------- topup manual: info pembayaran + pengajuan ---------- */
+  function lihatQris(url) {
+    const kotak = $("payQrisLihat");
+    if (!kotak) return;
+    kotak.innerHTML = url
+      ? `<img src="${aman(url)}" alt="QRIS" style="max-width:180px;border-radius:10px;background:#fff;padding:6px">`
+      : "";
+  }
+
+  async function muatPengajuan() {
+    const kotak = $("payDaftar");
+    if (!kotak) return;
+    kotak.innerHTML = '<div class="kosong">Memuat pengajuan…</div>';
+    try {
+      const out = await walletAdmin({ op: "manual_all", limit: 40 });
+      const baris = out.list || [];
+      if (!baris.length) { kotak.innerHTML = '<div class="kosong">Belum ada pengajuan topup.</div>'; return; }
+      kotak.innerHTML = `<table>
+        <tr><th>WAKTU</th><th>USER</th><th>COIN</th><th>NOMINAL</th><th>METODE</th><th>PENGIRIM</th><th>STATUS</th><th>AKSI</th></tr>
+        ${baris.map((b) => {
+          const waktu = b.created_at ? new Date(Number(b.created_at)).toLocaleString("id-ID") : "—";
+          const status = String(b.status || "");
+          const tag = status === "ok" ? '<span class="tag aktif">disetujui</span>'
+            : status === "tolak" ? '<span class="tag blokir">ditolak</span>'
+            : '<span class="tag">menunggu</span>';
+          const aksi = status === "pending"
+            ? `<button class="aksi" data-setuju="${aman(b.id)}">Setujui</button> · <button class="aksi" data-tolak="${aman(b.id)}">Tolak</button>`
+            : "—";
+          return `<tr>
+            <td>${aman(waktu)}</td>
+            <td>${aman(String(b.uid || "").slice(0, 12))}…</td>
+            <td>${aman(String(b.coins ?? ""))}</td>
+            <td>${aman(b.amount ? rupiah(Number(b.amount)) : "—")}</td>
+            <td>${aman(b.method || "—")}</td>
+            <td>${aman(b.payer || "—")}</td>
+            <td>${tag}</td>
+            <td>${aksi}</td>
+          </tr>`;
+        }).join("")}
+      </table><div class="kaki">${baris.length} pengajuan terakhir</div>`;
+
+      kotak.querySelectorAll("[data-setuju]").forEach((b) => (b.onclick = () => putusPengajuan(b.dataset.setuju, true)));
+      kotak.querySelectorAll("[data-tolak]").forEach((b) => (b.onclick = () => putusPengajuan(b.dataset.tolak, false)));
+    } catch (e) {
+      kotak.innerHTML = `<div class="kosong">${aman(e.message || "Gagal memuat")}</div>`;
+    }
+  }
+
+  async function putusPengajuan(id, setuju) {
+    try {
+      await walletAdmin({ op: "manual_decide", id, ok: setuju });
+      catatLog("Topup manual", (setuju ? "Setujui " : "Tolak ") + id);
+      toast(setuju ? "Coin sudah ditambahkan" : "Pengajuan ditolak");
+      muatPengajuan();
+    } catch (e) {
+      toast("Gagal: " + (e.message || e), true);
+    }
+  }
+
+  async function muatInfoBayar() {
+    try {
+      const out = await walletAdmin({ op: "pay_get" });
+      const p = out.pay || {};
+      $("payDana").value = p.dana || "";
+      $("payNama").value = p.name || "";
+      $("payGopay").value = p.gopay || "";
+      $("payQris").value = p.qris || "";
+      lihatQris(p.qris);
+    } catch (e) {
+      toast("Info pembayaran gagal dimuat: " + (e.message || e), true);
+    }
+  }
+
+  $("payMuat").onclick = () => { muatInfoBayar(); muatPengajuan(); };
+  $("payQris").oninput = (e) => lihatQris(e.target.value.trim());
+  $("payUnggah").onclick = () => {
+    const pilih = el("input");
+    pilih.type = "file";
+    pilih.accept = "image/*";
+    pilih.onchange = async () => {
+      const berkas = pilih.files && pilih.files[0];
+      if (!berkas) return;
+      const tombol = $("payUnggah");
+      tombol.disabled = true;
+      try {
+        const url = await unggahBerkas(berkas, "qris", (persen) => { tombol.textContent = persen + "%"; });
+        $("payQris").value = url;
+        lihatQris(url);
+        toast("Gambar QRIS diunggah, tekan Simpan");
+      } catch (e) {
+        toast("Unggah gagal: " + (e.message || e), true);
+      } finally {
+        tombol.disabled = false; tombol.textContent = "Unggah";
+      }
+    };
+    pilih.click();
+  };
+  $("paySimpan").onclick = async () => {
+    const tombol = $("paySimpan");
+    tombol.disabled = true;
+    try {
+      await walletAdmin({
+        op: "pay_set",
+        dana: $("payDana").value.trim(),
+        name: $("payNama").value.trim(),
+        gopay: $("payGopay").value.trim(),
+        qris: $("payQris").value.trim()
+      });
+      $("payHasil").textContent = "Info pembayaran tersimpan.";
+      catatLog("Info pembayaran", "DANA/GoPay/QRIS disimpan");
+      toast("Info pembayaran disimpan");
+    } catch (e) {
+      $("payHasil").textContent = "";
+      toast("Gagal menyimpan: " + (e.message || e), true);
+    } finally {
+      tombol.disabled = false;
+    }
+  };
+
+  muatInfoBayar();
+  muatPengajuan();
 }
 
 /* ================= kirim item ke user ================= */

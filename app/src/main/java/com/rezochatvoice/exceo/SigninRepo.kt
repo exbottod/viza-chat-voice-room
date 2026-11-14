@@ -198,23 +198,14 @@ object SigninRepo {
             // Jalur utama: dompet Turso (sumber saldo yang dipakai aplikasi).
             val utama = try {
                 kotlinx.coroutines.withTimeoutOrNull(25_000L) {
-                    SupaRepo.signinClaim(uid, p.coins, p.date)
+                    SupaRepo.signinClaim(uid, p.day, p.date)
                 }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) { null }
-            if (utama?.wallet == null) {
-                // Cadangan: alur server game lama, untuk akun lama yang belum
-                // punya dompet Turso.
-                val ok = try {
-                    kotlinx.coroutines.withTimeoutOrNull(20_000L) {
-                        SupaRepo.waveFlow(p.coins, 2, txFor(uid, p.date, "coin"), "Sign-in")
-                    }
-                } catch (e: kotlinx.coroutines.CancellationException) {
-                    throw e
-                } catch (e: Exception) { null }
-                if (ok == null) catat("Coin belum masuk, akan dicoba otomatis")
-            }
+            // Cadangan lewat server game lama DIHAPUS: di sana jumlah coin
+            // dikirim dari aplikasi, jadi bisa dipakai mencetak coin.
+            if (utama?.wallet == null) catat("Coin belum masuk, akan dicoba otomatis")
         }
         if (p.itemId.isNotBlank()) {
             try {
@@ -233,7 +224,7 @@ object SigninRepo {
         if (p.vipTier in 1..9) {
             try {
                 kotlinx.coroutines.withTimeoutOrNull(30_000L) {
-                    SupaRepo.waveFlow(vipPrice(p.vipTier), 2, txFor(uid, p.date, "vipcoin"), "Sign-in VIP")
+                    // Harga VIP tidak lagi ditambah lewat server game lama.
                     SupaRepo.buyVip(uid, p.vipTier)
                 }
             } catch (e: kotlinx.coroutines.CancellationException) {

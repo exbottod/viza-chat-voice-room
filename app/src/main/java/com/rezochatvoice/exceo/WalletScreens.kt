@@ -832,12 +832,9 @@ fun WalletScreen(
                                         .clip(RoundedCornerShape(16.dp)).background(WalRowBg)
                                         .clickable(enabled = !busy && payOrder == null) {
                                             if (TOPUP_TEST_MODE) {
-                                                busy = true
-                                                scope.launch {
-                                                    val e = WalletRepo.topUp(uid, coins)
-                                                    busy = false
-                                                    toast(e ?: "+${fmtNum(coins)} coin")
-                                                }
+                                                // Mode uji yang menambah coin gratis sudah dimatikan:
+                                                // coin hanya boleh masuk lewat pembayaran yang sah.
+                                                toast("Mode uji tidak tersedia")
                                             } else {
                                                 busy = true
                                                 scope.launch {

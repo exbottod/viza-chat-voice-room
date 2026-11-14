@@ -718,8 +718,9 @@ object UserDirectory {
                 ),
             )
             batch.commit().await()
-            // Hadiah undangan masuk dompet Supabase (dompet tidak lagi di Firestore).
-            WalletRepo.topUp(myUid, INVITE_REWARD_COINS)
+            // Hadiah undangan diberikan SERVER (sekali per akun). Aplikasi tidak
+            // lagi menambah coin sendiri, supaya tidak ada yang bisa mencetak coin.
+            SupaRepo.inviteClaim(myUid)
             null
         } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) {
             "Gagal: ${e.message}"

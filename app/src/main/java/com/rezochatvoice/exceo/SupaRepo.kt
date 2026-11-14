@@ -673,8 +673,9 @@ object SupaRepo {
             hasil ?: org.json.JSONObject().put("ok", 0).put("e", pesan)
         }
 
-    suspend fun signinClaim(uid: String, coins: Long, date: String): Res =
-        call("signin_claim", uidJson(uid).put("coins", coins).put("date", date))
+    /** Hadiah cek in diambil server dari pengaturan panel; aplikasi hanya kirim hari ke berapa. */
+    suspend fun signinClaim(uid: String, day: Int, date: String): Res =
+        call("signin_claim", uidJson(uid).put("day", day).put("date", date))
 
     suspend fun sendGift(
         uid: String,
@@ -731,6 +732,22 @@ object SupaRepo {
             mult = j.optInt("mult"),
             parts = parts,
         )
+    }
+
+    /** Jackpot gift: diundi server, coin ditambahkan di server juga. */
+    class JpRes(val win: Long, val mult: Long, val error: String?)
+
+    suspend fun giftJp(uid: String, itemId: String, count: Int): JpRes {
+        val p = uidJson(uid).put("item_id", itemId).put("count", count)
+        val j = postRaw("gift_jp", p) ?: return JpRes(0, 0, "Server tidak merespons")
+        if (j.optInt("ok") != 1) return JpRes(0, 0, j.optString("e").ifBlank { "Jackpot gagal" })
+        return JpRes(j.optLong("win"), j.optLong("mult"), null)
+    }
+
+    /** Hadiah memakai kode undangan: diperiksa server, sekali per akun. */
+    suspend fun inviteClaim(uid: String): Long {
+        val j = postRaw("invite_claim", uidJson(uid)) ?: return 0
+        return if (j.optInt("ok") == 1) j.optLong("win") else 0
     }
 
     /** Hadiah hasil klaim roket dari server. */

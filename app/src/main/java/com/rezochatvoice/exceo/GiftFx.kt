@@ -206,9 +206,18 @@ object GiftFx {
             comboN = try {
                 kotlinx.coroutines.withTimeoutOrNull(3000L) { combo(roomId, uid) } ?: 1
             } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { 1 }
-            if (g.jpRate > 0 && (1..100).random() <= g.jpRate) {
-                jpWin = g.price * g.jpMult * count
-                WalletRepo.topUp(uid, jpWin)
+            // Jackpot diundi SERVER. Aplikasi dulu mengundi sendiri lalu menambah
+            // coin lewat topup, dan itu jalan pintas untuk mencetak coin. Sekarang
+            // coin jackpot masuk di server, aplikasi hanya menampilkan hasilnya.
+            if (g.jpRate > 0) {
+                val jp = try {
+                    kotlinx.coroutines.withTimeoutOrNull(9000L) { SupaRepo.giftJp(uid, g.id, count) }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    null
+                }
+                if (jp != null && jp.win > 0) jpWin = jp.win
             }
             // Cashback: server yang mengundi pecahan (RTP dan tabel diatur di panel).
             val cb = try {
@@ -237,31 +246,9 @@ object GiftFx {
                 } catch (e: Exception) { }
             }
         }
-        // Server belum siap / belum di-deploy: undi lokal dari pengaturan panel
-        // supaya animasi pecahan tetap jalan.
-        if (cbWin <= 0L && (cbParts.isBlank() || cbMult <= 0)) {
-            val value = (if (g.cbPrice > 0L) g.cbPrice else g.price) * count
-            val local = CashbackCfg.roll(value)
-            if (local != null && local.parts.isNotEmpty()) {
-                cbParts = local.parts.joinToString(",")
-                cbPecahan = local.parts.first()
-                cbMult = local.mult
-                cbWin = local.parts.sum()
-                cbJp = cbWin >= local.jpMin
-                try { WalletRepo.topUp(uid, cbWin) } catch (e: Exception) { }
-                try {
-                    Rtdb.ref("cashback/$uid/total").setValue(ServerValue.increment(cbWin))
-                    Rtdb.ref("cashback/$uid/log").push().setValue(
-                        hashMapOf<String, Any?>(
-                            "g" to g.name,
-                            "cb" to cbWin,
-                            "p" to cbPecahan,
-                            "ts" to System.currentTimeMillis(),
-                        ),
-                    )
-                } catch (e: Exception) { }
-            }
-        }
+        // Dulu di sini ada undian cashback lokal yang menambah coin langsung dari
+        // aplikasi. Itu jalan pintas mencetak coin, jadi dihapus: cashback hanya
+        // diberikan server lewat gift_cashback dan hanya jika server menjawab.
         // Gift terbang ke avatar penerima, lalu pecahan cashback muncul di titik itu.
         // Dikirim satu per penerima supaya tiap kursi kebagian.
         val flyTo = if (seats.isNotEmpty()) seats else listOf(Triple(targetUid, targetName, targetSeat))

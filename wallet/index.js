@@ -439,6 +439,10 @@ async function siapTabel(env) {
     { sql: "create table if not exists money_tx (uid text, kind text, item_id text, amount integer, room_id text, created_at integer)" },
     { sql: "create table if not exists exchange_req (req_id text primary key, uid text, at integer)" },
     { sql: "create table if not exists gift_req (req_id text primary key, uid text, at integer)" },
+    // Setiap gift yang sudah dibayar hanya boleh diundi jackpotnya sekali.
+    { sql: "create table if not exists jp_claim (req_id text primary key, uid text, at integer)" },
+    // Hadiah undangan hanya sekali per akun.
+    { sql: "create table if not exists invite_reward (uid text primary key, at integer)" },
     { sql: "create table if not exists vip_req (req_id text primary key, uid text, at integer)" },
     { sql: "create table if not exists topup_req (req_id text primary key, uid text, at integer)" },
     { sql: "create table if not exists hive_order (order_id text primary key, uid text, kind text, amount integer, round_id text, game text, at integer)" },
@@ -1167,6 +1171,12 @@ async function kreditPenerima(env, uid, p, price, item, room, now, req) {
 }
 
 async function topup(env, uid, p) {
+  // PENTING: coin tidak boleh dicetak dari aplikasi. Dulu siapa pun yang punya
+  // akun bisa memanggil op ini dan menambah coin sesukanya. Sekarang hanya
+  // staf/panel yang boleh, sedang reward (jackpot, undangan) punya jalur
+  // sendiri yang diperiksa server.
+  const peran = await peranStaf(env, uid);
+  if (!peran.length) return gagal("Coin hanya bisa ditambah lewat pembayaran atau panel");
   await pastikan(env, uid);
   const coins = Math.trunc(Number(p.coins ?? 0));
   if (coins <= 0) return gagal("Jumlah tidak valid");
@@ -1196,11 +1206,21 @@ async function topup(env, uid, p) {
 
 /** Hadiah cek in harian: sekali per tanggal, tidak bisa dobel. */
 async function klaimSignin(env, uid, p) {
-  const coins = Math.trunc(Number(p.coins ?? 0));
   const date = String(p.date ?? "").slice(0, 10);
-  if (!(coins > 0) || coins > 500000000) return gagal("Jumlah hadiah cek in tidak valid");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return gagal("Tanggal cek in tidak valid");
+  const hari = Math.max(1, Math.min(7, Math.floor(Number(p.day ?? p.hari ?? 1))));
+  // Hadiah dibaca dari pengaturan panel (signinCfg/days/{hari}), BUKAN dari
+  // angka kiriman aplikasi. Dulu aplikasi mengirim jumlah coin sendiri, jadi
+  // siapa pun bisa mengirim angka besar dan mencetak coin tiap hari.
+  const cfg = await cfgRtdb("signinCfg");
+  const baris = (cfg && cfg.days && (cfg.days[String(hari)] ?? cfg.days[hari])) || null;
+  const coins = Math.max(0, Math.min(500000000, Math.floor(Number(baris?.coins ?? 0))));
   await pastikan(env, uid);
+  if (!(coins > 0)) {
+    // Panel belum mengisi hadiah hari ini: klaim tetap dianggap sah tanpa coin.
+    const w = await pipe(env, [{ sql: `select ${KOLOM} from wallets where uid = ?`, args: [T(uid)] }]);
+    return ok(rapikan(w[0].rows[0]));
+  }
   const req = `signin-${uid}-${date}`;
   const now = Date.now();
   const r = await pipe(env, [
@@ -1767,6 +1787,83 @@ async function cashbackGift(env, uid, p) {
   return json({ ok: 1, amount: paid, mult: Math.floor(mult), multF: mult,
     parts: parts.slice(0, 5), pecahan: parts[0] ?? 0,
     recv, jp: paid >= jpMin ? 1 : 0, asset: "" });
+}
+
+// ---------- Jackpot gift (diundi server) ----------
+/** Harga dan aturan jackpot dibaca dari katalog gift di RTDB (giftCfg/{id}). */
+async function katalogGift(env, id) {
+  const k = String(id || "").trim();
+  if (!k) return null;
+  const d = await cfgRtdb("giftCfg/" + k);
+  const price = Math.max(0, Math.floor(Number(d?.price ?? 0)));
+  if (!(price > 0)) return null;
+  return {
+    id: k,
+    price,
+    jpRate: Math.max(0, Math.min(100, Math.floor(Number(d?.jpRate ?? 0)))),
+    jpMult: Math.max(0, Math.min(100000, Math.floor(Number(d?.jpMult ?? 0)))),
+  };
+}
+
+/**
+ * Undian jackpot untuk satu gift yang SUDAH dibayar. Aplikasi hanya menampilkan
+ * hasilnya; coin ditambahkan di sini. Satu baris gift_req hanya bisa diundi
+ * sekali, jadi tidak bisa diulang-ulang untuk memancing jackpot.
+ */
+async function jackpotGift(env, uid, p) {
+  const itemId = String(p.itemId ?? p.item_id ?? p.id ?? "").trim();
+  const count = Math.max(1, Math.min(999, Math.floor(Number(p.count ?? 1))));
+  const g = await katalogGift(env, itemId);
+  if (!g || g.jpRate <= 0 || g.jpMult <= 0) return json({ ok: 1, win: 0, mult: 0 });
+  const now = Date.now();
+  // Klaim satu gift terbaru (maksimal 5 menit lalu) yang belum pernah diundi.
+  const r = await pipe(env, [
+    {
+      sql: `insert into jp_claim (req_id, uid, at)
+            select r.req_id, r.uid, ? from gift_req r
+             where r.uid = ? and r.at >= ?
+               and not exists (select 1 from jp_claim c where c.req_id = r.req_id)
+             order by r.at desc limit 1`,
+      args: [I(now), T(uid), I(now - 300000)],
+    },
+  ]);
+  if (!((r[0].affected ?? 0) > 0)) return json({ ok: 1, win: 0, mult: 0 });
+  if (Math.random() * 100 >= g.jpRate) return json({ ok: 1, win: 0, mult: 0 });
+  const menang = Math.max(0, Math.floor(g.price * g.jpMult * count));
+  const paid = menang > 0 ? await beriCoin(env, uid, menang, "gift_jp", g.id) : 0;
+  return json({ ok: 1, win: paid, mult: g.jpMult });
+}
+
+// ---------- Hadiah undangan (sekali per akun) ----------
+const INVITE_COINS = 10000000;
+
+/** Hadiah memakai kode undangan. Diperiksa server, sekali per akun. */
+async function hadiahUndangan(env, uid) {
+  const now = Date.now();
+  const kunci = await pipe(env, [
+    { sql: "insert or ignore into invite_reward (uid, at) values (?, ?)", args: [T(uid), I(now)] },
+  ]);
+  if (!((kunci[0].affected ?? 0) > 0)) return json({ ok: 1, win: 0, sudah: 1 });
+  // Wajib punya catatan undangan di Firestore (invites/{uid}); tanpa itu bukan
+  // pengguna kode undangan dan tidak dapat hadiah.
+  let ada = false;
+  try {
+    const token = await tokenLayanan(env);
+    if (token) {
+      const proyek = String(env.FIREBASE_PROJECT || "my-app-e7f8c").trim();
+      const r = await fetch(
+        `https://firestore.googleapis.com/v1/projects/${proyek}/databases/(default)/documents/invites/${encodeURIComponent(uid)}`,
+        { headers: { authorization: "Bearer " + token } },
+      );
+      ada = r.ok;
+    }
+  } catch (e) { ada = false; }
+  if (!ada) {
+    await pipe(env, [{ sql: "delete from invite_reward where uid = ?", args: [T(uid)] }]);
+    return gagal("Catatan undangan tidak ditemukan");
+  }
+  const paid = await beriCoin(env, uid, INVITE_COINS, "undangan", null);
+  return json({ ok: 1, win: paid });
 }
 
 // ---------- Topup manual DANA ----------
@@ -4029,6 +4126,10 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           return await kirimGift(env, uid, p);
         case "topup":
           return await topup(env, uid, p);
+        case "gift_jp":
+          return await jackpotGift(env, uid, p);
+        case "invite_claim":
+          return await hadiahUndangan(env, uid);
         case "signin_claim":
           return await klaimSignin(env, uid, p);
         case "exchange":

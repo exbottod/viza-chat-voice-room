@@ -1061,7 +1061,13 @@ fun RoomScreen(
                 DialogCard {
                     Text(tr("Keluar dari room?"), color = GoldLight, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(18.dp))
-                    GoldButton(tr("Keluar")) { resetDrafts(); onExit() }
+                    GoldButton(tr("Keluar")) {
+                        // Keluar room berarti riwayat chat dan draf memang harus
+                        // dibuang. Hanya minimize yang menyimpannya.
+                        RoomChatCache.hapus(roomId)
+                        resetDrafts()
+                        onExit()
+                    }
                     Spacer(Modifier.height(10.dp))
                     OutlineButton(tr("Minimalkan")) { panel = P_NONE; onMinimize() }
                 }

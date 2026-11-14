@@ -1709,7 +1709,7 @@ async function gambarWallet() {
         <div class="filter"><div class="pil on" id="payMuat">Muat ulang</div></div>
       </div>
       <div style="padding:12px">
-        <div class="isian"><label>Nomor DANA</label><input id="payDana" placeholder="08xxxxxxxxxx"></div>
+        <div class="isian"><label>Nomor DANA atau tautan resmi DANA</label><input id="payDana" placeholder="08xxxxxxxxxx atau https://qr.dana.id/..."></div>
         <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
           <div class="isian" style="flex:1;min-width:140px"><label>Nama pemilik</label><input id="payNama" placeholder="Nama sesuai akun"></div>
           <div class="isian" style="flex:1;min-width:140px"><label>Nomor GoPay</label><input id="payGopay" placeholder="08xxxxxxxxxx"></div>

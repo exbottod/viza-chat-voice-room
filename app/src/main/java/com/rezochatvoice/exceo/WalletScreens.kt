@@ -59,17 +59,44 @@ private fun bukaAplikasi(ctx: android.content.Context, paket: String, cadangan: 
 private fun openDana(ctx: android.content.Context) =
     bukaAplikasi(ctx, "com.dana.id", "https://m.dana.id", tr("Aplikasi DANA tidak bisa dibuka"))
 
+/** Nilai dari panel bisa berupa nomor HP atau tautan resmi DANA (http/https/dana:). */
+private fun tautanDana(nilai: String): String? {
+    val n = nilai.trim()
+    return when {
+        n.startsWith("dana:", true) -> n
+        n.startsWith("http://", true) || n.startsWith("https://", true) -> n
+        else -> null
+    }
+}
+
 /**
- * Sekali tekan: nomor tujuan dari panel developer otomatis masuk papan klip
- * lalu aplikasi DANA langsung dibuka. User tinggal tempel nomornya, tidak
- * perlu menyalin manual lagi. Nomor selalu diambil dari panel, bukan dari kode.
+ * Sekali tekan langsung lari ke DANA:
+ *  - panel berisi tautan resmi (mis. tautan QR/terima uang DANA) -> tautan itu dibuka
+ *    langsung di aplikasi DANA, jadi penerima dan nominalnya sudah terisi.
+ *  - panel berisi nomor HP -> nomor otomatis tersalin, lalu aplikasi DANA dibuka.
+ * Tidak ada lagi langkah salin manual sebelum masuk DANA.
  */
-private fun bayarKeDana(ctx: android.content.Context, nomor: String) {
-    val n = nomor.trim()
-    if (n.isNotBlank()) {
+private fun bayarKeDana(ctx: android.content.Context, nilai: String) {
+    val isi = nilai.trim()
+    val tautan = tautanDana(isi)
+    if (tautan != null) {
+        try {
+            val niat = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(tautan))
+            niat.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            // Utamakan aplikasi DANA; kalau tidak ada, biarkan browser menanganinya.
+            if (tautan.startsWith("dana:", true)) {
+                niat.setPackage("com.dana.id")
+            }
+            ctx.startActivity(niat)
+            return
+        } catch (e: Exception) {
+            // Lanjut ke cara nomor di bawah kalau tautan gagal dibuka.
+        }
+    }
+    if (isi.isNotBlank()) {
         try {
             val cm = ctx.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-            cm.setPrimaryClip(android.content.ClipData.newPlainText("nomor dana", n))
+            cm.setPrimaryClip(android.content.ClipData.newPlainText("nomor dana", isi))
             android.widget.Toast.makeText(ctx, tr("Nomor DANA sudah disalin, tinggal tempel di DANA"), android.widget.Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
             android.widget.Toast.makeText(ctx, tr("Gagal menyalin nomor"), android.widget.Toast.LENGTH_SHORT).show()
@@ -1033,7 +1060,7 @@ fun WalletScreen(
                                 Text(payDana, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF118EEA))
                                 Spacer(Modifier.height(12.dp))
                                 Text(
-                                    tr("Tekan tombol di bawah: nomor tujuan dari panel otomatis tersalin dan aplikasi DANA langsung terbuka. Tinggal tempel nomornya lalu kirim sebesar ${harga.ifBlank { "nominal paket" }}."),
+                                    tr("Tekan tombol di bawah untuk langsung masuk ke DANA. Nomor tujuan dari panel otomatis tersalin, tinggal tempel lalu kirim sebesar ${harga.ifBlank { "nominal paket" }}."),
                                     fontSize = 12.sp,
                                     color = WalGrey,
                                 )
@@ -1047,7 +1074,7 @@ fun WalletScreen(
                                         .padding(vertical = 12.dp),
                                     contentAlignment = Alignment.Center,
                                 ) {
-                                    Text(tr("Buka DANA (nomor otomatis tersalin)"), color = WalNavy, fontWeight = FontWeight.Bold)
+                                    Text(tr("Bayar lewat DANA"), color = WalNavy, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }

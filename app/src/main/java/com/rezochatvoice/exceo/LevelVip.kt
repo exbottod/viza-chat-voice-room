@@ -697,7 +697,7 @@ fun VipScreen(uid: String, wallet: Wallet, onBack: () -> Unit) {
 
                 // ---- paket ----
                 VipSectionTitle("VIP Packages")
-                VipPackageButton(VIP_DAYS, price, active) { confirm = true }
+                VipPackageButton(VIP_DAYS.toInt(), price, active) { confirm = true }
                 Spacer(Modifier.height(20.dp))
             } else {
                 VipSectionTitle("Item VIP$sel")
@@ -710,10 +710,12 @@ fun VipScreen(uid: String, wallet: Wallet, onBack: () -> Unit) {
                 VipItemList(sel)
                 Spacer(Modifier.height(16.dp))
                 VipSectionTitle("VIP Packages")
-                VipPackageButton(VIP_DAYS, price, active) { confirm = true }
+                VipPackageButton(VIP_DAYS.toInt(), price, active) { confirm = true }
                 Spacer(Modifier.height(20.dp))
             }
         }
+    }
+
     if (confirm) AlertDialog(
         onDismissRequest = { confirm = false },
         title = { Text(tr("Beli VIP$sel")) },

@@ -1097,9 +1097,14 @@ fun StoreScreen(uid: String, wallet: Wallet, onOpenVip: () -> Unit, onBack: () -
                 // (tampil emoji kosong) dan item yang sudah expired tidak ditampilkan.
                 // Item milik VIP Center punya id vipt_/vipf_/vipb_/vipe_/vipbn_ dan
                 // hanya tampil di tab Item VIP, tidak lagi bercampur di kategori Store.
+                // Item VIP dan SVIP (vip*_ / sv*_) hanya tampil di tab Item VIP,
+                // supaya tidak dobel di kategori Store seperti Entry effect.
                 val isVipId = { i: String ->
                     i.startsWith("vipt_") || i.startsWith("vipf_") || i.startsWith("vipb_") ||
-                        i.startsWith("vipe_") || i.startsWith("vipbn_") || i.startsWith("vipm_")
+                        i.startsWith("vipe_") || i.startsWith("vipbn_") || i.startsWith("vipm_") ||
+                        i.startsWith("sve_") || i.startsWith("svf_") || i.startsWith("svb_") ||
+                        i.startsWith("svbn_") || i.startsWith("svbd_") || i.startsWith("svm_") ||
+                        i.startsWith("svip")
                 }
                 val vipLevelOf = { i: String -> i.substringAfter("_").toIntOrNull() ?: 0 }
                 val mineAll = wallet.inv.filter { it.value > now }

@@ -1691,7 +1691,7 @@ async function gambarWallet() {
         <div class="isian" style="margin-top:10px"><label>Gambar QRIS</label>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <input id="payQris" placeholder="tautan gambar atau tekan Unggah" style="flex:1;min-width:160px">
-            <label class="tombolAtas" for="payQrisFile" role="button" id="payUnggah">Unggah</label>
+            <label class="tombolAtas" for="payQrisFile" role="button" id="payUnggah" style="color:#fff;cursor:pointer">Unggah</label>
             <input type="file" id="payQrisFile" accept="image/*" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
           </div>
           <div id="payQrisLihat" style="margin-top:8px"></div>

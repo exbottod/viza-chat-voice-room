@@ -628,6 +628,18 @@ const keteranganHal = {
 function bukaRute() {
   if ($("aplikasi").hidden) return;
   const nama = (location.hash.replace("#", "") || "dashboard").split("?")[0];
+  // Pengaturan (mendaftarkan admin panel) hanya untuk Owner. Admin lain boleh
+  // semua halaman lain, tapi tidak bisa membuat akun panel baru.
+  const peranSaya = String(adminSaya?.peran || "");
+  const menuPengaturan = document.querySelector('.menu[data-hal="pengaturan"]');
+  if (menuPengaturan) menuPengaturan.hidden = peranSaya !== "owner";
+  if (nama === "pengaturan" && peranSaya !== "owner") {
+    $("judulHal").textContent = "Khusus owner";
+    $("crumbHal").textContent = "Dashboard";
+    document.querySelectorAll(".menu").forEach((m) => m.classList.toggle("aktif", m.dataset.hal === "dashboard"));
+    $("isiHal").innerHTML = '<div class="kosong">Halaman Pengaturan hanya bisa dibuka Owner.</div>';
+    return;
+  }
   const hal = daftarHal[nama] || daftarHal.dashboard;
   document.querySelectorAll(".menu").forEach((m) => m.classList.toggle("aktif", m.dataset.hal === nama));
   $("judulHal").textContent = hal.judul;
@@ -2635,7 +2647,6 @@ async function gambarPengaturan() {
           <div class="isian" style="margin-top:10px"><label>Password</label><input id="aSandi" type="text" placeholder="minimal 6 karakter"></div>
           <div class="isian" style="margin-top:10px"><label>Peran</label><select id="aPeran">
             <option value="admin">Admin</option>
-            <option value="moderator">Moderator</option>
             <option value="owner">Owner</option>
           </select></div>
           <button class="tombol" id="aSimpan" style="margin-top:14px;width:100%">Daftarkan admin</button>
@@ -2660,6 +2671,9 @@ async function gambarPengaturan() {
     </div>`;
 
   $("aSimpan").onclick = async () => {
+    if (String((adminSaya && adminSaya.peran) || "") !== "owner") {
+      return toast("Hanya Owner yang bisa mendaftarkan admin panel", true);
+    }
     const nama = $("aNama").value.trim(), sandi = $("aSandi").value, peran = $("aPeran").value;
     let email = ($("aEmail").value || "").trim().toLowerCase();
     // Email tidak wajib. Kalau dikosongkan, panel membuat alamat login internal

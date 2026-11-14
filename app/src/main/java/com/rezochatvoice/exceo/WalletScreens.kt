@@ -30,18 +30,46 @@ import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
-// QR DANA milik admin (hasil baca QR terima uang). Tombol di dialog topup
-// membuka tautan ini supaya aplikasi DANA langsung terbuka.
-const val DANA_LINK = "https://link.dana.id/minta?full_url=https://qr.dana.id/v1/281012012023020637707267"
+@Deprecated("Nomor DANA sekarang diatur dari panel developer, bukan tautan di kode.")
+const val DANA_LINK = ""
 const val DANA_QR_IMG = "https://GANTI-HALAMAN-ANDA/dana-qr.png"
 
-private fun openDana(ctx: android.content.Context) {
+/**
+ * Buka aplikasi DANA di halaman utama. Nomor tujuan TIDAK ditempel ke tautan
+ * karena DANA menolak kalau akun pengirim sama dengan penerima, dan tautan QR
+ * lama di kode mengunci penerima ke akun yang salah. Nomor yang diisi admin di
+ * panel ditampilkan di layar untuk disalin user.
+ */
+private fun bukaAplikasi(ctx: android.content.Context, paket: String, cadangan: String, pesan: String) {
     try {
-        val i = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(DANA_LINK))
+        val niat = ctx.packageManager.getLaunchIntentForPackage(paket)
+        if (niat != null) {
+            niat.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            ctx.startActivity(niat)
+            return
+        }
+        val i = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(cadangan))
         i.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
         ctx.startActivity(i)
     } catch (e: Exception) {
-        android.widget.Toast.makeText(ctx, tr("Aplikasi DANA tidak bisa dibuka"), android.widget.Toast.LENGTH_SHORT).show()
+        android.widget.Toast.makeText(ctx, pesan, android.widget.Toast.LENGTH_SHORT).show()
+    }
+}
+
+private fun openDana(ctx: android.content.Context) =
+    bukaAplikasi(ctx, "com.dana.id", "https://m.dana.id", tr("Aplikasi DANA tidak bisa dibuka"))
+
+private fun openGopay(ctx: android.content.Context) =
+    bukaAplikasi(ctx, "com.gojek.app", "https://gojek.link", tr("Aplikasi GoPay tidak bisa dibuka"))
+
+/** Salin teks ke clipboard supaya user tidak salah ketik nomor tujuan. */
+private fun salinTeks(ctx: android.content.Context, teks: String) {
+    try {
+        val cm = ctx.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        cm.setPrimaryClip(android.content.ClipData.newPlainText("nomor", teks))
+        android.widget.Toast.makeText(ctx, tr("Nomor disalin"), android.widget.Toast.LENGTH_SHORT).show()
+    } catch (e: Exception) {
+        android.widget.Toast.makeText(ctx, tr("Gagal menyalin nomor"), android.widget.Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -957,6 +985,18 @@ fun WalletScreen(
                                 Text(tr("Transfer ke GoPay:"))
                                 Spacer(Modifier.height(6.dp))
                                 Text(payGopay, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF00A66A))
+                                Spacer(Modifier.height(10.dp))
+                                Box(
+                                    Modifier.fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(WalRowBg)
+                                        .border(1.dp, Color(0xFFD9D9E3), RoundedCornerShape(12.dp))
+                                        .clickable { salinTeks(context, payGopay) }
+                                        .padding(vertical = 12.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(tr("Salin nomor GoPay"), color = WalNavy, fontWeight = FontWeight.Bold)
+                                }
                             }
                             "qris" -> {
                                 Text(tr("Scan QRIS ini lalu bayar $harga:"))
@@ -974,30 +1014,22 @@ fun WalletScreen(
                                 Text(payDana, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF118EEA))
                                 Spacer(Modifier.height(12.dp))
                                 Text(
-                                    tr("Tekan tombol ini, aplikasi DANA terbuka sendiri, lalu masukkan nominal $harga."),
+                                    tr("Tekan tombol ini untuk membuka aplikasi DANA, lalu kirim ke nomor di atas sebesar ${harga.ifBlank { "nominal paket" }}. Tombol di bawah menyalin nomornya."),
                                     fontSize = 12.sp,
                                     color = WalGrey,
                                 )
-                                Spacer(Modifier.height(8.dp))
+                                Spacer(Modifier.height(10.dp))
                                 Box(
                                     Modifier.fillMaxWidth()
                                         .clip(RoundedCornerShape(12.dp))
-                                        .background(Color(0xFF118EEA))
-                                        .clickable { openDana(context) }
+                                        .background(WalRowBg)
+                                        .border(1.dp, Color(0xFFD9D9E3), RoundedCornerShape(12.dp))
+                                        .clickable { salinTeks(context, payDana) }
                                         .padding(vertical = 12.dp),
                                     contentAlignment = Alignment.Center,
                                 ) {
-                                    Text(tr("Buka DANA"), color = Color.White, fontWeight = FontWeight.Bold)
+                                    Text(tr("Salin nomor DANA"), color = WalNavy, fontWeight = FontWeight.Bold)
                                 }
-                                Spacer(Modifier.height(10.dp))
-                                Text(tr("Atau pindai QR ini dari HP lain:"), fontSize = 12.sp, color = WalGrey)
-                                Spacer(Modifier.height(6.dp))
-                                AsyncImage(
-                                    model = DANA_QR_IMG,
-                                    contentDescription = tr("QR DANA"),
-                                    modifier = Modifier.fillMaxWidth().height(200.dp),
-                                    contentScale = ContentScale.Fit,
-                                )
                             }
                         }
                         if (payName.isNotBlank()) {
@@ -1028,7 +1060,8 @@ fun WalletScreen(
                                 val metode = payMethod
                                 manualCoins = null
                                 manualPayer = ""
-                                payUrl = if (metode == "dana") DANA_LINK else null
+                                // Tautan QR lama dihapus: penerimanya bukan nomor dari panel.
+                                payUrl = null
                                 payOrder = r.order
                                 toast(tr("Pengajuan dikirim. Coin masuk otomatis setelah admin menyetujui."))
                             } else {

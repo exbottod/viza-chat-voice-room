@@ -322,11 +322,20 @@ private fun _GcTile(g: GcItem, tile: Dp, onPick: (String) -> Unit) {
                     model = g.iconUrl, contentDescription = g.name,
                     contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(),
                 )
-            } else {
+            } else if (g.icon != 0) {
+                // painterResource(0) langsung menutup aplikasi, jadi id 0 tidak boleh dipakai.
                 Image(
                     painterResource(g.icon), contentDescription = g.name,
                     contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(),
                 )
+            } else {
+                // Game yang belum punya ikon: pakai huruf pertama namanya.
+                Box(Modifier.fillMaxSize().background(Color(0xFF3E2A19)), contentAlignment = Alignment.Center) {
+                    Text(
+                        g.name.take(1).uppercase(), color = Color(0xFFE0B54A),
+                        fontSize = 20.sp, fontWeight = FontWeight.Bold,
+                    )
+                }
             }
         }
         Spacer(Modifier.height(4.dp))

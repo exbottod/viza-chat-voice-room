@@ -1120,7 +1120,7 @@ fun RoomScreen(
                                     try { simpul.removeValue() } catch (e: Exception) { }
                                     try {
                                         val nol = mutableMapOf<String, Any>()
-                                        for (i in 0 until seats.size) nol["s$i"] = 0L
+                                        for (i in 0 until seats.size) nol[i.toString()] = 0L
                                         if (nol.isNotEmpty()) simpul.updateChildren(nol)
                                     } catch (e: Exception) { }
                                     micPoints = emptyMap()

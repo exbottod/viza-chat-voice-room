@@ -83,7 +83,7 @@ fun medalValid(id: String, w: Wallet, now: Long = System.currentTimeMillis()): B
  */
 fun activeMedalIds(w: Wallet): List<String> {
     val now = System.currentTimeMillis()
-    return medalIdList(w.equip["medals"]).filter { id ->
+    return gabungMedalTier(medalIdList(w.equip["medals"])).filter { id ->
         when {
             // Medal dari VIP center: masa aktifnya BARE NG dengan VIP
             // (lencana, frame, gelembung, efek masuk, medal ikut habis bersamaan).
@@ -107,11 +107,29 @@ private fun ownedMedalIds(w: Wallet): List<String> {
     // Medal milik VIP yang aktif selalu dianggap dimiliki, walau entri inv-nya hilang.
     val vipMedals = if (w.vip > 0 && w.vipUntil > now) (1..w.vip).map { "vipt_$it" } else emptyList()
     val worn = medalIdList(w.equip["medals"]).filter { findItem(it) != null }
-    return (w.inv.filter { (id, exp) ->
+    val semua = (w.inv.filter { (id, exp) ->
         exp > now && (id.startsWith("vipt_") || id.startsWith("svm_") || findItem(id)?.slot == "medal")
-    }.keys + vipMedals + worn)
-        .distinct()
-        .sortedWith(compareBy<String>({ !it.startsWith("vipt_") }, { it }))
+    }.keys + vipMedals + worn).distinct()
+    return gabungMedalTier(semua)
+        .sortedWith(compareBy<String>({ !it.startsWith("vipt_") && !it.startsWith("svm_") }, { tierMedal(it) }, { it }))
+}
+
+/** Nomor tier dari id medal VIP (vipt_N) atau SVIP (svm_N), atau 0 kalau bukan keduanya. */
+fun tierMedal(id: String): Int = when {
+    id.startsWith("vipt_") -> id.removePrefix("vipt_").toIntOrNull() ?: 0
+    id.startsWith("svm_") -> id.removePrefix("svm_").toIntOrNull() ?: 0
+    else -> 0
+}
+
+/**
+ * Satu tier hanya boleh punya satu medal. vipt_N (Gelar VIP) dan svm_N (medal SVIP)
+ * memakai gambar yang sama untuk tier yang sama, jadi tanpa penggabungan keduanya
+ * tampil dobel di MY MEDALS (SVIP 1 muncul dua kali, SVIP 2 dua kali, dst).
+ * Yang dipertahankan adalah svm_N bila ada, karena itu yang bergambar 1:1.
+ */
+fun gabungMedalTier(ids: List<String>): List<String> {
+    val adaSvm = ids.filter { it.startsWith("svm_") }.map { tierMedal(it) }.toSet()
+    return ids.filterNot { it.startsWith("vipt_") && tierMedal(it) in adaSvm }
 }
 
 /** Satu ikon medal: medal VIP pakai VipTag, lainnya ikon store. */
@@ -154,7 +172,7 @@ fun UserMedals(
 ) {
     LaunchedEffect(Unit) { StoreCatalog.start(); VipAssets.load() }
     // Aturan sama dengan activeMedalIds: medal VIP, store (sx_), SVIP (svm_), dan bawaan.
-    val ids = medalIdList(csv).take(MAX_MEDALS).filter {
+    val ids = gabungMedalTier(medalIdList(csv)).take(MAX_MEDALS).filter {
         it.startsWith("vipt_") || it.startsWith("sx_") || it.startsWith("svm_") || findItem(it) != null
     }.filter { LENCANA_AKTIF || findItem(it)?.slot != "badge" }
     if (ids.isEmpty()) return

@@ -171,8 +171,8 @@ fun FamilySettingsScreen(
                     if (l.length < 2) return@YellowButton toast(tr("Label family minimal 2 karakter"))
                     busy = true
                     scope.launch {
-                        val err = if (existing == null) FamilyRepo.create(myUid, myName, myAvatar, n, l, logo, needApproval)
-                        else FamilyRepo.saveSettings(existing, n, l, logo, needApproval)
+                        val err = if (existing == null) FamilyRepo.create(myUid, myName, myAvatar, n, l, logo, null, "", needApproval)
+                        else FamilyRepo.saveSettings(existing, n, l, logo, null, existing.country, needApproval)
                         busy = false
                         if (err != null) toast(err) else {
                             toast(if (existing == null) "Family berhasil dibuat" else "Pengaturan disimpan")
@@ -297,9 +297,9 @@ fun FamilyHomeScreen(f: Family, myUid: String, myName: String, myAvatar: String?
 
             // ---- tiga kartu: Points (exp), Members, Coins ----
             Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp).offset(y = (-26).dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                StatCard(Modifier.weight(1f), "spark", fmtShort(f.exp), "Points", onClick = null)
+                StatCard(Modifier.weight(1f), "spark", fmShort(f.exp), "Points", onClick = null)
                 StatCard(Modifier.weight(1f), "people", "${f.memberCount}/$kapasitas", "Members", onClick = null)
-                StatCard(Modifier.weight(1f), "coin", fmtShort(famCoins), "Coins", onClick = if (isAdmin) ({ showSend = true }) else null)
+                StatCard(Modifier.weight(1f), "coin", fmShort(famCoins), "Coins", onClick = if (isAdmin) ({ showSend = true }) else null)
             }
 
             // ---- progres level ----
@@ -307,7 +307,7 @@ fun FamilyHomeScreen(f: Family, myUid: String, myName: String, myAvatar: String?
             val awal = familyLevelNeed(level)
             if (level < FAMILY_MAX_LEVEL) {
                 Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).offset(y = (-18).dp)) {
-                    Row { Text(tr("Exp to Lv. ${level + 1}"), color = FM_SOFT, fontSize = 11.sp, modifier = Modifier.weight(1f)); Text("${fmtShort(f.exp)} / ${fmtShort(perlu)}", color = FM_SOFT, fontSize = 11.sp) }
+                    Row { Text(tr("Exp to Lv. ${level + 1}"), color = FM_SOFT, fontSize = 11.sp, modifier = Modifier.weight(1f)); Text("${fmShort(f.exp)} / ${fmShort(perlu)}", color = FM_SOFT, fontSize = 11.sp) }
                     Spacer(Modifier.height(4.dp))
                     val pct = ((f.exp - awal).toFloat() / (perlu - awal).toFloat()).coerceIn(0f, 1f)
                     Box(Modifier.fillMaxWidth().height(7.dp).clip(RoundedCornerShape(50)).background(Color(0xFFEBDCEB))) {
@@ -351,7 +351,7 @@ fun FamilyHomeScreen(f: Family, myUid: String, myName: String, myAvatar: String?
                                     )
                                 }
                                 Box(Modifier.clip(RoundedCornerShape(50)).background(Color(0xFFF1E7F2)).padding(horizontal = 10.dp, vertical = 5.dp)) {
-                                    Text(fmtShort(m.contribution), color = FM_INK, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    Text(fmShort(m.contribution), color = FM_INK, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 }
                                 if (bisaKelola) Box(Modifier.size(38.dp).clip(CircleShape).clickable { aksi = m }, contentAlignment = Alignment.Center) { FmIcon("dots", 22.dp, FM_SOFT) }
                             }

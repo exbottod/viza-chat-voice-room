@@ -310,7 +310,7 @@ fun FamilyFindScreen(
                                 FmPill("${f.memberCount}/${familyCapacity(lv)}", Color(0xFFF6E8F7), FM_MID, "people")
                             }
                             Spacer(Modifier.height(4.dp))
-                            Text(tr("ID ${f.numId}  ·  ${fmtShort(f.exp)} Points"), color = FM_PINK, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                            Text(tr("ID ${f.numId}  ·  ${fmShort(f.exp)} Points"), color = FM_PINK, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                         }
                         val sudah = f.id in pending
                         Box(
@@ -341,7 +341,7 @@ fun FamilyFindScreen(
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(tr("Create Family"), color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
-                Text(tr("Your coins: ${fmtShort(myCoins)}"), color = Color(0xCCFFFFFF), fontSize = 11.sp)
+                Text(tr("Your coins: ${fmShort(myCoins)}"), color = Color(0xCCFFFFFF), fontSize = 11.sp)
             }
             Row(
                 Modifier.clip(RoundedCornerShape(50)).background(FM_GOLD).padding(horizontal = 14.dp, vertical = 9.dp),
@@ -354,7 +354,7 @@ fun FamilyFindScreen(
     }
 }
 
-fun fmtShort(n: Long): String {
+fun fmShort(n: Long): String {
     fun f(x: Double, s: String): String {
         val t = Math.round(x * 100) / 100.0
         return (if (t == Math.floor(t)) t.toLong().toString() else t.toString()) + s

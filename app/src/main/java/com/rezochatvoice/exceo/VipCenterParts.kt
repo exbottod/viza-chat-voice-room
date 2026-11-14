@@ -208,44 +208,57 @@ val VIP_IDENT = listOf(
     VipIdent("color", "Chat Color", "bubble", "palette"),
 )
 
+/**
+ * Semua kisi di VIP Center memakai 3 kolom dan baris terakhir selalu di tengah.
+ * Bila baris terakhir belum penuh, ruang kosong dibagi rata di kiri dan kanan
+ * supaya kotak tidak menempel ke kiri.
+ */
+@Composable
+fun Kisi3(
+    jumlah: Int,
+    jarak: Dp = 8.dp,
+    horizontal: Dp = 12.dp,
+    isi: @Composable (index: Int, mod: Modifier) -> Unit,
+) {
+    Column(
+        Modifier.fillMaxWidth().padding(horizontal = horizontal),
+        verticalArrangement = Arrangement.spacedBy(jarak),
+    ) {
+        var mulai = 0
+        while (mulai < jumlah) {
+            val akhir = minOf(mulai + 3, jumlah)
+            val isiBaris = akhir - mulai
+            val sisa = 3 - isiBaris
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(jarak)) {
+                // ruang kosong kiri dan kanan dibagi dua, jadi baris sisa tetap tengah
+                if (sisa > 0) Spacer(Modifier.weight(sisa / 2f))
+                for (i in mulai until akhir) {
+                    Box(Modifier.weight(1f)) { isi(i, Modifier.fillMaxWidth()) }
+                }
+                if (sisa > 0) Spacer(Modifier.weight(sisa / 2f))
+            }
+            mulai = akhir
+        }
+    }
+}
+
 /** Kisi "VIP Identity": 8 kotak seragam, ikon digambar dengan kode. */
 @Composable
 fun VipIdentityGrid(sel: Int, onPick: (VipIdent) -> Unit) {
-    Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        VIP_IDENT.chunked(3).forEach { baris ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                baris.forEach { it ->
-                    Box(Modifier.weight(1f)) {
-                        VcTile(it.label, true, { onPick(it) }, tinggi = 92.dp) {
-                            IsiIdentitas(sel, it)
-                        }
-                    }
-                }
-                // Baris terakhir jangan melebar: sisanya diisi ruang kosong.
-                repeat(3 - baris.size) { Spacer(Modifier.weight(1f)) }
-                repeat(4 - baris.size) { Spacer(Modifier.weight(1f)) }
-            }
-        }
+    Kisi3(VIP_IDENT.size) { i, _ ->
+        val it = VIP_IDENT[i]
+        VcTile(it.label, true, { onPick(it) }, tinggi = 92.dp) { IsiIdentitas(sel, it) }
     }
 }
 
 /** Kisi "Exclusive Privileges" memakai daftar privilege SVIP yang benar-benar aktif di aplikasi. */
 @Composable
 fun VipPrivGrid(sel: Int, onPick: (SvipPriv) -> Unit) {
-    val daftar = SVIP_PRIVS
-    Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        daftar.chunked(4).forEach { baris ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                baris.forEach { p ->
-                    val buka = sel >= p.minVip
-                    Box(Modifier.weight(1f)) {
-                        VcTile(p.title, buka, { onPick(p) }) {
-                            InkGlyph(privGlyph(p.key), Modifier.size(26.dp), if (buka) VC_LINE else Color(0x66FFFFFF))
-                        }
-                    }
-                }
-                repeat(4 - baris.size) { Spacer(Modifier.weight(1f)) }
-            }
+    Kisi3(SVIP_PRIVS.size) { i, _ ->
+        val p = SVIP_PRIVS[i]
+        val buka = sel >= p.minVip
+        VcTile(p.title, buka, { onPick(p) }) {
+            InkGlyph(privGlyph(p.key), Modifier.size(30.dp), if (buka) VC_LINE else Color(0x66FFFFFF))
         }
     }
 }
@@ -338,17 +351,18 @@ private fun VcTile(label: String, aktif: Boolean = true, tap: () -> Unit, tinggi
 
 // ---------------- Aset & paket ----------------
 
-/** Tiga kotak aset milik tingkat ini: medali, lencana, gelar (gambar asli dari panel). */
+/** Kotak aset milik tingkat ini: medali, lencana, gelar, efek masuk (gambar asli dari panel). */
 @Composable
 fun VipAssetsRow(sel: Int, coin: Color, onPick: (VipIdent) -> Unit = {}) {
-    Row(
-        Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Box(Modifier.weight(1f)) { VcAsset(sel, "SVIP $sel", "medal") { onPick(VIP_IDENT.first { it.key == "badge" }) } }
-        Box(Modifier.weight(1f)) { VcAsset(sel, "Vip badge", "entry") { onPick(VIP_IDENT.first { it.key == "entry" }) } }
-        Box(Modifier.weight(1f)) { VcAsset(sel, "vip $sel", "title") { onPick(VIP_IDENT.first { it.key == "title" }) } }
-        Box(Modifier.weight(1f)) { VcAsset(sel, "Efek Masuk", "banner") { onPick(VIP_IDENT.first { it.key == "efek" }) } }
+    val daftar = listOf(
+        Triple("SVIP $sel", "medal", "badge"),
+        Triple("Vip badge", "entry", "entry"),
+        Triple("vip $sel", "title", "title"),
+        Triple("Efek Masuk", "banner", "efek"),
+    )
+    Kisi3(daftar.size, jarak = 6.dp) { i, _ ->
+        val (label, slot, keyIdent) = daftar[i]
+        VcAsset(sel, label, slot) { onPick(VIP_IDENT.first { it.key == keyIdent }) }
     }
 }
 

@@ -387,6 +387,6 @@ private fun mintaDompet(metode: String, jalur: String, isi: String, token: Strin
 }
 
 private const val GREEDY_API = "https://viza.43-156-99-4.sslip.io/greedy"
-private const val GREEDY_BAWAAN = "https://viza.43-156-99-4.sslip.io/greedy-play/index.html"
+private const val GREEDY_BAWAAN = "https://appassets.androidplatform.net/assets/greedy/index.html"
 private const val GREEDY_LOKAL = "https://appassets.androidplatform.net/assets/greedy/index.html"
-private const val GREEDY_SERVER = "https://viza.43-156-99-4.sslip.io/greedy-play/index.html"
+private const val GREEDY_SERVER = "https://appassets.androidplatform.net/assets/greedy/index.html"

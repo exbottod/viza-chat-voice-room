@@ -615,6 +615,7 @@ fun VipScreen(uid: String, wallet: Wallet, onBack: () -> Unit) {
     var tab by remember { mutableStateOf(0) }          // 0 = SVIP, 1 = Item VIP
     var panelPriv by remember { mutableStateOf(false) }
     var identitas by remember { mutableStateOf<VipIdent?>(null) }
+    var privTampil by remember { mutableStateOf<SvipPriv?>(null) }
     val c = vipColor(sel)
     val bgTop = lerp(Color(0xFF1C0A0C), c, 0.30f)
     val tampil = listOf("title", "frame", "bubble", "entry")
@@ -688,11 +689,11 @@ fun VipScreen(uid: String, wallet: Wallet, onBack: () -> Unit) {
 
                 // ---- privilege eksklusif ----
                 VipSectionTitle("Exclusive Privileges")
-                VipPrivGrid(sel) { panelPriv = true }
+                VipPrivGrid(sel) { privTampil = it }
 
                 // ---- aset milik tingkat ini ----
                 VipSectionTitle("VIP Assets")
-                VipAssetsRow(sel, c)
+                VipAssetsRow(sel, c) { identitas = it }
 
                 // ---- paket ----
                 VipSectionTitle("VIP Packages")
@@ -736,49 +737,67 @@ fun VipScreen(uid: String, wallet: Wallet, onBack: () -> Unit) {
     )
 
     identitas?.let { id ->
-        val adaAset = VipAssets.get(sel, id.slot) != null
-        AlertDialog(
-            onDismissRequest = { identitas = null },
-            title = { Text(tr(id.label)) },
-            text = {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                    Box(Modifier.height(120.dp), contentAlignment = Alignment.Center) {
-                        when (id.slot) {
-                            "frame" -> Box(
-                                Modifier.size(96.dp).border(6.dp, frameBrush("vipf_$sel"), CircleShape),
-                                contentAlignment = Alignment.Center,
-                            ) { Text(tr("SVIP$sel"), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold) }
-                            "bubble" -> Box(
-                                Modifier.width(150.dp).height(56.dp).clip(RoundedCornerShape(14.dp))
-                                    .background(Brush.verticalGradient(listOf(c, lerp(c, Color.Black, 0.5f)))),
-                                contentAlignment = Alignment.Center,
-                            ) { Text(tr("Halo!"), color = Color.White, fontSize = 15.sp) }
-                            else -> key(sel) {
-                                VipMediaSafe(
-                                    VipAssets.get(sel, id.slot),
-                                    Modifier.size(110.dp),
-                                    loop = true,
-                                    contentScale = ContentScale.Fit,
-                                    fallback = { InkGlyph(id.glyph, Modifier.size(72.dp), c) },
-                                )
-                            }
-                        }
+        VipPreviewDialog(
+            title = id.label,
+            onClose = { identitas = null },
+        ) {
+            when (id.slot) {
+                "frame" -> Box(contentAlignment = Alignment.Center) {
+                    Box(Modifier.size(90.dp).clip(CircleShape).background(Color(0xFF4A3030)))
+                    key(sel) {
+                        VipMediaSafe(
+                            VipAssets.get(sel, "frame"),
+                            Modifier.requiredSize(170.dp),
+                            loop = true,
+                            fallback = {
+                                Box(Modifier.size(120.dp).border(7.dp, frameBrush("vipf_$sel"), CircleShape))
+                            },
+                        )
                     }
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        tr(
-                            if (adaAset) "${id.label} SVIP$sel sudah tersedia dan aktif otomatis setelah SVIP$sel dibeli."
-                            else "Aset ${id.label} SVIP$sel belum diunggah di panel developer. Hubungi admin supaya gambarnya ditambahkan.",
-                        ),
-                        color = Color(0xFF444444), fontSize = 13.sp, textAlign = TextAlign.Center,
+                }
+                "bubble" -> Box(
+                    Modifier.width(210.dp).height(86.dp).clip(RoundedCornerShape(16.dp))
+                        .background(Brush.verticalGradient(listOf(c, lerp(c, Color.Black, 0.5f)))),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    key(sel) { VipMediaSafe(VipAssets.get(sel, "bubble"), Modifier.matchParentSize(), contentScale = ContentScale.FillBounds) }
+                    if (id.key == "color") Text(tr("Halo!"), color = Color.White, fontSize = 18.sp)
+                }
+                "cardbg" -> key(sel) {
+                    VipMediaSafe(
+                        kartuProfil(sel),
+                        Modifier.width(200.dp).fillMaxHeight(),
+                        loop = true,
+                        contentScale = ContentScale.Crop,
+                        fallback = { InkGlyph("card", Modifier.size(80.dp), c) },
                     )
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = { identitas = null; confirm = true }) { Text(tr("Lihat paket")) }
-            },
-            dismissButton = { TextButton(onClick = { identitas = null }) { Text(tr("Tutup")) } },
-        )
+                else -> key(sel) {
+                    VipMediaSafe(
+                        VipAssets.get(sel, id.slot),
+                        Modifier.fillMaxSize().padding(10.dp),
+                        loop = true,
+                        contentScale = ContentScale.Fit,
+                        fallback = { InkGlyph(id.glyph, Modifier.size(80.dp), c) },
+                    )
+                }
+            }
+        }
+    }
+
+    privTampil?.let { pv ->
+        VipPreviewDialog(title = pv.title, onClose = { privTampil = null }) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(18.dp)) {
+                InkGlyph(privGlyphPublic(pv.key), Modifier.size(64.dp), if (sel >= pv.minVip) VC_GOLD else Color(0x66FFFFFF))
+                Spacer(Modifier.height(12.dp))
+                Text(tr(pv.desc), color = Color(0xFFF4EAD6), fontSize = 13.sp, textAlign = TextAlign.Center)
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    tr(if (sel >= pv.minVip) "Terbuka di SVIP$sel" else "Terbuka mulai SVIP${pv.minVip}"),
+                    color = VC_GOLD, fontSize = 12.sp, fontWeight = FontWeight.Bold,
+                )
+            }
+        }
     }
 }
 

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -239,6 +240,8 @@ fun VipPrivGrid(sel: Int, onPick: (SvipPriv) -> Unit) {
     }
 }
 
+fun privGlyphPublic(key: String): String = privGlyph(key)
+
 private fun privGlyph(key: String): String = when (key) {
     "muteRingtone" -> "bell"
     "hideGiftBanner" -> "banner"
@@ -284,27 +287,27 @@ private fun VcTile(label: String, aktif: Boolean = true, tap: () -> Unit, icon: 
 
 /** Tiga kotak aset milik tingkat ini: medali, lencana, gelar. */
 @Composable
-fun VipAssetsRow(sel: Int, coin: Color) {
+fun VipAssetsRow(sel: Int, coin: Color, onPick: (VipIdent) -> Unit = {}) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Box(Modifier.weight(1f)) {
-            VcAsset("SVIP $sel", "medal")
+            VcAsset("SVIP $sel", "medal") { onPick(VIP_IDENT.first { it.key == "badge" }) }
         }
         Box(Modifier.weight(1f)) {
-            VcAsset("Vip badge", "badge")
+            VcAsset("Vip badge", "badge") { onPick(VIP_IDENT.first { it.key == "badge" }) }
         }
         Box(Modifier.weight(1f)) {
-            VcAsset("vip $sel", "title")
+            VcAsset("vip $sel", "title") { onPick(VIP_IDENT.first { it.key == "title" }) }
         }
     }
 }
 
 @Composable
-private fun VcAsset(label: String, slot: String) {
+private fun VcAsset(label: String, slot: String, tap: () -> Unit = {}) {
     Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Color(0x1FFFFFFF))
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Color(0x1FFFFFFF)).clickable(onClick = tap)
             .padding(vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -522,6 +525,53 @@ fun InkGlyph(kind: String, mod: Modifier = Modifier.size(24.dp), tint: Color = V
             else -> {
                 drawCircle(tint, radius = s * 0.3f, center = center, style = Stroke(w))
             }
+        }
+    }
+}
+
+
+/**
+ * Dialog pratinjau gaya SVIP Center: judul emas + tombol X, kotak gelap berisi
+ * aset, tulisan "Preview", dan tombol OK oranye.
+ */
+@Composable
+fun VipPreviewDialog(title: String, onClose: () -> Unit, isi: @Composable () -> Unit) {
+    androidx.compose.ui.window.Dialog(onDismissRequest = onClose) {
+        Column(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp))
+                .background(Brush.verticalGradient(listOf(Color(0xFF4A1E1C), Color(0xFF2B100F))))
+                .border(1.dp, Color(0x88E6C47A), RoundedCornerShape(22.dp))
+                .padding(16.dp),
+        ) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(tr(title), color = VC_GOLD_SOFT, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f))
+                Box(
+                    Modifier.size(36.dp).clip(CircleShape).background(Color(0x33000000))
+                        .border(1.dp, Color(0x55E6C47A), CircleShape).clickable(onClick = onClose),
+                    contentAlignment = Alignment.Center,
+                ) { Text("✕", color = Color.White, fontSize = 15.sp) }
+            }
+            Spacer(Modifier.height(12.dp))
+            Box(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
+                    .border(1.dp, Color(0x44E6C47A), RoundedCornerShape(16.dp))
+                    .padding(10.dp),
+            ) {
+                Box(
+                    Modifier.fillMaxWidth().height(280.dp).clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFF1E1004)),
+                    contentAlignment = Alignment.Center,
+                ) { isi() }
+            }
+            Spacer(Modifier.height(10.dp))
+            Text(tr("Preview"), color = Color(0xFFF4EAD6), fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+            Spacer(Modifier.height(12.dp))
+            Box(
+                Modifier.fillMaxWidth().height(46.dp).clip(RoundedCornerShape(50))
+                    .background(Brush.horizontalGradient(listOf(Color(0xFFFFD98A), Color(0xFFFF7A4D))))
+                    .clickable(onClick = onClose),
+                contentAlignment = Alignment.Center,
+            ) { Text("OK", color = Color(0xFF2B1204), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold) }
         }
     }
 }

@@ -55,6 +55,21 @@ import java.net.URL
  * Pembaruan kecil: unduh file selisih (~4 MB), gabung dengan APK terpasang,
  * periksa sidik jari, lalu pasang. Gagal di tengah jalan -> unduh APK penuh.
  */
+/** Pemicu cek pembaruan manual dari halaman Tentang. */
+object UpdateMinta {
+    var nomor by androidx.compose.runtime.mutableStateOf(0)
+        private set
+
+    /** Paksa cek ulang: hapus tundaan "Nanti" lalu naikkan nomor pemicu. */
+    fun cekSekarang(ctx: Context) {
+        try {
+            ctx.getSharedPreferences("app_update", Context.MODE_PRIVATE).edit()
+                .remove("skip_v").remove("skip_at").apply()
+        } catch (e: Exception) { }
+        nomor++
+    }
+}
+
 object AppUpdate {
     private const val INFO_URL = "https://exbottod.github.io/viza-chat-voice-room/unduh/build-info.json"
     private const val NOTE_URL = "https://exbottod.github.io/viza-chat-voice-room/unduh/update-note.txt"
@@ -433,7 +448,8 @@ fun UpdateGate() {
     var error by remember { mutableStateOf("") }
     var apk by remember { mutableStateOf<File?>(null) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(UpdateMinta.nomor) {
+        dismissed = false
         val prefs = ctx.getSharedPreferences("app_update", Context.MODE_PRIVATE)
         // Dialog hanya muncul kalau patch kecil sudah siap. Selama patch belum
         // jadi (build masih membuat file selisih) atau tidak ada jalur patch

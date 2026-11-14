@@ -41,6 +41,8 @@ fun appVersionName(): String {
 /** Halaman "Tentang Rezo Chat Voice": logo, nama aplikasi, dan versi APK. */
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+
     BackHandler(onBack = onBack)
     Box(Modifier.fillMaxSize().background(Color.White)) {
         // Top bar putih: tombol back + judul di tengah
@@ -69,6 +71,20 @@ fun AboutScreen(onBack: () -> Unit) {
             Text(tr("Rezo Star"), color = Color(0xFF444444), fontSize = 24.sp)
             Spacer(Modifier.height(6.dp))
             Text(tr("Version ${appVersionName()}"), color = Color(0xFF8A86A0), fontSize = 18.sp)
+
+        Spacer(Modifier.height(14.dp))
+        Box(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+                .background(Color(0xFFFFC21A))
+                .clickable {
+                    UpdateMinta.cekSekarang(context)
+                    android.widget.Toast.makeText(context, tr("Memeriksa pembaruan..."), android.widget.Toast.LENGTH_SHORT).show()
+                }
+                .padding(vertical = 12.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(tr("Cek pembaruan"), color = Color(0xFF3D2A00), fontWeight = FontWeight.Bold)
+        }
         }
     }
 }

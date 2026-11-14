@@ -143,7 +143,7 @@ private fun namaItem(item: StoreItem): String {
     return if (nomor.isNotBlank()) "${item.name} \u00b7 ID $nomor" else item.name
 }
 
-private fun vipItems(n: Int) = listOf(
+fun vipItems(n: Int) = listOf(
     StoreItem("vipt_$n", "title", "Gelar VIP$n", "🏅", 0, VIP_DAYS, vipColor(n), n),
     StoreItem("vipf_$n", "frame", "Bingkai eksklusif VIP$n", "⭕", 0, VIP_DAYS, vipColor(n), n),
     StoreItem("vipb_$n", "bubble", "Gelembung obrolan VIP$n", "💬", 0, VIP_DAYS, vipColor(n), n),
@@ -151,7 +151,7 @@ private fun vipItems(n: Int) = listOf(
     StoreItem("vipbn_$n", "banner", "Banner efek masuk VIP$n", "🚩", 0, VIP_DAYS, vipColor(n), n),
 )
 
-private fun svipItems(n: Int) = listOf(
+fun svipItems(n: Int) = listOf(
     StoreItem("svf_$n", "frame", "Bingkai eksklusif SVIP$n", "\u2B55", 0, VIP_DAYS, vipColor(n), n),
     StoreItem("sve_$n", "entry", "Efek masuk SVIP$n", "\u2728", 0, VIP_DAYS, vipColor(n), n),
     StoreItem("svbn_$n", "banner", "Banner efek masuk SVIP$n", "\uD83D\uDEA9", 0, VIP_DAYS, vipColor(n), n),
@@ -612,6 +612,9 @@ fun VipScreen(uid: String, wallet: Wallet, onBack: () -> Unit) {
     var sel by remember { mutableStateOf(if (active) wallet.vip else 1) }
     var confirm by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
+    var tab by remember { mutableStateOf(0) }          // 0 = SVIP, 1 = Item VIP
+    var panelPriv by remember { mutableStateOf(false) }
+    var identitas by remember { mutableStateOf<VipIdent?>(null) }
     val c = vipColor(sel)
     val bgTop = lerp(Color(0xFF1C0A0C), c, 0.30f)
     val tampil = listOf("title", "frame", "bubble", "entry")
@@ -622,204 +625,94 @@ fun VipScreen(uid: String, wallet: Wallet, onBack: () -> Unit) {
     // supaya angka di layar tidak menunggu aplikasi ditutup dulu.
     androidx.compose.runtime.LaunchedEffect(Unit) {
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { segarkanHargaVip() }
+        // Aset VIP (medali, bingkai, gelembung, efek masuk) dari panel developer.
+        VipAssets.load(force = true)
     }
     val price = vipPrice(sel)
+
+    // Gear di pojok membuka panel privilege SVIP yang dipakai juga di pengaturan.
+    if (panelPriv) {
+        SvipSettingsScreen(uid) { panelPriv = false }
+        return
+    }
 
     Box(
         Modifier.fillMaxSize().blockTouches()
             .background(Brush.verticalGradient(listOf(bgTop, Color(0xFF2A0F12), Color(0xFF14070A)))),
     ) {
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 130.dp)) {
-            LvTopBar("VIP", onBack)
-            Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp)) {
-                for (n in 1..9) {
-                    Column(
-                        Modifier.clickable { sel = n }.padding(horizontal = 10.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Text(tr("VIP$n"), color = if (n == sel) Color(0xFFFFEB3B) else Color(0x99FFFFFF), fontSize = if (n == sel) 22.sp else 17.sp, fontWeight = if (n == sel) FontWeight.Bold else FontWeight.Normal)
-                        Box(Modifier.padding(top = 2.dp).width(34.dp).height(4.dp).clip(RoundedCornerShape(50)).background(if (n == sel) Color(0xFFFFEB3B) else Color.Transparent))
-                    }
-                }
-            }
-            // ---- hero ----
-            Box(Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                Box(Modifier.size(220.dp).background(Brush.radialGradient(listOf(c.copy(alpha = 0.55f), Color.Transparent))))
-                Row(Modifier.fillMaxWidth().align(Alignment.TopCenter).padding(horizontal = 14.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("🏮", fontSize = 28.sp)
-                    Text("🏮", fontSize = 28.sp)
-                }
-                // MEDAL VIP: aset terpisah (slot "medal", kotak 1:1) tampil di posisi
-                // mahkota. Gelar VIP (slot "title") tetap dipakai seperti dulu (VipTag).
-                // Kalau medal belum diupload, tetap tampil mahkota.
-                val medalA = VipAssets.get(sel, "medal")
-                key(sel) {
-                    VipMediaSafe(
-                        medalA,
-                        Modifier.align(Alignment.TopCenter).offset(y = 22.dp).size(140.dp),
-                        loop = true,
-                        contentScale = ContentScale.Fit,
-                        fallback = { Text("👑", fontSize = 56.sp, modifier = Modifier.align(Alignment.TopCenter).offset(y = 22.dp)) },
-                    )
-                }
-            }
-            val perks = listOf(
-                "👑 Lencana VIP$sel otomatis tampil di bawah level & nama",
-                "🎁 Gelar, bingkai, gelembung & efek masuk VIP$sel masuk ke My Item (Store)",
-                "⚡ Bonus exp +${vipBoostPercent(sel)}% dari setiap gift",
-                "🖼️ Bingkai avatar eksklusif VIP$sel",
-                "🪪 Kartu profil eksklusif VIP$sel (latar semua sheet profil)",
-                "💬 Gelembung chat eksklusif VIP$sel",
-                "🕒 Aktif $VIP_DAYS hari, bisa diperpanjang",
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
+            // ===== Bilah atas: kembali, tab SVIP/Item, saldo koin, gear privilege =====
+            VipTopBar(
+                tab = tab,
+                coins = wallet.coins,
+                onBack = onBack,
+                onTab = { tab = it },
+                onGear = { panelPriv = true },
             )
-            Box(Modifier.align(Alignment.CenterHorizontally).clip(RoundedCornerShape(50)).background(Color(0x55000000)).padding(horizontal = 22.dp, vertical = 8.dp)) {
-                Text(tr("👑 Privileges ${perks.size}"), color = Color(0xFFFFE9A8), fontSize = 22.sp)
-            }
-            Spacer(Modifier.height(22.dp))
-            OrnTitle("Penampilan mewah $own/${tampil.size}", Color(0xFFE6C47A))
-            val devVip = remember {
-                try {
-                    com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.email.equals("owner@email-anda.com", ignoreCase = true)
-                } catch (e: Exception) { false }
-            }
-            if (devVip) {
-                val gagal = VipAssets.diag.entries.filter { it.key.startsWith("${sel}_") }
-                Text(
-                    "Diagnosa aset: " + VipAssets.jumlah() + " terbaca" +
-                        (if (gagal.isEmpty()) ", tidak ada gambar gagal" else ", gagal: " + gagal.joinToString(" ; ") { it.key + " " + it.value }),
-                    color = Color(0xFF9E9E9E), fontSize = 10.sp,
-                    modifier = Modifier.padding(horizontal = 18.dp),
-                )
-            }
-            VipAssets.lastError?.let { err ->
-                Column(
-                    Modifier.padding(horizontal = 18.dp, vertical = 6.dp).fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp)).background(Color(0x66B71C1C))
-                        .clickable { VipAssets.start(force = true) }.padding(10.dp),
-                ) {
-                    Text(tr("Aset VIP dari panel developer belum termuat"), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                    Text(err, color = Color(0xFFFFCDD2), fontSize = 12.sp)
-                    Text(tr("Ketuk untuk coba lagi. Kalau 'permission denied', publish rules vipConfig."), color = Color(0xFFFFCDD2), fontSize = 12.sp)
-                }
-            }
-            // ---- kartu penampilan: gelar, bingkai, gelembung, efek masuk (aset dari panel developer) ----
-            LaunchedEffect(Unit) { VipAssets.load(force = true) }
-            Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(Modifier.height(120.dp), contentAlignment = Alignment.Center) {
-                        key(sel) { VipTag(sel, Modifier.scale(1.6f)) }
-                    }
-                    Text(tr("Gelar VIP"), color = Color(0xFFE6C47A), fontSize = 17.sp)
-                }
-                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(Modifier.size(120.dp), contentAlignment = Alignment.Center) {
-                        Box(Modifier.size(86.dp).clip(CircleShape).background(Color(0xFF4A3030)), contentAlignment = Alignment.Center) {
-                            Text(tr("\uD83D\uDC64"), fontSize = 34.sp)
-                        }
-                        key(sel) {
-                            VipMediaSafe(
-                                VipAssets.get(sel, "frame"),
-                                Modifier.requiredSize(120.dp),
-                                loop = true,
-                                fallback = {
-                                    Box(Modifier.size(90.dp).border(6.dp, frameBrush("vipf_$sel"), CircleShape), contentAlignment = Alignment.Center) {
-                                        Text(tr("VIP$sel"), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
-                                    }
-                                },
-                            )
-                        }
-                    }
-                    Text(tr("Bingkai eksklusif"), color = Color(0xFFE6C47A), fontSize = 17.sp)
-                }
-            }
-            Spacer(Modifier.height(10.dp))
-            Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(Modifier.height(120.dp), contentAlignment = Alignment.Center) {
-                        val ba = VipAssets.get(sel, "bubble")
-                        Box(
-                            Modifier.width(150.dp).height(64.dp).clip(RoundedCornerShape(14.dp))
-                                .background(Brush.verticalGradient(listOf(c, lerp(c, Color.Black, 0.5f))))
-                                .border(2.dp, Color.White.copy(alpha = 0.7f), RoundedCornerShape(14.dp)),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            key(sel) { VipMediaSafe(ba, Modifier.matchParentSize(), contentScale = ContentScale.FillBounds) }
-                            Text(tr("Halo!"), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                        }
-                    }
-                    Text(tr("Gelembung obrolan"), color = Color(0xFFE6C47A), fontSize = 17.sp, textAlign = TextAlign.Center)
-                }
-                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(
-                        Modifier.size(120.dp).clip(RoundedCornerShape(14.dp)).background(Color(0x33000000)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        val ea = VipAssets.get(sel, "entry")
-                        key(sel) {
-                            VipMediaSafe(
-                                ea,
-                                Modifier.fillMaxSize(),
-                                loop = true,
-                                fallback = { Text("\u2728", fontSize = 40.sp) },
-                            )
-                        }
-                    }
-                    Text(tr("Efek masuk"), color = Color(0xFFE6C47A), fontSize = 17.sp)
-                }
-            }
-            Spacer(Modifier.height(12.dp))
-            // ---- kartu profil: latar animasi untuk semua sheet profil (slot "cardbg") ----
-            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(
-                    Modifier.width(170.dp).height(110.dp).clip(RoundedCornerShape(14.dp))
-                        .background(Color(0x33000000)).border(1.dp, Color(0x66E6C47A), RoundedCornerShape(14.dp)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    val ka = kartuProfil(sel)
+            VipTierChips(sel) { sel = it }
+
+            if (tab == 0) {
+                // ---- medali besar ----
+                Box(Modifier.fillMaxWidth().height(170.dp), contentAlignment = Alignment.Center) {
+                    Box(Modifier.size(200.dp).background(Brush.radialGradient(listOf(c.copy(alpha = 0.5f), Color.Transparent))))
+                    val medalA = VipAssets.get(sel, "medal")
                     key(sel) {
                         VipMediaSafe(
-                            ka,
-                            Modifier.fillMaxSize(),
+                            medalA,
+                            Modifier.size(120.dp),
                             loop = true,
-                            contentScale = ContentScale.Crop,
-                            fallback = { Text("\uD83E\uDEAA", fontSize = 40.sp) },
+                            contentScale = ContentScale.Fit,
+                            fallback = { InkGlyph("medal", Modifier.size(84.dp), c) },
                         )
                     }
                 }
-                Spacer(Modifier.height(6.dp))
-                Text(tr("Kartu profil"), color = Color(0xFFE6C47A), fontSize = 17.sp, textAlign = TextAlign.Center)
-                Text(tr("Tampil di belakang nama dan medali, semua sheet profil"), color = Color(0xFFB9A98A), fontSize = 11.sp, textAlign = TextAlign.Center)
-            }
-            Spacer(Modifier.height(18.dp))
-            Column(Modifier.padding(horizontal = 18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                perks.forEach { Text(it, color = Color(0xFFF3E3C3), fontSize = 15.sp) }
-            }
-        }
-        // ---- bar bawah ----
-        Row(
-            Modifier.align(Alignment.BottomCenter).fillMaxWidth()
-                .background(Color(0xF02E1316)).border(1.dp, Color(0x88E6C47A))
-                .navigationBarsPadding().padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(tr("Harga: ${fmtNum(price)} koin / $VIP_DAYS hari"), color = Color(0xFFFFE9A8), fontSize = 16.sp)
-                if (active) Text(tr("VIP${wallet.vip} aktif · Exp +${vipBoostPercent(wallet.vip)}% sedang dipercepat. Berlaku sampai ${fmtDate(wallet.vipUntil)}"), color = Color(0xFFE0C9C9), fontSize = 13.sp)
-                else Text(tr("Exp +${vipBoostPercent(sel)}% setelah VIP$sel aktif"), color = Color(0xFFE0C9C9), fontSize = 13.sp)
-            }
-            Spacer(Modifier.width(10.dp))
-            GoldPill(
-                when {
-                    sameTier -> "Perpanjang"
-                    higher -> "Beli VIP$sel"
-                    active -> "Upgrade VIP$sel"
-                    else -> "Beli VIP$sel"
-                },
-                enabled = !busy,
-            ) { confirm = true }
-        }
-    }
+                Text(
+                    tr("SVIP"),
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    tr("SVIP level with all premium VIP features enabled."),
+                    color = Color(0xCCFFFFFF),
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 30.dp),
+                )
 
+                // ---- identitas VIP ----
+                VipSectionTitle("VIP Identity")
+                VipIdentityGrid { id -> identitas = id }
+
+                // ---- privilege eksklusif ----
+                VipSectionTitle("Exclusive Privileges")
+                VipPrivGrid(sel) { panelPriv = true }
+
+                // ---- aset milik tingkat ini ----
+                VipSectionTitle("VIP Assets")
+                VipAssetsRow(sel, c)
+
+                // ---- paket ----
+                VipSectionTitle("VIP Packages")
+                VipPackageButton(VIP_DAYS, price, active) { confirm = true }
+                Spacer(Modifier.height(20.dp))
+            } else {
+                VipSectionTitle("Item VIP$sel")
+                Text(
+                    tr("Semua item di bawah masuk otomatis ke My Item saat SVIP$sel aktif. Tidak perlu beli terpisah."),
+                    color = VC_DIM, fontSize = 12.sp,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 4.dp),
+                )
+                Spacer(Modifier.height(6.dp))
+                VipItemList(sel)
+                Spacer(Modifier.height(16.dp))
+                VipSectionTitle("VIP Packages")
+                VipPackageButton(VIP_DAYS, price, active) { confirm = true }
+                Spacer(Modifier.height(20.dp))
+            }
+        }
     if (confirm) AlertDialog(
         onDismissRequest = { confirm = false },
         title = { Text(tr("Beli VIP$sel")) },
@@ -841,6 +734,52 @@ fun VipScreen(uid: String, wallet: Wallet, onBack: () -> Unit) {
         },
         dismissButton = { TextButton(onClick = { confirm = false }) { Text(tr("Batal")) } },
     )
+
+    identitas?.let { id ->
+        val adaAset = VipAssets.get(sel, id.slot) != null
+        AlertDialog(
+            onDismissRequest = { identitas = null },
+            title = { Text(tr(id.label)) },
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Box(Modifier.height(120.dp), contentAlignment = Alignment.Center) {
+                        when (id.slot) {
+                            "frame" -> Box(
+                                Modifier.size(96.dp).border(6.dp, frameBrush("vipf_$sel"), CircleShape),
+                                contentAlignment = Alignment.Center,
+                            ) { Text(tr("SVIP$sel"), color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold) }
+                            "bubble" -> Box(
+                                Modifier.width(150.dp).height(56.dp).clip(RoundedCornerShape(14.dp))
+                                    .background(Brush.verticalGradient(listOf(c, lerp(c, Color.Black, 0.5f)))),
+                                contentAlignment = Alignment.Center,
+                            ) { Text(tr("Halo!"), color = Color.White, fontSize = 15.sp) }
+                            else -> key(sel) {
+                                VipMediaSafe(
+                                    VipAssets.get(sel, id.slot),
+                                    Modifier.size(110.dp),
+                                    loop = true,
+                                    contentScale = ContentScale.Fit,
+                                    fallback = { InkGlyph(id.glyph, Modifier.size(72.dp), c) },
+                                )
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        tr(
+                            if (adaAset) "${id.label} SVIP$sel sudah tersedia dan aktif otomatis setelah SVIP$sel dibeli."
+                            else "Aset ${id.label} SVIP$sel belum diunggah di panel developer. Hubungi admin supaya gambarnya ditambahkan.",
+                        ),
+                        color = Color(0xFF444444), fontSize = 13.sp, textAlign = TextAlign.Center,
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { identitas = null; confirm = true }) { Text(tr("Lihat paket")) }
+            },
+            dismissButton = { TextButton(onClick = { identitas = null }) { Text(tr("Tutup")) } },
+        )
+    }
 }
 
 // =====================================================================

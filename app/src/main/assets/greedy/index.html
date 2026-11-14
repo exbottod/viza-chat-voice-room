@@ -12,30 +12,52 @@
       // game tingginya nol dan yang terlihat hanya latar kuning. Tinggi layar
       // nyata dipasang langsung sebagai piksel.
       (function () {
+        function paksa(el, h) {
+          if (!el || !el.style) return;
+          // Gaya inline dengan !important tidak bisa dikalahkan berkas CSS mana pun,
+          // termasuk CSS game yang dimuat setelah skrip ini.
+          el.style.setProperty("height", h + "px", "important");
+          el.style.setProperty("min-height", h + "px", "important");
+          el.style.setProperty("max-height", "none", "important");
+          el.style.setProperty("display", "block", "important");
+          el.style.setProperty("visibility", "visible", "important");
+          el.style.setProperty("opacity", "1", "important");
+        }
         function pasang() {
-          // Tinggi dari WebView native (RezoBridge) dipakai kalau innerHeight bernilai 0.
           var h = window.innerHeight || document.documentElement.clientHeight || 0;
           try { if (h < 100 && window.RezoBridge && window.RezoBridge.tinggi) h = Number(window.RezoBridge.tinggi()) || 0; } catch (e) {}
           if (h < 100) h = screen.height || 0;
           if (h < 100) return;
+          paksa(document.documentElement, h);
+          paksa(document.body, h);
+          var akar = document.getElementById("root");
+          paksa(akar, h);
+          if (akar) {
+            for (var i = 0; i < akar.children.length; i++) paksa(akar.children[i], h);
+          }
           var st = document.getElementById("gkTinggi");
           if (!st) {
             st = document.createElement("style");
             st.id = "gkTinggi";
-            document.head.appendChild(st);
+            (document.head || document.documentElement).appendChild(st);
           }
           st.textContent =
-            "html,body{height:" + h + "px!important}" +
-            "#root{height:" + h + "px!important;min-height:" + h + "px!important}" +
+            "html,body,#root{height:" + h + "px!important;min-height:" + h + "px!important}" +
+            "#root>*,body>div{height:" + h + "px!important;min-height:" + h + "px!important}" +
             ".h-dvh,.h-svh,.h-screen{height:" + h + "px!important}" +
             ".min-h-dvh,.min-h-svh,.min-h-screen{min-height:" + h + "px!important}";
         }
         pasang();
+        // Ulangi beberapa detik pertama: React memasang isi setelah skrip ini jalan.
         var n = 0;
-        var ulang = setInterval(function () { pasang(); if (++n > 40) clearInterval(ulang); }, 250);
+        var ulang = setInterval(function () { pasang(); if (++n > 60) clearInterval(ulang); }, 150);
+        try {
+          new MutationObserver(pasang).observe(document.documentElement, { childList: true, subtree: true });
+        } catch (e) {}
         window.addEventListener("resize", pasang);
         window.addEventListener("orientationchange", pasang);
         document.addEventListener("DOMContentLoaded", pasang);
+        window.addEventListener("load", pasang);
       })();
     </script>
     <script type="module" crossorigin src="./assets/index-DYdSTxI1.js"></script>

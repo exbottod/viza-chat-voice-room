@@ -10,54 +10,54 @@
     <script>
       // Di WebView Android, 100dvh/100vh kadang bernilai 0 sehingga seluruh isi
       // game tingginya nol dan yang terlihat hanya latar kuning. Tinggi layar
-      // nyata dipasang langsung sebagai piksel.
+      // nyata dipasang langsung sebagai piksel lewat gaya inline.
+      // Penting: tidak memakai MutationObserver. Mengubah elemen dari dalam
+      // observer memicu observer itu lagi tanpa henti dan membekukan halaman.
       (function () {
         function paksa(el, h) {
           if (!el || !el.style) return;
-          // Gaya inline dengan !important tidak bisa dikalahkan berkas CSS mana pun,
-          // termasuk CSS game yang dimuat setelah skrip ini.
-          el.style.setProperty("height", h + "px", "important");
-          el.style.setProperty("min-height", h + "px", "important");
-          el.style.setProperty("max-height", "none", "important");
-          el.style.setProperty("display", "block", "important");
-          el.style.setProperty("visibility", "visible", "important");
-          el.style.setProperty("opacity", "1", "important");
+          var v = h + "px";
+          // Tulis hanya kalau berubah, supaya tidak memicu penggambaran ulang terus-menerus.
+          if (el.style.getPropertyValue("height") !== v) {
+            el.style.setProperty("height", v, "important");
+            el.style.setProperty("min-height", v, "important");
+          }
         }
-        function pasang() {
+        function tinggi() {
           var h = window.innerHeight || document.documentElement.clientHeight || 0;
           try { if (h < 100 && window.RezoBridge && window.RezoBridge.tinggi) h = Number(window.RezoBridge.tinggi()) || 0; } catch (e) {}
           if (h < 100) h = screen.height || 0;
+          return h;
+        }
+        function pasang() {
+          var h = tinggi();
           if (h < 100) return;
           paksa(document.documentElement, h);
           paksa(document.body, h);
           var akar = document.getElementById("root");
           paksa(akar, h);
-          if (akar) {
-            for (var i = 0; i < akar.children.length; i++) paksa(akar.children[i], h);
-          }
+          if (akar && akar.firstElementChild) paksa(akar.firstElementChild, h);
           var st = document.getElementById("gkTinggi");
           if (!st) {
             st = document.createElement("style");
             st.id = "gkTinggi";
             (document.head || document.documentElement).appendChild(st);
           }
-          st.textContent =
+          var css =
             "html,body,#root{height:" + h + "px!important;min-height:" + h + "px!important}" +
-            "#root>*,body>div{height:" + h + "px!important;min-height:" + h + "px!important}" +
             ".h-dvh,.h-svh,.h-screen{height:" + h + "px!important}" +
             ".min-h-dvh,.min-h-svh,.min-h-screen{min-height:" + h + "px!important}";
+          if (st.textContent !== css) st.textContent = css;
         }
-        pasang();
-        // Ulangi beberapa detik pertama: React memasang isi setelah skrip ini jalan.
+        try { pasang(); } catch (e) {}
+        // Ulangi beberapa detik pertama (React memasang isi setelah skrip ini), lalu berhenti.
         var n = 0;
-        var ulang = setInterval(function () { pasang(); if (++n > 60) clearInterval(ulang); }, 150);
-        try {
-          new MutationObserver(pasang).observe(document.documentElement, { childList: true, subtree: true });
-        } catch (e) {}
-        window.addEventListener("resize", pasang);
-        window.addEventListener("orientationchange", pasang);
-        document.addEventListener("DOMContentLoaded", pasang);
-        window.addEventListener("load", pasang);
+        var ulang = setInterval(function () {
+          try { pasang(); } catch (e) {}
+          if (++n > 40) clearInterval(ulang);
+        }, 250);
+        window.addEventListener("resize", function () { try { pasang(); } catch (e) {} });
+        window.addEventListener("load", function () { try { pasang(); } catch (e) {} });
       })();
     </script>
     <script type="module" crossorigin src="./assets/index-DYdSTxI1.js"></script>

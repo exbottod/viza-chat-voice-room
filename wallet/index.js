@@ -1151,7 +1151,8 @@ let HARGA_VIP = [0, 500000, 1500000, 3000000, 6000000, 12000000, 25000000, 50000
 const HARGA_VIP_FILE = "/opt/viza-api/harga-vip.json";
 async function hargaVipKini() {
   try {
-    const t = await fs.readFile(HARGA_VIP_FILE, "utf8");
+    const fsp = await import("node:fs/promises");
+    const t = await fsp.readFile(HARGA_VIP_FILE, "utf8");
     const a = JSON.parse(t);
     if (Array.isArray(a) && a.length === 10) HARGA_VIP = a.map((x) => Number(x) || 0);
   } catch (e) { /* berkas belum ada: pakai bawaan */ }
@@ -1159,7 +1160,8 @@ async function hargaVipKini() {
 }
 async function hargaVipSimpan(a) {
   HARGA_VIP = [0, ...a.map((x) => Math.round(Number(x) || 0))];
-  await fs.writeFile(HARGA_VIP_FILE, JSON.stringify(HARGA_VIP), "utf8");
+  const fsp = await import("node:fs/promises");
+  await fsp.writeFile(HARGA_VIP_FILE, JSON.stringify(HARGA_VIP), "utf8");
   return HARGA_VIP;
 }
 const BULAN = 30 * 86400000;

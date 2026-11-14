@@ -498,6 +498,21 @@ fun VipFrame(tier: Int, size: Dp) {
     VipMediaSafe(VipAssets.get(tier, "frame"), Modifier.requiredSize(size), loop = true)
 }
 
+/**
+ * Rasio lebar/tinggi banner dari berkas yang dipasang di panel. Dipakai supaya banner
+ * tampil PERSIS seperti file aslinya (tidak ada ruang kosong kiri-kanan dan tidak
+ * terpotong). 0 = rasio tidak diketahui (svga/mp4), pemanggil pakai rasio bawaan.
+ */
+suspend fun ratioOf(a: VipAsset): Float {
+    if (a.kind == "mp4" || a.kind == "svga") return 0f
+    return try {
+        val d = bytes(a) ?: return 0f
+        val o = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        android.graphics.BitmapFactory.decodeByteArray(d, 0, d.size, o)
+        if (o.outWidth <= 0 || o.outHeight <= 0) 0f else o.outWidth.toFloat() / o.outHeight.toFloat()
+    } catch (e: Exception) { 0f }
+}
+
 /** Banner efek masuk VIP1-9 diambil dari panel developer (bukan lagi dari APK). */
 fun vipBannerAsset(n: Int): VipAsset? = if (n in 1..9) VipAssets.get(n, "banner") else null
 
@@ -627,7 +642,13 @@ fun VipEntryEffect(roomId: String) {
             // Banner efek masuk: di ATAS layar, digambar SETELAH efek jadi tampil di depannya.
             // Ukuran banner TETAP sesuai file aslinya (tidak diperbesar selebar layar).
             if (b != null) {
-                val bSize = DpSize(280.dp, 79.dp)
+                // Lebar:tinggi banner dibaca dari file yang dipasang di panel, jadi tidak
+                // lagi dipaksa 280x79 (dulu file dengan rasio lain jadi kecil/berongga).
+                var rasioBanner by remember(b.n, b.updatedAt) { mutableStateOf(280f / 79f) }
+                LaunchedEffect(b.n, b.updatedAt) {
+                    val r = try { VipAssets.ratioOf(b) } catch (e: Exception) { 0f }
+                    if (r > 0.4f) rasioBanner = r
+                }
                 BoxWithConstraints(
                     Modifier.align(Alignment.TopCenter).fillMaxWidth()
                         .statusBarsPadding().padding(top = 4.dp)
@@ -639,6 +660,11 @@ fun VipEntryEffect(roomId: String) {
                         },
                     contentAlignment = Alignment.Center,
                 ) {
+                    // Lebar maksimal 92% layar, tinggi mengikuti rasio file (dibatasi 150.dp
+                    // supaya tidak menutupi room di HP layar kecil).
+                    val lebarBanner = minOf(maxWidth * 0.92f, 360.dp)
+                    val tinggiBanner = (lebarBanner.value / rasioBanner).dp.coerceIn(54.dp, 150.dp)
+                    val bSize = DpSize(lebarBanner, tinggiBanner)
                     Box(Modifier.size(bSize).offset(x = maxWidth * slide.value)) {
                         VipMedia(b!!, Modifier.fillMaxSize(), loop = true, contentScale = ContentScale.Fit)
                     // Foto profil user dipasang di ujung kiri banner (di atas bola emas).

@@ -212,17 +212,17 @@ val VIP_IDENT = listOf(
 @Composable
 fun VipIdentityGrid(sel: Int, onPick: (VipIdent) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        VIP_IDENT.chunked(4).forEach { baris ->
+        VIP_IDENT.chunked(3).forEach { baris ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 baris.forEach { it ->
                     Box(Modifier.weight(1f)) {
-                        VcTile(it.label, true, { onPick(it) }, tinggi = 74.dp) {
+                        VcTile(it.label, true, { onPick(it) }, tinggi = 92.dp) {
                             IsiIdentitas(sel, it)
                         }
                     }
                 }
                 // Baris terakhir jangan melebar: sisanya diisi ruang kosong.
-                repeat(4 - baris.size) { Spacer(Modifier.weight(1f)) }
+                repeat(3 - baris.size) { Spacer(Modifier.weight(1f)) }
                 repeat(4 - baris.size) { Spacer(Modifier.weight(1f)) }
             }
         }
@@ -275,23 +275,23 @@ private fun privGlyph(key: String): String = when (key) {
  */
 @Composable
 fun IsiIdentitas(sel: Int, id: VipIdent) {
-    val ukuran = Modifier.size(58.dp)
-    val cadangan: @Composable () -> Unit = { InkGlyph(id.glyph, Modifier.size(26.dp), VC_LINE) }
+    val ukuran = Modifier.size(72.dp)
+    val cadangan: @Composable () -> Unit = { InkGlyph(id.glyph, Modifier.size(30.dp), VC_LINE) }
     when (id.key) {
         "title" -> key(sel) { VipTag(sel, Modifier) }
         "frame" -> Box(ukuran, contentAlignment = Alignment.Center) {
-            Box(Modifier.size(34.dp).clip(CircleShape).background(Color(0xFF4A3030)))
+            Box(Modifier.size(40.dp).clip(CircleShape).background(Color(0xFF4A3030)))
             key(sel) {
-                VipMediaSafe(VipAssets.get(sel, "frame"), Modifier.requiredSize(58.dp), loop = true, fallback = {
+                VipMediaSafe(VipAssets.get(sel, "frame"), Modifier.requiredSize(72.dp), loop = true, fallback = {
                     Box(Modifier.size(40.dp).border(3.dp, frameBrush("vipf_$sel"), CircleShape))
                 })
             }
         }
         "card" -> key(sel) {
-            VipMediaSafe(kartuProfil(sel), Modifier.size(width = 62.dp, height = 46.dp).clip(RoundedCornerShape(6.dp)), loop = true, contentScale = ContentScale.Crop, fallback = cadangan)
+            VipMediaSafe(kartuProfil(sel), Modifier.size(width = 78.dp, height = 56.dp).clip(RoundedCornerShape(6.dp)), loop = true, contentScale = ContentScale.Crop, fallback = cadangan)
         }
         "bubble", "color" -> Box(
-            Modifier.size(width = 62.dp, height = 40.dp).clip(RoundedCornerShape(10.dp))
+            Modifier.size(width = 78.dp, height = 48.dp).clip(RoundedCornerShape(10.dp))
                 .background(Brush.verticalGradient(listOf(vipColor(sel), androidx.compose.ui.graphics.lerp(vipColor(sel), Color.Black, 0.5f)))),
             contentAlignment = Alignment.Center,
         ) {
@@ -301,7 +301,7 @@ fun IsiIdentitas(sel: Int, id: VipIdent) {
         }
         "efek" -> key(sel) {
             VipMediaSafe(
-                VipAssets.get(sel, "banner"), Modifier.fillMaxWidth().height(66.dp).clip(RoundedCornerShape(8.dp)),
+                VipAssets.get(sel, "banner"), Modifier.fillMaxWidth().height(76.dp).clip(RoundedCornerShape(8.dp)),
                 loop = true, contentScale = ContentScale.Crop, fallback = cadangan,
             )
         }

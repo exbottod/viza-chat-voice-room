@@ -2631,7 +2631,7 @@ async function gambarPengaturan() {
         <div class="panelAtas"><h3>Daftarkan admin panel</h3></div>
         <div class="panelIsi">
           <div class="isian"><label>Nama</label><input id="aNama" placeholder="Nama admin"></div>
-          <div class="isian" style="margin-top:10px"><label>Email untuk login</label><input id="aEmail" type="email" placeholder="nama@email.com"></div>
+          <div class="isian" style="margin-top:10px"><label>Email (opsional)</label><input id="aEmail" type="email" placeholder="nama@email.com"></div>
           <div class="isian" style="margin-top:10px"><label>Password</label><input id="aSandi" type="text" placeholder="minimal 6 karakter"></div>
           <div class="isian" style="margin-top:10px"><label>Peran</label><select id="aPeran">
             <option value="admin">Admin</option>
@@ -2660,24 +2660,40 @@ async function gambarPengaturan() {
     </div>`;
 
   $("aSimpan").onclick = async () => {
-    const nama = $("aNama").value.trim(), email = $("aEmail").value.trim().toLowerCase(), sandi = $("aSandi").value, peran = $("aPeran").value;
-    if (!nama || !email || sandi.length < 6) return toast("Nama, email, dan password minimal 6 karakter wajib diisi", true);
+    const nama = $("aNama").value.trim(), sandi = $("aSandi").value, peran = $("aPeran").value;
+    let email = ($("aEmail").value || "").trim().toLowerCase();
+    // Email tidak wajib. Kalau dikosongkan, panel membuat alamat login internal
+    // dari nama admin, jadi owner cukup mengisi nama dan password.
+    const emailInternal = !email;
+    if (!nama || sandi.length < 6) return toast("Nama dan password minimal 6 karakter wajib diisi", true);
     try {
       const appKedua = initializeApp(firebaseConfig, "pendaftar-" + Date.now());
       const authKedua = getAuth(appKedua);
-      // Kalau email itu sudah punya akun Firebase, jangan gagal. Cukup daftarkan
-      // emailnya sebagai admin panel; dia masuk dengan sandi lamanya atau reset.
-      let akunBaru = true;
-      try {
-        const kredensial = await createUserWithEmailAndPassword(authKedua, email, sandi);
-        await updateProfile(kredensial.user, { displayName: nama }).catch(() => {});
-        await signOut(authKedua);
-      } catch (e) {
-        if (String(e.code || "") === "auth/email-already-in-use") {
-          akunBaru = false;
-          await signOut(authKedua).catch(() => {});
-        } else { throw e; }
+      // Buat akun login. Kalau email dikosongkan, alamat dibuat dari nama admin
+      // (mis. boypanel@vizapanel.app) supaya password yang diketik langsung berlaku.
+      let akunBaru = false;
+      const dasar = kunciNama(nama) || "admin";
+      const calon = emailInternal
+        ? [1, 2, 3, 4, 5].map((n) => dasar + (n === 1 ? "" : n) + "@vizapanel.app")
+        : [email];
+      let galatTerakhir = null;
+      for (const alamat of calon) {
+        try {
+          const kredensial = await createUserWithEmailAndPassword(authKedua, alamat, sandi);
+          await updateProfile(kredensial.user, { displayName: nama }).catch(() => {});
+          await signOut(authKedua);
+          email = alamat;
+          akunBaru = true;
+          galatTerakhir = null;
+          break;
+        } catch (e) {
+          galatTerakhir = e;
+          const kode = String(e.code || "");
+          if (kode !== "auth/email-already-in-use") break;
+          if (!emailInternal) { await signOut(authKedua).catch(() => {}); break; }
+        }
       }
+      if (!akunBaru && galatTerakhir && String(galatTerakhir.code || "") !== "auth/email-already-in-use") throw galatTerakhir;
       await deleteApp(appKedua).catch(() => {});
 
       await setDoc(doc(db, "panelAdmins", email), {
@@ -2686,7 +2702,7 @@ async function gambarPengaturan() {
       // Akun lama tidak bisa diberi sandi baru dari panel (Firebase menolak).
       // Jadi kirim tautan reset supaya dia bisa membuat sandi sendiri.
       let tautanTerkirim = false;
-      if (!akunBaru) {
+      if (!akunBaru && !emailInternal) {
         try {
           await sendPasswordResetEmail(auth, email);
           tautanTerkirim = true;

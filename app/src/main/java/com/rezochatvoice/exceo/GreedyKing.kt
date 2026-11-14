@@ -66,6 +66,8 @@ fun GreedyKingScreen(
     var siap by remember { mutableStateOf(false) }
     var token by remember { mutableStateOf("") }
     var chips by remember { mutableStateOf("[]") }
+    // Foto profil dipakai menggantikan huruf awal nama di panel saldo game.
+    var foto by remember { mutableStateOf("") }
     var alamat by remember { mutableStateOf(GREEDY_BAWAAN) }
     // Pegangan WebView dipakai untuk mematikan game (termasuk suaranya) saat
     // layar ditutup.
@@ -77,6 +79,12 @@ fun GreedyKingScreen(
         chips = daftar.joinToString(",", "[", "]")
         token = try {
             FirebaseAuth.getInstance().currentUser?.getIdToken(false)?.await()?.token.orEmpty()
+        } catch (e: Exception) { "" }
+        foto = try {
+            Rtdb.ref("pub/$myUid/photo").get().await()
+                .getValue(String::class.java)?.trim().orEmpty()
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
         } catch (e: Exception) { "" }
         alamat = try { alamatGreedy() } catch (e: Exception) { GREEDY_BAWAAN }
         siap = true
@@ -94,6 +102,13 @@ fun GreedyKingScreen(
                 }
             } catch (e: Exception) { }
             wvPegang.value = null
+        }
+    }
+
+    // Foto profil biasanya baru terbaca setelah halaman tampil, jadi disuntik ulang.
+    LaunchedEffect(foto) {
+        if (foto.isNotBlank()) {
+            try { wvPegang.value?.evaluateJavascript(skripFoto(foto), null) } catch (e: Exception) { }
         }
     }
 
@@ -171,6 +186,7 @@ fun GreedyKingScreen(
                                 @JavascriptInterface fun token() = token
                                 @JavascriptInterface fun uid() = myUid
                                 @JavascriptInterface fun nama() = namaAman
+                                @JavascriptInterface fun foto() = foto
                                 @JavascriptInterface fun chips() = chips
                                 // Permintaan ke server dompet dikerjakan app, bukan
                                 // WebView. Di sebagian HP permintaan dari halaman
@@ -222,6 +238,7 @@ fun GreedyKingScreen(
                                 super.onPageFinished(view, url)
                                 // Segarkan token di halaman supaya tombol coba lagi
                                 // memakai sesi yang benar.
+                                if (foto.isNotBlank()) view.evaluateJavascript(skripFoto(foto), null)
                                 val tAman = token.replace("'", "")
                                 view.evaluateJavascript(
                                     "window.__GREEDY_TOKEN__='" + tAman + "';" +
@@ -266,6 +283,26 @@ fun GreedyKingScreen(
  * sementara pita tipis di atas masih memperlihatkan room di belakangnya.
  */
 private const val PECAHAN_SHEET = 0.93f
+
+/**
+ * Ganti kotak huruf awal nama di panel saldo game (dan di lembar profil game)
+ * dengan foto profil user. Dipasang lewat CSS dari sisi aplikasi, jadi bundel
+ * game tidak perlu diubah.
+ */
+private fun skripFoto(url: String): String {
+    val bersih = url.trim()
+    val sah = bersih.startsWith("https://") || bersih.startsWith("http://") || bersih.startsWith("data:image/")
+    if (!sah) return ""
+    // Kutip dan garis miring dibuang supaya tidak bisa memutus string JS/CSS.
+    val aman = bersih.replace("\\", "").replace("'", "").replace("\"", "").replace("\n", "")
+    return "(function(){try{" +
+        "var id='vizaFoto',st=document.getElementById(id);" +
+        "if(!st){st=document.createElement('style');st.id=id;(document.head||document.documentElement).appendChild(st);}" +
+        "st.textContent=\"div.h-11.w-11,div.h-20.w-20{background-image:url('" + aman + "')!important;" +
+        "background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;" +
+        "color:transparent!important;font-size:0!important}\";" +
+        "}catch(e){}})()"
+}
 
 /** Tambahkan token, uid, dan nama ke alamat halaman game. */
 private fun denganToken(alamat: String, token: String, uid: String, nama: String): String {

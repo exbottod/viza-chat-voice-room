@@ -581,6 +581,31 @@ async function gambarVip() {
   };
 }
 
+/** Harga membuat family + rasio exp ke coin family (dipakai aplikasi tanpa build ulang). */
+async function gambarFamily() {
+  let cfg = { harga: 200000, exp_per_coin: 100 };
+  let galat = "";
+  try { cfg = Object.assign(cfg, await walletAdmin({ op: "fam_cfg_get" })); }
+  catch (e) { galat = e.message || String(e); }
+  $("aksiTopbar").innerHTML = '<button class="tombolAtas" id="simpanFamily">Simpan</button>';
+  $("isiHal").innerHTML = `
+    <div class="panel">
+      <div class="catatan">Harga membuat family dalam coin. Rasio exp family ke coin family: isi 100 artinya setiap 100 exp menjadi 1 coin family. Setelah disimpan, aplikasi memakai nilai baru tanpa build ulang.</div>
+      ${galat ? `<div class="catatan">${aman(galat)}</div>` : ""}
+      <div class="barisIsian">
+        <div class="isian"><label>Harga buat family (coin)</label><input id="famHarga" type="number" min="0" step="1000" value="${Number(cfg.harga) || 0}"></div>
+        <div class="isian"><label>Exp jadi 1 coin family</label><input id="famExp" type="number" min="1" step="1" value="${Number(cfg.exp_per_coin) || 100}"></div>
+      </div>
+    </div>`;
+  $("simpanFamily").onclick = async () => {
+    try {
+      await walletAdmin({ op: "fam_cfg_set", harga: Number($("famHarga").value) || 0, exp_per_coin: Number($("famExp").value) || 100 });
+      alert("Pengaturan family disimpan.");
+      bukaRute();
+    } catch (e) { alert("Gagal menyimpan: " + (e.message || e)); }
+  };
+}
+
 const daftarHal = {
   dashboard: { judul: "Dashboard", crumb: "Dashboard", gambar: gambarDashboard },
   user: { judul: "Kelola user", crumb: "Dashboard / User", gambar: gambarUser },
@@ -592,6 +617,7 @@ const daftarHal = {
   wallet: { judul: "Coin, diamond & reset", crumb: "Dashboard / Coin, diamond & reset", gambar: gambarWallet },
   cekin: { judul: "Cek in harian", crumb: "Dashboard / Cek in harian", gambar: gambarCekIn },
   vipharga: { judul: "Harga VIP", crumb: "Dashboard / Harga VIP", gambar: gambarVip },
+  family: { judul: "Family", crumb: "Dashboard / Family", gambar: gambarFamily },
   aset: { judul: "Aset & VIP", crumb: "Dashboard / Aset & VIP", gambar: gambarAset },
   asetvps: { judul: "Aset di VPS", crumb: "Dashboard / Aset di VPS", gambar: gambarAsetVps },
   katalog: { judul: "Katalog game", crumb: "Dashboard / Game", gambar: gambarKatalog },

@@ -654,7 +654,7 @@ fun VipEntryEffect(roomId: String) {
                 // lagi dipaksa 280x79 (dulu file dengan rasio lain jadi kecil/berongga).
                 var rasioBanner by remember(b.n, b.updatedAt) { mutableStateOf(280f / 79f) }
                 LaunchedEffect(b.n, b.updatedAt) {
-                    val r = try { VipAssets.ratioOf(b) } catch (e: Exception) { 0f }
+                    val r = try { ratioOf(b) } catch (e: Exception) { 0f }
                     if (r > 0.4f) rasioBanner = r
                 }
                 BoxWithConstraints(

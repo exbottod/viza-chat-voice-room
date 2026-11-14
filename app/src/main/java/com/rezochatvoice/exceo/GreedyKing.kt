@@ -99,7 +99,7 @@ fun GreedyKingScreen(
 
     // Game tampil sebagai sheet dari bawah, bukan menutupi seluruh layar.
     Box(
-        Modifier.fillMaxSize().background(Color(0x99000000)).clickable(
+        Modifier.fillMaxSize().background(Color.Transparent).clickable(
             indication = null,
             interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
         ) { onClose() },
@@ -258,8 +258,8 @@ fun GreedyKingScreen(
     }
 }
 
-/** Tinggi sheet game dibanding layar. 0,86 = 86% layar. */
-private const val PECAHAN_SHEET = 0.86f
+/** Tinggi sheet game dibanding layar. 0,78 = 78% layar, sisanya room kelihatan. */
+private const val PECAHAN_SHEET = 0.78f
 
 /** Tambahkan token, uid, dan nama ke alamat halaman game. */
 private fun denganToken(alamat: String, token: String, uid: String, nama: String): String {

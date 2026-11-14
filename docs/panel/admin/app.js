@@ -2684,9 +2684,21 @@ async function gambarPengaturan() {
         nama, peran, aktif: true, dibuat: serverTimestamp(), oleh: auth.currentUser.email
       });
       // Simpan nama agar admin bisa login memakai namanya, bukan email.
-      await setDoc(doc(db, "panelNama", kunciNama(nama)), { nama, email, peran }, { merge: true });
+      // Kalau aturan Firestore panelNama belum dipublikasikan, jangan gagalkan
+      // pendaftaran: admin tetap terdaftar dan bisa masuk memakai email.
+      let namaTersimpan = true;
+      try {
+        await setDoc(doc(db, "panelNama", kunciNama(nama)), { nama, email, peran }, { merge: true });
+      } catch (e) {
+        namaTersimpan = false;
+        console.warn("panelNama gagal:", e.code);
+      }
       catatLog("Daftarkan admin", `${nama} · ${email} · ${peran}`);
-      toast(akunBaru ? "Admin terdaftar. Dia bisa langsung masuk dengan email dan password itu." : "Email itu sudah punya akun login. Akses panel ditambahkan; dia masuk dengan sandi lamanya atau reset sandi dulu.");
+      toast(
+        (akunBaru ? "Admin terdaftar. Dia bisa langsung masuk dengan email dan password itu." : "Email itu sudah punya akun login. Akses panel ditambahkan; dia masuk dengan sandi lamanya atau reset sandi dulu.")
+        + (namaTersimpan ? "" : " Catatan: login pakai nama belum aktif karena aturan Firestore panelNama belum dipublikasikan; untuk sekarang masuk pakai email."),
+        true,
+      );
       gambarPengaturan();
     } catch (e) {
       toast("Gagal: " + pesanAuth(e), true);

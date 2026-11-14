@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="./assets/images/icon.png" />
+    <link rel="apple-touch-icon" href="./assets/images/icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#C0392B" />
+    <title>Greedy King</title>
+    <script>
+      // Di WebView Android, 100dvh/100vh kadang bernilai 0 sehingga seluruh isi
+      // game tingginya nol dan yang terlihat hanya latar kuning. Tinggi layar
+      // nyata dipasang langsung sebagai piksel.
+      (function () {
+        function pasang() {
+          var h = window.innerHeight || document.documentElement.clientHeight || screen.height || 0;
+          if (h < 100) return;
+          var st = document.getElementById("gkTinggi");
+          if (!st) {
+            st = document.createElement("style");
+            st.id = "gkTinggi";
+            document.head.appendChild(st);
+          }
+          st.textContent =
+            "html,body{height:" + h + "px!important}" +
+            "#root{height:" + h + "px!important;min-height:" + h + "px!important}" +
+            ".h-dvh{height:" + h + "px!important}" +
+            ".min-h-dvh{min-height:" + h + "px!important}";
+        }
+        pasang();
+        var n = 0;
+        var ulang = setInterval(function () { pasang(); if (++n > 40) clearInterval(ulang); }, 250);
+        window.addEventListener("resize", pasang);
+        window.addEventListener("orientationchange", pasang);
+        document.addEventListener("DOMContentLoaded", pasang);
+      })();
+    </script>
+    <script type="module" crossorigin src="./assets/index-DYdSTxI1.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-C6zMQ3Ai.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

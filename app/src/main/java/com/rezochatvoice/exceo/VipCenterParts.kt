@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.key
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -206,12 +208,16 @@ val VIP_IDENT = listOf(
 
 /** Kisi "VIP Identity": 8 kotak seragam, ikon digambar dengan kode. */
 @Composable
-fun VipIdentityGrid(onPick: (VipIdent) -> Unit) {
+fun VipIdentityGrid(sel: Int, onPick: (VipIdent) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         VIP_IDENT.chunked(4).forEach { baris ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 baris.forEach { it ->
-                    Box(Modifier.weight(1f)) { VcTile(it.label, true, { onPick(it) }) { InkGlyph(it.glyph, Modifier.size(26.dp), VC_LINE) } }
+                    Box(Modifier.weight(1f)) {
+                        VcTile(it.label, true, { onPick(it) }, tinggi = 74.dp) {
+                            IsiIdentitas(sel, it)
+                        }
+                    }
                 }
                 repeat(4 - baris.size) { Spacer(Modifier.weight(1f)) }
             }
@@ -258,9 +264,46 @@ private fun privGlyph(key: String): String = when (key) {
     else -> "spark"
 }
 
+/**
+ * Isi kotak identitas: menampilkan aset yang diupload di panel developer
+ * (bingkai, gelar, medali, efek masuk, kartu profil, gelembung). Kalau belum
+ * diupload, tampil ikon garis sebagai cadangan.
+ */
+@Composable
+fun IsiIdentitas(sel: Int, id: VipIdent) {
+    val ukuran = Modifier.size(58.dp)
+    val cadangan: @Composable () -> Unit = { InkGlyph(id.glyph, Modifier.size(26.dp), VC_LINE) }
+    when (id.key) {
+        "title" -> key(sel) { VipTag(sel, Modifier) }
+        "frame" -> Box(ukuran, contentAlignment = Alignment.Center) {
+            Box(Modifier.size(34.dp).clip(CircleShape).background(Color(0xFF4A3030)))
+            key(sel) {
+                VipMediaSafe(VipAssets.get(sel, "frame"), Modifier.requiredSize(58.dp), loop = true, fallback = {
+                    Box(Modifier.size(40.dp).border(3.dp, frameBrush("vipf_$sel"), CircleShape))
+                })
+            }
+        }
+        "card" -> key(sel) {
+            VipMediaSafe(kartuProfil(sel), Modifier.size(width = 62.dp, height = 46.dp).clip(RoundedCornerShape(6.dp)), loop = true, contentScale = ContentScale.Crop, fallback = cadangan)
+        }
+        "bubble", "color" -> Box(
+            Modifier.size(width = 62.dp, height = 40.dp).clip(RoundedCornerShape(10.dp))
+                .background(Brush.verticalGradient(listOf(vipColor(sel), androidx.compose.ui.graphics.lerp(vipColor(sel), Color.Black, 0.5f)))),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (id.key == "bubble") key(sel) {
+                VipMediaSafe(VipAssets.get(sel, "bubble"), Modifier.matchParentSize(), contentScale = ContentScale.FillBounds)
+            }
+        }
+        else -> key(sel) {
+            VipMediaSafe(VipAssets.get(sel, id.slot), ukuran, loop = true, contentScale = ContentScale.Fit, fallback = cadangan)
+        }
+    }
+}
+
 /** Kotak ikon + label yang bentuknya sama untuk semua bagian. */
 @Composable
-private fun VcTile(label: String, aktif: Boolean = true, tap: () -> Unit, icon: @Composable () -> Unit) {
+private fun VcTile(label: String, aktif: Boolean = true, tap: () -> Unit, tinggi: Dp = 26.dp, icon: @Composable () -> Unit) {
     Column(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
             .background(if (aktif) Color(0x2EFFFFFF) else Color(0x1A000000))
@@ -269,7 +312,7 @@ private fun VcTile(label: String, aktif: Boolean = true, tap: () -> Unit, icon: 
             .padding(vertical = 10.dp, horizontal = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(Modifier.size(26.dp), contentAlignment = Alignment.Center) { icon() }
+        Box(Modifier.height(tinggi).fillMaxWidth(), contentAlignment = Alignment.Center) { icon() }
         Spacer(Modifier.height(6.dp))
         Text(
             tr(label),
@@ -285,36 +328,40 @@ private fun VcTile(label: String, aktif: Boolean = true, tap: () -> Unit, icon: 
 
 // ---------------- Aset & paket ----------------
 
-/** Tiga kotak aset milik tingkat ini: medali, lencana, gelar. */
+/** Tiga kotak aset milik tingkat ini: medali, lencana, gelar (gambar asli dari panel). */
 @Composable
 fun VipAssetsRow(sel: Int, coin: Color, onPick: (VipIdent) -> Unit = {}) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Box(Modifier.weight(1f)) {
-            VcAsset("SVIP $sel", "medal") { onPick(VIP_IDENT.first { it.key == "badge" }) }
-        }
-        Box(Modifier.weight(1f)) {
-            VcAsset("Vip badge", "badge") { onPick(VIP_IDENT.first { it.key == "badge" }) }
-        }
-        Box(Modifier.weight(1f)) {
-            VcAsset("vip $sel", "title") { onPick(VIP_IDENT.first { it.key == "title" }) }
-        }
+        Box(Modifier.weight(1f)) { VcAsset(sel, "SVIP $sel", "medal") { onPick(VIP_IDENT.first { it.key == "badge" }) } }
+        Box(Modifier.weight(1f)) { VcAsset(sel, "Vip badge", "entry") { onPick(VIP_IDENT.first { it.key == "entry" }) } }
+        Box(Modifier.weight(1f)) { VcAsset(sel, "vip $sel", "title") { onPick(VIP_IDENT.first { it.key == "title" }) } }
     }
 }
 
 @Composable
-private fun VcAsset(label: String, slot: String, tap: () -> Unit = {}) {
+private fun VcAsset(sel: Int, label: String, slot: String, tap: () -> Unit = {}) {
     Column(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Color(0x1FFFFFFF)).clickable(onClick = tap)
             .padding(vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Canvas(Modifier.size(44.dp)) {
-            val w = 1.8.dp.toPx()
-            drawCircle(VC_GOLD.copy(alpha = 0.9f), radius = size.minDimension / 2f - w, style = Stroke(w))
-            drawCircle(VC_GOLD.copy(alpha = 0.25f), radius = size.minDimension / 2f - w * 3.5f)
+        Box(Modifier.size(64.dp), contentAlignment = Alignment.Center) {
+            if (slot == "title") key(sel) { VipTag(sel, Modifier) }
+            else key(sel) {
+                VipMediaSafe(
+                    VipAssets.get(sel, slot), Modifier.size(64.dp), loop = true, contentScale = ContentScale.Fit,
+                    fallback = {
+                        Canvas(Modifier.size(44.dp)) {
+                            val w = 1.8.dp.toPx()
+                            drawCircle(VC_GOLD.copy(alpha = 0.9f), radius = size.minDimension / 2f - w, style = Stroke(w))
+                            drawCircle(VC_GOLD.copy(alpha = 0.25f), radius = size.minDimension / 2f - w * 3.5f)
+                        }
+                    },
+                )
+            }
         }
         Spacer(Modifier.height(6.dp))
         Text(tr(label), color = Color(0xFFF4EAD6), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)

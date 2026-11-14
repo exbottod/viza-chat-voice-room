@@ -641,7 +641,7 @@ fun VipScreen(uid: String, wallet: Wallet, onBack: () -> Unit) {
         Modifier.fillMaxSize().blockTouches()
             .background(Brush.verticalGradient(listOf(bgTop, Color(0xFF2A0F12), Color(0xFF14070A)))),
     ) {
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 130.dp)) {
             // ===== Bilah atas: kembali, tab SVIP/Item, saldo koin, gear privilege =====
             VipTopBar(
                 tab = tab,
@@ -685,7 +685,7 @@ fun VipScreen(uid: String, wallet: Wallet, onBack: () -> Unit) {
 
                 // ---- identitas VIP ----
                 VipSectionTitle("VIP Identity")
-                VipIdentityGrid { id -> identitas = id }
+                VipIdentityGrid(sel) { id -> identitas = id }
 
                 // ---- privilege eksklusif ----
                 VipSectionTitle("Exclusive Privileges")
@@ -695,9 +695,6 @@ fun VipScreen(uid: String, wallet: Wallet, onBack: () -> Unit) {
                 VipSectionTitle("VIP Assets")
                 VipAssetsRow(sel, c) { identitas = it }
 
-                // ---- paket ----
-                VipSectionTitle("VIP Packages")
-                VipPackageButton(VIP_DAYS.toInt(), price, active) { confirm = true }
                 Spacer(Modifier.height(20.dp))
             } else {
                 VipSectionTitle("Item VIP$sel")
@@ -708,11 +705,31 @@ fun VipScreen(uid: String, wallet: Wallet, onBack: () -> Unit) {
                 )
                 Spacer(Modifier.height(6.dp))
                 VipItemList(sel)
-                Spacer(Modifier.height(16.dp))
-                VipSectionTitle("VIP Packages")
-                VipPackageButton(VIP_DAYS.toInt(), price, active) { confirm = true }
                 Spacer(Modifier.height(20.dp))
             }
+        }
+        // ---- bar bawah (harga & beli, seperti semula) ----
+        Row(
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                .background(Color(0xF02E1316)).border(1.dp, Color(0x88E6C47A))
+                .navigationBarsPadding().padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(tr("Harga: ${fmtNum(price)} koin / $VIP_DAYS hari"), color = Color(0xFFFFE9A8), fontSize = 16.sp)
+                if (active) Text(tr("VIP${wallet.vip} aktif · Exp +${vipBoostPercent(wallet.vip)}% sedang dipercepat. Berlaku sampai ${fmtDate(wallet.vipUntil)}"), color = Color(0xFFE0C9C9), fontSize = 13.sp)
+                else Text(tr("Exp +${vipBoostPercent(sel)}% setelah VIP$sel aktif"), color = Color(0xFFE0C9C9), fontSize = 13.sp)
+            }
+            Spacer(Modifier.width(10.dp))
+            GoldPill(
+                when {
+                    sameTier -> "Perpanjang"
+                    higher -> "Beli VIP$sel"
+                    active -> "Upgrade VIP$sel"
+                    else -> "Beli VIP$sel"
+                },
+                enabled = !busy,
+            ) { confirm = true }
         }
     }
 

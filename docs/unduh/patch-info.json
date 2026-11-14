@@ -1540,6 +1540,15 @@
       }
     },
     {
+      "dari": "1.0.82",
+      "ke": "1.0.86",
+      "arm64": {
+        "file": "patch-1.0.82-1.0.86-arm64.bsdiff",
+        "ukuran": 4008167,
+        "sha256": "e33aff6c46afc12f887a8079ba695c619d94c6447404fc36e8e9b6ff0e081e0e"
+      }
+    },
+    {
       "dari": "1.0.83",
       "ke": "1.0.85",
       "arm64": {
@@ -1549,12 +1558,39 @@
       }
     },
     {
+      "dari": "1.0.83",
+      "ke": "1.0.86",
+      "arm64": {
+        "file": "patch-1.0.83-1.0.86-arm64.bsdiff",
+        "ukuran": 4005282,
+        "sha256": "a4cd4d53d0e9c2acda85e9c13f1a3c62ecafd1eb216351e41d42c0c9f61c570d"
+      }
+    },
+    {
       "dari": "1.0.84",
       "ke": "1.0.85",
       "arm64": {
         "file": "patch-1.0.84-1.0.85-arm64.bsdiff",
         "ukuran": 3954927,
         "sha256": "adb988b436934b62ebff983344e20568224a87fd457e8371ae5bdcce4f953de4"
+      }
+    },
+    {
+      "dari": "1.0.84",
+      "ke": "1.0.86",
+      "arm64": {
+        "file": "patch-1.0.84-1.0.86-arm64.bsdiff",
+        "ukuran": 3965359,
+        "sha256": "358f5ef10377161c17ec78b7e7187c03729aa9bfd279b60af530a1b4701da315"
+      }
+    },
+    {
+      "dari": "1.0.85",
+      "ke": "1.0.86",
+      "arm64": {
+        "file": "patch-1.0.85-1.0.86-arm64.bsdiff",
+        "ukuran": 3923063,
+        "sha256": "a6bd44c458b34469572983cac144654116ac7a7efe633d21c2c7db5c6d871abe"
       }
     }
   ]

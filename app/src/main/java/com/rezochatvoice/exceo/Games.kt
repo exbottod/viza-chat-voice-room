@@ -107,11 +107,25 @@ fun GamesHub(myUid: String, roomId: String, myName: String = "", myAvatarB64: St
         daftarDariServer = segar.isNotEmpty()
     }
 
+    // Semua panggilan jaringan dibungkus: kalau server atau data user bermasalah,
+    // tab game tetap terbuka, bukan menutup aplikasi.
     LaunchedEffect(Unit) {
-        GameCfg.start()
-        // Nama + foto asli akun REZO supaya ranking game menampilkan pemain yang benar.
-        SupaRepo.wavePrepare(myName.ifBlank { "Player" }.take(30), myAvatarB64)
-        balance = SupaRepo.get(myUid).wallet?.coins ?: 0L
+        try { GameCfg.start() } catch (e: Exception) { }
+        try {
+            // Nama + foto asli akun supaya ranking game menampilkan pemain yang benar.
+            SupaRepo.wavePrepare(myName.ifBlank { "Player" }.take(30), myAvatarB64)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            android.util.Log.w("GamesHub", "wavePrepare: " + (e.message ?: "gagal"))
+        }
+        try {
+            balance = SupaRepo.get(myUid).wallet?.coins ?: 0L
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            android.util.Log.w("GamesHub", "saldo game: " + (e.message ?: "gagal"))
+        }
     }
 
     // Kotak "Game Rezo" membuka game Greedy Rezo sendiri (dompet VPS).

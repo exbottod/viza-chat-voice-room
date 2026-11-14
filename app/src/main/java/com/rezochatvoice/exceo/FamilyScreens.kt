@@ -64,7 +64,15 @@ fun FamilyTabScreen(
     var showSearch by remember { mutableStateOf(false) }
 
     DisposableEffect(myUid) {
-        val r = if (myUid.isNotEmpty()) FamilyRepo.observeMy(myUid) { f, l -> fam = f; loaded = l } else null
+        val r = if (myUid.isNotEmpty()) FamilyRepo.observeMy(myUid) { f, sudah ->
+            fam = f
+            loaded = sudah
+            // Nama/foto di catatan anggota disamakan dengan profil terbaru supaya
+            // anggota lain juga melihat perubahannya, bukan salinan saat join.
+            if (f != null && sudah) {
+                AppScope.scope.launch { FamilyRepo.syncProfil(f.id, myUid, myName, myAvatar) }
+            }
+        } else null
         onDispose { r?.remove() }
     }
 
@@ -353,10 +361,11 @@ fun FamilyHomeScreen(
                                     .border(1.dp, Color(0x14000000), RoundedCornerShape(18.dp)).padding(12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Box(Modifier.clip(CircleShape).clickable { profilUid = m.uid }) { FmAvatar(m.avatarB64, m.name, 50.dp, ring = true) }
+                                val (nmAnggota, avAnggota) = IngatProfil(m.uid, m.name, m.avatarB64)
+                                Box(Modifier.clip(CircleShape).clickable { profilUid = m.uid }) { FmAvatar(avAnggota, nmAnggota, 50.dp, ring = true) }
                                 Spacer(Modifier.width(12.dp))
                                 Column(Modifier.weight(1f).clickable { profilUid = m.uid }) {
-                                    Text(m.name, color = FM_INK, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text(nmAnggota, color = FM_INK, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                     Text(
                                         when { m.uid == f.ownerUid -> "Owner"; m.role == "admin" -> "Admin"; else -> "Member" },
                                         color = if (m.uid == f.ownerUid) Color(0xFFE09A00) else if (m.role == "admin") FM_PINK else FM_SOFT,
@@ -376,10 +385,11 @@ fun FamilyHomeScreen(
                     } else LazyColumn(Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(requests) { r ->
                             Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Color.White).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                                FmAvatar(r.avatarB64, r.name, 46.dp, ring = true)
+                                val (nmMinta, avMinta) = IngatProfil(r.uid, r.name, r.avatarB64)
+                                FmAvatar(avMinta, nmMinta, 46.dp, ring = true)
                                 Spacer(Modifier.width(10.dp))
                                 Column(Modifier.weight(1f)) {
-                                    Text(r.name, color = FM_INK, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                                    Text(nmMinta, color = FM_INK, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                                     Text(timeAgo(r.createdAt), color = FM_SOFT, fontSize = 11.sp)
                                 }
                                 Box(Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFFFFE3E3)).clickable { scope.launch { FamilyRepo.reject(f.id, r.uid); toast(tr("Permintaan ditolak")) } }.padding(horizontal = 12.dp, vertical = 8.dp)) { Text(tr("Reject"), color = Color(0xFFD32F2F), fontSize = 12.sp, fontWeight = FontWeight.Bold) }
@@ -546,12 +556,40 @@ private fun SubPage(title: String, onBack: () -> Unit, content: @Composable () -
 }
 
 @Composable
-private fun MemberAvatar(b64: String?, name: String, size: Dp) {
-    val bmp = remember(b64) { ProfileRepo.decodeB64(b64) }
-    Box(Modifier.size(size).clip(CircleShape).background(Color(0xFF263238)), contentAlignment = Alignment.Center) {
-        if (bmp != null) Image(bmp, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-        else Text(name.take(1).uppercase(), color = GoldLight, fontWeight = FontWeight.Bold)
+/**
+ * Nama dan foto anggota diambil dari PROFIL TERBARU (RTDB pub) tiap kali daftar
+ * tampil, bukan dari salinan saat join family. Dulu salinan itu yang dipakai,
+ * jadi nama dan foto yang sudah diganti user tetap tampil versi lama.
+ */
+@Composable
+private fun IngatProfil(uid: String, name: String, avatar: String?): Pair<String, String?> {
+    var nilai by remember(uid) { mutableStateOf(name to avatar) }
+    LaunchedEffect(uid) {
+        if (uid.isBlank()) return@LaunchedEffect
+        val u = try {
+            kotlinx.coroutines.withTimeoutOrNull(6000L) { UserCache.byUid(uid) }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) { null } ?: return@LaunchedEffect
+        val nm = u.name.ifBlank { name }
+        val av = u.avatarB64?.takeIf { it.isNotBlank() } ?: avatar
+        if (nm != nilai.first || av != nilai.second) nilai = nm to av
     }
+    return nilai
+}
+
+/** Avatar anggota dengan foto terbaru. */
+@Composable
+private fun AnggotaAvatar(uid: String, name: String, avatar: String?, size: Dp, ring: Boolean = false) {
+    val (nm, av) = IngatProfil(uid, name, avatar)
+    FmAvatar(av, nm, size, ring = ring)
+}
+
+/** Baris nama anggota dengan nama terbaru. */
+@Composable
+private fun NamaAnggota(uid: String, name: String, avatar: String?, isi: @Composable (String, String?) -> Unit) {
+    val (nm, av) = IngatProfil(uid, name, avatar)
+    isi(nm, av)
 }
 
 @Composable
@@ -564,7 +602,7 @@ private fun MemberListScreen(
             items(members) { m ->
                 val canManage = m.uid != myUid && m.uid != ownerUid && (isOwner || (isAdmin && m.role == "member"))
                 Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    MemberAvatar(m.avatarB64, m.name, 46.dp)
+                    AnggotaAvatar(m.uid, m.name, m.avatarB64, 46.dp)
                     Spacer(Modifier.width(10.dp))
                     Column(Modifier.weight(1f)) {
                         Text(m.name, color = Color.White, fontSize = 16.sp)
@@ -590,7 +628,7 @@ private fun RequestsScreen(list: List<FamilyRequest>, isAdmin: Boolean, onBack: 
         } else LazyColumn(Modifier.fillMaxSize().padding(horizontal = 12.dp)) {
             items(list) { r ->
                 Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    MemberAvatar(r.avatarB64, r.name, 46.dp)
+                    AnggotaAvatar(r.uid, r.name, r.avatarB64, 46.dp)
                     Spacer(Modifier.width(10.dp))
                     Column(Modifier.weight(1f)) {
                         Text(r.name, color = Color.White, fontSize = 16.sp)
@@ -686,7 +724,7 @@ fun FamilyProfileDialog(
                     items(members.size) { i ->
                         val m = members[i]
                         Row(Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(RoundedCornerShape(10.dp)).background(CardBlack).padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                            MemberAvatar(m.avatarB64, m.name, 40.dp)
+                            AnggotaAvatar(m.uid, m.name, m.avatarB64, 40.dp)
                             Spacer(Modifier.width(10.dp))
                             Column(Modifier.weight(1f)) {
                                 Text(m.name, color = Color.White, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -711,7 +749,13 @@ private fun FamilyRankScreen(myFamilyId: String, onBack: () -> Unit, onOpenFamil
         list = l
         val peta = HashMap<String, String>()
         for (f in l) {
-            val n = try { FamilyRepo.ownerName(f.id, f.ownerUid) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { null }
+            // Nama pemilik dibaca dari profil terbaru; salinan di family bisa basi.
+            val n = try {
+                kotlinx.coroutines.withTimeoutOrNull(6000L) { UserCache.byUid(f.ownerUid) }?.name
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) { null }
+                ?: try { FamilyRepo.ownerName(f.id, f.ownerUid) } catch (e: Exception) { null }
             if (!n.isNullOrBlank()) { peta[f.id] = n; pemilik = HashMap(peta) }
         }
     }

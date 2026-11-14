@@ -278,6 +278,31 @@ object FamilyRepo {
             )
         }
 
+    /**
+     * Samakan nama dan foto pada catatan anggota family dengan profil terbaru.
+     * Catatan anggota menyimpan salinan saat join, jadi tanpa ini orang lain
+     * (dan APK versi lama) tetap melihat nama/foto lama setelah diganti.
+     */
+    suspend fun syncProfil(fid: String, uid: String, name: String, avatar: String?) {
+        if (fid.isBlank() || uid.isBlank()) return
+        try {
+            val jalur = fm(fid).child("members/$uid")
+            val snap = kotlinx.coroutines.withTimeoutOrNull(5000L) { jalur.get().await() } ?: return
+            if (!snap.exists()) return
+            val namaLama = snap.child("name").getValue(String::class.java).orEmpty()
+            val avLama = snap.child("avatarB64").getValue(String::class.java).orEmpty()
+            val namaBaru = name.trim()
+            val avBaru = avatar?.trim().orEmpty()
+            val ubah = HashMap<String, Any?>()
+            if (namaBaru.isNotBlank() && namaBaru != namaLama) ubah["name"] = namaBaru
+            if (avBaru.isNotBlank() && avBaru != avLama) ubah["avatarB64"] = avBaru
+            if (ubah.isEmpty()) return
+            kotlinx.coroutines.withTimeoutOrNull(5000L) { jalur.updateChildren(ubah).await() }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) { }
+    }
+
     fun observeLog(fid: String, onChange: (List<FamilyLog>) -> Unit): Reg =
         listen(fm(fid).child("log").orderByChild("createdAt").limitToLast(60)) { snap ->
             onChange(snap.children.map { FamilyLog(it.key ?: "", it.str("text") ?: "", it.lng("createdAt")) }.sortedByDescending { it.createdAt })

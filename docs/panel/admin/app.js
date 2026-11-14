@@ -2718,15 +2718,38 @@ async function gambarPengaturan() {
 
   $("isiHal").querySelectorAll("[data-toggle]").forEach((b) => (b.onclick = async () => {
     const aktifBaru = b.dataset.aktif !== "true";
-    await setDoc(doc(db, "panelAdmins", b.dataset.toggle), { aktif: aktifBaru }, { merge: true })
-      .then(() => { toast(aktifBaru ? "Akses diaktifkan" : "Akses dicabut"); catatLog(aktifBaru ? "Aktifkan admin" : "Cabut admin", b.dataset.toggle); gambarPengaturan(); })
+    const emailAdmin = b.dataset.toggle;
+    await setDoc(doc(db, "panelAdmins", emailAdmin), { aktif: aktifBaru }, { merge: true })
+      .then(async () => {
+        // Nama untuk login ikut dicabut atau dipasang lagi supaya sama dengan aksesnya.
+        try {
+          const dd = await getDoc(doc(db, "panelAdmins", emailAdmin));
+          const namaAdmin = dd.exists() ? String(dd.data().nama || "") : "";
+          if (namaAdmin) {
+            const kunci = kunciNama(namaAdmin);
+            if (aktifBaru) await setDoc(doc(db, "panelNama", kunci), { nama: namaAdmin, email: emailAdmin }, { merge: true });
+            else await deleteDoc(doc(db, "panelNama", kunci)).catch(() => {});
+          }
+        } catch (e) { console.warn("panelNama:", e.code); }
+        toast(aktifBaru ? "Akses diaktifkan" : "Akses dicabut, dia tidak bisa masuk lagi");
+        catatLog(aktifBaru ? "Aktifkan admin" : "Cabut admin", emailAdmin);
+        gambarPengaturan();
+      })
       .catch((e) => toast("Gagal: " + (e.code || e.message), true));
   }));
   $("isiHal").querySelectorAll("[data-hapusadmin]").forEach((b) => (b.onclick = async () => {
     if (!confirm("Hapus admin ini dari daftar panel? Akun Firebase-nya tetap ada, tapi tidak bisa membuka panel.")) return;
-    await deleteDoc(doc(db, "panelAdmins", b.dataset.hapusadmin))
-      .then(() => { toast("Admin dihapus"); catatLog("Hapus admin", b.dataset.hapusadmin); gambarPengaturan(); })
-      .catch((e) => toast("Gagal: " + (e.code || e.message), true));
+    const emailHapus = b.dataset.hapusadmin;
+    try {
+      // Ambil namanya dulu supaya pemetaan nama untuk login ikut dibersihkan.
+      const dd = await getDoc(doc(db, "panelAdmins", emailHapus));
+      const namaHapus = dd.exists() ? String(dd.data().nama || "") : "";
+      await deleteDoc(doc(db, "panelAdmins", emailHapus));
+      if (namaHapus) await deleteDoc(doc(db, "panelNama", kunciNama(namaHapus))).catch(() => {});
+      toast("Admin dihapus, dia tidak bisa masuk lagi. Email yang sama boleh didaftarkan ulang kapan saja.");
+      catatLog("Hapus admin", emailHapus);
+      gambarPengaturan();
+    } catch (e) { toast("Gagal: " + (e.code || e.message), true); }
   }));
 }
 

@@ -27,14 +27,14 @@ grep -q "async function siapTabel" "$BARU" || { echo "kode baru tidak memuat sia
 mv "$BARU" "$DIR/index.js"
 if [ -f "$DIR/server.js" ]; then
   cp "$DIR/server.js" "$DIR/server.js.bak-$(date +%Y%m%d-%H%M%S)"
-  if curl -fsSL "$SUMBER_SRV?cb=$(date +%s)" -o "$DIR/server.js.baru"; then
-    if ! command -v node >/dev/null 2>&1 || node --check "$DIR/server.js.baru" 2>/dev/null; then
-      mv "$DIR/server.js.baru" "$DIR/server.js"; echo "server.js ikut diperbarui"
+  if curl -fsSL "$SUMBER_SRV?cb=$(date +%s)" -o "$DIR/server.js.tmp.js"; then
+    if ! command -v node >/dev/null 2>&1 || node --check "$DIR/server.js.tmp.js" 2>/dev/null; then
+      mv "$DIR/server.js.tmp.js" "$DIR/server.js"; echo "server.js ikut diperbarui"
     else
-      rm -f "$DIR/server.js.baru"; echo "server.js baru tidak valid, dibiarkan"
+      rm -f "$DIR/server.js.tmp.js"; echo "server.js baru tidak valid, dibiarkan"
     fi
   else
-    rm -f "$DIR/server.js.baru"; echo "server.js gagal diunduh, dibiarkan"
+    rm -f "$DIR/server.js.tmp.js"; echo "server.js gagal diunduh, dibiarkan"
   fi
 fi
 echo "kode baru terpasang"

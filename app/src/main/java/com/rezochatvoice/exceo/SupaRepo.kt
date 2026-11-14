@@ -494,6 +494,42 @@ object SupaRepo {
             }
         }
 
+    // ---------------- Coin FAMILY (server dompet) ----------------
+
+    class FamInfo(val harga: Long, val expPerCoin: Long)
+
+    /** Harga buat family & rasio exp->coin, diatur dari panel developer. */
+    suspend fun famInfo(): FamInfo? {
+        val o = raw("fam_info", org.json.JSONObject()) ?: return null
+        if (o.optInt("ok", 0) != 1) return null
+        return FamInfo(o.optLong("harga", 200000L), o.optLong("exp_per_coin", 100L))
+    }
+
+    /** Bayar buat family (potong coin pemilik di server). null = berhasil. */
+    suspend fun famBayarBuat(uid: String): String? {
+        val r = call("fam_create_pay", uidJson(uid).put("req", "fc-$uid-${System.currentTimeMillis()}"))
+        return r.error
+    }
+
+    /** Tambah exp family dari gift (server mengubah 100 exp jadi 1 coin family). */
+    suspend fun famTambahExp(uid: String, fid: String, exp: Long) {
+        raw("fam_add_exp", uidJson(uid).put("fid", fid).put("exp", exp)
+            .put("req", "fe-$fid-$uid-${System.currentTimeMillis()}-${(Math.random() * 1e6).toLong()}"))
+    }
+
+    suspend fun famCoins(uid: String, fid: String): Long {
+        val o = raw("fam_coins", uidJson(uid).put("fid", fid)) ?: return 0L
+        return o.optLong("coins", 0L)
+    }
+
+    /** Kirim coin family ke member. null = berhasil, selain itu pesan galat. */
+    suspend fun famKirim(uid: String, fid: String, to: String, coins: Long): String? {
+        val o = raw("fam_send", uidJson(uid).put("fid", fid).put("to", to).put("coins", coins)
+            .put("req", "fk-$fid-$to-${System.currentTimeMillis()}")) ?: return "Server dompet tidak menjawab"
+        lupakanSaldo()
+        return if (o.optInt("ok", 0) == 1) null else o.optString("e", "Gagal mengirim coin family")
+    }
+
     /** Top 1-3 pemenang game Hive (24 jam terakhir) versi REZO. */
     suspend fun hiveRank(game: String): org.json.JSONObject? =
         raw("hive_rank", org.json.JSONObject().put("game", game))

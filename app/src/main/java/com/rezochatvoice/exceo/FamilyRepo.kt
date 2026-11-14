@@ -17,6 +17,8 @@ data class Family(
     val name: String = "",
     val label: String = "",
     val logoB64: String? = null,
+    val coverB64: String? = null,
+    val country: String = "",
     val ownerUid: String = "",
     val announcement: String = "",
     val slogan: String = "",
@@ -56,22 +58,21 @@ val FAMILY_CLASSES = listOf(
     FamilyClass("Gold", "IV", 1_500_000_000L, "Dapatkan Dolar", "Medali Kelas", "Bingkai avatar"),
 )
 
-/** Level family dari total exp. Lv.1 mulai 0, tiap level butuh ambang yang naik. */
-fun familyLevelNeed(level: Int): Long = when (level) {
-    1 -> 0L
-    2 -> 1_000_000L
-    3 -> 10_000_000L
-    4 -> 100_000_000L
-    5 -> 1_000_000_000L
-    6 -> 17_010_000_000L
-    else -> 17_010_000_000L * (level - 5)
-}
+const val FAMILY_MAX_LEVEL = 50
+/** Exp yang dibutuhkan untuk naik 1 level (Lv.2 = 100 juta). Dipakai bertingkat. */
+const val FAMILY_EXP_PER_LEVEL = 100_000_000L
+
+/** Total exp untuk MENCAPAI level n (Lv.1 = 0, Lv.2 = 100 juta, Lv.3 = 200 juta, dst). */
+fun familyLevelNeed(level: Int): Long = (level.coerceIn(1, FAMILY_MAX_LEVEL + 1) - 1) * FAMILY_EXP_PER_LEVEL
 
 fun familyLevel(exp: Long): Int {
     var lv = 1
-    while (lv < 10 && exp >= familyLevelNeed(lv + 1)) lv++
+    while (lv < FAMILY_MAX_LEVEL && exp >= familyLevelNeed(lv + 1)) lv++
     return lv
 }
+
+/** Kapasitas member: Lv.1 = 20, Lv.2 = 30, Lv.3 = 40, dst (tambah 10 tiap level). */
+fun familyCapacity(level: Int): Int = 20 + (level.coerceIn(1, FAMILY_MAX_LEVEL) - 1) * 10
 
 fun familyClassOf(exp: Long): FamilyClass {
     var res = FAMILY_CLASSES.first()
@@ -106,6 +107,8 @@ object FamilyRepo {
             name = str("name") ?: "",
             label = str("label") ?: "",
             logoB64 = str("logoB64"),
+            coverB64 = str("coverB64"),
+            country = str("country") ?: "",
             ownerUid = str("ownerUid") ?: "",
             announcement = str("announcement") ?: "",
             slogan = str("slogan") ?: "",
@@ -274,6 +277,9 @@ object FamilyRepo {
             )
         }
 
+    /** Saldo coin family dari server dompet (bukan RTDB, supaya tidak bisa dipalsukan). */
+    suspend fun coins(uid: String, fid: String): Long = SupaRepo.famCoins(uid, fid)
+
     fun observeRequests(fid: String, onChange: (List<FamilyRequest>) -> Unit): Reg =
         listen(fm(fid).child("requests")) { snap ->
             onChange(
@@ -332,6 +338,12 @@ object FamilyRepo {
         return emptyList()
     }
 
+    /** Family untuk tab Recommended: yang terbaru dulu. */
+    suspend fun recommended(): List<Family> =
+        readOnce(Rtdb.ref("fm").orderByChild("createdAt").limitToLast(40)) { s ->
+            s.children.mapNotNull { it.toFamily() }.sortedByDescending { it.createdAt }
+        } ?: scanAll()
+
     suspend fun topFamilies(): List<Family> =
         readOnce(Rtdb.ref("fm").orderByChild("exp").limitToLast(30)) { s ->
             s.children.mapNotNull { it.toFamily() }.sortedByDescending { it.exp }
@@ -348,7 +360,7 @@ object FamilyRepo {
     private suspend fun nextNum(): Long = suspendCancellableCoroutine { cont ->
         Rtdb.ref("fmIdx/next").runTransaction(object : Transaction.Handler {
             override fun doTransaction(cur: MutableData): Transaction.Result {
-                val n = (cur.value as? Number)?.toLong() ?: 10001L
+                val n = (cur.value as? Number)?.toLong() ?: 1000001L
                 cur.value = n + 1
                 return Transaction.success(cur)
             }
@@ -361,21 +373,26 @@ object FamilyRepo {
         })
     }
 
+    /** Buat family. Harga dipotong di server (diatur dari panel developer). */
     suspend fun create(
         uid: String, myName: String, myAvatar: String?, name: String, label: String,
-        logoB64: String?, needApproval: Boolean,
-    ): String? = try {
-        val now = System.currentTimeMillis()
-        if (!myFamilyId(uid).isNullOrBlank()) {
-            "Kamu sudah punya family"
-        } else {
+        logoB64: String?, coverB64: String?, country: String, needApproval: Boolean,
+    ): String? {
+        try {
+            if (!myFamilyId(uid).isNullOrBlank()) return "Kamu sudah punya family"
+            // Ambil nomor dulu: kalau gagal, coin belum terpotong.
             var num = -1L
             repeat(3) { if (num < 0) num = nextNum() }
-            if (num < 0) num = 10000L + (now % 900000L)
+            if (num < 0) return "Gagal membuat ID family, coba lagi"
+            // Bayar di server. Gagal = berhenti, tidak ada family yang dibuat.
+            val bayar = SupaRepo.famBayarBuat(uid)
+            if (bayar != null) return bayar
+            val now = System.currentTimeMillis()
             val fid = Rtdb.ref("fm").push().key ?: "f$now"
             val data = hashMapOf<String, Any?>(
                 "fm/$fid/numId" to num.toString(), "fm/$fid/name" to name, "fm/$fid/label" to label,
-                "fm/$fid/logoB64" to logoB64, "fm/$fid/ownerUid" to uid, "fm/$fid/announcement" to "",
+                "fm/$fid/logoB64" to logoB64, "fm/$fid/coverB64" to coverB64, "fm/$fid/country" to country,
+                "fm/$fid/ownerUid" to uid, "fm/$fid/announcement" to "",
                 "fm/$fid/slogan" to "", "fm/$fid/needApproval" to needApproval, "fm/$fid/exp" to 0L,
                 "fm/$fid/memberCount" to 1L, "fm/$fid/createdAt" to now, "fm/$fid/nameChangedAt" to now,
                 "fm/$fid/labelChangedAt" to now,
@@ -386,9 +403,13 @@ object FamilyRepo {
             )
             kotlinx.coroutines.withTimeout(10000L) { Rtdb.root().updateChildren(data).await() }
             UserDirectory.setFam(uid, name)
-            null
+            return null
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            return e.message ?: "Gagal membuat family"
         }
-    } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { e.message ?: "Gagal membuat family" }
+    }
 
     suspend fun join(fid: String, uid: String, myName: String, myAvatar: String?): String? = try {
         val now = System.currentTimeMillis()
@@ -396,7 +417,7 @@ object FamilyRepo {
             val fs = readOnce(fm(fid)) { it } 
             val f = fs?.toFamily()
             if (f == null) "Family tidak ditemukan"
-            else if (f.memberCount >= 100) "Family sudah penuh"
+            else if (f.memberCount >= familyCapacity(familyLevel(f.exp))) "Family sudah penuh"
             else if (f.needApproval) {
                 kotlinx.coroutines.withTimeout(8000L) {
                     Rtdb.root().updateChildren(hashMapOf<String, Any?>(
@@ -472,10 +493,10 @@ object FamilyRepo {
         kotlinx.coroutines.withTimeout(8000L) { fm(fid).child("members/$uid/role").setValue(role).await() }; null
     } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { e.message }
 
-    suspend fun saveSettings(f: Family, name: String, label: String, logoB64: String?, needApproval: Boolean): String? {
+    suspend fun saveSettings(f: Family, name: String, label: String, logoB64: String?, coverB64: String?, country: String, needApproval: Boolean): String? {
         return try {
             val now = System.currentTimeMillis()
-            val upd = hashMapOf<String, Any?>("logoB64" to logoB64, "needApproval" to needApproval)
+            val upd = hashMapOf<String, Any?>("logoB64" to logoB64, "coverB64" to coverB64, "country" to country, "needApproval" to needApproval)
             if (name != f.name) {
                 if (now - f.nameChangedAt < MONTH_MS) return "Nama family hanya dapat diubah 1 kali per bulan"
                 upd["name"] = name; upd["nameChangedAt"] = now
@@ -540,6 +561,7 @@ object FamilyRepo {
             }
             incr(fm(fid).child("exp"), t.reward)
             incr(fm(fid).child("members/$uid/contribution"), t.reward)
+            try { SupaRepo.famTambahExp(uid, fid, t.reward) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { }
             null
         }
     } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { e.message }
@@ -558,6 +580,8 @@ object FamilyRepo {
                 incr(fm(fid).child("exp"), amount)
                 incr(fm(fid).child("members/$uid/contribution"), amount)
             } ?: return "timeout"
+            // 100 exp = 1 coin family (dihitung di server, anti dobel).
+            try { SupaRepo.famTambahExp(uid, fid, amount) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { }
             null
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e

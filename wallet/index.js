@@ -641,6 +641,167 @@ async function pastikan(env, uid) {
 }
 
 
+
+// ---------- Coin FAMILY ----------
+// Coin family dipisah dari dompet pribadi. Setiap 100 exp family (dari gift)
+// menambah 1 coin family. Pemilik/admin bisa mengirim coin family ke member.
+// Semua operasi atomik (BEGIN IMMEDIATE) dan memakai penanda req supaya
+// permintaan yang terkirim dua kali tidak dihitung dua kali.
+const FAM_FILE = "/opt/viza-api/family-cfg.json";
+let FAM_CFG = { harga: 200000, exp_per_coin: 100 };
+async function famCfgKini() {
+  try {
+    const fsp = await import("node:fs/promises");
+    const a = JSON.parse(await fsp.readFile(FAM_FILE, "utf8"));
+    if (a && typeof a === "object") FAM_CFG = { ...FAM_CFG, ...a };
+  } catch (e) { /* berkas belum ada: pakai bawaan */ }
+  return FAM_CFG;
+}
+async function famCfgSimpan(a) {
+  const baru = {
+    harga: Math.max(0, Math.round(Number(a.harga) || 0)),
+    exp_per_coin: Math.max(1, Math.round(Number(a.exp_per_coin) || 100)),
+  };
+  FAM_CFG = baru;
+  const fsp = await import("node:fs/promises");
+  await fsp.writeFile(FAM_FILE, JSON.stringify(baru), "utf8");
+  return baru;
+}
+let siapFam = false;
+async function siapFamily(env) {
+  if (siapFam) return;
+  await pipe(env, [
+    { sql: "create table if not exists fam_coin (fid text primary key, coins integer not null default 0, exp_sisa integer not null default 0, updated_at integer not null default 0)" },
+    { sql: "create table if not exists fam_req (req text primary key, uid text, at integer)" },
+    { sql: "create table if not exists fam_tx (fid text, uid text, kind text, amount integer, note text, created_at integer)" },
+  ]);
+  siapFam = true;
+}
+
+/** Buat family: potong coin pemilik sebesar harga dari panel. Aman dari dobel. */
+async function famBayarBuat(env, uid, p) {
+  await siapFamily(env);
+  const cfg = await famCfgKini();
+  const harga = Math.max(0, Math.trunc(Number(cfg.harga) || 0));
+  const req = String(p.req ?? `fc-${uid}-${Date.now()}`);
+  const now = Date.now();
+  const w0 = await pastikan(env, uid);
+  if (harga > 0 && w0.coins < harga) return gagal("Coin tidak cukup untuk membuat family");
+  const r = await pipeTrx(env, [
+    { sql: "begin immediate" },
+    {
+      sql: `update wallets set coins = coins - ?, updated_at = ?
+            where uid = ? and coins >= ? and not exists (select 1 from fam_req where req = ?)`,
+      args: [I(harga), I(now), T(uid), I(harga), T(req)],
+    },
+    { sql: "insert into fam_req (req, uid, at) select ?, ?, ? where changes() > 0", args: [T(req), T(uid), I(now)] },
+    {
+      sql: `insert into money_tx (uid, kind, item_id, amount, created_at)
+            select ?, 'family_create', 'family', ?, ? where changes() > 0`,
+      args: [T(uid), I(harga), I(now)],
+    },
+    { sql: `select ${KOLOM} from wallets where uid = ?`, args: [T(uid)] },
+    { sql: "commit" },
+  ]);
+  return json({ ok: 1, w: rapikan(r[4].rows[0]), harga });
+}
+
+/** Harga buat family + rasio exp -> coin (dibaca aplikasi untuk tampilan). */
+async function famInfo(env) {
+  const cfg = await famCfgKini();
+  return json({ ok: 1, harga: Math.trunc(Number(cfg.harga) || 0), exp_per_coin: Math.trunc(Number(cfg.exp_per_coin) || 100) });
+}
+
+/** Tambah exp family dari gift: 100 exp = 1 coin family, sisa pecahan disimpan. */
+async function famTambahExp(env, uid, p) {
+  await siapFamily(env);
+  const fid = String(p.fid ?? "").trim();
+  const exp = Math.trunc(Number(p.exp ?? 0));
+  if (!/^[A-Za-z0-9_-]{6,64}$/.test(fid)) return gagal("Family tidak valid");
+  if (!(exp > 0) || exp > 1e13) return gagal("Exp tidak valid");
+  const cfg = await famCfgKini();
+  const rasio = Math.max(1, Math.trunc(Number(cfg.exp_per_coin) || 100));
+  const req = String(p.req ?? `fe-${fid}-${uid}-${Date.now()}`);
+  const now = Date.now();
+  const r = await pipeTrx(env, [
+    { sql: "begin immediate" },
+    { sql: "insert or ignore into fam_coin (fid) values (?)", args: [T(fid)] },
+    {
+      sql: `update fam_coin set
+              coins = coins + ((exp_sisa + ?) / ?),
+              exp_sisa = (exp_sisa + ?) % ?,
+              updated_at = ?
+            where fid = ? and not exists (select 1 from fam_req where req = ?)`,
+      args: [I(exp), I(rasio), I(exp), I(rasio), I(now), T(fid), T(req)],
+    },
+    { sql: "insert into fam_req (req, uid, at) select ?, ?, ? where changes() > 0", args: [T(req), T(uid), I(now)] },
+    { sql: "select coins from fam_coin where fid = ?", args: [T(fid)] },
+    { sql: "commit" },
+  ]);
+  return json({ ok: 1, coins: Number(r[4].rows[0]?.coins ?? 0) });
+}
+
+async function famSaldo(env, fid) {
+  await siapFamily(env);
+  const r = await pipe(env, [{ sql: "select coins from fam_coin where fid = ?", args: [T(fid)] }]);
+  return Number(r[0].rows[0]?.coins ?? 0);
+}
+
+/** Kirim coin family ke member. Hanya pemilik/admin family (dicek di RTDB). */
+async function famKirim(env, uid, p) {
+  await siapFamily(env);
+  const fid = String(p.fid ?? "").trim();
+  const to = String(p.to ?? "").trim();
+  const coins = Math.trunc(Number(p.coins ?? 0));
+  if (!/^[A-Za-z0-9_-]{6,64}$/.test(fid)) return gagal("Family tidak valid");
+  if (!/^[A-Za-z0-9_-]{6,64}$/.test(to)) return gagal("Penerima tidak valid");
+  if (!(coins > 0) || coins > 1e12) return gagal("Jumlah coin tidak valid");
+  const peran = await famPeran(fid, uid);
+  if (peran !== "owner" && peran !== "admin") return gagal("Hanya pemilik atau admin family");
+  const sasaran = await famPeran(fid, to);
+  if (!sasaran) return gagal("Penerima bukan anggota family ini");
+  const req = String(p.req ?? `fk-${fid}-${to}-${Date.now()}`);
+  const now = Date.now();
+  await pastikan(env, to);
+  const r = await pipeTrx(env, [
+    { sql: "begin immediate" },
+    {
+      sql: `update fam_coin set coins = coins - ?, updated_at = ?
+            where fid = ? and coins >= ? and not exists (select 1 from fam_req where req = ?)`,
+      args: [I(coins), I(now), T(fid), I(coins), T(req)],
+    },
+    { sql: "insert into fam_req (req, uid, at) select ?, ?, ? where changes() > 0", args: [T(req), T(uid), I(now)] },
+    { sql: "update wallets set coins = coins + ?, updated_at = ? where uid = ? and changes() > 0", args: [I(coins), I(now), T(to)] },
+    {
+      sql: `insert into fam_tx (fid, uid, kind, amount, note, created_at)
+            select ?, ?, 'kirim', ?, ?, ? where changes() > 0`,
+      args: [T(fid), T(to), I(coins), T(`dari ${uid}`), I(now)],
+    },
+    {
+      sql: `insert into money_tx (uid, kind, item_id, amount, created_at)
+            select ?, 'family_in', ?, ?, ? where changes() > 0`,
+      args: [T(to), T(fid), I(coins), I(now)],
+    },
+    { sql: "select coins from fam_coin where fid = ?", args: [T(fid)] },
+    { sql: "commit" },
+  ]);
+  if (Number(r[2].affected ?? 0) > 0) return json({ ok: 1, sisa: Number(r[6].rows[0]?.coins ?? 0), terkirim: coins });
+  const cek = await pipe(env, [{ sql: "select 1 as ada from fam_req where req = ?", args: [T(req)] }]);
+  if (cek[0].rows.length) return json({ ok: 1, sisa: Number(r[6].rows[0]?.coins ?? 0), terkirim: 0, ulang: 1 });
+  return gagal(`Coin family tidak cukup. Sisa ${(await famSaldo(env, fid)).toLocaleString("id-ID")}.`);
+}
+
+/** Peran uid di family (owner|admin|member), dibaca LANGSUNG dari RTDB tanpa cache.
+ *  Gagal baca = null (ditolak), jangan pernah menganggap sah saat ragu. */
+async function famPeran(fid, uid) {
+  try {
+    const r = await fetch(`${RTDB}/fm/${encodeURIComponent(fid)}/members/${encodeURIComponent(uid)}/role.json`);
+    if (!r.ok) return null;
+    const d = await r.json();
+    return typeof d === "string" && d ? d : null;
+  } catch { return null; }
+}
+
 // ---------- Coin seller ----------
 // Penjual coin resmi: didaftarkan developer, punya stok sendiri, dan muncul di
 // halaman seller pada Dompet. Stok hanya bisa diisi developer.
@@ -2263,6 +2424,18 @@ async function admin(env, body) {
     return json({ ok: 1, harga: HARGA_VIP.slice(1) });
   }
 
+  // ---- Family: harga buat family & rasio exp->coin (diubah dari panel developer) ----
+  if (op === "fam_cfg_get") {
+    return json({ ok: 1, ...(await famCfgKini()) });
+  }
+  if (op === "fam_cfg_set") {
+    const h = Number(p.harga), e = Number(p.exp_per_coin);
+    if (!Number.isFinite(h) || h < 0) return gagal("Harga tidak sah");
+    if (!Number.isFinite(e) || e < 1) return gagal("Rasio exp tidak sah");
+    try { return json({ ok: 1, ...(await famCfgSimpan({ harga: h, exp_per_coin: e })) }); }
+    catch (err) { return gagal("Gagal menyimpan: " + String(err?.message ?? err)); }
+  }
+
   // ---- Coin seller: pendaftaran (khusus developer) ----
   if (op === "seller_list") {
     return json({ ok: 1, seller: await daftarSeller(env, false) });
@@ -3859,6 +4032,18 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           return await tukar(env, uid, p);
         case "buy_vip":
           return await beliVip(env, uid, p);
+        case "fam_info":
+          return await famInfo(env);
+        case "fam_create_pay":
+          return await famBayarBuat(env, uid, p);
+        case "fam_add_exp":
+          return await famTambahExp(env, uid, p);
+        case "fam_coins": {
+          const f = String(p.fid ?? "").trim();
+          return json({ ok: 1, coins: /^[A-Za-z0-9_-]{6,64}$/.test(f) ? await famSaldo(env, f) : 0 });
+        }
+        case "fam_send":
+          return await famKirim(env, uid, p);
         case "buy_item":
           return await beliItem(env, uid, p);
         case "equip":

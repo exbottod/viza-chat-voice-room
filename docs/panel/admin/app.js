@@ -1,7 +1,8 @@
 import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup,
-  GoogleAuthProvider, signOut, createUserWithEmailAndPassword, updateProfile
+  GoogleAuthProvider, signOut, createUserWithEmailAndPassword, updateProfile,
+  sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   getFirestore, collection, doc, getDoc, getDocs, setDoc, deleteDoc,
@@ -494,6 +495,28 @@ $("tombolMasuk").addEventListener("click", async () => {
   }
   try {
     await signInWithEmailAndPassword(auth, email, sandi);
+  } catch (e) {
+    $("pesanLogin").className = "pesan";
+    $("pesanLogin").textContent = pesanAuth(e);
+  }
+});
+
+/* Lupa sandi: kirim tautan reset ke email yang diisi. Berguna kalau akunnya
+   sudah ada dari sebelumnya sehingga sandi baru tidak pernah terpasang. */
+const lupaSandi = $("lupaSandi");
+if (lupaSandi) lupaSandi.addEventListener("click", async () => {
+  const isi = $("loginEmail").value.trim();
+  if (!isi.includes("@")) {
+    $("pesanLogin").className = "pesan";
+    $("pesanLogin").textContent = "Isi email lengkap dulu untuk menerima tautan reset.";
+    return;
+  }
+  $("pesanLogin").className = "pesan info";
+  $("pesanLogin").textContent = "Mengirim tautan reset…";
+  try {
+    await sendPasswordResetEmail(auth, isi);
+    $("pesanLogin").className = "pesan info";
+    $("pesanLogin").textContent = "Tautan reset dikirim ke " + isi + ". Buka email itu, buat sandi baru, lalu masuk lagi.";
   } catch (e) {
     $("pesanLogin").className = "pesan";
     $("pesanLogin").textContent = pesanAuth(e);

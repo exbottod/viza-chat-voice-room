@@ -10,8 +10,21 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -84,11 +97,33 @@ fun GreedyKingScreen(
         }
     }
 
-    Box(Modifier.fillMaxSize().background(Color(0xFF0A0F1E))) {
-        WebDiagBar(alamat)
-        if (siap) {
-            AndroidView(
-                modifier = Modifier.fillMaxSize(),
+    // Game tampil sebagai sheet dari bawah, bukan menutupi seluruh layar.
+    Box(
+        Modifier.fillMaxSize().background(Color(0x99000000)).clickable(
+            indication = null,
+            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+        ) { onClose() },
+    ) {
+        Column(
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(PECAHAN_SHEET)
+                .navigationBarsPadding()
+                .clip(RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
+                .background(Color(0xFF0A0F1E))
+                .border(1.dp, Color(0xFF2A3550), RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                ) { },
+        ) {
+            // Gagang sheet: garis pendek di tengah atas.
+            Box(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 6.dp), contentAlignment = Alignment.Center) {
+                Box(Modifier.width(44.dp).height(4.dp).clip(RoundedCornerShape(2.dp)).background(Color(0xFF3A4763)))
+            }
+            Box(Modifier.fillMaxWidth().weight(1f)) {
+                WebDiagBar(alamat)
+                if (siap) {
+                    AndroidView(
+                        modifier = Modifier.fillMaxSize(),
                 factory = { c ->
                     val namaAman = myName.ifBlank { "Player" }
                     val jatuhKeAset = booleanArrayOf(false)
@@ -216,10 +251,15 @@ fun GreedyKingScreen(
                         loadUrl(denganToken(alamat, token, myUid, namaAman))
                     }
                 },
-            )
+                    )
+                }
+            }
         }
     }
 }
+
+/** Tinggi sheet game dibanding layar. 0,86 = 86% layar. */
+private const val PECAHAN_SHEET = 0.86f
 
 /** Tambahkan token, uid, dan nama ke alamat halaman game. */
 private fun denganToken(alamat: String, token: String, uid: String, nama: String): String {

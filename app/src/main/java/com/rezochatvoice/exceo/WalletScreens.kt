@@ -59,6 +59,25 @@ private fun bukaAplikasi(ctx: android.content.Context, paket: String, cadangan: 
 private fun openDana(ctx: android.content.Context) =
     bukaAplikasi(ctx, "com.dana.id", "https://m.dana.id", tr("Aplikasi DANA tidak bisa dibuka"))
 
+/**
+ * Sekali tekan: nomor tujuan dari panel developer otomatis masuk papan klip
+ * lalu aplikasi DANA langsung dibuka. User tinggal tempel nomornya, tidak
+ * perlu menyalin manual lagi. Nomor selalu diambil dari panel, bukan dari kode.
+ */
+private fun bayarKeDana(ctx: android.content.Context, nomor: String) {
+    val n = nomor.trim()
+    if (n.isNotBlank()) {
+        try {
+            val cm = ctx.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            cm.setPrimaryClip(android.content.ClipData.newPlainText("nomor dana", n))
+            android.widget.Toast.makeText(ctx, tr("Nomor DANA sudah disalin, tinggal tempel di DANA"), android.widget.Toast.LENGTH_LONG).show()
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(ctx, tr("Gagal menyalin nomor"), android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+    openDana(ctx)
+}
+
 private fun openGopay(ctx: android.content.Context) =
     bukaAplikasi(ctx, "com.gojek.app", "https://gojek.link", tr("Aplikasi GoPay tidak bisa dibuka"))
 
@@ -1014,7 +1033,7 @@ fun WalletScreen(
                                 Text(payDana, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF118EEA))
                                 Spacer(Modifier.height(12.dp))
                                 Text(
-                                    tr("Tekan tombol ini untuk membuka aplikasi DANA, lalu kirim ke nomor di atas sebesar ${harga.ifBlank { "nominal paket" }}. Tombol di bawah menyalin nomornya."),
+                                    tr("Tekan tombol di bawah: nomor tujuan dari panel otomatis tersalin dan aplikasi DANA langsung terbuka. Tinggal tempel nomornya lalu kirim sebesar ${harga.ifBlank { "nominal paket" }}."),
                                     fontSize = 12.sp,
                                     color = WalGrey,
                                 )
@@ -1024,11 +1043,11 @@ fun WalletScreen(
                                         .clip(RoundedCornerShape(12.dp))
                                         .background(WalRowBg)
                                         .border(1.dp, Color(0xFFD9D9E3), RoundedCornerShape(12.dp))
-                                        .clickable { salinTeks(context, payDana) }
+                                        .clickable { bayarKeDana(context, payDana) }
                                         .padding(vertical = 12.dp),
                                     contentAlignment = Alignment.Center,
                                 ) {
-                                    Text(tr("Salin nomor DANA"), color = WalNavy, fontWeight = FontWeight.Bold)
+                                    Text(tr("Buka DANA (nomor otomatis tersalin)"), color = WalNavy, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }

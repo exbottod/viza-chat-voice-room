@@ -498,33 +498,19 @@ fun VipFrame(tier: Int, size: Dp) {
     VipMediaSafe(VipAssets.get(tier, "frame"), Modifier.requiredSize(size), loop = true)
 }
 
-/** Ic banner efek masuk VIP1-9 (drawable di dalam APK). */
-fun vipBannerRes(n: Int): Int = when (n) {
-    1 -> R.drawable.ic_banner1
-    2 -> R.drawable.ic_banner2
-    3 -> R.drawable.ic_banner3
-    4 -> R.drawable.ic_banner4
-    5 -> R.drawable.ic_banner5
-    6 -> R.drawable.ic_banner6
-    7 -> R.drawable.ic_banner7
-    8 -> R.drawable.ic_banner8
-    9 -> R.drawable.ic_banner9
-    else -> R.drawable.ic_banner1
-}
+/** Banner efek masuk VIP1-9 diambil dari panel developer (bukan lagi dari APK). */
+fun vipBannerAsset(n: Int): VipAsset? = if (n in 1..9) VipAssets.get(n, "banner") else null
 
 /** Banner efek masuk dari pesan "masuk kamar":
  *  item store custom (sx_) MENANG, lalu item banner VIP (vipbn_, drawable di APK),
  *  terakhir otomatis sesuai level VIP user. */
 fun bannerAssetOf(m: RoomMsg): VipAsset? =
-    if (m.banner.startsWith("sx_")) StoreCatalog.find(m.banner)?.asset else null
-
-fun bannerResOf(m: RoomMsg): Int? = when {
-    m.banner.startsWith("vipbn_") -> m.banner.removePrefix("vipbn_").toIntOrNull()?.let { vipBannerRes(it) }
+    if (m.banner.startsWith("sx_")) StoreCatalog.find(m.banner)?.asset
+    else if (m.banner.startsWith("vipbn_")) vipBannerAsset(m.banner.removePrefix("vipbn_").toIntOrNull() ?: 0)
     // Banner SVIP (svbn_N) memakai banner VIP N.
-    m.banner.startsWith("svbn_") -> m.banner.removePrefix("svbn_").toIntOrNull()?.let { vipBannerRes(it) }
-    m.vip in 1..9 -> vipBannerRes(m.vip)
-    else -> null
-}
+    else if (m.banner.startsWith("svbn_")) vipBannerAsset(m.banner.removePrefix("svbn_").toIntOrNull() ?: 0)
+    else if (m.vip in 1..9) vipBannerAsset(m.vip)
+    else null
 
 /** Efek masuk VIP di room: mp4 atau gif/webp/svga, diputar sebentar di bagian atas layar.
  *  Banner efek masuk (kalau dipakai) tampil DI DEPAN efek masuk. */
@@ -532,7 +518,6 @@ fun bannerResOf(m: RoomMsg): Int? = when {
 fun VipEntryEffect(roomId: String) {
     var playing by remember { mutableStateOf<VipAsset?>(null) }
     var banner by remember { mutableStateOf<VipAsset?>(null) }
-    var bannerRes by remember { mutableStateOf<Int?>(null) }
     var bannerName by remember { mutableStateOf<String?>(null) }
     var bannerUid by remember { mutableStateOf<String?>(null) }
     var first by remember { mutableStateOf(true) }
@@ -560,10 +545,9 @@ fun VipEntryEffect(roomId: String) {
         repeat(15) {
             val a = entryAssetOf(m)
             val b = bannerAssetOf(m)
-            if (a != null || b != null || bannerResOf(m) != null) {
+            if (a != null || b != null) {
                 playing = a
                 banner = b
-                bannerRes = if (b != null) null else bannerResOf(m)
                 bannerName = msgName(m).takeIf { it.isNotBlank() }
                 bannerUid = m.vipUid.takeIf { it.isNotBlank() }
                 return@LaunchedEffect
@@ -583,11 +567,9 @@ fun VipEntryEffect(roomId: String) {
                 if (last != null && fresh && last.vipUid == myUid) {
                     val a = entryAssetOf(last)
                     val b = bannerAssetOf(last)
-                    val br = bannerResOf(last)
-                    if (a != null || b != null || br != null) {
+                    if (a != null || b != null) {
                         playing = a
                         banner = b
-                        bannerRes = if (b != null) null else br
                         bannerName = msgName(last).takeIf { it.isNotBlank() }
                         bannerUid = last.vipUid.takeIf { it.isNotBlank() }
                     } else if (last.entry.startsWith("sx_") || last.banner.startsWith("sx_")) pending = last
@@ -596,11 +578,9 @@ fun VipEntryEffect(roomId: String) {
                 lastId = last.id
                 val a = entryAssetOf(last)
                 val b = bannerAssetOf(last)
-                val br = bannerResOf(last)
-                if (a != null || b != null || br != null) {
+                if (a != null || b != null) {
                     playing = a
                     banner = b
-                    bannerRes = if (b != null) null else br
                     bannerName = msgName(last).takeIf { it.isNotBlank() }
                         bannerUid = last.vipUid.takeIf { it.isNotBlank() }
                 } else if (last.entry.startsWith("sx_") || last.banner.startsWith("sx_")) pending = last
@@ -611,26 +591,24 @@ fun VipEntryEffect(roomId: String) {
 
     val p = playing
     val b = banner
-    val br = bannerRes
     // Posisi geser banner: 1f = penuh di kanan layar, 0f = tengah, negatif = keluar kiri.
     val slide = remember { Animatable(1f) }
-    if (p != null || b != null || br != null) {
+    if (p != null || b != null) {
         if (p != null) {
             LaunchedEffect(p) {
                 delay(if (p.kind == "mp4" || p.kind == "svga") 15000L else 5000L)
                 playing = null
             }
         }
-        if (b != null || br != null) {
+        if (b != null) {
             // Banner geser: dari kanan CEPAT ke tengah, di tengah LAMBAT,
             // saat menutup CEPAT lagi ke kiri. Total 3 detik.
-            LaunchedEffect(b, br) {
+            LaunchedEffect(b) {
                 slide.snapTo(1f)
                 slide.animateTo(0f, tween(800, easing = FastOutSlowInEasing))
                 slide.animateTo(-0.08f, tween(1400, easing = LinearEasing))
                 slide.animateTo(-1.25f, tween(800, easing = FastOutLinearInEasing))
                 banner = null
-                bannerRes = null
                 bannerName = null
                 bannerUid = null
             }
@@ -648,35 +626,21 @@ fun VipEntryEffect(roomId: String) {
             }
             // Banner efek masuk: di ATAS layar, digambar SETELAH efek jadi tampil di depannya.
             // Ukuran banner TETAP sesuai file aslinya (tidak diperbesar selebar layar).
-            if (b != null || br != null) {
-                val painter = if (br != null) painterResource(br) else null
-                val density = LocalDensity.current
-                val bSize = remember(painter, density) {
-                    val ins = painter?.intrinsicSize
-                    val base = if (ins != null && ins.width > 0f && ins.height > 0f) {
-                        with(density) { DpSize(ins.width.toDp(), ins.height.toDp()) }
-                    } else DpSize(320.dp, 90.dp)
-                    // Banner diperkecil sedikit (80%) supaya tidak kebesaran di layar.
-                    DpSize(base.width * 0.8f, base.height * 0.8f)
-                }
+            if (b != null) {
+                val bSize = DpSize(280.dp, 79.dp)
                 BoxWithConstraints(
                     Modifier.align(Alignment.TopCenter).fillMaxWidth()
                         .statusBarsPadding().padding(top = 4.dp)
                         // Geser ke atas untuk menutup banner sebelum selesai terbang.
-                        .geserTutup(b ?: br) {
+                        .geserTutup(b) {
                             banner = null
-                            bannerRes = null
                             bannerName = null
                             bannerUid = null
                         },
                     contentAlignment = Alignment.Center,
                 ) {
                     Box(Modifier.size(bSize).offset(x = maxWidth * slide.value)) {
-                        if (b != null) {
-                            VipMedia(b, Modifier.fillMaxSize(), loop = true, contentScale = ContentScale.Fit)
-                        } else {
-                            Image(painter!!, null, Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
-                        }
+                        VipMedia(b!!, Modifier.fillMaxSize(), loop = true, contentScale = ContentScale.Fit)
                     // Foto profil user dipasang di ujung kiri banner (di atas bola emas).
                     val bu = bannerUid?.let { UserCache.peek(it) }
                     if (bu != null) {

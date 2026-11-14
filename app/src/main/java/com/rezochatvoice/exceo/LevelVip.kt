@@ -890,14 +890,15 @@ private fun EntryPreview(item: StoreItem, size: Dp) {
 
 @Composable
 private fun ItemPreview(item: StoreItem, size: Dp = 70.dp) {
-    // Banner VIP1-9: gambar langsung dari drawable di dalam APK.
+    // Banner VIP1-9 diambil dari aset panel, tidak lagi ditanam di APK.
     if (item.slot == "banner" && item.vip in 1..9 && item.asset == null) {
         Box(Modifier.size(size), contentAlignment = Alignment.Center) {
-            Image(
-                painterResource(vipBannerRes(item.vip)),
-                null,
+            VipMediaSafe(
+                vipBannerAsset(item.vip),
                 Modifier.fillMaxWidth().height(size),
+                loop = true,
                 contentScale = ContentScale.Fit,
+                fallback = { Text("\uD83D\uDEA9", fontSize = (size.value * 0.4f).sp) },
             )
         }
         return

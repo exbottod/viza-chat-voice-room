@@ -750,12 +750,16 @@ private fun FamilyRankScreen(myFamilyId: String, onBack: () -> Unit, onOpenFamil
         val peta = HashMap<String, String>()
         for (f in l) {
             // Nama pemilik dibaca dari profil terbaru; salinan di family bisa basi.
-            val n = try {
+            val nProfil = try {
                 kotlinx.coroutines.withTimeoutOrNull(6000L) { UserCache.byUid(f.ownerUid) }?.name
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) { null }
-                ?: try { FamilyRepo.ownerName(f.id, f.ownerUid) } catch (e: Exception) { null }
+            val n = if (!nProfil.isNullOrBlank()) {
+                nProfil
+            } else {
+                try { FamilyRepo.ownerName(f.id, f.ownerUid) } catch (e: Exception) { null }
+            }
             if (!n.isNullOrBlank()) { peta[f.id] = n; pemilik = HashMap(peta) }
         }
     }

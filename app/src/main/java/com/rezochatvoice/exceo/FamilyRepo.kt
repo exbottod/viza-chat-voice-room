@@ -293,11 +293,13 @@ object FamilyRepo {
             val avLama = snap.child("avatarB64").getValue(String::class.java).orEmpty()
             val namaBaru = name.trim()
             val avBaru = avatar?.trim().orEmpty()
-            val ubah = HashMap<String, Any?>()
+            val ubah = HashMap<String, Any>()
             if (namaBaru.isNotBlank() && namaBaru != namaLama) ubah["name"] = namaBaru
             if (avBaru.isNotBlank() && avBaru != avLama) ubah["avatarB64"] = avBaru
             if (ubah.isEmpty()) return
-            kotlinx.coroutines.withTimeoutOrNull(5000L) { jalur.updateChildren(ubah).await() }
+            kotlinx.coroutines.withTimeoutOrNull(5000L) {
+                jalur.updateChildren(ubah.toMap()).await()
+            }
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) { }

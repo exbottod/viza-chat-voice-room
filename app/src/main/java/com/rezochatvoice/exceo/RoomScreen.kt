@@ -1110,7 +1110,20 @@ fun RoomScreen(
                             onClick = {
                                 panel = P_NONE
                                 scope.launch {
-                                    Rtdb.ref("micPoints/" + r.id).removeValue()
+                                    // Langsung nol di layar, tidak menunggu kursi kosong.
+                                    micPoints = emptyMap()
+                                    val simpul = Rtdb.ref("micPoints/" + r.id)
+                                    // Hapus simpulnya, lalu tulis 0 eksplisit untuk setiap
+                                    // kursi. Sebagian aturan database menolak penghapusan,
+                                    // dan itulah sebabnya angka baru hilang setelah pengguna
+                                    // turun kursi.
+                                    try { simpul.removeValue() } catch (e: Exception) { }
+                                    try {
+                                        val nol = mutableMapOf<String, Any>()
+                                        for (i in 0 until seats.size) nol["s$i"] = 0L
+                                        if (nol.isNotEmpty()) simpul.updateChildren(nol)
+                                    } catch (e: Exception) { }
+                                    micPoints = emptyMap()
                                     toast(tr("Poin mic dihapus"))
                                 }
                             },

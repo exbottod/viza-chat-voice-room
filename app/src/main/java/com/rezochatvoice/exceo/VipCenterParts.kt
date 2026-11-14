@@ -211,7 +211,7 @@ fun VipIdentityGrid(onPick: (VipIdent) -> Unit) {
         VIP_IDENT.chunked(4).forEach { baris ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 baris.forEach { it ->
-                    Box(Modifier.weight(1f)) { VcTile(it.label) { onPick(it) } { InkGlyph(it.glyph, Modifier.size(26.dp), VC_LINE) } }
+                    Box(Modifier.weight(1f)) { VcTile(it.label, true, { onPick(it) }) { InkGlyph(it.glyph, Modifier.size(26.dp), VC_LINE) } }
                 }
                 repeat(4 - baris.size) { Spacer(Modifier.weight(1f)) }
             }
@@ -229,7 +229,7 @@ fun VipPrivGrid(sel: Int, onPick: (SvipPriv) -> Unit) {
                 baris.forEach { p ->
                     val buka = sel >= p.minVip
                     Box(Modifier.weight(1f)) {
-                        VcTile(p.title, buka) { onPick(p) } {
+                        VcTile(p.title, buka, { onPick(p) }) {
                             InkGlyph(privGlyph(p.key), Modifier.size(26.dp), if (buka) VC_LINE else Color(0x66FFFFFF))
                         }
                     }

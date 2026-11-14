@@ -311,8 +311,12 @@ private fun ChatRow(c: ChatSummary) {
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(u?.name ?: c.otherName, color = GoldLight, fontWeight = FontWeight.Bold, fontSize = 16.sp, maxLines = 1)
-            if (c.otherId.isNotBlank()) {
-                Text("ID " + c.otherId, color = Color(0xFF9A9A9A), fontSize = 11.sp, maxLines = 1)
+            // ID diambil dari profil terbaru. Nilai simpanan di baris chat bisa
+            // basi (tertulis saat chat dibuat), sehingga bisa menampilkan ID
+            // tetangga yang angkanya mirip.
+            val idTampil = (u?.userId ?: "").ifBlank { c.otherId }
+            if (idTampil.isNotBlank()) {
+                Text("ID " + idTampil, color = Color(0xFF9A9A9A), fontSize = 11.sp, maxLines = 1)
             }
             Text(ringkasPesan(c.lastText), color = Color(0xFFBDBDBD), fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
@@ -469,10 +473,16 @@ fun ChatListTab(myUid: String) {
         }
         val chatsSaring = remember(chats, cari) {
             val q = cari.trim().lowercase()
-            if (q.isEmpty()) chats else chats.filter {
-                it.otherId.lowercase().contains(q) ||
-                    it.otherName.lowercase().contains(q) ||
-                    it.otherUid.lowercase().contains(q)
+            if (q.isEmpty()) chats
+            else chats.filter { c ->
+                val profil = UserCache.peek(c.otherUid)
+                listOf(
+                    c.otherId,
+                    c.otherName,
+                    c.otherUid,
+                    profil?.userId ?: "",
+                    profil?.name ?: "",
+                ).any { it.lowercase().contains(q) }
             }
         }
         if (chats.isEmpty()) {

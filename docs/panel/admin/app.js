@@ -2618,16 +2618,26 @@ async function gambarPengaturan() {
     try {
       const appKedua = initializeApp(firebaseConfig, "pendaftar-" + Date.now());
       const authKedua = getAuth(appKedua);
-      const kredensial = await createUserWithEmailAndPassword(authKedua, email, sandi);
-      await updateProfile(kredensial.user, { displayName: nama }).catch(() => {});
-      await signOut(authKedua);
-      await deleteApp(appKedua);
+      // Kalau email itu sudah punya akun Firebase, jangan gagal. Cukup daftarkan
+      // emailnya sebagai admin panel; dia masuk dengan sandi lamanya atau reset.
+      let akunBaru = true;
+      try {
+        const kredensial = await createUserWithEmailAndPassword(authKedua, email, sandi);
+        await updateProfile(kredensial.user, { displayName: nama }).catch(() => {});
+        await signOut(authKedua);
+      } catch (e) {
+        if (String(e.code || "") === "auth/email-already-in-use") {
+          akunBaru = false;
+          await signOut(authKedua).catch(() => {});
+        } else { throw e; }
+      }
+      await deleteApp(appKedua).catch(() => {});
 
       await setDoc(doc(db, "panelAdmins", email), {
         nama, peran, aktif: true, dibuat: serverTimestamp(), oleh: auth.currentUser.email
       });
       catatLog("Daftarkan admin", `${nama} · ${email} · ${peran}`);
-      toast("Admin terdaftar. Dia bisa langsung masuk dengan email dan password itu.");
+      toast(akunBaru ? "Admin terdaftar. Dia bisa langsung masuk dengan email dan password itu." : "Email itu sudah punya akun login. Akses panel ditambahkan; dia masuk dengan sandi lamanya atau reset sandi dulu.");
       gambarPengaturan();
     } catch (e) {
       toast("Gagal: " + pesanAuth(e), true);

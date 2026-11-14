@@ -555,7 +555,6 @@ private fun SubPage(title: String, onBack: () -> Unit, content: @Composable () -
     }
 }
 
-@Composable
 /**
  * Nama dan foto anggota diambil dari PROFIL TERBARU (RTDB pub) tiap kali daftar
  * tampil, bukan dari salinan saat join family. Dulu salinan itu yang dipakai,

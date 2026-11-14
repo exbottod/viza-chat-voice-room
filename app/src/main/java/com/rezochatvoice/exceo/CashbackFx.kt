@@ -208,41 +208,8 @@ private fun GiftFlyOnce(
         f.parts.forEachIndexed { i, v -> PartPop(v, i, box) }
         if (f.mult > 0 && f.cb > 0) MultBall(f.mult, f.cb, target)
     }
-    if (f.cb > 0) {
-        Box(
-            Modifier
-                .offset { IntOffset((target.x - 110f).toInt(), (target.y + 62f).toInt()) }
-                .width(220.dp)
-                .background(Color(0xCC000000), RoundedCornerShape(50))
-                .padding(vertical = 6.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                tr("+${fmtNum(f.cb)}"),
-                color = Color(0xFFFFD54F),
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-            )
-        }
-    }
-
-    // Banner JP: hanya untuk cashback besar, terlihat semua orang di room.
-    if (f.jp && f.cb > 0) {
-        Box(Modifier.fillMaxWidth().padding(top = 120.dp), contentAlignment = Alignment.TopCenter) {
-            Box(
-                Modifier
-                    .background(Color(0xE64A148C), RoundedCornerShape(14.dp))
-                    .padding(horizontal = 18.dp, vertical = 10.dp),
-            ) {
-                Text(
-                    tr("💥 JP ${f.from} +${fmtNum(f.cb)}"),
-                    color = Color.White,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-        }
-    }
+    // Tampilan lama (pil "+angka" di bawah avatar dan banner "JP nama +angka" ungu)
+    // dihapus. Yang tersisa: gift terbang, pecahan angka (SVGA), dan bola pengali.
 }
 
 

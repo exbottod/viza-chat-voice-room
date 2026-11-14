@@ -74,26 +74,15 @@ fun playComboVisuals(myUid: String, myName: String, s: GiftCombo.Sess) {
     visualScope.launch {
         val g = GiftCatalog.list.firstOrNull { it.id == s.giftId } ?: return@launch
         val rec = s.all()
-        val first = rec.firstOrNull()
         val toText = when {
             rec.size > 1 -> "semua mic (${rec.size})"
             else -> s.targetName
         }
+        // Hanya pesan chat dan poin mic. Undian cashback dan jackpot TIDAK diundi
+        // di sini lagi: antrean kombo (GiftComboSend) sudah mengundinya satu kali
+        // per kiriman. Dulu keduanya jalan sekaligus sehingga kombo macet dan
+        // hasilnya ganda.
         try { RoomExtras.sendGiftMessage(s.roomId, myName, g, s.count, toText) } catch (e: Exception) { }
-        try {
-            GiftFx.sent(
-                s.roomId,
-                myUid,
-                myName,
-                g,
-                s.count,
-                if (rec.isEmpty()) 1 else rec.size,
-                first?.first ?: "",
-                first?.second ?: "",
-                first?.third ?: -1,
-                rec,
-            )
-        } catch (e: Exception) { }
         // Poin mic naik untuk SETIAP penerima, bukan hanya yang pertama.
         for (r in rec) {
             if (r.third < 0) continue
@@ -155,6 +144,7 @@ object GiftComboSend {
                 if (err != null) {
                     lastError = err
                 } else if (g.cashback || g.cbRate > 0) {
+                    lastError = null
                     // Kombo juga wajib ikut undian cashback, kalau tidak pengali/JP
                     // tidak pernah muncul walau gift sudah terkirim.
                     undiCashbackKombo(cur.uid, s, g, s.count * n)
@@ -185,7 +175,9 @@ object GiftComboSend {
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) { }
-        if (cbWin <= 0L) return
+        // Tanpa pecahan dari server tidak ada yang bisa dianimasikan dengan benar,
+        // jadi tidak ada tampilan "+angka" gaya lama.
+        if (cbWin <= 0L || parts.isBlank()) return
         val dari = try { UserCache.meLocal(uid)?.name ?: "" } catch (e: Exception) { "" }
         s.all().forEach { t ->
             try {

@@ -17,7 +17,7 @@ class App : Application(), ImageLoaderFactory {
     init {
         // Harga VIP diatur dari panel developer; ambil sekali saat aplikasi mulai
         // supaya angka di layar VIP ikut berubah tanpa build baru.
-        runCatching { kotlin.concurrent.thread(isDaemon = true) { LevelVip.segarkanHargaVip() } }
+        runCatching { kotlin.concurrent.thread(isDaemon = true) { segarkanHargaVip() } }
     }
     companion object {
         /** Konteks aplikasi, dipakai untuk penyimpanan lokal yang harus selalu ada. */

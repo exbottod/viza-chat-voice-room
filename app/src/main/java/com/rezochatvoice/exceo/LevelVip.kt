@@ -67,7 +67,7 @@ fun levelBrush(level: Int): Brush {
 // =====================================================================
 
 const val VIP_DAYS = 30L
-private val VIP_PRICES = listOf(
+private var VIP_PRICES = listOf(
     500_000L, 1_500_000L, 3_000_000L, 6_000_000L, 12_000_000L,
     25_000_000L, 50_000_000L, 100_000_000L, 250_000_000L,
 )
@@ -77,6 +77,28 @@ private val VIP_COLORS = listOf(
 )
 
 fun vipPrice(n: Int): Long = VIP_PRICES[(n - 1).coerceIn(0, 8)]
+
+/**
+ * Ambil harga VIP terbaru dari server dompet. Harga diatur dari panel developer,
+ * jadi harga bisa berubah tanpa build APK baru. Kalau server belum menjawab,
+ * harga bawaan di atas yang dipakai.
+ */
+fun segarkanHargaVip() {
+    try {
+        val c = (java.net.URL("https://viza.43-156-99-4.sslip.io/vip-harga").openConnection()
+            as java.net.HttpURLConnection).apply {
+            connectTimeout = 8000
+            readTimeout = 8000
+            requestMethod = "GET"
+        }
+        if (c.responseCode !in 200..299) return
+        val teks = c.inputStream.bufferedReader().use { it.readText() }
+        val arr = org.json.JSONObject(teks).optJSONArray("harga") ?: return
+        if (arr.length() == 9) {
+            VIP_PRICES = (0 until 9).map { i -> arr.optLong(i, VIP_PRICES[i]) }
+        }
+    } catch (e: Exception) { /* pakai harga bawaan */ }
+}
 fun vipColor(n: Int): Color = Color(VIP_COLORS[(n - 1).coerceIn(0, 8)])
 fun vipActive(vip: Int, until: Long): Boolean = vip in 1..9 && until > System.currentTimeMillis()
 fun vipBoostPercent(vip: Int): Int = 5 * vip

@@ -200,6 +200,7 @@ val VIP_IDENT = listOf(
     VipIdent("title", "VIP Title", "title", "title"),
     VipIdent("name", "VIP Name", "banner", "banner"),
     VipIdent("badge", "VIP Badge", "medal", "medal"),
+    VipIdent("efek", "Efek Masuk", "banner", "spark"),
     VipIdent("entry", "Entry Banner", "entry", "spark"),
     VipIdent("card", "Profile Card", "cardbg", "card"),
     VipIdent("bubble", "Chat Bubble", "bubble", "bubble"),
@@ -219,6 +220,8 @@ fun VipIdentityGrid(sel: Int, onPick: (VipIdent) -> Unit) {
                         }
                     }
                 }
+                // Baris terakhir jangan melebar: sisanya diisi ruang kosong.
+                repeat(4 - baris.size) { Spacer(Modifier.weight(1f)) }
                 repeat(4 - baris.size) { Spacer(Modifier.weight(1f)) }
             }
         }
@@ -295,6 +298,12 @@ fun IsiIdentitas(sel: Int, id: VipIdent) {
                 VipMediaSafe(VipAssets.get(sel, "bubble"), Modifier.matchParentSize(), contentScale = ContentScale.FillBounds)
             }
         }
+        "efek" -> key(sel) {
+            VipMediaSafe(
+                VipAssets.get(sel, "banner"), Modifier.fillMaxWidth().height(66.dp).clip(RoundedCornerShape(8.dp)),
+                loop = true, contentScale = ContentScale.Crop, fallback = cadangan,
+            )
+        }
         else -> key(sel) {
             VipMediaSafe(VipAssets.get(sel, id.slot), ukuran, loop = true, contentScale = ContentScale.Fit, fallback = cadangan)
         }
@@ -333,11 +342,12 @@ private fun VcTile(label: String, aktif: Boolean = true, tap: () -> Unit, tinggi
 fun VipAssetsRow(sel: Int, coin: Color, onPick: (VipIdent) -> Unit = {}) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Box(Modifier.weight(1f)) { VcAsset(sel, "SVIP $sel", "medal") { onPick(VIP_IDENT.first { it.key == "badge" }) } }
         Box(Modifier.weight(1f)) { VcAsset(sel, "Vip badge", "entry") { onPick(VIP_IDENT.first { it.key == "entry" }) } }
         Box(Modifier.weight(1f)) { VcAsset(sel, "vip $sel", "title") { onPick(VIP_IDENT.first { it.key == "title" }) } }
+        Box(Modifier.weight(1f)) { VcAsset(sel, "Efek Masuk", "banner") { onPick(VIP_IDENT.first { it.key == "efek" }) } }
     }
 }
 
@@ -364,7 +374,7 @@ private fun VcAsset(sel: Int, label: String, slot: String, tap: () -> Unit = {})
             }
         }
         Spacer(Modifier.height(6.dp))
-        Text(tr(label), color = Color(0xFFF4EAD6), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(tr(label), color = Color(0xFFF4EAD6), fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 

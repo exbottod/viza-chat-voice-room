@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.*
 import androidx.compose.ui.unit.*
+import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.launch
 
 private val Teal = Color(0xFF14625A)
@@ -53,7 +54,7 @@ fun FamilyLogo(b64: String?, size: Dp, modifier: Modifier = Modifier) {
 
 /* Tab Family: belum punya -> buat / cari. Sudah punya -> halaman */
 @Composable
-fun FamilyTabScreen(myUid: String, myName: String, myAvatar: String?, myId: String) {
+fun FamilyTabScreen(myUid: String, myName: String, myAvatar: String?, myId: String, myCoins: Long = 0L) {
     var fam by remember { mutableStateOf<Family?>(null) }
     var loaded by remember { mutableStateOf(false) }
     var showCreate by remember { mutableStateOf(false) }
@@ -67,14 +68,16 @@ fun FamilyTabScreen(myUid: String, myName: String, myAvatar: String?, myId: Stri
     when {
         !loaded -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(tr("Memuat..."), color = Color(0xFF8A8A8A)) }
         fam != null -> FamilyHomeScreen(fam!!, myUid, myName, myAvatar)
-        else -> NoFamilyPage(onCreate = { showCreate = true }, onSearch = { showSearch = true })
+        else -> FamilyFindScreen(
+            myUid = myUid, myName = myName, myAvatar = myAvatar, myCoins = myCoins,
+            onBack = null, onCreate = { showCreate = true },
+        )
     }
 
-    if (showCreate) FamilySettingsScreen(
+    if (showCreate) FamilyFormScreen(
         existing = null, myUid = myUid, myName = myName, myAvatar = myAvatar,
         onBack = { showCreate = false }, onDone = { showCreate = false },
     )
-    if (showSearch) FamilySearchScreen(myUid = myUid, myName = myName, myAvatar = myAvatar, onBack = { showSearch = false })
 }
 
 @Composable
@@ -226,21 +229,17 @@ fun FamilyHomeScreen(f: Family, myUid: String, myName: String, myAvatar: String?
     var tab by remember { mutableStateOf(0) }
     var members by remember { mutableStateOf<List<FamilyMember>>(emptyList()) }
     var requests by remember { mutableStateOf<List<FamilyRequest>>(emptyList()) }
-    var events by remember { mutableStateOf<List<FamilyEvent>>(emptyList()) }
-    var done by remember { mutableStateOf<Set<String>>(emptySet()) }
-    var menu by remember { mutableStateOf(false) }
-    var showSettings by remember { mutableStateOf(false) }
+    var logs by remember { mutableStateOf<List<FamilyLog>>(emptyList()) }
+    var famCoins by remember { mutableStateOf(0L) }
+    var sheet by remember { mutableStateOf(false) }
+    var showEdit by remember { mutableStateOf(false) }
+    var showReq by remember { mutableStateOf(false) }
     var showDelete by remember { mutableStateOf(false) }
     var showLeave by remember { mutableStateOf(false) }
-    var showMembers by remember { mutableStateOf(false) }
-    var showRank by remember { mutableStateOf(false) }
-    var showInbox by remember { mutableStateOf(false) }
-    var showInvite by remember { mutableStateOf(false) }
-    var editAnn by remember { mutableStateOf(false) }
-    var editSlogan by remember { mutableStateOf(false) }
-    var showPost by remember { mutableStateOf(false) }
-    var showClass by remember { mutableStateOf(false) }
-    var memberAction by remember { mutableStateOf<FamilyMember?>(null) }
+    var showSend by remember { mutableStateOf(false) }
+    var aksi by remember { mutableStateOf<FamilyMember?>(null) }
+    var kirimKe by remember { mutableStateOf<FamilyMember?>(null) }
+    var refreshKey by remember { mutableStateOf(0) }
 
     fun toast(s: String) = Toast.makeText(context, s, Toast.LENGTH_SHORT).show()
 
@@ -248,363 +247,265 @@ fun FamilyHomeScreen(f: Family, myUid: String, myName: String, myAvatar: String?
     val isOwner = f.ownerUid == myUid
     val isAdmin = isOwner || me?.role == "admin"
     val level = familyLevel(f.exp)
-    val nextNeed = familyLevelNeed(level + 1)
-    val cls = familyClassOf(f.exp)
+    val kapasitas = familyCapacity(level)
 
     DisposableEffect(f.id) {
         val a = FamilyRepo.observeMembers(f.id) { members = it }
-        val b = FamilyRepo.observeEvents(f.id) { events = it }
-        val c = FamilyRepo.observeDoneTasks(f.id, myUid) { done = it }
+        val c = FamilyRepo.observeLog(f.id) { logs = it }
         val d = if (isAdmin) FamilyRepo.observeRequests(f.id) { requests = it } else null
-        onDispose { a.remove(); b.remove(); c.remove(); d?.remove() }
+        onDispose { a.remove(); c.remove(); d?.remove() }
+    }
+    // Coin family dibaca dari server dompet; diperbarui saat exp berubah atau di-refresh.
+    LaunchedEffect(f.id, f.exp, refreshKey) { famCoins = try { FamilyRepo.coins(myUid, f.id) } catch (e: Exception) { famCoins } }
+
+    Box(Modifier.fillMaxSize().background(FM_BG)) {
+        Column(Modifier.fillMaxSize()) {
+            // ---- header: cover + logo + nama + pil ----
+            Box(Modifier.fillMaxWidth().height(300.dp).background(FM_BRUSH_V)) {
+                val cov = remember(f.coverB64) { ProfileRepo.decodeB64(f.coverB64) }
+                if (cov != null) {
+                    Image(cov, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                    Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0x66000000), Color(0xCC2A0A33)))))
+                }
+                Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(42.dp).clip(RoundedCornerShape(14.dp)).background(Color(0x44000000)).border(1.dp, Color(0x55FFFFFF), RoundedCornerShape(14.dp)).clickable { /* kembali ditangani tab */ }, contentAlignment = Alignment.Center) { FmIcon("back", 22.dp) }
+                    Spacer(Modifier.weight(1f))
+                    if (isAdmin) Box(
+                        Modifier.size(42.dp).clip(RoundedCornerShape(14.dp)).background(Brush.verticalGradient(listOf(Color(0xFFFFE680), FM_GOLD)))
+                            .clickable { sheet = true },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        FmIcon("gear", 24.dp, Color(0xFF3D2A00))
+                        if (requests.isNotEmpty()) Box(Modifier.align(Alignment.TopEnd).padding(3.dp).size(10.dp).clip(CircleShape).background(Color(0xFFE53935)))
+                    } else Box(Modifier.size(42.dp).clip(RoundedCornerShape(14.dp)).background(Color(0x44000000)).clickable { showLeave = true }, contentAlignment = Alignment.Center) { FmIcon("dots", 22.dp) }
+                }
+                Column(Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(bottom = 22.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(Modifier.size(104.dp).clip(CircleShape).border(4.dp, Color.White, CircleShape)) { FamilyLogo(f.logoB64, 104.dp) }
+                    Spacer(Modifier.height(8.dp))
+                    Text(f.name, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Spacer(Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        FmLevelPill(level)
+                        FmPill("ID: ${f.numId}", icon = null)
+                        val c = ProfileRepo.countries.firstOrNull { it.code == f.country }
+                        if (c != null) FmPill("${c.flag} ${c.name}")
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    FmPill("${f.memberCount}/$kapasitas", icon = "people")
+                }
+            }
+
+            // ---- tiga kartu: Points (exp), Members, Coins ----
+            Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp).offset(y = (-26).dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                StatCard(Modifier.weight(1f), "spark", fmtShort(f.exp), "Points", onClick = null)
+                StatCard(Modifier.weight(1f), "people", "${f.memberCount}/$kapasitas", "Members", onClick = null)
+                StatCard(Modifier.weight(1f), "coin", fmtShort(famCoins), "Coins", onClick = if (isAdmin) ({ showSend = true }) else null)
+            }
+
+            // ---- progres level ----
+            val perlu = familyLevelNeed(level + 1)
+            val awal = familyLevelNeed(level)
+            if (level < FAMILY_MAX_LEVEL) {
+                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).offset(y = (-18).dp)) {
+                    Row { Text(tr("Exp to Lv. ${level + 1}"), color = FM_SOFT, fontSize = 11.sp, modifier = Modifier.weight(1f)); Text("${fmtShort(f.exp)} / ${fmtShort(perlu)}", color = FM_SOFT, fontSize = 11.sp) }
+                    Spacer(Modifier.height(4.dp))
+                    val pct = ((f.exp - awal).toFloat() / (perlu - awal).toFloat()).coerceIn(0f, 1f)
+                    Box(Modifier.fillMaxWidth().height(7.dp).clip(RoundedCornerShape(50)).background(Color(0xFFEBDCEB))) {
+                        Box(Modifier.fillMaxWidth(pct.coerceAtLeast(0.02f)).height(7.dp).background(FM_BRUSH))
+                    }
+                }
+            }
+
+            // ---- tab Members / Request / Log ----
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 12.dp).offset(y = (-8).dp).clip(RoundedCornerShape(24.dp)).background(Color.White).padding(5.dp),
+            ) {
+                listOf("Members", "Request", "Log").forEachIndexed { i, t ->
+                    Box(
+                        Modifier.weight(1f).height(40.dp).clip(RoundedCornerShape(20.dp))
+                            .background(if (tab == i) FM_BRUSH else Brush.horizontalGradient(listOf(Color.Transparent, Color.Transparent)))
+                            .clickable { tab = i },
+                        contentAlignment = Alignment.Center,
+                    ) { Text(tr(t) + if (i == 1 && requests.isNotEmpty()) " (${requests.size})" else "", color = if (tab == i) Color.White else FM_SOFT, fontSize = 14.sp, fontWeight = FontWeight.Bold) }
+                }
+            }
+
+            Box(Modifier.weight(1f)) {
+                when (tab) {
+                    0 -> LazyColumn(Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(members) { m ->
+                            val bisaKelola = m.uid != myUid && m.uid != f.ownerUid && (isOwner || (isAdmin && m.role == "member"))
+                            Row(
+                                Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Color.White)
+                                    .border(1.dp, Color(0x14000000), RoundedCornerShape(18.dp)).padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                FmAvatar(m.avatarB64, m.name, 50.dp, ring = true)
+                                Spacer(Modifier.width(12.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(m.name, color = FM_INK, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text(
+                                        when { m.uid == f.ownerUid -> "Owner"; m.role == "admin" -> "Admin"; else -> "Member" },
+                                        color = if (m.uid == f.ownerUid) Color(0xFFE09A00) else if (m.role == "admin") FM_PINK else FM_SOFT,
+                                        fontSize = 12.sp, fontWeight = FontWeight.Medium,
+                                    )
+                                }
+                                Box(Modifier.clip(RoundedCornerShape(50)).background(Color(0xFFF1E7F2)).padding(horizontal = 10.dp, vertical = 5.dp)) {
+                                    Text(fmtShort(m.contribution), color = FM_INK, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                }
+                                if (bisaKelola) Box(Modifier.size(38.dp).clip(CircleShape).clickable { aksi = m }, contentAlignment = Alignment.Center) { FmIcon("dots", 22.dp, FM_SOFT) }
+                            }
+                        }
+                        item { Spacer(Modifier.height(20.dp)) }
+                    }
+                    1 -> if (!isAdmin || requests.isEmpty()) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(tr(if (!isAdmin) "Only admin can see requests" else "No pending request"), color = FM_SOFT)
+                    } else LazyColumn(Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(requests) { r ->
+                            Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Color.White).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                FmAvatar(r.avatarB64, r.name, 46.dp, ring = true)
+                                Spacer(Modifier.width(10.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(r.name, color = FM_INK, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                                    Text(timeAgo(r.createdAt), color = FM_SOFT, fontSize = 11.sp)
+                                }
+                                Box(Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFFFFE3E3)).clickable { scope.launch { FamilyRepo.reject(f.id, r.uid); toast(tr("Permintaan ditolak")) } }.padding(horizontal = 12.dp, vertical = 8.dp)) { Text(tr("Reject"), color = Color(0xFFD32F2F), fontSize = 12.sp, fontWeight = FontWeight.Bold) }
+                                Spacer(Modifier.width(6.dp))
+                                Box(Modifier.clip(RoundedCornerShape(12.dp)).background(FM_BRUSH_V).clickable { scope.launch { toast(FamilyRepo.approve(f.id, r) ?: "${r.name} diterima") } }.padding(horizontal = 12.dp, vertical = 8.dp)) { Text(tr("Approve"), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold) }
+                            }
+                        }
+                    }
+                    else -> if (logs.isEmpty()) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(tr("Belum ada aktivitas"), color = FM_SOFT) }
+                    else LazyColumn(Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        items(logs) { l ->
+                            Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Color.White).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Text(l.text, color = FM_INK, fontSize = 13.sp, modifier = Modifier.weight(1f))
+                                Text(timeAgo(l.createdAt), color = FM_SOFT, fontSize = 11.sp)
+                            }
+                        }
+                    }
+                }
+            }
+            if (isAdmin) Box(Modifier.fillMaxWidth().navigationBarsPadding().padding(12.dp)) {
+                FmButton("Manage Requests${if (requests.isNotEmpty()) " (${requests.size})" else ""}", Modifier.fillMaxWidth()) { showReq = true }
+            }
+        }
     }
 
-    Box(Modifier.fillMaxSize().background(Color(0xFF07201D))) {
-        Column(Modifier.fillMaxSize()) {
-            // Header
-            Box(Modifier.fillMaxWidth().height(330.dp).background(Brush.verticalGradient(listOf(Color(0xFF1B5E55), Color(0xFF0E3A35), Color(0xFF07201D))))) {
-                Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 8.dp).height(52.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Spacer(Modifier.weight(1f))
-                    Text("✉", fontSize = 26.sp, modifier = Modifier.clickable { showInbox = true }.padding(8.dp))
-                    if (isAdmin && requests.isNotEmpty()) Text(tr("${requests.size}"), color = Color.White, fontSize = 11.sp, modifier = Modifier.clip(CircleShape).background(Color.Red).padding(horizontal = 6.dp, vertical = 2.dp))
-                    Box {
-                        Text("⋮", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { menu = true }.padding(horizontal = 12.dp, vertical = 4.dp))
-                        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }, containerColor = Color(0xFF1E1A16)) {
-                            if (isAdmin) DropdownMenuItem(text = { Text(tr("Atur family"), color = Color.White) }, onClick = { menu = false; showSettings = true })
-                            DropdownMenuItem(text = { Text(tr("Daftar anggota"), color = Color.White) }, onClick = { menu = false; showMembers = true })
-                            DropdownMenuItem(text = { Text(tr("Salin ID family"), color = Color.White) }, onClick = {
-                                menu = false
-                                val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                                cm.setPrimaryClip(android.content.ClipData.newPlainText("family", f.numId))
-                                toast(tr("ID family disalin"))
-                            })
-                            if (isOwner) DropdownMenuItem(text = { Text(tr("Hapus family"), color = Color(0xFFFF6B6B)) }, onClick = { menu = false; showDelete = true })
-                            else DropdownMenuItem(text = { Text(tr("Keluar family"), color = Color(0xFFFF6B6B)) }, onClick = { menu = false; showLeave = true })
-                        }
-                    }
-                }
-                Column(Modifier.fillMaxWidth().padding(top = 56.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    FamilyLogo(f.logoB64, 120.dp)
-                    Spacer(Modifier.height(10.dp))
-                    Text(f.name, color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Medium)
-                    Text(tr("ID:${f.numId}"), color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 6.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp).clickable(enabled = isAdmin) { editSlogan = true }) {
-                        Text(f.slogan.ifBlank { "welcome to family ${f.name}" }, color = Color.White, fontSize = 16.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
-                        if (isAdmin) Text(" ✎", color = Color.White, fontSize = 16.sp)
-                    }
-                }
+    // ---------- sheet, layar, dan dialog ----------
+    if (sheet) FamilySettingsSheet(
+        isOwner = isOwner, pending = requests.size,
+        onEdit = { sheet = false; showEdit = true },
+        onRequests = { sheet = false; showReq = true },
+        onRefresh = { sheet = false; refreshKey++; toast(tr("Family dimuat ulang")) },
+        onDismiss = { sheet = false },
+    )
+    if (showEdit) FamilyFormScreen(existing = f, myUid = myUid, myName = myName, myAvatar = myAvatar, onBack = { showEdit = false }, onDone = { showEdit = false })
+    if (showReq) FamilyRequestsScreen(
+        fid = f.id, requests = requests, isAdmin = isAdmin, onBack = { showReq = false },
+        onApprove = { r -> scope.launch { toast(FamilyRepo.approve(f.id, r) ?: "${r.name} diterima") } },
+        onReject = { r -> scope.launch { FamilyRepo.reject(f.id, r.uid); toast(tr("Permintaan ditolak")) } },
+        onRefresh = { refreshKey++ },
+    )
+
+    aksi?.let { m ->
+        Dialog(onDismissRequest = { aksi = null }) {
+            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(Color.White).padding(16.dp)) {
+                Text(m.name, color = FM_INK, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
+                Spacer(Modifier.height(10.dp))
+                if (isOwner && m.role != "admin") MenuRow("Jadikan admin") { aksi = null; scope.launch { toast(FamilyRepo.setRole(f.id, m.uid, "admin") ?: "${m.name} jadi admin") } }
+                if (isOwner && m.role == "admin") MenuRow("Cabut admin") { aksi = null; scope.launch { toast(FamilyRepo.setRole(f.id, m.uid, "member") ?: "Admin ${m.name} dicabut") } }
+                if (isAdmin) MenuRow("Kirim coin family") { aksi = null; kirimKe = m }
+                MenuRow("Keluarkan dari family", merah = true) { aksi = null; scope.launch { toast(FamilyRepo.kick(f.id, m.uid) ?: "${m.name} dikeluarkan") } }
             }
-            // Kartu EXP
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 10.dp).offset(y = (-50).dp).clip(RoundedCornerShape(12.dp))
-                    .background(Brush.horizontalGradient(listOf(Color(0xFF0E5149), Color(0xFF0B3430))))
-                    .border(2.dp, Color(0xFF2FB9A8), RoundedCornerShape(12.dp)).padding(14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("🛡", fontSize = 54.sp, modifier = Modifier.clickable { showClass = true })
-                Spacer(Modifier.width(10.dp))
-                Column(Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(tr("Total nilai pengalaman family"), color = Color.White, fontSize = 16.sp, modifier = Modifier.weight(1f))
-                        Text(tr("Peringkat bulan ini ›"), color = Color(0xFFB8D8D3), fontSize = 13.sp, modifier = Modifier.clickable { showRank = true })
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        val pct = (f.exp.toFloat() / nextNeed.toFloat()).coerceIn(0f, 1f)
-                        Box(Modifier.weight(1f).height(18.dp).clip(RoundedCornerShape(9.dp)).background(Color(0xFF2B2B2B))) {
-                            Box(Modifier.fillMaxWidth(pct.coerceAtLeast(0.02f)).height(18.dp).background(Brush.horizontalGradient(listOf(Color(0xFFE0A100), Color(0xFFFFD54F)))))
-                            Text(tr("${f.exp}/$nextNeed"), color = Color.White, fontSize = 10.sp, modifier = Modifier.align(Alignment.Center), maxLines = 1)
-                        }
-                        Text(tr(" Lv.$level"), color = Color(0xFFB8D8D3), fontSize = 13.sp)
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    Text(tr("Nilai kontribusi saya:${me?.contribution ?: 0}"), color = Color.White, fontSize = 15.sp)
-                }
-            }
-            // Tabs
-            val tabs = listOf("BERANDA", "TUGAS", "MOMEN", "KEGIATAN FAM")
-            Row(Modifier.fillMaxWidth().offset(y = (-36).dp).padding(horizontal = 10.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                tabs.forEachIndexed { i, t ->
-                    Text(
-                        t,
-                        color = if (tab == i) Color(0xFF3D2A00) else Color(0xFFB8D8D3),
-                        fontWeight = if (tab == i) FontWeight.Bold else FontWeight.Normal,
-                        fontSize = 15.sp,
-                        modifier = Modifier.clip(RoundedCornerShape(50))
-                            .background(
-                                if (tab == i) Brush.verticalGradient(listOf(Color(0xFFFFE680), Color(0xFFFFC107)))
-                                else Brush.verticalGradient(listOf(Color.Transparent, Color.Transparent)),
-                            )
-                            .clickable { tab = i }.padding(horizontal = 14.dp, vertical = 8.dp),
-                    )
-                }
-            }
-            Box(Modifier.weight(1f).offset(y = (-30).dp)) {
-                when (tab) {
-                    0 -> HomeTab(f, cls, members, isAdmin, onEditAnn = { editAnn = true }, onRank = { showRank = true }, onMembers = { showMembers = true }, onClass = { showClass = true })
-                    1 -> TasksTab(done) { t ->
-                        scope.launch {
-                            val err = FamilyRepo.completeTask(f.id, myUid, t)
-                            toast(err ?: "+${t.reward} EXP family")
-                        }
-                    }
-                    2 -> MomentsTab(events.filter { it.title == "momen" }, onPost = { showPost = true }) { id -> scope.launch { FamilyRepo.deleteEvent(f.id, id) } }
-                    else -> ActivitiesTab(events.filter { it.title != "momen" }, isAdmin, onPost = { showPost = true }) { id -> scope.launch { FamilyRepo.deleteEvent(f.id, id) } }
+        }
+    }
+
+    if (showSend) {
+        Dialog(onDismissRequest = { showSend = false }) {
+            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(Color.White).padding(16.dp)) {
+                Text(tr("Coin family: ${fmtNum(famCoins)}"), color = FM_INK, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
+                Text(tr("Pilih member penerima, lalu ketuk titik tiga di daftar member untuk mengirim coin."), color = FM_SOFT, fontSize = 12.sp, modifier = Modifier.padding(vertical = 8.dp))
+                Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(50)).background(FM_BRUSH).clickable { showSend = false; tab = 0 }.padding(12.dp), contentAlignment = Alignment.Center) {
+                    Text(tr("Lihat daftar member"), color = Color.White, fontWeight = FontWeight.Bold)
                 }
             }
         }
-        // Tombol Undang Anggota
-        YellowButton("Undang Anggota", Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 14.dp)) { showInvite = true }
     }
 
-    // ---------- Dialog & overlay ----------
-    if (showSettings) FamilySettingsScreen(existing = f, myUid = myUid, myName = myName, myAvatar = myAvatar, onBack = { showSettings = false }, onDone = { showSettings = false })
+    kirimKe?.let { m ->
+        var jumlah by remember { mutableStateOf("") }
+        var sibuk by remember { mutableStateOf(false) }
+        AlertDialog(
+            onDismissRequest = { if (!sibuk) kirimKe = null },
+            title = { Text(tr("Kirim coin ke ${m.name}")) },
+            text = {
+                Column {
+                    Text(tr("Coin family tersedia: ${fmtNum(famCoins)}"), color = FM_SOFT, fontSize = 12.sp)
+                    OutlinedTextField(
+                        jumlah, { jumlah = it.filter { c -> c.isDigit() }.take(12) }, singleLine = true,
+                        placeholder = { Text(tr("Jumlah coin")) }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(enabled = !sibuk, onClick = {
+                    val n = jumlah.toLongOrNull() ?: 0L
+                    if (n <= 0L) { toast(tr("Isi jumlah coin")); return@TextButton }
+                    sibuk = true
+                    scope.launch {
+                        val err = SupaRepo.famKirim(myUid, f.id, m.uid, n)
+                        sibuk = false
+                        if (err == null) {
+                            FamilyRepo.catat(f.id, "${myName} mengirim ${fmtNum(n)} coin ke ${m.name}")
+                            refreshKey++
+                            toast(tr("Coin terkirim ke ${m.name}")); kirimKe = null
+                        } else toast(err)
+                    }
+                }) { Text(tr(if (sibuk) "Mengirim..." else "Kirim")) }
+            },
+            dismissButton = { TextButton(enabled = !sibuk, onClick = { kirimKe = null }) { Text(tr("Batal")) } },
+        )
+    }
 
     if (showDelete) AlertDialog(
         onDismissRequest = { showDelete = false },
         title = { Text(tr("Hapus family?")) },
         text = { Text(tr("Family \"${f.name}\" dan semua datanya akan dihapus permanen, seluruh anggota akan dikeluarkan. Tindakan ini tidak bisa dibatalkan.")) },
-        confirmButton = {
-            TextButton(onClick = {
-                showDelete = false
-                scope.launch { val e = FamilyRepo.delete(f.id); toast(e ?: "Family dihapus") }
-            }) { Text(tr("Hapus"), color = Color(0xFFD9534F)) }
-        },
+        confirmButton = { TextButton(onClick = { showDelete = false; scope.launch { val e = FamilyRepo.delete(f.id); toast(e ?: "Family dihapus") } }) { Text(tr("Hapus"), color = Color(0xFFD9534F)) } },
         dismissButton = { TextButton(onClick = { showDelete = false }) { Text(tr("Batal")) } },
     )
-
     if (showLeave) AlertDialog(
         onDismissRequest = { showLeave = false },
         title = { Text(tr("Keluar dari family?")) },
         text = { Text(tr("Kontribusimu di family ini akan hilang.")) },
-        confirmButton = {
-            TextButton(onClick = {
-                showLeave = false
-                scope.launch { val e = FamilyRepo.leave(f.id, myUid); toast(e ?: "Kamu keluar dari family") }
-            }) { Text(tr("Keluar"), color = Color(0xFFD9534F)) }
-        },
+        confirmButton = { TextButton(onClick = { showLeave = false; scope.launch { val e = FamilyRepo.leave(f.id, myUid); toast(e ?: "Kamu keluar dari family") } }) { Text(tr("Keluar"), color = Color(0xFFD9534F)) } },
         dismissButton = { TextButton(onClick = { showLeave = false }) { Text(tr("Batal")) } },
     )
+}
 
-    if (editAnn) TextEditDialog("Pengumuman family", f.announcement, 200, onDismiss = { editAnn = false }) { t ->
-        scope.launch { toast(FamilyRepo.setAnnouncement(f.id, t) ?: "Pengumuman diperbarui") }
+@Composable
+private fun StatCard(mod: Modifier, icon: String, value: String, label: String, onClick: (() -> Unit)?) {
+    Column(
+        mod.clip(RoundedCornerShape(22.dp)).background(FM_BRUSH_V)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(vertical = 14.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(Modifier.size(36.dp).clip(CircleShape).background(Color(0x22FFFFFF)), contentAlignment = Alignment.Center) { FmIcon(icon, 20.dp, FM_GOLD) }
+        Spacer(Modifier.height(8.dp))
+        Text(value, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
+        Text(tr(label), color = Color(0xCCFFFFFF), fontSize = 11.sp)
     }
-    if (editSlogan) TextEditDialog("Sapaan family", f.slogan.ifBlank { "welcome to family ${f.name}" }, 60, onDismiss = { editSlogan = false }) { t ->
-        scope.launch { toast(FamilyRepo.setSlogan(f.id, t) ?: "Sapaan diperbarui") }
-    }
-    if (showPost) TextEditDialog(if (tab == 2) "Tulis momen" else "Buat kegiatan", "", 300, onDismiss = { showPost = false }) { t ->
-        scope.launch { toast(FamilyRepo.postEvent(f.id, myName, if (tab == 2) "momen" else "kegiatan", t) ?: "Terkirim") }
-    }
+}
 
-    if (showInvite) AlertDialog(
-        onDismissRequest = { showInvite = false },
-        title = { Text(tr("Undang Anggota")) },
-        text = { Text(tr("Bagikan ID family ${f.numId} (${f.name}). Teman bisa membuka tab Family lalu Cari / Gabung Family.")) },
-        confirmButton = {
-            TextButton(onClick = {
-                showInvite = false
-                val i = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, "Gabung family \"${f.name}\" di aplikasi kami! Cari ID family: ${f.numId}")
-                }
-                context.startActivity(Intent.createChooser(i, "Undang lewat"))
-            }) { Text(tr("Bagikan")) }
-        },
-        dismissButton = { TextButton(onClick = { showInvite = false }) { Text(tr("Tutup")) } },
+@Composable
+private fun MenuRow(text: String, merah: Boolean = false, tap: () -> Unit) {
+    Text(
+        tr(text), color = if (merah) Color(0xFFD32F2F) else FM_INK, fontSize = 15.sp, fontWeight = FontWeight.Medium,
+        modifier = Modifier.fillMaxWidth().clickable(onClick = tap).padding(vertical = 12.dp),
     )
-
-    if (showClass) AlertDialog(
-        onDismissRequest = { showClass = false },
-        title = { Text(tr("Kelas Family")) },
-        text = {
-            Column {
-                FAMILY_CLASSES.forEach {
-                    Text(tr("${it.name} ${it.roman}: butuh ${fmtNum(it.need)} EXP${if (it == cls) " ◀ sekarang" else ""}"), modifier = Modifier.padding(vertical = 3.dp))
-                }
-            }
-        },
-        confirmButton = { TextButton(onClick = { showClass = false }) { Text(tr("Tutup")) } },
-    )
-
-    if (showRank) FamilyRankScreen(myFamilyId = f.id, onBack = { showRank = false })
-    if (showMembers) MemberListScreen(members, f.ownerUid, myUid, isAdmin, isOwner, onBack = { showMembers = false }) { memberAction = it }
-    if (showInbox) RequestsScreen(
-        requests, isAdmin, onBack = { showInbox = false },
-        onApprove = { r -> scope.launch { toast(FamilyRepo.approve(f.id, r) ?: "${r.name} diterima") } },
-        onReject = { r -> scope.launch { FamilyRepo.reject(f.id, r.uid); toast(tr("Permintaan ditolak")) } },
-    )
-
-    memberAction?.let { m ->
-        AlertDialog(
-            onDismissRequest = { memberAction = null },
-            title = { Text(m.name) },
-            text = {
-                Column {
-                    if (isOwner && m.role != "admin") Text(
-                        tr("Jadikan admin"),
-                        Modifier.fillMaxWidth().clickable {
-                            memberAction = null
-                            scope.launch { toast(FamilyRepo.setRole(f.id, m.uid, "admin") ?: "${m.name} jadi admin") }
-                        }.padding(vertical = 10.dp),
-                    )
-                    if (isOwner && m.role == "admin") Text(
-                        tr("Cabut admin"),
-                        Modifier.fillMaxWidth().clickable {
-                            memberAction = null
-                            scope.launch { toast(FamilyRepo.setRole(f.id, m.uid, "member") ?: "Admin ${m.name} dicabut") }
-                        }.padding(vertical = 10.dp),
-                    )
-                    Text(
-                        tr("Keluarkan dari family"),
-                        Modifier.fillMaxWidth().clickable {
-                            memberAction = null
-                            scope.launch { toast(FamilyRepo.kick(f.id, m.uid) ?: "${m.name} dikeluarkan") }
-                        }.padding(vertical = 10.dp),
-                    )
-                }
-            },
-            confirmButton = { TextButton(onClick = { memberAction = null }) { Text(tr("Tutup")) } },
-        )
-    }
-}
-
-@Composable
-private fun TextEditDialog(title: String, initial: String, max: Int, onDismiss: () -> Unit, onSave: (String) -> Unit) {
-    var t by remember { mutableStateOf(initial) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(tr(title)) },
-        text = { OutlinedTextField(t, { if (it.length <= max) t = it }, modifier = Modifier.fillMaxWidth(), supportingText = { Text(tr("${t.length}/$max")) }) },
-        confirmButton = { TextButton(onClick = { if (t.isNotBlank()) { onSave(t.trim()); onDismiss() } }) { Text(tr("Simpan")) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(tr("Batal")) } },
-    )
-}
-
-@Composable
-private fun HomeTab(
-    f: Family, cls: FamilyClass, members: List<FamilyMember>, isAdmin: Boolean,
-    onEditAnn: () -> Unit, onRank: () -> Unit, onMembers: () -> Unit, onClass: () -> Unit,
-) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 12.dp)) {
-        Box(
-            Modifier.fillMaxWidth().height(80.dp).clip(RoundedCornerShape(10.dp))
-                .background(Brush.horizontalGradient(listOf(Color(0xFF8A4B0F), Color(0xFF2A1A0A), Color(0xFF123B5C)))).clickable(onClick = onRank),
-            contentAlignment = Alignment.Center,
-        ) { Text(tr("Liga Peringkat Fam"), color = Color(0xFFFFD54F), fontSize = 28.sp, fontWeight = FontWeight.ExtraBold) }
-
-        Row(Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(tr("Pengumuman family"), color = Color.White, fontSize = 20.sp, modifier = Modifier.weight(1f))
-            if (isAdmin) Text("✎", color = Color(0xFFB8D8D3), fontSize = 22.sp, modifier = Modifier.clickable(onClick = onEditAnn).padding(4.dp))
-        }
-        Text(
-            f.announcement.ifBlank { "welcome ${f.name}" },
-            color = Color.White, fontSize = 16.sp,
-            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(Color(0xFF1D2B28)).padding(14.dp),
-        )
-
-        Text(tr("Kelas Fam"), color = Color.White, fontSize = 18.sp, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
-        Column(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
-                .background(Brush.verticalGradient(listOf(Color(0xFF5A2A1A), Color(0xFF2E1710))))
-                .border(2.dp, Color(0xFF8A5A2E), RoundedCornerShape(10.dp)).clickable(onClick = onClass).padding(12.dp),
-        ) {
-            Text(tr("Peringkat saat ini: ${cls.name} ${cls.roman}"), color = Color(0xFFFFB74D), fontSize = 15.sp)
-            Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-                Text("🛡", fontSize = 56.sp)
-                PerkBox("💵", cls.perk1); PerkBox("🏅", cls.perk2); PerkBox("⭕", cls.perk3)
-            }
-            val need = cls.need / 1000
-            Text(tr("Diperlukan untuk naik ke peringkat berikutnya: ${f.exp}/$need"), color = Color.White, fontSize = 13.sp)
-        }
-
-        Row(Modifier.fillMaxWidth().padding(top = 18.dp, bottom = 8.dp).clickable(onClick = onMembers), verticalAlignment = Alignment.CenterVertically) {
-            Text(tr("Member TOP"), color = Color.White, fontSize = 18.sp, modifier = Modifier.weight(1f))
-            Text("›", color = Color(0xFFB8D8D3), fontSize = 28.sp)
-        }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            val colors = listOf(Color(0xFF7B2FBE), Color(0xFFC62828), Color(0xFF1565C0))
-            val top = members.take(3)
-            for (i in 0 until 3) {
-                val m = top.getOrNull(i)
-                Column(
-                    Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).background(colors[i].copy(alpha = 0.85f)).padding(vertical = 14.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    val bmp = remember(m?.avatarB64) { ProfileRepo.decodeB64(m?.avatarB64) }
-                    Box(Modifier.size(64.dp).clip(CircleShape).background(Color(0xFF263238)), contentAlignment = Alignment.Center) {
-                        if (bmp != null) Image(bmp, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-                        else Text((m?.name ?: "?").take(1).uppercase(), color = GoldLight, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                    }
-                    Text(m?.name ?: "-", color = Color.White, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp, start = 4.dp, end = 4.dp))
-                    Text(fmtNum(m?.contribution ?: 0L), color = Color(0xFFFFE082), fontSize = 12.sp)
-                }
-            }
-        }
-        Spacer(Modifier.height(90.dp))
-    }
-}
-
-@Composable
-private fun PerkBox(emoji: String, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(Modifier.size(56.dp).clip(RoundedCornerShape(10.dp)).background(Color(0x33FFFFFF)), contentAlignment = Alignment.Center) { Text(emoji, fontSize = 28.sp) }
-        Text(tr(label), color = Color(0xFFD7B9A5), fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
-    }
-}
-
-@Composable
-private fun TasksTab(done: Set<String>, onClaim: (FamilyTask) -> Unit) {
-    LazyColumn(Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        items(FAMILY_TASKS) { t ->
-            val isDone = t.id in done
-            Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(Color(0xFF1D2B28)).padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(t.title, color = Color.White, fontSize = 16.sp)
-                    Text(t.desc, color = Color(0xFF9AB5B0), fontSize = 12.sp)
-                    Text(tr("+${t.reward} EXP"), color = Color(0xFFFFD54F), fontSize = 13.sp)
-                }
-                Text(
-                    if (isDone) "Selesai" else "Klaim",
-                    color = if (isDone) Color(0xFF9A9A9A) else Color(0xFF3D2A00),
-                    modifier = Modifier.clip(RoundedCornerShape(50))
-                        .background(if (isDone) Brush.verticalGradient(listOf(Color(0xFF444444), Color(0xFF444444))) else YellowBtn)
-                        .clickable(enabled = !isDone) { onClaim(t) }.padding(horizontal = 18.dp, vertical = 8.dp),
-                )
-            }
-        }
-        item { Spacer(Modifier.height(90.dp)) }
-    }
-}
-
-@Composable
-private fun MomentsTab(list: List<FamilyEvent>, onPost: () -> Unit, onDelete: (String) -> Unit) {
-    PostList(list, "Belum ada momen family", "Tulis momen", true, onPost, onDelete)
-}
-
-@Composable
-private fun ActivitiesTab(list: List<FamilyEvent>, isAdmin: Boolean, onPost: () -> Unit, onDelete: (String) -> Unit) {
-    PostList(list, "Belum ada kegiatan family", "Buat kegiatan", isAdmin, onPost, onDelete)
-}
-
-@Composable
-private fun PostList(list: List<FamilyEvent>, empty: String, btn: String, canPost: Boolean, onPost: () -> Unit, onDelete: (String) -> Unit) {
-    LazyColumn(Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        if (canPost) item {
-            OutlinedButton(onClick = onPost, border = BorderStroke(1.dp, Gold), colors = ButtonDefaults.outlinedButtonColors(contentColor = GoldLight), modifier = Modifier.fillMaxWidth()) { Text(btn) }
-        }
-        if (list.isEmpty()) item { Text(empty, color = Color(0xFF8A8A8A), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(32.dp)) }
-        items(list) { e ->
-            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(Color(0xFF1D2B28)).padding(14.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(e.byName, color = GoldLight, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                    Text(timeAgo(e.createdAt), color = Color(0xFF9AB5B0), fontSize = 12.sp)
-                    if (canPost) Text(" 🗑 ", modifier = Modifier.clickable { onDelete(e.id) })
-                }
-                Text(e.text, color = Color.White, fontSize = 15.sp, modifier = Modifier.padding(top = 6.dp))
-            }
-        }
-        item { Spacer(Modifier.height(90.dp)) }
-    }
 }
 
 /* Daftar anggota, permintaan, peringkat, cari */

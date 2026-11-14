@@ -39,6 +39,7 @@ data class FamilyMember(
     val joinedAt: Long = 0L,
 )
 
+data class FamilyLog(val id: String, val text: String, val createdAt: Long)
 data class FamilyRequest(val uid: String, val name: String, val avatarB64: String?, val createdAt: Long)
 data class FamilyTask(val id: String, val title: String, val desc: String, val reward: Long, val target: Long)
 data class FamilyEvent(val id: String, val title: String, val text: String, val createdAt: Long, val byName: String)
@@ -277,6 +278,20 @@ object FamilyRepo {
             )
         }
 
+    fun observeLog(fid: String, onChange: (List<FamilyLog>) -> Unit): Reg =
+        listen(fm(fid).child("log").orderByChild("createdAt").limitToLast(60)) { snap ->
+            onChange(snap.children.map { FamilyLog(it.key ?: "", it.str("text") ?: "", it.lng("createdAt")) }.sortedByDescending { it.createdAt })
+        }
+
+    /** Catat kejadian penting family (tampil di tab Log). Gagal mencatat tidak boleh mengganggu aksi utama. */
+    suspend fun catat(fid: String, text: String) {
+        try {
+            kotlinx.coroutines.withTimeoutOrNull(5000L) {
+                fm(fid).child("log").push().setValue(hashMapOf<String, Any?>("text" to text, "createdAt" to System.currentTimeMillis())).await()
+            }
+        } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { }
+    }
+
     /** Saldo coin family dari server dompet (bukan RTDB, supaya tidak bisa dipalsukan). */
     suspend fun coins(uid: String, fid: String): Long = SupaRepo.famCoins(uid, fid)
 
@@ -468,6 +483,7 @@ object FamilyRepo {
         } else {
             addMember(fid, r.uid, r.name, r.avatarB64, now)
             UserDirectory.setFam(r.uid, getFamily(fid)?.name ?: "")
+            catat(fid, "${r.name} bergabung ke family")
             null
         }
     } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { e.message }
@@ -487,10 +503,18 @@ object FamilyRepo {
         null
     } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { e.message }
 
-    suspend fun kick(fid: String, uid: String): String? = leave(fid, uid)
+    suspend fun kick(fid: String, uid: String): String? {
+        val nama = readOnce(fm(fid).child("members/$uid/name")) { it.value as? String } ?: "Anggota"
+        val e = leave(fid, uid)
+        if (e == null) catat(fid, "$nama dikeluarkan dari family")
+        return e
+    }
 
     suspend fun setRole(fid: String, uid: String, role: String): String? = try {
-        kotlinx.coroutines.withTimeout(8000L) { fm(fid).child("members/$uid/role").setValue(role).await() }; null
+        kotlinx.coroutines.withTimeout(8000L) { fm(fid).child("members/$uid/role").setValue(role).await() }
+        val nama = readOnce(fm(fid).child("members/$uid/name")) { it.value as? String } ?: "Anggota"
+        catat(fid, if (role == "admin") "$nama dijadikan admin" else "Admin $nama dicabut")
+        null
     } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { e.message }
 
     suspend fun saveSettings(f: Family, name: String, label: String, logoB64: String?, coverB64: String?, country: String, needApproval: Boolean): String? {

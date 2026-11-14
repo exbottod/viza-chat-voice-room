@@ -528,7 +528,7 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
                                 onComments = { commentMoment = it },
                             )
                         }
-                        2 -> KecilkanKonten(0.90f) { FamilyTabScreen(myUid = uid, myName = myName, myAvatar = profile.avatarB64, myId = userId) }
+                        2 -> KecilkanKonten(0.90f) { FamilyTabScreen(myUid = uid, myName = myName, myAvatar = profile.avatarB64, myId = userId, myCoins = wallet.coins) }
                         3 -> KecilkanKonten(0.92f) { ChatListTab(myUid = uid) }
                         else -> androidx.compose.material3.pulltorefresh.PullToRefreshBox(
                             isRefreshing = refreshingTab,

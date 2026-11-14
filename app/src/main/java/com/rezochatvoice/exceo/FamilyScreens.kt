@@ -702,31 +702,145 @@ fun FamilyProfileDialog(
 }
 
 @Composable
-private fun FamilyRankScreen(myFamilyId: String, onBack: () -> Unit, onOpenFamily: (String) -> Unit = {}) {                         
+private fun FamilyRankScreen(myFamilyId: String, onBack: () -> Unit, onOpenFamily: (String) -> Unit = {}) {
     var list by remember { mutableStateOf<List<Family>?>(null) }
-    LaunchedEffect(Unit) { list = try { FamilyRepo.topFamilies() } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { emptyList() } }
-    SubPage("Liga Peringkat Fam", onBack) {
-        val l = list
-        if (l == null) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(tr("Memuat..."), color = Color(0xFF8A8A8A)) }
-        else if (l.isEmpty()) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(tr("Belum ada data peringkat"), color = Color(0xFF8A8A8A)) }
-        else LazyColumn(Modifier.fillMaxSize().padding(horizontal = 12.dp)) {
-            items(l.size) { i ->
-                val f = l[i]
-                Row(
-                    Modifier.fillMaxWidth().padding(vertical = 4.dp).clip(RoundedCornerShape(10.dp))
-                        .background(if (f.id == myFamilyId) Color(0xFF2A3A20) else CardBlack)
-                        .clickable { onOpenFamily(f.id) }.padding(10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(when (i) { 0 -> "🥇"; 1 -> "🥈"; 2 -> "🥉"; else -> "${i + 1}" }, color = Color.White, fontSize = 17.sp, modifier = Modifier.width(34.dp), textAlign = TextAlign.Center)
-                    FamilyLogo(f.logoB64, 40.dp)
-                    Spacer(Modifier.width(10.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(f.name, color = Color.White, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(tr("ID:${f.numId} · ${f.memberCount} anggota"), color = Color(0xFF9AB5B0), fontSize = 11.sp, maxLines = 1)
-                    }
-                    Text(tr("${fmtNum(f.exp)} EXP"), color = Color(0xFFFFD54F), fontSize = 11.sp, maxLines = 1)
+    // Nama pemilik tiap family, dibaca sekali untuk baris "Zeeto Alam" di bawah nama family.
+    var pemilik by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+    LaunchedEffect(Unit) {
+        val l = try { FamilyRepo.topFamilies() } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { emptyList() }
+        list = l
+        val peta = HashMap<String, String>()
+        for (f in l) {
+            val n = try { FamilyRepo.ownerName(f.id, f.ownerUid) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { null }
+            if (!n.isNullOrBlank()) { peta[f.id] = n; pemilik = HashMap(peta) }
+        }
+    }
+    BackHandler(onBack = onBack)
+
+    val latar = Brush.verticalGradient(listOf(Color(0xFFFDEFF7), Color(0xFFFFFFFF), Color(0xFFFBF1F8)))
+    Box(Modifier.fillMaxSize().background(latar)) {
+        Column(Modifier.fillMaxSize().statusBarsPadding()) {
+            // ---- header kapsul ----
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp).clip(RoundedCornerShape(26.dp))
+                    .background(Color.White).border(1.dp, Color(0x14000000), RoundedCornerShape(26.dp)).padding(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(Modifier.size(46.dp).clip(RoundedCornerShape(16.dp)).background(FM_BRUSH_V).clickable(onClick = onBack), contentAlignment = Alignment.Center) { FmIcon("back", 24.dp) }
+                Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(tr("Family Ranking"), color = FM_INK, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+                    Text(tr("Top family leaderboard"), color = FM_SOFT, fontSize = 12.sp)
                 }
+                Box(Modifier.size(46.dp).clip(CircleShape).background(Brush.verticalGradient(listOf(Color(0xFFFFE680), FM_GOLD))), contentAlignment = Alignment.Center) {
+                    FmIcon("medal", 24.dp, Color(0xFF3D2A00))
+                }
+            }
+
+            val l = list
+            if (l == null) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(tr("Memuat..."), color = FM_SOFT) }
+            else if (l.isEmpty()) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(tr("Belum ada data peringkat"), color = FM_SOFT) }
+            else LazyColumn(Modifier.fillMaxSize(), contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 24.dp)) {
+                // ---- podium: 2 - 1 - 3 ----
+                item {
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 10.dp).padding(top = 22.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.Bottom,
+                    ) {
+                        val juara2 = l.getOrNull(1); val juara1 = l.getOrNull(0); val juara3 = l.getOrNull(2)
+                        Box(Modifier.weight(1f)) { if (juara2 != null) PodiumCard(2, juara2, pemilik[juara2.id], onOpenFamily) }
+                        Box(Modifier.weight(1.22f)) { if (juara1 != null) PodiumCard(1, juara1, pemilik[juara1.id], onOpenFamily) }
+                        Box(Modifier.weight(1f)) { if (juara3 != null) PodiumCard(3, juara3, pemilik[juara3.id], onOpenFamily) }
+                    }
+                    Spacer(Modifier.height(18.dp))
+                }
+                // ---- peringkat 4 dst ----
+                if (l.size > 3) item {
+                    Column(
+                        Modifier.fillMaxWidth().padding(horizontal = 14.dp).clip(RoundedCornerShape(26.dp)).background(Color.White)
+                            .border(1.dp, Color(0x14000000), RoundedCornerShape(26.dp)).padding(horizontal = 14.dp, vertical = 6.dp),
+                    ) {
+                        for (i in 3 until l.size) {
+                            val f = l[i]
+                            val sayaIni = f.id == myFamilyId
+                            Row(
+                                Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
+                                    .background(if (sayaIni) Color(0xFFFFF0F7) else Color.Transparent)
+                                    .clickable { onOpenFamily(f.id) }.padding(vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text("${i + 1}", color = FM_INK, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.width(34.dp), textAlign = TextAlign.Center)
+                                FmAvatar(f.logoB64, f.name, 58.dp, ring = true)
+                                Spacer(Modifier.width(12.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(f.name, color = FM_INK, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Spacer(Modifier.height(4.dp))
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(pemilik[f.id] ?: "", color = FM_SOFT, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                                        Spacer(Modifier.width(8.dp))
+                                        Box(Modifier.clip(RoundedCornerShape(50)).background(Color(0xFFFFE9F3)).padding(horizontal = 9.dp, vertical = 3.dp)) {
+                                            Text("${f.memberCount}/${familyCapacity(familyLevel(f.exp))}", color = FM_PINK, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(Modifier.size(18.dp).clip(CircleShape).background(FM_GOLD), contentAlignment = Alignment.Center) { FmIcon("coin", 12.dp, Color(0xFF3D2A00)) }
+                                        Spacer(Modifier.width(5.dp))
+                                        Text(fmShort(f.exp), color = FM_INK, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
+                                    }
+                                    Text("${fmShort(f.exp)} pts", color = FM_SOFT, fontSize = 11.sp)
+                                }
+                            }
+                            if (i < l.size - 1) Box(Modifier.fillMaxWidth().padding(start = 46.dp).height(1.dp).background(Color(0x14000000)))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** Kartu podium juara 1 sampai 3: gradien, logo di bingkai, nama, pemilik, jumlah member, dan poin. */
+@Composable
+private fun PodiumCard(rank: Int, f: Family, pemilik: String?, onOpen: (String) -> Unit) {
+    val (warna, medali) = when (rank) {
+        1 -> listOf(Color(0xFF4A0F3F), Color(0xFFB0206A), Color(0xFFFF3D8B)) to Color(0xFFFFC928)
+        2 -> listOf(Color(0xFF3F5BFF), Color(0xFF5E7BFF), Color(0xFF9B6BFF)) to Color(0xFF8FA6FF)
+        else -> listOf(Color(0xFFFF8A3D), Color(0xFFFF5E7A), Color(0xFFE0388F)) to Color(0xFFFFA25E)
+    }
+    val tinggi = if (rank == 1) 262.dp else 232.dp
+    val logo = if (rank == 1) 112.dp else 88.dp
+    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
+        // lencana nomor di atas kartu
+        Box(
+            Modifier.align(Alignment.TopCenter).size(34.dp).clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp, bottomStart = 4.dp, bottomEnd = 4.dp)).background(medali),
+            contentAlignment = Alignment.Center,
+        ) { Text("$rank", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold) }
+        Column(
+            Modifier.padding(top = 22.dp).fillMaxWidth().height(tinggi).clip(RoundedCornerShape(26.dp))
+                .background(Brush.verticalGradient(warna)).clickable { onOpen(f.id) }.padding(horizontal = 6.dp, vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(Modifier.size(logo + 8.dp).clip(RoundedCornerShape(logo * 0.26f)).border(3.dp, medali, RoundedCornerShape(logo * 0.26f)).padding(3.dp), contentAlignment = Alignment.Center) {
+                FmAvatar(f.logoB64, f.name, logo)
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(f.name, color = Color.White, fontSize = if (rank == 1) 16.sp else 14.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(pemilik ?: "", color = Color(0xD9FFFFFF), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(6.dp))
+            Box(Modifier.clip(RoundedCornerShape(50)).background(Color(0x33FFFFFF)).padding(horizontal = 12.dp, vertical = 4.dp)) {
+                Text("${f.memberCount}/${familyCapacity(familyLevel(f.exp))}", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.weight(1f))
+            Row(
+                Modifier.clip(RoundedCornerShape(50)).background(Color(0x40000000)).padding(horizontal = 12.dp, vertical = 7.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(Modifier.size(18.dp).clip(CircleShape).background(FM_GOLD), contentAlignment = Alignment.Center) { FmIcon("coin", 12.dp, Color(0xFF3D2A00)) }
+                Spacer(Modifier.width(6.dp))
+                Text(fmShort(f.exp), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
             }
         }
     }

@@ -364,6 +364,10 @@ object FamilyRepo {
             s.children.mapNotNull { it.toFamily() }.sortedByDescending { it.exp }
         } ?: emptyList()
 
+    /** Nama pemilik family, dibaca dari data member. null kalau tidak ditemukan. */
+    suspend fun ownerName(fid: String, ownerUid: String): String? =
+        readOnce(fm(fid).child("members/$ownerUid/name")) { it.value as? String }
+
     /** Ambil satu family berdasarkan id (dipakai halaman family orang lain). */
     suspend fun getFamily(fid: String): Family? = readOnce(fm(fid)) { it.toFamily() }
 

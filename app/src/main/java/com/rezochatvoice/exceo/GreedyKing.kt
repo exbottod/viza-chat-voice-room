@@ -302,17 +302,9 @@ private const val SKRIP_UKUR = """
   try {
     var d = document.documentElement, b = document.body;
     var r = document.getElementById("root");
-    var vh = window.innerHeight || d.clientHeight || 0;
-    if (vh > 100) d.style.setProperty("--gk-h", vh + "px");
-    var st = document.getElementById("gkPaksa");
-    if (!st) {
-      st = document.createElement("style");
-      st.id = "gkPaksa";
-      st.textContent = "html,body,#root{height:100vh!important;min-height:100vh!important}" +
-        ".h-dvh{height:100vh!important}.min-h-dvh{min-height:100vh!important}" +
-        ".aspect-square{position:relative}";
-      document.head.appendChild(st);
-    }
+    // Jangan memasang tinggi di sini. Dulu skrip ini memaksa 100vh yang di sebagian
+    // WebView bernilai 0, sehingga game yang sudah tampil runtuh jadi layar coklat
+    // beberapa detik kemudian. Tinggi sudah dipasang di index.html (piksel nyata).
     setTimeout(function () {
       var rr = r ? r.getBoundingClientRect() : null;
       var dots = document.querySelector(".bg-dots");

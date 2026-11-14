@@ -606,11 +606,147 @@ async function gambarFamily() {
   };
 }
 
+
+/* ---------- Cashback gift: atur peluang (%) dan pengali ---------- */
+// Disimpan di Realtime Database pub/_cashbackCfg, dibaca server dompet dan
+// aplikasi. Satu baris undian = "pengali:bobot", mis. "10:5" artinya peluang
+// 5 bagian mendapat cashback 10x harga gift.
+const CB_BAWAAN = {
+  on: true,
+  recvPct: 5,
+  jpMin: 1000,
+  t1: { min: 0, rows: [{ v: 10, w: 5 }, { v: 1, w: 20 }, { v: 0.2, w: 35 }, { v: 0, w: 40 }] },
+};
+
+function bacaBarisCashback(teks) {
+  // Satu undian per baris (atau dipisah titik koma). Koma dipakai sebagai
+  // pemisah desimal, jadi "0,2:35" terbaca 0,2 dengan bobot 35. Kalau satu baris
+  // memuat lebih dari satu pasangan ("10:5, 1:20"), barulah koma jadi pemisah.
+  const potong = [];
+  String(teks || "")
+    .split(/[\n;]+/)
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .forEach((baris) => {
+      if ((baris.match(/[:=]/g) || []).length > 1) potong.push(...baris.split(/[,]+/));
+      else potong.push(baris);
+    });
+  return potong
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .map((x) => {
+      const bag = x.split(/[:=]/).map((y) => Number(String(y).replace(",", ".").trim()));
+      const v = Number.isFinite(bag[0]) ? Math.max(0, bag[0]) : 0;
+      const w = Number.isFinite(bag[1]) ? Math.max(0, bag[1]) : 0;
+      return { v, w };
+    })
+    .filter((r) => r.w > 0);
+}
+
+function teksBarisCashback(rows) {
+  return (Array.isArray(rows) ? rows : []).map((r) => `${Number(r.v) || 0}:${Number(r.w) || 0}`).join("\n");
+}
+
+/** Tabel peluang + rata-rata koin yang kembali per 1 koin yang dibelanjakan. */
+function ringkasCashback(rows) {
+  const total = rows.reduce((a, b) => a + b.w, 0);
+  if (!total) return '<div class="catatan">Belum ada baris undian.</div>';
+  const rtp = rows.reduce((a, b) => a + b.v * b.w, 0) / total;
+  const isi = rows
+    .map((r) => {
+      const pct = (r.w / total) * 100;
+      return `<tr><td>${r.v > 0 ? "x" + r.v : "tidak dapat"}</td><td>${pct.toFixed(1)}%</td><td>${rupiah(Math.round(r.v * 100))}% dari harga gift</td></tr>`;
+    })
+    .join("");
+  const balik = rtp.toFixed(2).replace(".", ",");
+  const sisa = ((1 - rtp) * 100).toFixed(1).replace(".", ",");
+  return `<table style="margin-top:8px"><tr><th>PENGALI</th><th>PELUANG</th><th>CASHBACK</th></tr>${isi}</table>
+    <div class="catatan">Rata-rata yang kembali: <b>${balik} coin</b> untuk setiap 1 coin yang dibelanjakan (sisa untuk aplikasi ${sisa}%).</div>`;
+}
+
+async function gambarCashback() {
+  let cfg = CB_BAWAAN;
+  let galat = "";
+  try {
+    const sn = await dGet(dRef(rtdb, "pub/_cashbackCfg"));
+    if (sn.exists()) cfg = Object.assign({}, CB_BAWAAN, sn.val() || {});
+  } catch (e) { galat = e.message || String(e); }
+
+  const tier = (k, judul) => {
+    const node = cfg[k] && typeof cfg[k] === "object" ? cfg[k] : null;
+    const rows = node && Array.isArray(node.rows) ? node.rows : [];
+    return `
+      <div class="isian" style="margin-top:14px">
+        <label>${judul}</label>
+        <div class="barisIsian">
+          <div class="isian"><label>Harga gift minimum (coin)</label>
+            <input id="cbMin_${k}" type="number" min="0" step="100" value="${Number(node?.min) || 0}">
+          </div>
+        </div>
+        <div class="isian" style="margin-top:8px">
+          <label>Undian (pengali:bobot, satu per baris)</label>
+          <textarea id="cbRows_${k}" rows="4" style="width:100%;font-family:monospace">${aman(teksBarisCashback(rows))}</textarea>
+        </div>
+        <div id="cbRin_${k}">${ringkasCashback(rows)}</div>
+      </div>`;
+  };
+
+  $("aksiTopbar").innerHTML = '<button class="tombolAtas" id="simpanCashback">Simpan</button>';
+  $("isiHal").innerHTML = `
+    <div class="panel" style="max-width:700px">
+      <div class="panelAtas"><h3>Cashback gift</h3><div class="sub">peluang dan pengali</div></div>
+      <div class="panelIsi">
+        <div class="catatan">Ditulis ke <b>pub/_cashbackCfg</b> dan langsung dipakai server dompet, tanpa build ulang aplikasi. Tier dipilih dari harga gift: tier dengan syarat minimum terbesar yang terpenuhi yang dipakai. Kalau tier 2 sampai 4 dikosongkan, semua gift memakai tier 1. Pengali boleh pecahan, mis. 0,2 berarti cashback 20% dari harga gift. Baris dengan pengali 0 berarti tidak dapat cashback.</div>
+        ${galat ? `<div class="catatan">${aman(galat)}</div>` : ""}
+        <div class="barisIsian" style="margin-top:10px">
+          <div class="isian"><label>Cashback aktif</label>
+            <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="cbOn" ${cfg.on === false ? "" : "checked"} style="width:auto">aktif</label>
+          </div>
+          <div class="isian"><label>Bonus penerima (%)</label><input id="cbRecv" type="number" min="0" max="100" value="${Number(cfg.recvPct) || 0}"></div>
+          <div class="isian"><label>Batas JP (coin)</label><input id="cbJp" type="number" min="0" value="${Number(cfg.jpMin) || 0}"></div>
+        </div>
+        ${tier("t1", "Tier 1")}
+        ${tier("t2", "Tier 2 (opsional)")}
+        ${tier("t3", "Tier 3 (opsional)")}
+        ${tier("t4", "Tier 4 (opsional)")}
+      </div>
+    </div>`;
+
+  const pasangPratinjau = (k) => {
+    const el = $("cbRows_" + k);
+    if (!el) return;
+    el.oninput = () => {
+      $("cbRin_" + k).innerHTML = ringkasCashback(bacaBarisCashback(el.value));
+    };
+  };
+  ["t1", "t2", "t3", "t4"].forEach(pasangPratinjau);
+
+  $("simpanCashback").onclick = async () => {
+    const baru = {
+      on: $("cbOn").checked,
+      recvPct: Math.max(0, Math.min(100, Number($("cbRecv").value) || 0)),
+      jpMin: Math.max(0, Number($("cbJp").value) || 0),
+    };
+    for (const k of ["t1", "t2", "t3", "t4"]) {
+      const rows = bacaBarisCashback($("cbRows_" + k).value);
+      if (rows.length) baru[k] = { min: Math.max(0, Number($("cbMin_" + k).value) || 0), rows };
+    }
+    if (!baru.t1 && !baru.t2 && !baru.t3 && !baru.t4) return toast("Isi minimal satu tier undian", true);
+    try {
+      await dSet(dRef(rtdb, "pub/_cashbackCfg"), baru);
+      catatLog("Atur cashback gift", "peluang " + Object.keys(baru).filter((k) => k[0] === "t").join(","));
+      toast("Pengaturan cashback disimpan");
+      gambarCashback();
+    } catch (e) { toast("Gagal menyimpan: " + (e.code || e.message), true); }
+  };
+}
+
 const daftarHal = {
   dashboard: { judul: "Dashboard", crumb: "Dashboard", gambar: gambarDashboard },
   user: { judul: "Kelola user", crumb: "Dashboard / User", gambar: gambarUser },
   room: { judul: "Kelola room", crumb: "Dashboard / Room", gambar: gambarRoom },
   gift: { judul: "Kelola gift", crumb: "Dashboard / Gift", gambar: gambarGift },
+  cashback: { judul: "Cashback gift", crumb: "Dashboard / Gift", gambar: gambarCashback },
   frame: { judul: "Frame & banner", crumb: "Dashboard / Frame & banner", gambar: gambarFrame },
   kirim: { judul: "Kirim ke user", crumb: "Dashboard / Kirim ke user", gambar: gambarKirim },
   staf: { judul: "Staf & seller", crumb: "Dashboard / Staf & seller", gambar: gambarStaf },
@@ -636,6 +772,7 @@ const keteranganHal = {
   user: "Cari user, lihat detail, blokir atau buka blokir",
   room: "Daftar room aktif dan tombol tutup room",
   gift: "Katalog gift yang tampil di aplikasi",
+  cashback: "Atur peluang (%) dan pengali cashback gift",
   frame: "Banner beranda dan bingkai profil",
   kirim: "Kirim lencana, medali, frame, efek, banner, ID unik ke akun user",
   staf: "Tambah staf dan seller yang boleh masuk panel",

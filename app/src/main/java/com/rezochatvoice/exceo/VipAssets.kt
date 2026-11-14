@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -506,12 +507,19 @@ fun VipFrame(tier: Int, size: Dp) {
 suspend fun ratioOf(a: VipAsset): Float {
     if (a.kind == "mp4" || a.kind == "svga") return 0f
     return try {
-        val d = bytes(a) ?: return 0f
+        val d = VipAssets.bytes(a) ?: return 0f
         val o = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
         android.graphics.BitmapFactory.decodeByteArray(d, 0, d.size, o)
         if (o.outWidth <= 0 || o.outHeight <= 0) 0f else o.outWidth.toFloat() / o.outHeight.toFloat()
     } catch (e: Exception) { 0f }
 }
+
+/** Kanvas banner SVGA dari panel developer: 750x1624 dan gambarnya hanya di bagian
+ *  tengah (52% sampai 67% tinggi kanvas). Dipakai supaya banner tampil besar dan pas,
+ *  bukan mengecil karena seluruh kanvas yang tinggi ikut dikecilkan. */
+private const val SVGA_KANVAS_TINGGI = 2.1653f   // 1624 / 750
+private const val SVGA_BAND_ATAS = 0.5197f       // 844 / 1624
+private const val SVGA_BAND_RASIO = 0.3347f      // 251 / 750
 
 /** Banner efek masuk VIP1-9 diambil dari panel developer (bukan lagi dari APK). */
 fun vipBannerAsset(n: Int): VipAsset? = if (n in 1..9) VipAssets.get(n, "banner") else null
@@ -662,32 +670,58 @@ fun VipEntryEffect(roomId: String) {
                 ) {
                     // Lebar maksimal 92% layar, tinggi mengikuti rasio file (dibatasi 150.dp
                     // supaya tidak menutupi room di HP layar kecil).
-                    val lebarBanner = minOf(maxWidth * 0.92f, 360.dp)
-                    val tinggiBanner = (lebarBanner.value / rasioBanner).dp.coerceIn(54.dp, 150.dp)
+                    val lebarBanner = minOf(maxWidth * 0.94f, 400.dp)
+                    // b adalah properti delegasi, jadi disalin dulu supaya bisa dipakai.
+                    val asetBanner = b!!
+                    val svgaBanner = asetBanner.kind == "svga"
+                    val tinggiBanner = if (svgaBanner) {
+                        lebarBanner * SVGA_BAND_RASIO
+                    } else {
+                        (lebarBanner.value / rasioBanner).dp.coerceIn(54.dp, 150.dp)
+                    }
                     val bSize = DpSize(lebarBanner, tinggiBanner)
                     Box(Modifier.size(bSize).offset(x = maxWidth * slide.value)) {
-                        VipMedia(b!!, Modifier.fillMaxSize(), loop = true, contentScale = ContentScale.Fit)
+                        if (svgaBanner) {
+                            // Kanvastinggi dikecilkan hanya pada bagian gambarnya: isi kanvas
+                            // dibuat selebar banner lalu digeser ke atas supaya pita gambar
+                            // pas memenuhi kotak.
+                            val isiTinggi = lebarBanner * SVGA_KANVAS_TINGGI
+                            Box(Modifier.fillMaxSize().clipToBounds()) {
+                                Box(
+                                    Modifier.width(lebarBanner).height(isiTinggi)
+                                        .offset(y = -(isiTinggi * SVGA_BAND_ATAS)),
+                                ) {
+                                    VipMedia(asetBanner, Modifier.fillMaxSize(), loop = true, contentScale = ContentScale.FillBounds)
+                                }
+                            }
+                        } else {
+                            VipMedia(asetBanner, Modifier.fillMaxSize(), loop = true, contentScale = ContentScale.Fit)
+                        }
                     // Foto profil user dipasang di ujung kiri banner (di atas bola emas).
                     val bu = bannerUid?.let { UserCache.peek(it) }
                     if (bu != null) {
-                        val av = (bSize.height.value * 0.75f).dp
+                        // Foto dibuat besar mengikuti tinggi banner supaya pas dengan hiasannya.
+                        val av = (bSize.height.value * 0.84f).dp
                         Box(
                             Modifier.align(Alignment.CenterStart)
-                                .padding(start = (bSize.height.value * 0.09f).dp)
+                                .padding(start = (bSize.height.value * 0.08f).dp)
                                 .size(av + 4.dp)
                                 .clip(CircleShape)
                                 .border(2.dp, Color(0xFFFFE9A0), CircleShape),
                             contentAlignment = Alignment.Center,
                         ) { PublicAvatar(bu, av) }
                     }
-                    // Nama user tampil DI DEPAN banner (overlay di tengahnya).
+                    // Nama user tampil di bagian ATAS banner.
                     val nm = bannerName
                     if (!nm.isNullOrBlank()) {
-                        Box(Modifier.matchParentSize(), contentAlignment = Alignment.Center) {
+                        Box(
+                            Modifier.matchParentSize().padding(top = (bSize.height.value * 0.06f).dp),
+                            contentAlignment = Alignment.TopCenter,
+                        ) {
                             Text(
                                 nm,
                                 color = Color(0xFFFFE9A0),
-                                fontSize = 22.sp,
+                                fontSize = (bSize.height.value * 0.20f).coerceIn(13f, 26f).sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 textAlign = TextAlign.Center,
                                 maxLines = 1,

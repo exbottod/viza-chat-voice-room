@@ -2128,7 +2128,14 @@ async function panel(env, body) {
 let saCache = { kunci: "", token: "", exp: 0 };
 
 async function tokenLayanan(env) {
-  const mentah = String(env.FIREBASE_SA_JSON || "").trim();
+  let mentah = String(env.FIREBASE_SA_JSON || "").trim();
+  if (!mentah) {
+    // Cara kedua: berkas di server, tanpa mengubah systemd.
+    try {
+      const fs = await import("node:fs/promises");
+      mentah = String(await fs.readFile("/opt/viza-api/firebase-sa.json", "utf8")).trim();
+    } catch (e) { mentah = ""; }
+  }
   if (!mentah) return "";
   if (saCache.kunci === mentah && saCache.token && Date.now() < saCache.exp - 60000) return saCache.token;
   let sa;
@@ -2180,6 +2187,33 @@ async function hapusAkunAuth(env, uid) {
   // Akun yang memang sudah tidak ada dianggap berhasil.
   if (pesan.includes("USER_NOT_FOUND") || pesan.includes("EMAIL_NOT_FOUND")) return { ok: 1 };
   return { ok: 0, alasan: pesan || ("HTTP " + r.status) };
+}
+
+
+/** Panel developer disajikan dari server ini: /opt/viza-api/panel. */
+async function panelBerkas(jalur) {
+  let fs, path;
+  try {
+    fs = await import("node:fs/promises");
+    path = await import("node:path");
+  } catch (e) {
+    return new Response("Tidak tersedia", { status: 404 });
+  }
+  const nama = (jalur.replace(/^\/panel\/?/, "") || "index.html").replace(/\.\./g, "").replace(/^\/+/, "");
+  const lokasi = path.join("/opt/viza-api/panel", nama);
+  const ext = (nama.split(".").pop() || "").toLowerCase();
+  const mime = {
+    html: "text/html; charset=utf-8", js: "text/javascript; charset=utf-8",
+    css: "text/css; charset=utf-8", json: "application/json",
+    webmanifest: "application/manifest+json", ico: "image/x-icon",
+    png: "image/png", svg: "image/svg+xml", webp: "image/webp",
+  }[ext] || "application/octet-stream";
+  try {
+    const isi = await fs.readFile(lokasi);
+    return new Response(isi, { status: 200, headers: { "content-type": mime, "cache-control": "no-cache" } });
+  } catch (e) {
+    return new Response("Berkas panel tidak ada: " + nama, { status: 404, headers: { "content-type": "text/plain; charset=utf-8" } });
+  }
 }
 
 async function admin(env, body) {
@@ -3378,6 +3412,12 @@ export default {
     const url = new URL(req.url);
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
     await siapTabel(env).catch(() => {});
+    if (url.pathname === "/panel" && req.method === "GET") {
+      return Response.redirect(url.origin + "/panel/", 308);
+    }
+    if (req.method === "GET" && url.pathname.startsWith("/panel/")) {
+      return await panelBerkas(url.pathname);
+    }
     if (url.pathname === "/panel") {
       const b = await req.json().catch(() => null);
       if (!b) return json({ ok: 0, e: "Body tidak valid" }, 400);

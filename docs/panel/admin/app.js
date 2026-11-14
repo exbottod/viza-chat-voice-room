@@ -2683,6 +2683,16 @@ async function gambarPengaturan() {
       await setDoc(doc(db, "panelAdmins", email), {
         nama, peran, aktif: true, dibuat: serverTimestamp(), oleh: auth.currentUser.email
       });
+      // Akun lama tidak bisa diberi sandi baru dari panel (Firebase menolak).
+      // Jadi kirim tautan reset supaya dia bisa membuat sandi sendiri.
+      let tautanTerkirim = false;
+      if (!akunBaru) {
+        try {
+          await sendPasswordResetEmail(auth, email);
+          tautanTerkirim = true;
+        } catch (e) { console.warn("reset gagal:", e.code); }
+      }
+
       // Simpan nama agar admin bisa login memakai namanya, bukan email.
       // Kalau aturan Firestore panelNama belum dipublikasikan, jangan gagalkan
       // pendaftaran: admin tetap terdaftar dan bisa masuk memakai email.
@@ -2696,7 +2706,8 @@ async function gambarPengaturan() {
       catatLog("Daftarkan admin", `${nama} · ${email} · ${peran}`);
       toast(
         (akunBaru ? "Admin terdaftar. Dia bisa langsung masuk dengan email dan password itu." : "Email itu sudah punya akun login. Akses panel ditambahkan; dia masuk dengan sandi lamanya atau reset sandi dulu.")
-        + (namaTersimpan ? "" : " Catatan: login pakai nama belum aktif karena aturan Firestore panelNama belum dipublikasikan; untuk sekarang masuk pakai email."),
+        + (namaTersimpan ? "" : " Catatan: login pakai nama belum aktif karena aturan Firestore panelNama belum dipublikasikan; untuk sekarang masuk pakai email.")
+        + (tautanTerkirim ? " Karena akun loginnya sudah ada, tautan buat sandi baru sudah dikirim ke email itu." : ""),
         true,
       );
       gambarPengaturan();

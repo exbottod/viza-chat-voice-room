@@ -1933,14 +1933,22 @@ async function gambarWallet() {
       </tr>`).join("")}
     </table><div class="kaki">${paketBaris.length} paket · harga tampil ${paketBaris.filter((x) => Number(x.aktif)).map((x) => rupiahTeks(x.harga)).join(", ") || "—"}</div>`;
 
+    // Jangan gambar ulang tabel saat mengetik: kolom input diganti elemen baru
+    // sehingga fokus hilang dan keyboard HP langsung menutup setiap satu angka.
+    // Cukup simpan nilainya, dan perbarui ringkasan di bawah tabel saja.
+    const ringkasan = () => {
+      const kaki = kotak.querySelector(".kaki");
+      if (kaki) kaki.textContent = paketBaris.length + " paket · harga tampil "
+        + (paketBaris.filter((x) => Number(x.aktif)).map((x) => rupiahTeks(x.harga)).join(", ") || "—");
+    };
     kotak.querySelectorAll("[data-paket-coin]").forEach((inp) => (inp.oninput = () => {
-      paketBaris[Number(inp.dataset.paketCoin)].coins = Number(inp.value) || 0; gambarPaket();
+      paketBaris[Number(inp.dataset.paketCoin)].coins = Number(inp.value) || 0; ringkasan();
     }));
     kotak.querySelectorAll("[data-paket-harga]").forEach((inp) => (inp.oninput = () => {
-      paketBaris[Number(inp.dataset.paketHarga)].harga = Number(inp.value) || 0; gambarPaket();
+      paketBaris[Number(inp.dataset.paketHarga)].harga = Number(inp.value) || 0; ringkasan();
     }));
     kotak.querySelectorAll("[data-paket-aktif]").forEach((inp) => (inp.onchange = () => {
-      paketBaris[Number(inp.dataset.paketAktif)].aktif = inp.checked ? 1 : 0; gambarPaket();
+      paketBaris[Number(inp.dataset.paketAktif)].aktif = inp.checked ? 1 : 0; ringkasan();
     }));
     kotak.querySelectorAll("[data-paket-hapus]").forEach((b) => (b.onclick = () => {
       paketBaris.splice(Number(b.dataset.paketHapus), 1); gambarPaket();

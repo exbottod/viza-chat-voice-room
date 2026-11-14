@@ -462,12 +462,36 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 /* ================= login ================= */
+/** Nama admin disimpan sebagai kunci panelNama agar bisa dipakai untuk login. */
+function kunciNama(nama) {
+  return String(nama || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 60);
+}
+async function emailDariNama(nama) {
+  const kunci = kunciNama(nama);
+  if (!kunci) return "";
+  try {
+    const d = await getDoc(doc(db, "panelNama", kunci));
+    return d.exists() ? String(d.get("email") || "") : "";
+  } catch (e) { return ""; }
+}
+
+
 $("tombolMasuk").addEventListener("click", async () => {
-  const email = $("loginEmail").value.trim();
+  const isi = $("loginEmail").value.trim();
   const sandi = $("loginSandi").value;
-  if (!email || !sandi) return ($("pesanLogin").textContent = "Isi email dan password dulu.");
+  if (!isi || !sandi) return ($("pesanLogin").textContent = "Isi nama admin dan password dulu.");
   $("pesanLogin").className = "pesan info";
   $("pesanLogin").textContent = "Memeriksa…";
+  // Boleh isi nama admin (seperti saat didaftarkan) atau email lengkap.
+  let email = isi;
+  if (!isi.includes("@")) {
+    email = await emailDariNama(isi);
+    if (!email) {
+      $("pesanLogin").className = "pesan";
+      $("pesanLogin").textContent = "Nama admin itu belum terdaftar. Pakai email, atau minta owner mendaftarkannya dulu.";
+      return;
+    }
+  }
   try {
     await signInWithEmailAndPassword(auth, email, sandi);
   } catch (e) {
@@ -2636,6 +2660,8 @@ async function gambarPengaturan() {
       await setDoc(doc(db, "panelAdmins", email), {
         nama, peran, aktif: true, dibuat: serverTimestamp(), oleh: auth.currentUser.email
       });
+      // Simpan nama agar admin bisa login memakai namanya, bukan email.
+      await setDoc(doc(db, "panelNama", kunciNama(nama)), { nama, email, peran }, { merge: true });
       catatLog("Daftarkan admin", `${nama} · ${email} · ${peran}`);
       toast(akunBaru ? "Admin terdaftar. Dia bisa langsung masuk dengan email dan password itu." : "Email itu sudah punya akun login. Akses panel ditambahkan; dia masuk dengan sandi lamanya atau reset sandi dulu.");
       gambarPengaturan();

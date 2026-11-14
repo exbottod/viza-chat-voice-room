@@ -43,6 +43,14 @@ service cloud.firestore {
     // ---------- akun panel developer ----------
     // Dibaca supaya panel tahu siapa yang boleh masuk.
     // Hanya owner yang boleh menambah atau mencabut admin.
+    // Peta nama admin -> email, dipakai layar login (cari email dari nama).
+    // Hanya boleh dibaca satu dokumen demi satu, tidak boleh didaftar semua.
+    match /panelNama/{nama} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if isAdmin();
+    }
+
     match /panelAdmins/{email} {
       allow read: if signedIn();
       allow write: if isPemilik();

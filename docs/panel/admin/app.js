@@ -505,6 +505,35 @@ $("tombolKeluar").addEventListener("click", async () => {
 });
 
 /* ================= rute ================= */
+/** Harga VIP 1-9 bisa diubah di sini; aplikasi membacanya dari /vip-harga. */
+async function gambarVip() {
+  let harga = [];
+  let galat = "";
+  try { harga = (await walletAdmin({ op: "vip_harga_get" })).harga || []; }
+  catch (e) { galat = e.message || String(e); }
+  if (!Array.isArray(harga) || harga.length !== 9) {
+    harga = [500000, 1500000, 3000000, 6000000, 12000000, 25000000, 50000000, 100000000, 250000000];
+  }
+  $("aksiTopbar").innerHTML = '<button class="tombolAtas" id="simpanVip">Simpan harga</button>';
+  $("isiHal").innerHTML = `
+    <div class="panel">
+      <div class="catatan">Harga VIP 1 sampai 9 dalam coin. Setelah disimpan, aplikasi memakai harga baru tanpa build ulang.</div>
+      ${galat ? `<div class="catatan">${aman(galat)}</div>` : ""}
+      <div class="barisIsian">
+        ${harga.map((h, i) => `<div class="isian"><label>VIP ${i + 1}</label><input id="vipHarga${i + 1}" type="number" min="0" step="1000" value="${Number(h) || 0}"></div>`).join("")}
+      </div>
+    </div>`;
+  $("simpanVip").onclick = async () => {
+    const isi = [];
+    for (let i = 1; i <= 9; i++) isi.push(Number($("vipHarga" + i).value) || 0);
+    try {
+      await walletAdmin({ op: "vip_harga_set", harga: isi });
+      alert("Harga VIP disimpan.");
+      bukaRute();
+    } catch (e) { alert("Gagal menyimpan: " + (e.message || e)); }
+  };
+}
+
 const daftarHal = {
   dashboard: { judul: "Dashboard", crumb: "Dashboard", gambar: gambarDashboard },
   user: { judul: "Kelola user", crumb: "Dashboard / User", gambar: gambarUser },
@@ -515,6 +544,7 @@ const daftarHal = {
   staf: { judul: "Staf & seller", crumb: "Dashboard / Staf & seller", gambar: gambarStaf },
   wallet: { judul: "Coin, diamond & reset", crumb: "Dashboard / Coin, diamond & reset", gambar: gambarWallet },
   cekin: { judul: "Cek in harian", crumb: "Dashboard / Cek in harian", gambar: gambarCekIn },
+  vipharga: { judul: "Harga VIP", crumb: "Dashboard / Harga VIP", gambar: gambarVip },
   aset: { judul: "Aset & VIP", crumb: "Dashboard / Aset & VIP", gambar: gambarAset },
   asetvps: { judul: "Aset di VPS", crumb: "Dashboard / Aset di VPS", gambar: gambarAsetVps },
   katalog: { judul: "Katalog game", crumb: "Dashboard / Game", gambar: gambarKatalog },

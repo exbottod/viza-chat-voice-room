@@ -1145,7 +1145,23 @@ function levelDariExp(exp) {
   return l;
 }
 
-const HARGA_VIP = [0, 500000, 1500000, 3000000, 6000000, 12000000, 25000000, 50000000, 100000000, 250000000];
+let HARGA_VIP = [0, 500000, 1500000, 3000000, 6000000, 12000000, 25000000, 50000000, 100000000, 250000000];
+// Harga VIP bisa diubah dari panel developer. Disimpan di berkas sendiri supaya
+// tidak perlu build APK baru; app membaca angkanya dari /vip-harga.
+const HARGA_VIP_FILE = "/opt/viza-api/harga-vip.json";
+async function hargaVipKini() {
+  try {
+    const t = await fs.readFile(HARGA_VIP_FILE, "utf8");
+    const a = JSON.parse(t);
+    if (Array.isArray(a) && a.length === 10) HARGA_VIP = a.map((x) => Number(x) || 0);
+  } catch (e) { /* berkas belum ada: pakai bawaan */ }
+  return HARGA_VIP;
+}
+async function hargaVipSimpan(a) {
+  HARGA_VIP = [0, ...a.map((x) => Math.round(Number(x) || 0))];
+  await fs.writeFile(HARGA_VIP_FILE, JSON.stringify(HARGA_VIP), "utf8");
+  return HARGA_VIP;
+}
 const BULAN = 30 * 86400000;
 const AWALAN_VIP = ["vipt_", "vipf_", "vipb_", "vipe_", "vipbn_"];
 
@@ -1153,6 +1169,7 @@ const AWALAN_VIP = ["vipt_", "vipf_", "vipb_", "vipe_", "vipbn_"];
 async function beliVip(env, uid, p) {
   const tier = Math.trunc(Number(p.tier ?? 0));
   if (!(tier >= 1 && tier <= 9)) return gagal("Level VIP tidak valid");
+  await hargaVipKini();
   const harga = HARGA_VIP[tier];
   const now = Date.now();
   const req = String(p.req ?? `v-${uid}-${tier}-${now}`);
@@ -2105,6 +2122,21 @@ async function admin(env, body) {
   const p = body.p ?? {};
   const op = String(p.op ?? "");
   const target = String(p.uid ?? "");
+
+  // ---- Harga VIP (diubah dari panel developer) ----
+  if (op === "vip_harga_get") {
+    await hargaVipKini();
+    return json({ ok: 1, harga: HARGA_VIP.slice(1) });
+  }
+  if (op === "vip_harga_set") {
+    const a = Array.isArray(p.harga) ? p.harga.map(Number) : null;
+    if (!a || a.length !== 9 || a.some((x) => !Number.isFinite(x) || x < 0)) {
+      return gagal("Harga VIP tidak sah: isi 9 angka");
+    }
+    try { await hargaVipSimpan(a); }
+    catch (e) { return gagal("Gagal menyimpan: " + String(e?.message ?? e)); }
+    return json({ ok: 1, harga: HARGA_VIP.slice(1) });
+  }
 
   // ---- Coin seller: pendaftaran (khusus developer) ----
   if (op === "seller_list") {
@@ -3369,6 +3401,11 @@ export default {
       if (!nm) return json({ ok: 0, e: "Nama berkas kosong" }, 400);
       try { await asetHapus(env, nm); return json({ ok: 1, nama: nm }); }
       catch (e) { return json({ ok: 0, e: String(e?.message ?? e) }, 502); }
+    }
+    // Harga VIP terbaru untuk aplikasi (tanpa perlu build baru).
+    if (url.pathname.toLowerCase() === "/vip-harga") {
+      await hargaVipKini();
+      return json({ ok: 1, harga: HARGA_VIP.slice(1) });
     }
     if (url.pathname.toLowerCase() === "/chatimg") {
       // Gambar chat room disimpan di VPS sendiri. Supabase menolak unggahan

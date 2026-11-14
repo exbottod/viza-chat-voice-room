@@ -54,7 +54,10 @@ fun FamilyLogo(b64: String?, size: Dp, modifier: Modifier = Modifier) {
 
 /* Tab Family: belum punya -> buat / cari. Sudah punya -> halaman */
 @Composable
-fun FamilyTabScreen(myUid: String, myName: String, myAvatar: String?, myId: String, myCoins: Long = 0L) {
+fun FamilyTabScreen(
+    myUid: String, myName: String, myAvatar: String?, myId: String, myCoins: Long = 0L,
+    onExit: (() -> Unit)? = null, onChat: ((PublicUser) -> Unit)? = null,
+) {
     var fam by remember { mutableStateOf<Family?>(null) }
     var loaded by remember { mutableStateOf(false) }
     var showCreate by remember { mutableStateOf(false) }
@@ -67,10 +70,10 @@ fun FamilyTabScreen(myUid: String, myName: String, myAvatar: String?, myId: Stri
 
     when {
         !loaded -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(tr("Memuat..."), color = Color(0xFF8A8A8A)) }
-        fam != null -> FamilyHomeScreen(fam!!, myUid, myName, myAvatar)
+        fam != null -> FamilyHomeScreen(fam!!, myUid, myName, myAvatar, onExit = onExit, onChat = onChat)
         else -> FamilyFindScreen(
             myUid = myUid, myName = myName, myAvatar = myAvatar, myCoins = myCoins,
-            onBack = null, onCreate = { showCreate = true },
+            onBack = onExit, onCreate = { showCreate = true },
         )
     }
 
@@ -223,7 +226,10 @@ private fun FamilyPreviewCard(name: String, label: String, logo: String?) {
 
 /* Halaman family */
 @Composable
-fun FamilyHomeScreen(f: Family, myUid: String, myName: String, myAvatar: String?) {
+fun FamilyHomeScreen(
+    f: Family, myUid: String, myName: String, myAvatar: String?,
+    onExit: (() -> Unit)? = null, onChat: ((PublicUser) -> Unit)? = null,
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var tab by remember { mutableStateOf(0) }
@@ -240,6 +246,7 @@ fun FamilyHomeScreen(f: Family, myUid: String, myName: String, myAvatar: String?
     var aksi by remember { mutableStateOf<FamilyMember?>(null) }
     var kirimKe by remember { mutableStateOf<FamilyMember?>(null) }
     var refreshKey by remember { mutableStateOf(0) }
+    var profilUid by remember { mutableStateOf<String?>(null) }
 
     fun toast(s: String) = Toast.makeText(context, s, Toast.LENGTH_SHORT).show()
 
@@ -268,6 +275,13 @@ fun FamilyHomeScreen(f: Family, myUid: String, myName: String, myAvatar: String?
                     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0x66000000), Color(0xCC2A0A33)))))
                 }
                 Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    if (onExit != null) {
+                        Box(
+                            Modifier.size(42.dp).clip(RoundedCornerShape(14.dp)).background(Color(0x44000000))
+                                .border(1.dp, Color(0x55FFFFFF), RoundedCornerShape(14.dp)).clickable(onClick = onExit),
+                            contentAlignment = Alignment.Center,
+                        ) { FmIcon("back", 22.dp) }
+                    }
                     Spacer(Modifier.weight(1f))
                     if (isAdmin) Box(
                         Modifier.size(42.dp).clip(RoundedCornerShape(14.dp)).background(Brush.verticalGradient(listOf(Color(0xFFFFE680), FM_GOLD)))
@@ -339,9 +353,9 @@ fun FamilyHomeScreen(f: Family, myUid: String, myName: String, myAvatar: String?
                                     .border(1.dp, Color(0x14000000), RoundedCornerShape(18.dp)).padding(12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                FmAvatar(m.avatarB64, m.name, 50.dp, ring = true)
+                                Box(Modifier.clip(CircleShape).clickable { profilUid = m.uid }) { FmAvatar(m.avatarB64, m.name, 50.dp, ring = true) }
                                 Spacer(Modifier.width(12.dp))
-                                Column(Modifier.weight(1f)) {
+                                Column(Modifier.weight(1f).clickable { profilUid = m.uid }) {
                                     Text(m.name, color = FM_INK, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                     Text(
                                         when { m.uid == f.ownerUid -> "Owner"; m.role == "admin" -> "Admin"; else -> "Member" },
@@ -389,6 +403,18 @@ fun FamilyHomeScreen(f: Family, myUid: String, myName: String, myAvatar: String?
                 FmButton("Manage Requests${if (requests.isNotEmpty()) " (${requests.size})" else ""}", Modifier.fillMaxWidth()) { showReq = true }
             }
         }
+    }
+
+    // Profil member: ketuk foto atau nama di daftar member.
+    profilUid?.let { pu ->
+        OtherProfileScreen(
+            uid = pu,
+            myUid = myUid,
+            onBack = { profilUid = null },
+            onChat = { u -> profilUid = null; onChat?.invoke(u) },
+            onFansClick = {},
+            onFollowingClick = {},
+        )
     }
 
     // ---------- sheet, layar, dan dialog ----------

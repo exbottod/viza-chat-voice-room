@@ -93,6 +93,7 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
     var fullProfileUid by remember { mutableStateOf<String?>(null) }
     var followList by remember { mutableStateOf<Pair<String, String>?>(null) }
     var chatWith by remember { mutableStateOf<PublicUser?>(null) }
+    var familyFull by remember { mutableStateOf(false) }
     // Coin seller: daftar penjual di Dompet dan panel seller di tab Profil.
     var showSellers by remember { mutableStateOf(false) }
     var showSellerPanel by remember { mutableStateOf(false) }
@@ -489,7 +490,7 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
                         items.forEachIndexed { index, item ->
                             NavigationBarItem(
                                 selected = selected == index,
-                                onClick = { selected = index },
+                                onClick = { if (index == 2) familyFull = true else selected = index },
                                 icon = { Icon(painterResource(item.icon), contentDescription = item.label, Modifier.size(45.dp), tint = Color.Unspecified) },
                                 label = { Text(tr(item.label)) },
                                 colors = NavigationBarItemDefaults.colors(
@@ -632,6 +633,18 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
             }
 
             // Dompet, Level Center, dan VIP Center diperkecil 86% supaya rapi di semua device.
+            // Tab Family: masuk halaman penuh, bilah bawah dan tab lain ikut tertutup.
+            if (familyFull) {
+                androidx.activity.compose.BackHandler { familyFull = false }
+                Box(Modifier.fillMaxSize().background(Color(0xFF0B0B0B))) {
+                    FamilyTabScreen(
+                        myUid = uid, myName = myName, myAvatar = profile.avatarB64, myId = userId,
+                        myCoins = wallet.coins,
+                        onExit = { familyFull = false },
+                        onChat = { u -> familyFull = false; chatWith = u },
+                    )
+                }
+            }
             if (showWallet) KecilkanKonten {
                 WalletScreen(
                     uid = uid,

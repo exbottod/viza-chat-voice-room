@@ -595,15 +595,19 @@ fun ChatScreen(myUid: String, myName: String, myId: String, other: PublicUser, o
                         ) {
                             val foto = m.fotoUrl
                             if (foto != null) {
+                                // Ketuk foto: langsung layar penuh, bisa dicubit untuk zoom.
+                                var fotoBesar by remember { mutableStateOf(false) }
                                 AsyncImage(
                                     model = foto,
                                     contentDescription = tr("Foto"),
                                     modifier = Modifier
                                         .widthIn(max = 220.dp)
                                         .heightIn(max = 300.dp)
-                                        .clip(RoundedCornerShape(12.dp)),
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .clickable { fotoBesar = true },
                                     contentScale = ContentScale.Fit,
                                 )
+                                if (fotoBesar) FotoLayarPenuh(foto) { fotoBesar = false }
                             } else {
                                 Text(m.text, color = if (mine) Color.Black else Color.White, fontSize = 15.sp)
                             }

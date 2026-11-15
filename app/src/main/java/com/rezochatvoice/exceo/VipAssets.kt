@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -682,16 +683,23 @@ fun VipEntryEffect(roomId: String) {
                     val bSize = DpSize(lebarBanner, tinggiBanner)
                     Box(Modifier.size(bSize).offset(x = maxWidth * slide.value)) {
                         if (svgaBanner) {
-                            // Kanvastinggi dikecilkan hanya pada bagian gambarnya: isi kanvas
-                            // dibuat selebar banner lalu digeser ke atas supaya pita gambar
-                            // pas memenuhi kotak.
+                            // Kanvas SVGA 750x1624 tapi gambarnya hanya pita di tengah. View
+                            // dibuat sebesar kanvas penuh lalu digambar lewat graphicsLayer
+                            // (translasi + clip) supaya SVGAImageView tetap berada di dalam
+                            // layar dan benar-benar ikut digambar oleh Android.
                             val isiTinggi = lebarBanner * SVGA_KANVAS_TINGGI
-                            // requiredSize wajib: tanpa itu Compose memaksa kanvas setinggi kotak
-                            // banner, lalu offset menggesernya keluar dan banner jadi kosong.
-                            Box(Modifier.fillMaxSize().clipToBounds(), contentAlignment = Alignment.TopStart) {
+                            val gesekAtas = isiTinggi * SVGA_BAND_ATAS
+                            Box(
+                                Modifier.fillMaxSize().clipToBounds(),
+                                contentAlignment = Alignment.TopStart,
+                            ) {
                                 Box(
-                                    Modifier.requiredSize(lebarBanner, isiTinggi)
-                                        .offset(y = -(isiTinggi * SVGA_BAND_ATAS)),
+                                    Modifier
+                                        .wrapContentSize(align = Alignment.TopStart, unbounded = true)
+                                        .requiredSize(lebarBanner, isiTinggi)
+                                        .graphicsLayer {
+                                            translationY = -gesekAtas.toPx()
+                                        },
                                 ) {
                                     VipMedia(asetBanner, Modifier.fillMaxSize(), loop = true, contentScale = ContentScale.FillBounds)
                                 }

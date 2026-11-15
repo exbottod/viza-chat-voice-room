@@ -1863,11 +1863,37 @@ function tierCashback(cfg) {
   return bersih.length ? bersih : CASHBACK_BAWAAN;
 }
 
+/**
+ * Peluang dapat cashback menurut JUMLAH yang dikirim dalam satu kali kirim.
+ * Contoh panel: 1:70 lalu 520:78 berarti kirim 1-519 dapat peluang 70%, dan
+ * kirim 520 ke atas dapat peluang 78%. Sisanya zonk (tidak dapat cashback).
+ * Kalau panel kosong, semua jumlah dapat 100% (selalu dapat).
+ */
+function peluangMenurutJumlah(cfg, jumlah) {
+  const sumber = Array.isArray(cfg?.boostJumlah) ? cfg.boostJumlah : [];
+  const baris = sumber
+    .map((r) => ({
+      min: Math.max(0, Math.floor(Number(r?.min ?? 0))),
+      p: Math.max(0, Math.min(100, Number(r?.p ?? 0))),
+    }))
+    .filter((r) => r.p > 0)
+    .sort((x, y) => x.min - y.min);
+  if (!baris.length) return 100;
+  const kena = baris.filter((r) => jumlah >= r.min);
+  return kena.length ? kena[kena.length - 1].p : 100;
+}
+
 /** Undian: satu angka acak memilih kelompok, lalu nominal diundi rata di kelompok. */
-function undiCashback(cfg) {
+function undiCashback(cfg, jumlah = 1) {
   const tier = tierCashback(cfg);
   const total = tier.reduce((a, b) => a + b.p, 0);
   if (!(total > 0)) return { nominal: 0, jackpot: 0, kelompok: -1 };
+  // Lapis pertama: apakah kena cashback atau zonk (peluang per jumlah kirim).
+  const peluang = peluangMenurutJumlah(cfg, jumlah);
+  if (Math.random() * 100 >= peluang) {
+    return { nominal: 0, jackpot: 0, kelompok: -1, zonk: 1, peluang };
+  }
+  // Lapis kedua: kelompok nominal, proporsional terhadap persen di panel.
   let acak = Math.random() * total;
   let pilih = tier.length - 1;
   for (let i = 0; i < tier.length; i++) {
@@ -1876,7 +1902,7 @@ function undiCashback(cfg) {
   }
   const t = tier[pilih];
   const nominal = t.min + Math.floor(Math.random() * (t.max - t.min + 1));
-  return { nominal, jackpot: pilih === tier.length - 1 ? 1 : 0, kelompok: pilih };
+  return { nominal, jackpot: pilih === tier.length - 1 ? 1 : 0, kelompok: pilih, zonk: 0, peluang };
 }
 
 async function cashbackGift(env, uid, p) {
@@ -1895,7 +1921,7 @@ async function cashbackGift(env, uid, p) {
   // pengali. Jadi 100.000 kena 10x: saldo kembali 100.000 dan dapat +1.000.000.
   // Nominal tetap: tidak dikali harga gift, dan harga gift tetap terpakai
   // (tidak dikembalikan seperti model pengali sebelumnya).
-  const undian = undiCashback(cfg);
+  const undian = undiCashback(cfg, count);
   const untung = Math.max(0, Math.floor(undian.nominal));
   const kembali = 0;
   const kredit = untung;
@@ -1924,6 +1950,7 @@ async function cashbackGift(env, uid, p) {
     recv,
     jp: undian.jackpot,
     kelompok: undian.kelompok,
+    peluang: undian.peluang,
     asset: "",
   });
 }
@@ -4219,7 +4246,7 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           stafAktif = Number(r[0].rows[0]?.a ?? 0);
           peran = r[1].rows.map((x) => String(x.role) + ":" + Number(x.n));
         } catch (e) { /* tabel belum ada */ }
-        return json({ ok: 1, v: "viza-2026-11-15-cashback-nominal", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
+        return json({ ok: 1, v: "viza-2026-11-15-cashback-peluang-jumlah", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
       } catch (e) {
         return json({ ok: 0, v: "viza-2026-11-13-mandiri", db: String(e?.message ?? e) }, 500);
       }

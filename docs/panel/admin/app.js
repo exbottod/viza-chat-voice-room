@@ -621,7 +621,45 @@ const CB_BAWAAN = {
     { p: 25, min: 10000, max: 20000 },
     { p: 5, min: 50000, max: 50000 },
   ],
+  boostJumlah: [
+    { min: 1, p: 100 },
+  ],
 };
+
+/** "520:78" -> kirim 520 ke atas dapat peluang 78%. */
+function bacaBoostJumlah(teks) {
+  return String(teks || "")
+    .split(/[\n;]+/)
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .map((baris) => {
+      const bag = baris.split(/[:=]/).map((y) => Number(String(y).replace(",", ".").trim()));
+      return {
+        min: Number.isFinite(bag[0]) ? Math.max(0, Math.floor(bag[0])) : 0,
+        p: Number.isFinite(bag[1]) ? Math.max(0, Math.min(100, bag[1])) : 0,
+      };
+    })
+    .filter((r) => r.p > 0)
+    .sort((a, b) => a.min - b.min);
+}
+
+function teksBoostJumlah(rows) {
+  return (Array.isArray(rows) ? rows : [])
+    .map((r) => `${Number(r.min) || 0}:${Number(r.p) || 0}`)
+    .join("\n");
+}
+
+function ringkasBoostJumlah(rows) {
+  if (!rows.length) return '<div class="catatan">Belum ada baris. Semua jumlah dianggap 100% dapat cashback.</div>';
+  const isi = rows
+    .map((r, i) => {
+      const sampe = rows[i + 1] ? rows[i + 1].min - 1 : null;
+      const rentang = sampe == null ? `${rupiah(r.min)} ke atas` : `${rupiah(r.min)} - ${rupiah(sampe)}`;
+      return `<tr><td>${rentang}</td><td>${String(r.p).replace(".", ",")}%</td></tr>`;
+    })
+    .join("");
+  return `<table style="margin-top:8px"><tr><th>JUMLAH KIRIM</th><th>PELUANG DAPAT</th></tr>${isi}</table>`;
+}
 
 function bacaTierCashback(teks) {
   return String(teks || "")
@@ -670,19 +708,25 @@ async function gambarCashback() {
     if (sn.exists()) cfg = Object.assign({}, CB_BAWAAN, sn.val() || {});
   } catch (e) { galat = e.message || String(e); }
   const tiers = Array.isArray(cfg.tiers) && cfg.tiers.length ? cfg.tiers : CB_BAWAAN.tiers;
+  const boost = Array.isArray(cfg.boostJumlah) ? cfg.boostJumlah : CB_BAWAAN.boostJumlah;
 
   $("aksiTopbar").innerHTML = '<button class="tombolAtas" id="simpanCashback">Simpan</button>';
   $("isiHal").innerHTML = `
     <div class="panel" style="max-width:700px">
       <div class="panelAtas"><h3>Cashback gift</h3><div class="sub">persen dan rentang nominal</div></div>
       <div class="panelIsi">
-        <div class="catatan">Ditulis ke <b>pub/_cashbackCfg</b> dan langsung dipakai server dompet, tanpa build ulang aplikasi. Tiap baris ditulis <b>persen:minimal:maksimal</b>, mis. <b>70:1000:5000</b> berarti 70% dapat cashback acak 1.000 sampai 5.000. Nominal tidak dikali harga gift. Baris terakhir dianggap jackpot.</div>
+        <div class="catatan">Ditulis ke <b>pub/_cashbackCfg</b> dan langsung dipakai server dompet, tanpa build ulang aplikasi. Peluang menurut jumlah kirim: baris <b>520:78</b> berarti mulai kirim 520 buah, peluang dapat cashback 78% (sisanya zonk). Tiap kelompok undian ditulis <b>persen:minimal:maksimal</b>, mis. <b>70:1000:5000</b> berarti 70% dapat cashback acak 1.000 sampai 5.000. Nominal tidak dikali harga gift. Baris terakhir dianggap jackpot.</div>
         ${galat ? `<div class="catatan">${aman(galat)}</div>` : ""}
         <div class="barisIsian" style="margin-top:10px">
           <div class="isian"><label>Cashback aktif</label>
             <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="cbOn" ${cfg.on === false ? "" : "checked"} style="width:auto">aktif</label>
           </div>
           <div class="isian"><label>Bagian penerima gift (%)</label><input id="cbRecv" type="number" min="0" max="100" value="${Number(cfg.recvPct) || 0}"></div>
+        </div>
+        <div class="isian" style="margin-top:12px">
+          <label>Peluang menurut jumlah kirim (jumlah:persen, satu per baris)</label>
+          <textarea id="cbBoost" rows="4" style="width:100%;font-family:monospace">${aman(teksBoostJumlah(boost))}</textarea>
+          <div id="cbBoostRin">${ringkasBoostJumlah(boost)}</div>
         </div>
         <div class="isian" style="margin-top:12px">
           <label>Kelompok undian (persen:minimal:maksimal, satu per baris)</label>
@@ -692,6 +736,8 @@ async function gambarCashback() {
       </div>
     </div>`;
 
+  const elBoost = $("cbBoost");
+  elBoost.oninput = () => { $("cbBoostRin").innerHTML = ringkasBoostJumlah(bacaBoostJumlah(elBoost.value)); };
   const el = $("cbTiers");
   el.oninput = () => { $("cbRin").innerHTML = ringkasCashback(bacaTierCashback(el.value)); };
 
@@ -702,6 +748,7 @@ async function gambarCashback() {
       on: $("cbOn").checked,
       recvPct: Math.max(0, Math.min(100, Number($("cbRecv").value) || 0)),
       tiers: tiers,
+      boostJumlah: bacaBoostJumlah($("cbBoost").value),
     };
     try {
       await dSet(dRef(rtdb, "pub/_cashbackCfg"), baru);

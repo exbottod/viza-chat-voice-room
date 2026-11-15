@@ -1140,14 +1140,27 @@ fun StoreScreen(uid: String, wallet: Wallet, onOpenVip: () -> Unit, onBack: () -
                     // Efek masuk dan banner SVIPn memakai gambar yang SAMA dengan VIPn
                     // (satu slot di panel). Kalau keduanya dimiliki, cukup tampilkan satu
                     // kartu: versi VIP dipertahankan, versi SVIP disembunyikan.
-                    .filter { (item, _) ->
+                    .filter { (item, exp) ->
+                        // Bingkai, efek masuk, banner efek, dan gelembung SVIPn memakai
+                        // gambar yang SAMA dengan VIPn (satu slot di panel: vipCfg/{n}_{slot}).
+                        // Kalau keduanya dimiliki, cukup tampilkan satu kartu supaya tidak
+                        // muncul dobel: yang masa aktifnya paling lama yang ditampilkan.
                         val id = item.id
                         val kembar = when {
+                            id.startsWith("svf_") -> "vipf_" + id.removePrefix("svf_")
                             id.startsWith("sve_") -> "vipe_" + id.removePrefix("sve_")
                             id.startsWith("svbn_") -> "vipbn_" + id.removePrefix("svbn_")
+                            id.startsWith("svb_") -> "vipb_" + id.removePrefix("svb_")
                             else -> null
                         }
-                        kembar == null || (wallet.inv[kembar] ?: 0L) <= now
+                        val expKembar = kembar?.let { wallet.inv[it] ?: 0L } ?: 0L
+                        when {
+                            kembar == null -> true
+                            expKembar <= now -> true            // tidak kembar / sudah habis
+                            expKembar > exp -> false            // kembar lebih lama: sembunyikan ini
+                            expKembar == exp -> !id.startsWith("sv") // sama: pakai versi VIP
+                            else -> true                        // ini yang lebih lama: tampilkan
+                        }
                     }
                     // Item kiriman panel (sx_) selalu tampil. Item bawaan yang belum punya
                 // gambar tetap disembunyikan supaya tidak muncul ikon kosong.

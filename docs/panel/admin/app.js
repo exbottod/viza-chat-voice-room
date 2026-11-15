@@ -625,6 +625,19 @@ const CB_BAWAAN = {
   // Model persen: hadiah = harga gift x pengali. Bobot = seberapa sering muncul.
   // Tanpa tingkatan 0: setiap kiriman dapat pecahan kecil, tidak ada zonk.
   // Ujungnya tetap ada 100x dan 1000x supaya jackpot masih bisa pecah besar.
+  // Kurva JP: pengali dan "1 dari berapa kiriman".
+  jpKurva: [
+    { m: 3, n: 10 },
+    { m: 5, n: 15 },
+    { m: 10, n: 25 },
+    { m: 20, n: 40 },
+    { m: 50, n: 100 },
+    { m: 100, n: 150 },
+    { m: 200, n: 300 },
+    { m: 500, n: 700 },
+    { m: 1000, n: 1799 },
+  ],
+  kurvaAktif: true,
   tiersPersen: [
     { m: 0.1, w: 50 },
     { m: 0.2, w: 25 },
@@ -721,6 +734,30 @@ function ringkasCashback(tiers) {
 }
 
 /* ---- Model persen: "pengali:bobot", mis. "10:0.3" ---- */
+function bacaKurva(teks) {
+  return String(teks || "")
+    .split(/[\n;]+/)
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .map((baris) => {
+      const bersih = baris.replace(/^x/i, "").replace(/1\s*:/g, ":");
+      const bag = bersih.split(/[:=]/).map((y) => Number(String(y).replace(",", ".").trim()));
+      return { m: Number.isFinite(bag[0]) ? Math.max(0, bag[0]) : 0, n: Number.isFinite(bag[1]) ? Math.max(1, bag[1]) : 1 };
+    })
+    .filter((r) => r.m > 0 && r.n > 0)
+    .sort((a, b) => a.m - b.m);
+}
+
+function teksKurva(rows) {
+  return (Array.isArray(rows) ? rows : []).map((r) => `${r.m} : 1:${r.n}`).join("\n");
+}
+
+function ringkasKurva(rows) {
+  const ev = rows.reduce((a, r) => a + r.m / r.n, 0);
+  const dapat = rows.reduce((a, r) => a + 100 / r.n, 0);
+  return `Rata-rata hadiah <b>${ev.toFixed(2)}x</b> nilai gift. Peluang dapat sesuatu <b>${dapat.toFixed(1)}%</b>, sisanya zonk.`;
+}
+
 function bacaTierPersen(teks) {
   return String(teks || "")
     .split(/[\n;]+/)
@@ -812,6 +849,14 @@ async function gambarCashback() {
           <div class="isian"><label>Batas cashback (% dari nilai gift)</label><input id="cbCap" type="number" min="100" max="100000" value="${capPct}"></div>
         </div>
         <div class="isian" style="margin-top:12px">
+          <label>Kurva JP (pengali : 1 dari berapa kiriman)</label>
+          <textarea id="cbKurva" rows="9" style="width:100%;font-family:monospace">${aman(teksKurva(Array.isArray(cfg.jpKurva) && cfg.jpKurva.length ? cfg.jpKurva : CB_BAWAAN.jpKurva))}</textarea>
+          <div class="isian" style="margin-top:6px"><label>Kurva JP aktif</label>
+            <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="cbKurvaOn" ${cfg.kurvaAktif === false ? "" : "checked"} style="width:auto">pakai kurva 1:N</label>
+          </div>
+          <div id="cbKurvaRin"></div>
+        </div>
+        <div class="isian" style="margin-top:12px">
           <label>Tingkatan persen (pengali:bobot, satu per baris)</label>
           <textarea id="cbPersenTiers" rows="6" style="width:100%;font-family:monospace">${aman(teksTierPersen(tierP))}</textarea>
           <div id="cbPersenRin">${ringkasTierPersen(tierP, capPct, cfg.recvPct, cfg.diamondPct ?? 5, cfg.kembaliPct ?? 100)}</div>
@@ -871,6 +916,8 @@ async function gambarCashback() {
       kembaliPct: Math.max(0, Math.min(100, Number($("cbKembali").value) || 0)),
       // Mulai jumlah kirim ini, zonk dibatalkan dan harga gift dikembalikan.
       bebasZonkMulai: Math.max(0, Math.min(999, Number($("cbBebasZonk").value) || 0)),
+      jpKurva: bacaKurva($("cbKurva").value),
+      kurvaAktif: $("cbKurvaOn").checked,
       tiers: tiers,
       boostJumlah: bacaBoostJumlah($("cbBoost").value),
       zonkPct: Math.max(0, Math.min(90, Math.floor(Number($("cbZonk").value) || 0))),

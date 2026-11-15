@@ -2070,6 +2070,71 @@ const JP_KELOMPOK_BAWAAN = [
   },
 ];
 
+// Peluang JP gaya "1 dari berapa kiriman" (kurva pemilik):
+// x3 1:10, x5 1:15, x10 1:25, x20 1:40, x50 1:100, x100 1:150,
+// x200 1:300, x500 1:700, x1000 1:1799.
+const KURVA_BAWAAN = [
+  [3, 10], [5, 15], [10, 25], [20, 40], [50, 100],
+  [100, 150], [200, 300], [500, 700], [1000, 1799],
+];
+
+/** Tabel kurva dari panel: [{m: pengali, n: 1 dari berapa}] */
+function tierKurva(cfg) {
+  const sumber = Array.isArray(cfg?.jpKurva) ? cfg.jpKurva : [];
+  const rows = sumber
+    .map((r) => ({
+      m: Math.max(0, Math.min(5000, Number(r?.m ?? 0))),
+      n: Math.max(1, Math.min(1_000_000, Number(r?.n ?? 0))),
+    }))
+    .filter((r) => r.m > 0 && r.n > 0)
+    .sort((a, b) => a.m - b.m);
+  if (rows.length) return rows;
+  return KURVA_BAWAAN.map(([m, n]) => ({ m, n }));
+}
+
+/** Peluang satu pengali menurut kurva: 1 dibagi N. */
+function peluangKurva(rows, m) {
+  const tepat = rows.find((r) => r.m === m);
+  if (tepat) return 1 / tepat.n;
+  // Di antara dua titik: interpolasi log-log supaya kurvanya halus.
+  let bawah = null; let atas = null;
+  for (const r of rows) {
+    if (r.m < m) bawah = r;
+    else if (r.m > m && !atas) atas = r;
+  }
+  if (!bawah || !atas) {
+    const dasar = bawah || atas;
+    if (!dasar) return 0;
+    const b = 0.894; // kemiringan kurva: N ~ m^0.894
+    const n = Math.max(1, Math.round(dasar.n * Math.pow(m / dasar.m, b)));
+    return 1 / n;
+  }
+  const t = (Math.log(m) - Math.log(bawah.m)) / (Math.log(atas.m) - Math.log(bawah.m));
+  const n = Math.exp(Math.log(bawah.n) + t * (Math.log(atas.n) - Math.log(bawah.n)));
+  return 1 / Math.max(1, n);
+}
+
+/** Undian memakai kurva 1:N. Sisa peluang = zonk. */
+function undiKurva(cfg, count) {
+  const rows = tierKurva(cfg);
+  // Kalau pemilik mengisi "kurvaKali": jumlah kirim ikut menggeser peluang
+  // (kiriman kecil lebih sering dapat), bawaannya mati: satu kurva untuk semua.
+  const geser = Math.max(0.1, Number(cfg?.kurvaGeser ?? 1));
+  const bobot = rows.map((r) => {
+    const p = peluangKurva(rows, r.m);
+    const p2 = Number(count) > 1 ? p * Math.pow(Number(count), geser - 1) : p;
+    return { m: r.m, w: Math.min(100, p2 * 100) };
+  });
+  const total = bobot.reduce((a, b) => a + b.w, 0);
+  let acak = Math.random() * 100;
+  if (acak >= total) return { mult: 0, zonk: 1, kelompok: -1 };
+  for (let i = 0; i < bobot.length; i++) {
+    acak -= bobot[i].w;
+    if (acak <= 0) return { mult: bobot[i].m, kelompok: i };
+  }
+  return { mult: 0, zonk: 1, kelompok: -1 };
+}
+
 /** Kelompok pengali yang berlaku untuk jumlah kirim tertentu. */
 function tierMenurutJumlah(cfg, count) {
   const sumber = Array.isArray(cfg?.tiersJumlah) ? cfg.tiersJumlah : [];
@@ -2188,7 +2253,10 @@ async function cashbackGift(env, uid, p) {
   // x188 tetapi batas diset 50x, hadiahnya terpotong dan pemain merasa rugi
   // walau pengali yang keluar x188. Jadi batas ikut naik sendiri.
   const pengaliTertinggi = persenAktif
-    ? tierMenurutJumlah(cfg, count).reduce((a, t) => Math.max(a, t.m), 0)
+    ? Math.max(
+        tierMenurutJumlah(cfg, count).reduce((a, t) => Math.max(a, t.m), 0),
+        tierKurva(cfg).reduce((a, t) => Math.max(a, t.m), 0),
+      )
     : 0;
   const capPct = persenAktif
     ? Math.max(
@@ -2204,7 +2272,7 @@ async function cashbackGift(env, uid, p) {
   if (persenAktif) {
     // Satu undian per kiriman, lalu dikali jumlah kirim. Kirim 5 buah = 5x
     // hadiah, tetapi tidak diundi lima kali (biar combo besar tidak "rata").
-    const u = undiPersen(cfg, count);
+    const u = cfg?.kurvaAktif === false ? undiPersen(cfg, count) : undiKurva(cfg, count);
     // Pengali JP berlaku untuk NILAI TOTAL kiriman (harga satuan x jumlah),
     // jadi angka di lingkaran WIN sama dengan hadiah sebenarnya.
     // Kalau undiannya ZONK di pengali 100x ke atas, untungnya nol.

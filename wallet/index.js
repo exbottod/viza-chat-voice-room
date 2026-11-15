@@ -2087,9 +2087,15 @@ async function cashbackGift(env, uid, p) {
     untung = Math.max(0, Math.min(batas, Math.floor(u.nominal * count)));
     undian = { jackpot: u.jackpot, kelompok: u.kelompok, peluang: u.peluang, mult: 0 };
   }
-  const kembali = 0;
-  const kredit = untung;
-  const parts = untung > 0 ? [untung] : [];
+  // Aturan pemilik: yang ZONK harga gift-nya hangus. Yang DAPAT, harga gift
+  // dikembalikan utuh lalu ditambah keuntungan sesuai pengali. Jadi gift
+  // 100.000 kena 0,5x: saldo kembali 100.000 dan ditambah 50.000.
+  // Berapa persen harga gift yang dikembalikan saat menang (panel). Bawaan
+  // 100%: harga gift utuh, jadi yang zonk saja yang benar-benar hangus.
+  const kembaliPct = Math.max(0, Math.min(100, Number(cfg?.kembaliPct ?? 100)));
+  const kembali = untung > 0 ? Math.floor((nilai * kembaliPct) / 100) : 0;
+  const kredit = kembali + untung;
+  const parts = untung > 0 ? [kredit] : [];
   const amount = await beriCoin(env, uid, kredit, "cashback", null);
 
   // Penerima gift langsung dapat coin 70% dari harga gift (angka diatur dari
@@ -2130,6 +2136,7 @@ async function cashbackGift(env, uid, p) {
     ok: 1,
     amount: untung,
     kembali,
+    kembaliPct,
     kredit,
     mult: 0,
     multF: 0,

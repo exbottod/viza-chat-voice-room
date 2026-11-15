@@ -619,6 +619,7 @@ const CB_BAWAAN = {
   recvPct: 70,
   diamondPct: 5,
   diamondBiasaPct: 100,
+  kembaliPct: 100,
   jpMin: 50000,
   // Model persen: hadiah = harga gift x pengali. Bobot = seberapa sering muncul.
   tiersPersen: [
@@ -739,7 +740,7 @@ function teksTierPersen(rows) {
 }
 
 /** Tabel peluang + rata-rata RTP dari model persen (per harga gift 100.000). */
-function ringkasTierPersen(rows, capPct, recvPct, diamondPct) {
+function ringkasTierPersen(rows, capPct, recvPct, diamondPct, kembaliPct = 0) {
   const total = rows.reduce((a, b) => a + b.w, 0);
   if (!total) return '<div class="catatan">Belum ada tingkatan.</div>';
   const contoh = 100000;
@@ -759,9 +760,14 @@ function ringkasTierPersen(rows, capPct, recvPct, diamondPct) {
         <td>${rupiah(dapat)}</td></tr>`;
     })
     .join("");
-  const totalKeluar = (rtp * 100) + (Number(recvPct) || 0) + (Number(diamondPct) || 0);
+  // Peluang dapat (bukan zonk) = bobot semua tingkatan selain pengali 0.
+  const totalBobot = rows.reduce((a, b) => a + b.w, 0);
+  const bobotMenang = rows.filter((r) => Number(r.m) > 0).reduce((a, b) => a + b.w, 0);
+  const peluangMenang = totalBobot > 0 ? bobotMenang / totalBobot : 0;
+  const biayaKembali = peluangMenang * ((Number(kembaliPct) || 0) / 100) * 100;
+  const totalKeluar = (rtp * 100) + (Number(recvPct) || 0) + (Number(diamondPct) || 0) + biayaKembali;
   return `<table style="margin-top:8px"><tr><th>PENGALI</th><th>PELUANG</th><th>CONTOH GIFT 100.000</th></tr>${isi}</table>
-    <div class="catatan">Cashback rata-rata <b>${(rtp * 100).toFixed(1).replace(".", ",")}%</b> dari harga gift. Kalau penerima dapat <b>${Number(recvPct) || 0}%</b> ditambah ${Number(diamondPct) || 0}% diamond, total keluar <b>${totalKeluar.toFixed(1).replace(".", ",")}%</b>, jadi platform ${totalKeluar > 100 ? "rugi " : "pegang "}${Math.abs(100 - totalKeluar).toFixed(1).replace(".", ",")}%.${totalKeluar > 100 ? " Turunkan persen penerima atau bobot pengali besar." : ""}</div>`;
+    <div class="catatan">Cashback rata-rata <b>${(rtp * 100).toFixed(1).replace(".", ",")}%</b> dari harga gift. Pengembalian harga gift saat menang menambah <b>${biayaKembali.toFixed(1).replace(".", ",")}%</b>. Kalau penerima dapat <b>${Number(recvPct) || 0}%</b> ditambah ${Number(diamondPct) || 0}% diamond, total keluar <b>${totalKeluar.toFixed(1).replace(".", ",")}%</b>, jadi platform ${totalKeluar > 100 ? "rugi " : "pegang "}${Math.abs(100 - totalKeluar).toFixed(1).replace(".", ",")}%.${totalKeluar > 100 ? " Turunkan persen penerima atau bobot pengali besar." : ""}</div>`;
 }
 
 async function gambarCashback() {
@@ -791,6 +797,7 @@ async function gambarCashback() {
           <div class="isian"><label>Bagian penerima gift (%)</label><input id="cbRecv" type="number" min="0" max="100" value="${Number(cfg.recvPct) || 0}"></div>
           <div class="isian"><label>Diamond penerima gift cashback (%)</label><input id="cbDiamond" type="number" min="0" max="100" step="0.5" value="${Number(cfg.diamondPct ?? 5)}"></div>
           <div class="isian"><label>Diamond penerima gift biasa (%)</label><input id="cbDiamondBiasa" type="number" min="0" max="100" step="0.5" value="${Number(cfg.diamondBiasaPct ?? 100)}"></div>
+          <div class="isian"><label>Kembalikan harga gift saat menang (%)</label><input id="cbKembali" type="number" min="0" max="100" step="5" value="${Number(cfg.kembaliPct ?? 100)}"></div>
           <div class="isian"><label>Peluang zonk (%)</label><input id="cbZonk" type="number" min="0" max="90" value="${Number(cfg.zonkPct ?? 8) || 0}"></div>
         </div>
         <div class="barisIsian" style="margin-top:12px">
@@ -802,7 +809,7 @@ async function gambarCashback() {
         <div class="isian" style="margin-top:12px">
           <label>Tingkatan persen (pengali:bobot, satu per baris)</label>
           <textarea id="cbPersenTiers" rows="6" style="width:100%;font-family:monospace">${aman(teksTierPersen(tierP))}</textarea>
-          <div id="cbPersenRin">${ringkasTierPersen(tierP, capPct, cfg.recvPct, cfg.diamondPct ?? 5)}</div>
+          <div id="cbPersenRin">${ringkasTierPersen(tierP, capPct, cfg.recvPct, cfg.diamondPct ?? 5, cfg.kembaliPct ?? 100)}</div>
         </div>
         <div class="catatan" style="margin-top:14px">Cadangan model nominal tetap (tidak ikut harga gift). Dipakai kalau model persen dimatikan.</div>
         <div class="isian" style="margin-top:12px">
@@ -830,12 +837,14 @@ async function gambarCashback() {
       Number(elCap.value) || 0,
       Number($("cbRecv").value) || 0,
       Number($("cbDiamond").value) || 0,
+      Number($("cbKembali").value) || 0,
     );
   };
   elP.oninput = segarkanPersen;
   elCap.oninput = segarkanPersen;
   $("cbRecv").oninput = segarkanPersen;
   $("cbDiamond").oninput = segarkanPersen;
+  $("cbKembali").oninput = segarkanPersen;
 
   $("simpanCashback").onclick = async () => {
     const tiers = bacaTierCashback($("cbTiers").value);
@@ -853,6 +862,8 @@ async function gambarCashback() {
       // Gift biasa: bawaan 100% (seluruh nilai jadi diamond). Ubah ke 5 kalau
       // ingin semua gift hanya 5% ke diamond.
       diamondBiasaPct: Math.max(0, Math.min(100, Number($("cbDiamondBiasa").value) || 0)),
+      // Saat menang, harga gift dikembalikan sebanyak ini. Zonk tetap hangus.
+      kembaliPct: Math.max(0, Math.min(100, Number($("cbKembali").value) || 0)),
       tiers: tiers,
       boostJumlah: bacaBoostJumlah($("cbBoost").value),
       zonkPct: Math.max(0, Math.min(90, Math.floor(Number($("cbZonk").value) || 0))),

@@ -1759,7 +1759,7 @@ function barisTier(cfg, value) {
 // tidak pernah muncul di layar.
 const CB_DEFAULT = {
   on: true,
-  t1: { min: 0, rows: [{ v: 10, w: 5 }, { v: 1, w: 20 }, { v: 0.2, w: 35 }, { v: 0, w: 40 }] },
+  t1: { min: 0, rows: [{ v: 10, w: 5 }, { v: 0.5, w: 25 }, { v: 0.1, w: 40 }, { v: 0, w: 30 }] },
   recvPct: 5,
   jpMin: 1000,
 };
@@ -4115,7 +4115,7 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           stafAktif = Number(r[0].rows[0]?.a ?? 0);
           peran = r[1].rows.map((x) => String(x.role) + ":" + Number(x.n));
         } catch (e) { /* tabel belum ada */ }
-        return json({ ok: 1, v: "viza-2026-11-14-family-coin", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
+        return json({ ok: 1, v: "viza-2026-11-15-cashback-kaskade", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
       } catch (e) {
         return json({ ok: 0, v: "viza-2026-11-13-mandiri", db: String(e?.message ?? e) }, 500);
       }

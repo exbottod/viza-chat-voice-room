@@ -743,7 +743,10 @@ function ringkasTierPersen(rows, capPct, recvPct, diamondPct) {
   const total = rows.reduce((a, b) => a + b.w, 0);
   if (!total) return '<div class="catatan">Belum ada tingkatan.</div>';
   const contoh = 100000;
-  const batas = (contoh * (Number(capPct) || 0)) / 100;
+  // Sama seperti server: batas tidak boleh memotong tingkatan tertinggi.
+  const tertinggi = rows.reduce((a, r) => Math.max(a, Number(r.m) || 0), 0);
+  const capPakai = Math.max(Number(capPct) || 0, tertinggi * 100);
+  const batas = (contoh * capPakai) / 100;
   let rtp = 0;
   const isi = rows
     .map((r) => {
@@ -758,7 +761,7 @@ function ringkasTierPersen(rows, capPct, recvPct, diamondPct) {
     .join("");
   const totalKeluar = (rtp * 100) + (Number(recvPct) || 0) + (Number(diamondPct) || 0);
   return `<table style="margin-top:8px"><tr><th>PENGALI</th><th>PELUANG</th><th>CONTOH GIFT 100.000</th></tr>${isi}</table>
-    <div class="catatan">Cashback rata-rata <b>${(rtp * 100).toFixed(1).replace(".", ",")}%</b> dari harga gift. Kalau penerima dapat <b>${Number(recvPct) || 0}%</b> ditambah ${Number(diamondPct) || 0}% diamond, total keluar <b>${totalKeluar.toFixed(1).replace(".", ",")}%</b>, jadi platform pegang ${(100 - totalKeluar).toFixed(1).replace(".", ",")}%.</div>`;
+    <div class="catatan">Cashback rata-rata <b>${(rtp * 100).toFixed(1).replace(".", ",")}%</b> dari harga gift. Kalau penerima dapat <b>${Number(recvPct) || 0}%</b> ditambah ${Number(diamondPct) || 0}% diamond, total keluar <b>${totalKeluar.toFixed(1).replace(".", ",")}%</b>, jadi platform ${totalKeluar > 100 ? "rugi " : "pegang "}${Math.abs(100 - totalKeluar).toFixed(1).replace(".", ",")}%.${totalKeluar > 100 ? " Turunkan persen penerima atau bobot pengali besar." : ""}</div>`;
 }
 
 async function gambarCashback() {

@@ -2053,8 +2053,18 @@ async function cashbackGift(env, uid, p) {
   // Batas atas: model persen butuh batas longgar supaya 10x benar-benar utuh
   // (bawaan 12.000% = 120x nilai gift) supaya JP 100x benar-benar utuh.
   // Model nominal tetap dibatasi 50-300%.
+  // Batas tidak boleh lebih kecil dari tingkatan tertinggi. Kalau ada tingkatan
+  // x188 tetapi batas diset 50x, hadiahnya terpotong dan pemain merasa rugi
+  // walau pengali yang keluar x188. Jadi batas ikut naik sendiri.
+  const pengaliTertinggi = persenAktif
+    ? tierPersen(cfg).reduce((a, t) => Math.max(a, t.m), 0)
+    : 0;
   const capPct = persenAktif
-    ? Math.max(100, Math.min(100000, Number(cfg?.capPct ?? 12000)))
+    ? Math.max(
+        100,
+        Math.min(100000, Number(cfg?.capPct ?? 12000)),
+        Math.min(100000, Math.ceil(pengaliTertinggi * 100)),
+      )
     : Math.max(50, Math.min(300, Number(cfg?.capPctTetap ?? cfg?.capPct ?? 106)));
   const batas = Math.floor((nilai * capPct) / 100);
   let untung = 0;

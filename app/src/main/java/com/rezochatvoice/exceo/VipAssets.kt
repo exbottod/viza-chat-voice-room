@@ -429,6 +429,25 @@ fun VipMedia(
 }
 
 /**
+ * Batas jumlah animasi berat (SVGA/MP4) yang boleh jalan bersamaan.
+ *
+ * Di halaman Item VIP ada puluhan pratinjau sekaligus; kalau semuanya memutar
+ * animasi, HP kehabisan memori lalu aplikasi tertutup sendiri. Hanya beberapa
+ * pratinjau pertama yang memutar, sisanya pakai cadangan diam.
+ */
+object MediaSlot {
+    private const val MAKS = 3
+    private val aktif = java.util.concurrent.atomic.AtomicInteger(0)
+
+    /** Ambil satu jatah putar. Panggil lepas() saat pratinjau hilang. */
+    fun ambil(): Boolean = aktif.getAndIncrement() < MAKS
+
+    fun lepas() {
+        if (aktif.get() > 0) aktif.decrementAndGet()
+    }
+}
+
+/**
  * VipMedia dengan cadangan: kalau aset tidak bisa dipakai (link mati atau data di
  * database tidak terbaca), yang tampil adalah cadangan bawaan, bukan kotak kosong.
  * Ini yang dulu membuat medal, gelar, bingkai, dan efek masuk jadi tidak terlihat.
@@ -440,10 +459,23 @@ fun VipMediaSafe(
     loop: Boolean = true,
     contentScale: ContentScale = ContentScale.Fit,
     fallback: @Composable () -> Unit = {},
+    batas: Boolean = false,
 ) {
     if (a == null || (a.url.isBlank() && !a.hasData)) {
         fallback()
         return
+    }
+    // Pratinjau di daftar: batasi jumlah animasi yang jalan bersamaan.
+    if (batas && (a.kind == "mp4" || a.kind == "svga")) {
+        var dapat by remember(a.n, a.slot, a.updatedAt) { mutableStateOf(false) }
+        DisposableEffect(a.n, a.slot, a.updatedAt) {
+            dapat = MediaSlot.ambil()
+            onDispose { if (dapat) MediaSlot.lepas() }
+        }
+        if (!dapat) {
+            fallback()
+            return
+        }
     }
     if (a.url.isNotBlank()) {
         if (a.kind == "mp4" || a.kind == "svga") {
@@ -501,10 +533,10 @@ fun VipTag(n: Int, modifier: Modifier = Modifier) {
 
 /** Bingkai eksklusif VIP ditumpuk di atas avatar (tidak menangkap sentuhan). */
 @Composable
-fun VipFrame(tier: Int, size: Dp) {
+fun VipFrame(tier: Int, size: Dp, batas: Boolean = false) {
     if (tier !in 1..9) return
     // Kalau gambar bingkai tidak bisa dipakai, tidak ada yang digambar (avatar tetap terlihat).
-    VipMediaSafe(VipAssets.get(tier, "frame"), Modifier.requiredSize(size), loop = true)
+    VipMediaSafe(VipAssets.get(tier, "frame"), Modifier.requiredSize(size), loop = true, batas = batas)
 }
 
 /**

@@ -850,13 +850,15 @@ private fun LegacyItemPreview(item: StoreItem) {
                 Box(Modifier.size(50.dp).clip(CircleShape).background(Color(0xFF4A3030)), contentAlignment = Alignment.Center) {
                     Text(tr("\uD83D\uDC64"), fontSize = 22.sp)
                 }
-                key(frameA.updatedAt) { VipFrame(item.vip, 70.dp) }
+                key(frameA.updatedAt) { VipFrame(item.vip, 70.dp, batas = true) }
             } else {
                 Box(Modifier.size(56.dp).border(5.dp, frameBrush(item.id), CircleShape))
             }
             "bubble" -> if (bubbleA != null) {
                 Box(Modifier.width(62.dp).height(36.dp), contentAlignment = Alignment.Center) {
-                    key(bubbleA.updatedAt) { VipMedia(bubbleA, Modifier.matchParentSize(), contentScale = ContentScale.FillBounds) }
+                    key(bubbleA.updatedAt) {
+                        VipMediaSafe(bubbleA, Modifier.matchParentSize(), contentScale = ContentScale.FillBounds, batas = true)
+                    }
                 }
             } else {
                 Box(Modifier.width(62.dp).height(36.dp).clip(RoundedCornerShape(10.dp)).background(item.color.copy(alpha = 0.75f)).border(1.5.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(10.dp)))
@@ -914,6 +916,7 @@ private fun ItemPreview(item: StoreItem, size: Dp = 70.dp) {
                 loop = true,
                 contentScale = ContentScale.Fit,
                 fallback = { Text("\uD83D\uDEA9", fontSize = (size.value * 0.4f).sp) },
+                batas = true,
             )
         }
         return
@@ -932,10 +935,19 @@ private fun ItemPreview(item: StoreItem, size: Dp = 70.dp) {
                 ) { Text(tr("\uD83D\uDC64"), fontSize = (size.value * 0.28f).sp) }
                 FrameOverlay(dyn, size)
             }
-            "badge" -> key(dyn.updatedAt) { VipMedia(dyn, Modifier.size((size.value * 0.8f).dp), loop = true) }
-            "banner" -> key(dyn.updatedAt) { VipMedia(dyn, Modifier.fillMaxWidth().height(size), loop = true, contentScale = ContentScale.Fit) }
+            "badge" -> key(dyn.updatedAt) {
+                VipMediaSafe(dyn, Modifier.size((size.value * 0.8f).dp), loop = true, batas = true,
+                    fallback = { Text(item.emoji, fontSize = (size.value * 0.4f).sp) })
+            }
+            "banner" -> key(dyn.updatedAt) {
+                VipMediaSafe(dyn, Modifier.fillMaxWidth().height(size), loop = true, contentScale = ContentScale.Fit, batas = true,
+                    fallback = { Text("\uD83D\uDEA9", fontSize = (size.value * 0.4f).sp) })
+            }
             "entry" -> EntryPreview(item, size)
-            else -> key(dyn.updatedAt) { VipMedia(dyn, Modifier.fillMaxSize(), loop = true) }
+            else -> key(dyn.updatedAt) {
+                VipMediaSafe(dyn, Modifier.fillMaxSize(), loop = true, batas = true,
+                    fallback = { Text(item.emoji, fontSize = (size.value * 0.4f).sp) })
+            }
         }
     }
 }
@@ -1226,7 +1238,7 @@ fun StoreScreen(uid: String, wallet: Wallet, onOpenVip: () -> Unit, onBack: () -
                                         ) {
                                             Box(Modifier.size(70.dp)) {
                                                 key(av.updatedAt) {
-                                                    VipMediaSafe(av, Modifier.fillMaxSize(), loop = true, contentScale = ContentScale.Fit)
+                                                    VipMediaSafe(av, Modifier.fillMaxSize(), loop = true, contentScale = ContentScale.Fit, batas = true)
                                                 }
                                             }
                                             Spacer(Modifier.height(6.dp))
@@ -1270,7 +1282,7 @@ fun StoreScreen(uid: String, wallet: Wallet, onOpenVip: () -> Unit, onBack: () -
                                         ) {
                                             Box(Modifier.fillMaxWidth().height(84.dp).clip(RoundedCornerShape(10.dp)).background(Color(0x33000000))) {
                                                 key(av.updatedAt) {
-                                                    VipMediaSafe(av, Modifier.fillMaxSize(), loop = true, contentScale = ContentScale.Crop)
+                                                    VipMediaSafe(av, Modifier.fillMaxSize(), loop = true, contentScale = ContentScale.Crop, batas = true)
                                                 }
                                             }
                                             Spacer(Modifier.height(6.dp))

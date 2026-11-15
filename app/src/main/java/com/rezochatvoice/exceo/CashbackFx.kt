@@ -53,6 +53,16 @@ data class GiftFly(
     val cbOn: Boolean = false,
     val jp: Boolean,
     val ts: Long,
+    /** Harga satu gift (untuk teks "N x harga koin"). */
+    val unit: Long = 0L,
+    /** Jumlah gift yang dikirim. */
+    val cnt: Int = 0,
+    /** Total nilai gift = harga x jumlah. */
+    val total: Long = 0L,
+    /** Kelipatan menang terhadap harga satuan (badge "x100"). */
+    val kelipatan: Int = 0,
+    /** Tingkat pemenang dari server: Rookie / Pro / Highest. */
+    val tingkat: String = "",
 )
 
 /**
@@ -103,6 +113,11 @@ fun GiftFlyOverlay(roomId: String, seatPoints: Map<Int, Offset>) {
                     jp = c.child("jp").getValue(Boolean::class.java) ?: false,
                     cbOn = c.child("cbOn").getValue(Boolean::class.java) ?: false,
                     ts = ts,
+                    unit = c.child("unit").getValue(Long::class.java) ?: 0L,
+                    cnt = (c.child("cnt").getValue(Long::class.java) ?: 0L).toInt(),
+                    total = c.child("total").getValue(Long::class.java) ?: 0L,
+                    kelipatan = (c.child("kl").getValue(Long::class.java) ?: 0L).toInt(),
+                    tingkat = c.child("tkt").getValue(String::class.java) ?: "",
                     ),
                 )
             }
@@ -223,129 +238,171 @@ private fun GiftFlyOnce(
 
 
 /**
- * Banner "Selamat! dapat cashback" setelah gift mendarat. Gaya mengikuti aturan
- * di contoh server: nominal cashback tampil jelas, dan kalau cashback >= 5x
- * harga gift banner berubah jadi JACKPOT.
+ * Kartu pemenang cashback gaya "Lucky Gift": total menang besar di tengah,
+ * keterangan pengiriman (jumlah x harga satuan), dan badge kelipatan + tingkat
+ * (Rookie / Pro / Highest) di sisi kanan. Kalau zonk, kartu berubah jadi abu-abu
+ * dengan tulisan "Belum beruntung".
  */
 @Composable
 private fun SelamatCashback(f: GiftFly) {
     var tampil by remember(f.ts) { mutableStateOf(false) }
     val naik = remember(f.ts) { Animatable(0.82f) }
     val dapat = f.cb > 0L
-    val jackpot = f.mult >= 5
     LaunchedEffect(f.ts) {
         delay(780L)
         tampil = true
         naik.animateTo(1f, tween(240, easing = FastOutSlowInEasing))
-        delay(2600L)
+        delay(3200L)
         tampil = false
     }
     if (!tampil) return
 
-    // Tampilan mengikuti contoh pemilik: nama gift dan harga di baris atas,
-    // hasil undian di tengah ("ZONK - belum beruntung" atau nominal cashback),
-    // lalu keterangan penerima di bawah.
+    // Kelipatan: dari server; kalau kosong dihitung dari nominal / harga satuan.
+    val harga = if (f.unit > 0L) f.unit else if (f.cnt > 0) f.price / f.cnt else f.price
+    val kali = if (f.kelipatan > 0) f.kelipatan else {
+        if (dapat && harga > 0L) maxOf(1, Math.round(f.cb.toDouble() / harga).toInt()) else 0
+    }
+    val jumlah = if (f.cnt > 0) f.cnt else 1
+    val tingkat = f.tingkat.ifBlank {
+        when {
+            kali >= 100 -> "Highest"
+            kali >= 5 -> "Pro"
+            kali > 0 -> "Rookie"
+            else -> ""
+        }
+    }
     val judul = when {
-        jackpot -> "JACKPOT"
-        dapat -> "CASHBACK"
-        else -> "ZONK"
+        !dapat -> "Belum beruntung"
+        kali >= 100 -> "HIGHEST WINNER"
+        kali >= 5 -> "PRO WINNER"
+        else -> "WINNER"
     }
-    val isiHasil = if (dapat) {
-        "${fmtNum(f.cb)} - beruntung"
-    } else {
-        "0 - belum beruntung"
-    }
+
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(
             Modifier
-                .padding(top = 140.dp, start = 26.dp, end = 26.dp)
+                .padding(top = 120.dp, start = 22.dp, end = 22.dp)
                 .fillMaxWidth()
                 .graphicsLayer {
                     scaleX = naik.value
                     scaleY = naik.value
                     alpha = ((naik.value - 0.82f) / 0.18f).coerceIn(0f, 1f)
                 }
-                .clip(RoundedCornerShape(14.dp))
+                .clip(RoundedCornerShape(18.dp))
                 .background(
-                    if (jackpot) {
-                        Brush.verticalGradient(listOf(Color(0xFFB8860B), Color(0xFFFFC107), Color(0xFFB8860B)))
+                    if (dapat) {
+                        Brush.verticalGradient(
+                            listOf(Color(0xFF2A1A3E), Color(0xFF43265F), Color(0xFF2A1A3E)),
+                        )
                     } else {
-                        Brush.verticalGradient(listOf(Color(0xFF3E2A16), Color(0xFF6B4A22)))
+                        Brush.verticalGradient(listOf(Color(0xFF2B2B2B), Color(0xFF1C1C1C)))
                     },
                 )
-                .border(1.5.dp, Color(0xFFFFE082), RoundedCornerShape(14.dp)),
+                .border(
+                    1.5.dp,
+                    if (dapat) Color(0xFFFFD24D) else Color(0xFF616161),
+                    RoundedCornerShape(18.dp),
+                )
+                .padding(horizontal = 14.dp, vertical = 13.dp),
         ) {
-            // Baris 1: nama gift dan harga yang dibayar.
+            // Baris atas: judul + badge kelipatan dan tingkat.
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    if (dapat) "👑" else "🎁",
+                    fontSize = 20.sp,
+                )
+                Spacer(Modifier.width(8.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        "Gift Cashback",
+                        color = Color(0xFFFFF3D6),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                    )
+                    Text(
+                        judul,
+                        color = if (dapat) Color(0xFFFFD24D) else Color(0xFFBDBDBD),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Black,
+                        maxLines = 1,
+                    )
+                }
+                if (dapat && kali > 0) {
+                    Column(horizontalAlignment = Alignment.End) {
+                        Box(
+                            Modifier
+                                .background(Color(0xFFFFD24D), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 10.dp, vertical = 4.dp),
+                        ) {
+                            Text(
+                                "x$kali",
+                                color = Color(0xFF3B2200),
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Black,
+                            )
+                        }
+                        if (tingkat.isNotBlank()) {
+                            Text(
+                                tingkat,
+                                color = Color(0xFFFFE082),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(top = 2.dp),
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(11.dp))
+
+            // Total menang: angka besar, gaya kartu pemenang Lucky Gift.
+            Text(
+                "Total memenangkan",
+                color = Color(0xFFCBB6E8),
+                fontSize = 12.sp,
+            )
+            Text(
+                "${fmtNum(f.cb)} koin",
+                color = if (dapat) Color(0xFFFFD24D) else Color(0xFF9E9E9E),
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Black,
+                maxLines = 1,
+            )
+            Text(
+                if (dapat) {
+                    "melalui pengiriman $jumlah x ${fmtNum(harga)} koin"
+                } else {
+                    "pengiriman $jumlah x ${fmtNum(harga)} koin belum dapat cashback"
+                },
+                color = Color(0xFFCBB6E8),
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 3.dp),
+            )
+
+            Spacer(Modifier.height(10.dp))
+            Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0x33FFE082)))
+            // Baris bawah: gift dan tujuannya (gaya keterangan di kartu Haco).
             Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                Modifier.fillMaxWidth().padding(top = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    f.gname.ifBlank { f.emoji.ifBlank { "Gift" } },
+                    "${f.gname.ifBlank { f.emoji.ifBlank { "Gift" } }}",
                     color = Color(0xFFFFF3D6),
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     modifier = Modifier.weight(1f),
                 )
                 Text(
-                    "-${fmtNum(f.price)} koin",
-                    color = Color(0xFFFFD24D),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Black,
+                    "ke ${f.toName.ifBlank { "penerima" }}",
+                    color = Color(0xFFCBB6E8),
+                    fontSize = 12.sp,
                     maxLines = 1,
                 )
             }
-            Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0x33FFE082)))
-            // Baris 2: hasil undian.
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 9.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    Modifier
-                        .background(
-                            when {
-                                jackpot -> Color(0xFFD32F2F)
-                                dapat -> Color(0xFF2E7D32)
-                                else -> Color(0xFF424242)
-                            },
-                            RoundedCornerShape(6.dp),
-                        )
-                        .padding(horizontal = 8.dp, vertical = 3.dp),
-                ) {
-                    Text(judul, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Black)
-                }
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    isiHasil,
-                    color = if (dapat) Color(0xFFFFD24D) else Color(0xFFE0E0E0),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Black,
-                    maxLines = 1,
-                    modifier = Modifier.weight(1f),
-                )
-                if (f.mult > 1) {
-                    Text(
-                        "x${f.mult}",
-                        color = Color(0xFFFFE082),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Black,
-                    )
-                }
-            }
-            Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0x33FFE082)))
-            // Baris 3: penerima gift.
-            Text(
-                "ke ${f.toName.ifBlank { "penerima" }}",
-                color = Color(0xFFFFF3D6),
-                fontSize = 12.sp,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
-            )
         }
     }
 }

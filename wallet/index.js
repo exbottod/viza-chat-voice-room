@@ -2004,6 +2004,11 @@ async function cashbackGift(env, uid, p) {
     ? await beriCoin(env, to, bagianPenerima, "cashback_recv", null)
     : 0;
 
+  // Info tampilan kartu pemenang (gaya "Lucky Gift"): harga satuan, jumlah
+  // kirim, total nilai, dan kelipatan menang terhadap harga satuan.
+  const kelipatan = untung > 0 ? Math.max(1, Math.round(untung / Math.max(1, price))) : 0;
+  const tingkat = kelipatan >= 100 ? "Highest" : kelipatan >= 5 ? "Pro" : kelipatan > 0 ? "Rookie" : "";
+
   // Jackpot = kelompok terakhir (bawaan 50.000). Tidak ada pengali lagi.
   return json({
     ok: 1,
@@ -2012,6 +2017,11 @@ async function cashbackGift(env, uid, p) {
     kredit,
     mult: 0,
     multF: 0,
+    unit: price,
+    cnt: count,
+    total: nilai,
+    kl: kelipatan,
+    tkt: tingkat,
     parts: parts.slice(0, 5),
     pecahan: parts[0] ?? 0,
     recv,

@@ -208,6 +208,11 @@ object GiftFx {
         var cbParts = ""
         var cbJp = false
         var cbMult = 0
+        var cbUnit = 0L
+        var cbCnt = 0
+        var cbTotal = 0L
+        var cbKl = 0
+        var cbTkt = ""
         var comboN = 0
         if (g.special) {
             comboN = try {
@@ -249,6 +254,11 @@ object GiftFx {
                 cbParts = cb.parts.joinToString(",")
                 cbJp = cb.jp
                 cbMult = cb.mult
+                cbUnit = cb.unit
+                cbCnt = cb.cnt
+                cbTotal = cb.total
+                cbKl = cb.kelipatan
+                cbTkt = cb.tingkat
                 try {
                     Rtdb.ref("cashback/$uid/total").setValue(ServerValue.increment(cbWin))
                     Rtdb.ref("cashback/$uid/log").push().setValue(
@@ -286,6 +296,11 @@ object GiftFx {
                     "pecahan" to cbPecahan,
                     "parts" to cbParts,
                     "mult" to cbMult,
+                    "unit" to cbUnit,
+                    "cnt" to cbCnt,
+                    "total" to cbTotal,
+                    "kl" to cbKl,
+                    "tkt" to cbTkt,
                     "combo" to comboN,
                     "asset" to cbAsset,
                     "jp" to cbJp,

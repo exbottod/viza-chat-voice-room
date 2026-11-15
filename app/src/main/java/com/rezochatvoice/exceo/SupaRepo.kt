@@ -708,6 +708,13 @@ object SupaRepo {
         val error: String?,
         val mult: Int = 0,
         val parts: List<Long> = emptyList(),
+        // Info kartu pemenang: harga satuan, jumlah kirim, total nilai gift,
+        // kelipatan menang terhadap harga satuan, dan tingkatnya.
+        val unit: Long = 0L,
+        val cnt: Int = 0,
+        val total: Long = 0L,
+        val kelipatan: Int = 0,
+        val tingkat: String = "",
     )
 
     suspend fun giftCashback(
@@ -738,6 +745,11 @@ object SupaRepo {
             error = null,
             mult = j.optInt("mult"),
             parts = parts,
+            unit = j.optLong("unit"),
+            cnt = j.optInt("cnt"),
+            total = j.optLong("total"),
+            kelipatan = j.optInt("kl"),
+            tingkat = j.optString("tkt"),
         )
     }
 

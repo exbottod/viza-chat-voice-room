@@ -1879,7 +1879,8 @@ function peluangMenurutJumlah(cfg, jumlah) {
     .filter((r) => r.p > 0)
     .sort((x, y) => x.min - y.min);
   // Kirim banyak tidak boleh zonk: mulai jumlah tertentu peluang dipaksa 100%.
-  const tanpaZonk = Math.max(0, Math.floor(Number(cfg?.tanpaZonkMin ?? 520)));
+  // Bawaan: SELALU dapat cashback (tidak ada zonk), berapa pun jumlah kirimnya.
+  const tanpaZonk = Math.max(0, Math.floor(Number(cfg?.tanpaZonkMin ?? 1)));
   if (tanpaZonk > 0 && jumlah >= tanpaZonk) return 100;
   if (!baris.length) return 100;
   const kena = baris.filter((r) => jumlah >= r.min);

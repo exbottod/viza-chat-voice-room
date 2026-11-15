@@ -39,6 +39,36 @@ if [ -f "$DIR/server.js" ]; then
 fi
 echo "kode baru terpasang"
 
+echo "== 2b/4 Perbarui berkas panel =="
+# Panel (docs/panel/admin) ikut diperbarui supaya kolom baru seperti "Peluang zonk"
+# langsung muncul, tanpa perlu menjalankan pasang-panel-viza.sh terpisah.
+PANEL=/opt/viza-panel/admin
+if [ -d "$PANEL" ] && command -v python3 >/dev/null; then
+  python3 - "$PANEL" <<'AKHIRPANEL'
+import json,os,sys,urllib.request
+tujuan=sys.argv[1]
+repo="exbottod/viza-chat-voice-room"; cabang="main"; n=[0]
+def unduh(jalur, ke):
+    api=f"https://api.github.com/repos/{repo}/contents/{jalur}?ref={cabang}"
+    req=urllib.request.Request(api,headers={"User-Agent":"viza-panel"})
+    daftar=json.load(urllib.request.urlopen(req,timeout=30))
+    if isinstance(daftar,dict): daftar=[daftar]
+    for f in daftar:
+        if f["type"]=="dir":
+            sub=os.path.join(ke,f["name"]); os.makedirs(sub,exist_ok=True); unduh(f["path"], sub)
+        elif f["type"]=="file":
+            data=urllib.request.urlopen(f["download_url"],timeout=30).read()
+            open(os.path.join(ke,f["name"]),"wb").write(data); n[0]+=1
+try:
+    unduh("docs/panel/admin", tujuan)
+    print(str(n[0])+" berkas panel diperbarui di "+tujuan)
+except Exception as e:
+    print("panel gagal diperbarui:", e)
+AKHIRPANEL
+else
+  echo "folder panel tidak ada ($PANEL), dilewati"
+fi
+
 echo "== 3/4 Jalankan ulang layanan =="
 systemctl restart viza-dompet
 for i in $(seq 1 20); do

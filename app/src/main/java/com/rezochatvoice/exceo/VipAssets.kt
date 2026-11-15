@@ -713,8 +713,10 @@ fun VipEntryEffect(roomId: String) {
                     // menutupi room; tinggi mengikuti rasio file dan dibatasi 130.dp.
                     // Untuk SVGA, lebar yang dihitung adalah lebar PITA (70% layar); kanvas
                     // penuh 750 dipasang lebih lebar supaya pita 568 tepat selebar itu.
-                    val lebarBanner = minOf(maxWidth * 0.70f, 280.dp)
-                    val skala = lebarBanner.value / (750f * SVGA_BAND_LEBAR)   // dp per piksel kanvas
+                    // Pita dibentangkan selebar layar supaya penutupnya tidak terpotong:
+                    // animasi masuk dan keluar berjalan dari tepi kanan ke tepi kiri layar.
+                    val lebarBanner = maxWidth
+                    val skala = lebarBanner.value / 750f                      // dp per piksel kanvas
                     // b adalah properti delegasi, jadi disalin dulu supaya bisa dipakai.
                     val asetBanner = b!!
                     val svgaBanner = asetBanner.kind == "svga"
@@ -786,10 +788,16 @@ fun VipEntryEffect(roomId: String) {
                     }
                     val nm = bannerName
                     if (!nm.isNullOrBlank()) {
-                        val tinggiTeks = (SVGA_PITA_TINGGI * skala * 0.30f).coerceIn(10f, 22f)
+                        // Nama dibesarkan sedikit dan digeser ke kanan agar ada jarak
+                        // dari foto profil.
+                        val tinggiTeks = (SVGA_PITA_TINGGI * skala * 0.42f).coerceIn(12f, 26f)
+                        val geserNama = (SVGA_PITA_TINGGI * skala * 0.34f)
                         Box(
                             Modifier
-                                .offset(x = (teksX * skala).dp, y = (pitaTengahY - tinggiTeks * 0.62f).dp)
+                                .offset(
+                                    x = (teksX * skala).dp + geserNama.dp,
+                                    y = (pitaTengahY - tinggiTeks * 0.62f).dp,
+                                )
                                 .width((330f * skala).dp),
                             contentAlignment = Alignment.CenterStart,
                         ) {

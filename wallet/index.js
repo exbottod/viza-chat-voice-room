@@ -1976,8 +1976,13 @@ async function cashbackGift(env, uid, p) {
   // (tidak dikembalikan seperti model pengali sebelumnya).
   // Nominal cashback DIKALI jumlah kirim: kirim 1 buah dapat nominal dasar,
   // kirim 520 buah dapat 520x nominal dasar (sesuai permintaan pemilik).
+  // Batas atas: cashback tidak boleh melebihi nilai gift (harga x jumlah).
+  // Bawaannya 106% dari nilai, jadi kirim 52.000.000 paling besar dapat 55.120.000.
+  // Nominal di atas batas dipotong ke batas, jadi angka raksasa (miliaran) hilang.
+  const capPct = Math.max(50, Math.min(300, Number(cfg?.capPct ?? 106)));
+  const batas = Math.floor((nilai * capPct) / 100);
   const undian = undiCashback(cfg, count);
-  const untung = Math.max(0, Math.floor(undian.nominal * count));
+  const untung = Math.max(0, Math.min(batas, Math.floor(undian.nominal * count)));
   const kembali = 0;
   const kredit = untung;
   const parts = untung > 0 ? [untung] : [];

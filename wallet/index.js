@@ -1215,15 +1215,23 @@ async function kirimGift(env, uid, p) {
  */
 const DIAMOND_CASHBACK_PCT = 5;
 
-/** Persen diamond penerima dari panel; kosong berarti 5%. */
-async function pctDiamondCashback() {
+/**
+ * Persen diamond penerima dari panel.
+ * - Gift cashback: bawaan 5% dari nilai gift.
+ * - Gift biasa: bawaan 100% (seluruh nilai gift jadi diamond penerima).
+ * Dua angka ini dipisah supaya mengubah yang cashback tidak ikut memotong
+ * penghasilan host dari gift biasa.
+ */
+async function pctDiamond(giftCashback) {
   try {
     const cfg = await cfgRtdb("pub/_cashbackCfg");
-    const v = Number(cfg?.diamondPct ?? DIAMOND_CASHBACK_PCT);
-    if (!Number.isFinite(v)) return DIAMOND_CASHBACK_PCT;
+    const bawaan = giftCashback ? DIAMOND_CASHBACK_PCT : 100;
+    const kunci = giftCashback ? "diamondPct" : "diamondBiasaPct";
+    const v = Number(cfg?.[kunci] ?? bawaan);
+    if (!Number.isFinite(v)) return bawaan;
     return Math.max(0, Math.min(100, v));
   } catch (e) {
-    return DIAMOND_CASHBACK_PCT;
+    return giftCashback ? DIAMOND_CASHBACK_PCT : 100;
   }
 }
 
@@ -1237,9 +1245,7 @@ async function kreditPenerima(env, uid, p, price, item, room, now, req, giftCash
   // Gift cashback: penerima tetap dapat BIASA cashback jalan, tapi diamond-nya
   // dihitung 5% dari harga gift (bukan nilai penuh seperti gift biasa).
   // Angka persennya diambil dari panel supaya bisa diubah tanpa build.
-  const diamond = giftCashback
-    ? Math.floor((each * (await pctDiamondCashback())) / 100)
-    : each;
+  const diamond = Math.floor((each * (await pctDiamond(giftCashback))) / 100);
   for (const r of unik) {
     try {
       await pastikan(env, r);

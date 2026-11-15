@@ -618,6 +618,7 @@ const CB_BAWAAN = {
   capPct: 12000,
   recvPct: 70,
   diamondPct: 5,
+  diamondBiasaPct: 100,
   jpMin: 50000,
   // Model persen: hadiah = harga gift x pengali. Bobot = seberapa sering muncul.
   tiersPersen: [
@@ -786,6 +787,7 @@ async function gambarCashback() {
           </div>
           <div class="isian"><label>Bagian penerima gift (%)</label><input id="cbRecv" type="number" min="0" max="100" value="${Number(cfg.recvPct) || 0}"></div>
           <div class="isian"><label>Diamond penerima gift cashback (%)</label><input id="cbDiamond" type="number" min="0" max="100" step="0.5" value="${Number(cfg.diamondPct ?? 5)}"></div>
+          <div class="isian"><label>Diamond penerima gift biasa (%)</label><input id="cbDiamondBiasa" type="number" min="0" max="100" step="0.5" value="${Number(cfg.diamondBiasaPct ?? 100)}"></div>
           <div class="isian"><label>Peluang zonk (%)</label><input id="cbZonk" type="number" min="0" max="90" value="${Number(cfg.zonkPct ?? 8) || 0}"></div>
         </div>
         <div class="barisIsian" style="margin-top:12px">
@@ -845,6 +847,9 @@ async function gambarCashback() {
       recvPct: Math.max(0, Math.min(100, Number($("cbRecv").value) || 0)),
       // Penerima gift cashback: 70% coin + diamond (bawaan 5%) dari harga gift.
       diamondPct: Math.max(0, Math.min(100, Number($("cbDiamond").value) || 0)),
+      // Gift biasa: bawaan 100% (seluruh nilai jadi diamond). Ubah ke 5 kalau
+      // ingin semua gift hanya 5% ke diamond.
+      diamondBiasaPct: Math.max(0, Math.min(100, Number($("cbDiamondBiasa").value) || 0)),
       tiers: tiers,
       boostJumlah: bacaBoostJumlah($("cbBoost").value),
       zonkPct: Math.max(0, Math.min(90, Math.floor(Number($("cbZonk").value) || 0))),

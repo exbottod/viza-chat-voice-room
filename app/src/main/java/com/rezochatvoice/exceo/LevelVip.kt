@@ -1226,6 +1226,15 @@ fun StoreScreen(uid: String, wallet: Wallet, onOpenVip: () -> Unit, onBack: () -
                         val shownCat = if (cat == "medal") "frame" else cat
                         val list = if (shownCat == "vip") {
                             mineAll.filter { isVipId(it.first.id) }
+                                // Satu tingkat hanya boleh tampil satu kartu per slot aset.
+                                // Bingkai, efek masuk, banner efek, dan gelembung VIP4 dan
+                                // SVIP4 memakai gambar yang sama, jadi kembarnya dibuang dan
+                                // yang dipertahankan adalah yang paling lama aktif.
+                                .groupBy { pasangan ->
+                                    vipLevelOf(pasangan.first.id).toString() + "|" +
+                                        vipAssetSlot(pasangan.first.id, pasangan.first.slot)
+                                }
+                                .mapNotNull { (_, grup) -> grup.maxByOrNull { it.second } }
                                 .sortedWith(compareBy<Pair<StoreItem, Long>>({ vipLevelOf(it.first.id) }, { it.first.slot }))
                         } else {
                             mineAll.filter { it.first.slot == shownCat && !isVipId(it.first.id) }.sortedBy { it.first.id }

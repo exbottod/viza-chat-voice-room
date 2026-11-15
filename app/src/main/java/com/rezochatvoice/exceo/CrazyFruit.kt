@@ -61,6 +61,8 @@ fun CrazyFruitScreen(
     onClose: () -> Unit,
 ) {
     var token by remember { mutableStateOf("") }
+    var chips by remember { mutableStateOf(CF_CHIPS) }
+    var rtp by remember { mutableStateOf(92) }
     var siap by remember { mutableStateOf(false) }
     val wvPegang = remember { mutableStateOf<WebView?>(null) }
 
@@ -69,6 +71,19 @@ fun CrazyFruitScreen(
             FirebaseAuth.getInstance().currentUser?.getIdToken(false)?.await()?.token.orEmpty()
         } catch (e: Exception) {
             ""
+        }
+        // Chip bet dari panel (Bet game / Crazy Fruit).
+        chips = try { BetCfg.load("crazyfruit", CF_CHIPS) } catch (e: Exception) { CF_CHIPS }
+        // RTP dari panel (pub/_cfCfg/rtp). Kalau belum diatur, 92%.
+        rtp = try {
+            val snap = Rtdb.ref("pub/_cfCfg").get().await()
+            val v = snap.child("rtp").getValue(Int::class.java)
+                ?: snap.child("rtp").getValue(Double::class.java)?.toInt()
+            if (v != null && v in 50..120) v else 92
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            92
         }
         siap = true
     }
@@ -139,6 +154,10 @@ fun CrazyFruitScreen(
                                         (c.resources.displayMetrics.heightPixels / c.resources.displayMetrics.density).toInt()
 
                                     @JavascriptInterface fun api() = CF_SERVER
+                                    // Chip bet + RTP dari panel, dibaca game saat halaman mulai.
+                                    @JavascriptInterface fun chips(): String =
+                                        chips.joinToString(",", "[", "]")
+                                    @JavascriptInterface fun rtp(): Int = rtp
                                     @JavascriptInterface fun token() = token
                                     @JavascriptInterface fun uid() = myUid
                                     @JavascriptInterface fun nama() = namaAman
@@ -205,6 +224,9 @@ fun CrazyFruitScreen(
 
 /** Tinggi sheet game dibanding layar: pita tipis di atas tetap memperlihatkan room. */
 private const val CF_SHEET = 0.93f
+
+/** Chip bet bawaan kalau panel belum mengatur apa pun. */
+private val CF_CHIPS = listOf(1000L, 5000L, 10000L, 50000L, 100000L)
 
 private const val CF_SERVER = "https://viza.43-156-99-4.sslip.io"
 private const val CF_LOKAL = "https://appassets.androidplatform.net/assets/crazyfruit/index.html"

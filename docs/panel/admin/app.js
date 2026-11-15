@@ -970,6 +970,7 @@ const daftarHal = {
   pasang: { judul: "Pasang game", crumb: "Dashboard / Game", gambar: gambarPasang },
   bet: { judul: "Bet game", crumb: "Dashboard / Game", gambar: gambarBet },
   greedy: { judul: "Greedy King", crumb: "Dashboard / Game", gambar: gambarGreedy },
+  fruit: { judul: "Crazy Fruit", crumb: "Dashboard / Game", gambar: gambarFruit },
   database: { judul: "Database", crumb: "Dashboard / Data", gambar: gambarDatabase },
   latar: { judul: "Background tab", crumb: "Dashboard / Background tab", gambar: gambarLatar },
   cs: { judul: "Customer Service", crumb: "Dashboard / Customer Service", gambar: gambarCs },
@@ -994,6 +995,7 @@ const keteranganHal = {
   katalog: "Game yang sudah terpasang",
   pasang: "Tambah game baru dengan alamat dan key production",
   greedy: "Chip bet dan RTP Greedy King (75 standar, 100 sering JP)",
+  fruit: "Chip bet dan RTP Crazy Fruit (92 standar, makin tinggi makin sering menang)",
   bet: "Atur nilai bet tiap game",
   database: "Lihat, ubah, dan hapus dokumen Firestore",
   log: "Riwayat aksi yang dilakukan admin",
@@ -2935,6 +2937,45 @@ async function gambarGreedy() {
       catatLog("Atur Greedy", "rtp " + rtp + " | chip " + bet.join(","));
       toast("Pengaturan Greedy disimpan");
       gambarGreedy();
+    } catch (e) { toast("Gagal menyimpan: " + (e.message || e), true); }
+  };
+}
+
+/**
+ * Crazy Fruit: chip bet dan RTP.
+ * RTP 92 = standar. Angka ini yang menentukan pengali buah: naikkan ke 100
+ * supaya pemain balik modal, turunkan (mis. 80) supaya keuntungan rumah lebih
+ * besar. Semua pengali buah ikut menyesuaikan, jadi tidak ada satu buah yang
+ * bisa dipakai menembus RTP. Disimpan lewat server dompet karena aturan RTDB
+ * menolak tulisan langsung dari browser panel.
+ */
+async function gambarFruit() {
+  let cfg = { bet: [1000, 5000, 10000, 50000, 100000], rtp: 92 };
+  try { cfg = Object.assign(cfg, await walletAdmin({ op: "cf_cfg_get" })); }
+  catch (e) { toast("Gagal memuat pengaturan Crazy Fruit: " + (e.message || e), true); }
+  const chipTeks = (cfg.bet || []).join(", ");
+  $("isiHal").innerHTML = `
+    <div class="panel" style="max-width:620px">
+      <div class="panelAtas"><h3>Crazy Fruit</h3><div class="sub">chip bet &amp; RTP</div></div>
+      <div class="panelIsi">
+        <div class="isian"><label>Pilihan chip bet (pisahkan dengan koma)</label>
+          <input id="cfBet" value="${aman(chipTeks)}" placeholder="1000,5000,10000,50000,100000"></div>
+        <div class="isian" style="margin-top:10px"><label>RTP game (%)</label>
+          <input id="cfRtp" type="number" min="50" max="120" value="${aman(String(cfg.rtp ?? 92))}"></div>
+        <div class="catatan">92 = standar. 100 = pemain balik modal, 80 = keuntungan rumah lebih besar.
+          Batas 50 sampai 120. Pengali buah ikut menyesuaikan otomatis, chip bet berubah tanpa build ulang.</div>
+        <button class="tombol" id="cfSimpan" style="margin-top:14px">Simpan pengaturan</button>
+      </div>
+    </div>`;
+  $("cfSimpan").onclick = async () => {
+    const bet = $("cfBet").value.split(",").map((x) => Number(String(x).trim())).filter((x) => x > 0);
+    if (!bet.length) return toast("Isi minimal satu chip bet", true);
+    const rtp = Math.max(50, Math.min(120, Math.floor(Number($("cfRtp").value) || 92)));
+    try {
+      await walletAdmin({ op: "cf_cfg_set", bet, rtp });
+      catatLog("Atur Crazy Fruit", "rtp " + rtp + " | chip " + bet.join(","));
+      toast("Pengaturan Crazy Fruit disimpan");
+      gambarFruit();
     } catch (e) { toast("Gagal menyimpan: " + (e.message || e), true); }
   };
 }

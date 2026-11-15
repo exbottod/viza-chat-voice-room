@@ -75,6 +75,17 @@ async function gkCfg() {
   return { bet, rtp };
 }
 
+/** Crazy Fruit: chip bet + RTP. Disimpan di pub/_cfCfg lewat panel. */
+const CF_BAWAAN = { bet: [1000, 5000, 10000, 50000, 100000], rtp: 92 };
+async function cfCfg() {
+  const d = await cfgRtdb("pub/_cfCfg");
+  let bet = Array.isArray(d?.bet) ? d.bet.map((x) => Math.floor(Number(x) || 0)).filter((x) => x > 0) : [];
+  if (!bet.length) bet = CF_BAWAAN.bet.slice();
+  bet = bet.slice(0, 8).sort((a, b) => a - b);
+  const rtp = Math.max(50, Math.min(120, Math.floor(Number(d?.rtp ?? CF_BAWAAN.rtp))));
+  return { bet, rtp };
+}
+
 /** Bayaran per 1 coin untuk tiap hasil (dipakai menghitung bobot RTP). */
 const ODDS_HASIL = (() => {
   const o = {};
@@ -3180,6 +3191,38 @@ async function admin(env, body) {
       return gagal("Gagal menyimpan greedy: " + String(e?.message ?? e));
     }
     cache.delete("pub/_greedyCfg");
+    return json({ ok: 1, ...cfgBaru });
+  }
+
+  if (op === "cf_cfg_get") {
+    return json({ ok: 1, ...(await cfCfg()) });
+  }
+  if (op === "cf_cfg_set") {
+    const bet = (Array.isArray(p.bet) ? p.bet : String(p.bet ?? "").split(","))
+      .map((x) => Math.floor(Number(x) || 0)).filter((x) => x > 0).slice(0, 8);
+    const rtp = Math.max(50, Math.min(120, Math.floor(Number(p.rtp ?? CF_BAWAAN.rtp))));
+    if (!bet.length) return gagal("Isi minimal satu chip bet");
+    const cfgBaru = { bet: bet.sort((a, b) => a - b), rtp };
+    const token = await tokenLayanan(env);
+    if (!token) return gagal("Kunci layanan belum dipasang di server");
+    const q = "?access_token=" + encodeURIComponent(token);
+    try {
+      const r1 = await fetch(`${RTDB}/pub/_cfCfg.json${q}`, {
+        method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(cfgBaru),
+      });
+      if (!r1.ok) return gagal("Gagal menyimpan Crazy Fruit: HTTP " + r1.status);
+      // Cermin ke betCfg supaya chip di aplikasi ikut berubah.
+      const r2 = await fetch(`${RTDB}/betCfg/crazyfruit/chips.json${q}`, {
+        method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(cfgBaru.bet),
+      });
+      const r3 = await fetch(`${RTDB}/pub/_betCfg/crazyfruit/chips.json${q}`, {
+        method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(cfgBaru.bet),
+      });
+      if (!r2.ok || !r3.ok) return json({ ok: 1, ...cfgBaru, catatan: "chip tersimpan, cermin betCfg gagal" });
+    } catch (e) {
+      return gagal("Gagal menyimpan Crazy Fruit: " + String(e?.message ?? e));
+    }
+    cache.delete("pub/_cfCfg");
     return json({ ok: 1, ...cfgBaru });
   }
 

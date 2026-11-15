@@ -1122,6 +1122,18 @@ fun StoreScreen(uid: String, wallet: Wallet, onOpenVip: () -> Unit, onBack: () -
                     // Gelar & medali VIP tetap disimpan, tapi hanya tampil di tab Item VIP.
                     .filter { (it.first.slot != "medal" && it.first.slot != "title") || isVipId(it.first.id) }
                     .filter { LENCANA_AKTIF || it.first.slot != "badge" }
+                    // Efek masuk dan banner SVIPn memakai gambar yang SAMA dengan VIPn
+                    // (satu slot di panel). Kalau keduanya dimiliki, cukup tampilkan satu
+                    // kartu: versi VIP dipertahankan, versi SVIP disembunyikan.
+                    .filter { (item, _) ->
+                        val id = item.id
+                        val kembar = when {
+                            id.startsWith("sve_") -> "vipe_" + id.removePrefix("sve_")
+                            id.startsWith("svbn_") -> "vipbn_" + id.removePrefix("svbn_")
+                            else -> null
+                        }
+                        kembar == null || (wallet.inv[kembar] ?: 0L) <= now
+                    }
                     // Item kiriman panel (sx_) selalu tampil. Item bawaan yang belum punya
                 // gambar tetap disembunyikan supaya tidak muncul ikon kosong.
                 .filter { it.first.id.startsWith("sx_") || run { val a = it.first.asset; a != null && (a.url.isNotBlank() || a.hasData) } }

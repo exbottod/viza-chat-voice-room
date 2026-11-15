@@ -619,18 +619,21 @@ const CB_BAWAAN = {
   recvPct: 70,
   diamondPct: 5,
   diamondBiasaPct: 100,
-  kembaliPct: 100,
-  bebasZonkMulai: 100,
+  kembaliPct: 0,
+  bebasZonkMulai: 0,
   jpMin: 50000,
   // Model persen: hadiah = harga gift x pengali. Bobot = seberapa sering muncul.
+  // Tanpa tingkatan 0: setiap kiriman dapat pecahan kecil, tidak ada zonk.
+  // Ujungnya tetap ada 100x dan 1000x supaya jackpot masih bisa pecah besar.
   tiersPersen: [
-    { m: 0, w: 54 },
-    { m: 0.1, w: 28 },
-    { m: 0.5, w: 13 },
-    { m: 1, w: 3.6 },
-    { m: 5, w: 1.1 },
-    { m: 10, w: 0.2 },
-    { m: 100, w: 0.02 },
+    { m: 0.1, w: 50 },
+    { m: 0.2, w: 25 },
+    { m: 0.5, w: 14 },
+    { m: 1, w: 8 },
+    { m: 5, w: 2.5 },
+    { m: 10, w: 0.39 },
+    { m: 100, w: 0.1 },
+    { m: 1000, w: 0.01 },
   ],
   tiers: [
     { p: 70, min: 1000, max: 5000 },

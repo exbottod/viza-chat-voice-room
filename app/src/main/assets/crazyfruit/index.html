@@ -15,7 +15,7 @@
         background: #7a1020; color: #fff; font: 12px/1.35 sans-serif; padding: 10px 12px;
         max-height: 45%; overflow: auto; white-space: pre-wrap; word-break: break-word; }
     </style>
-    <script defer src="./assets/index-BDfG_CTQ.js"></script>
+    <script defer src="./assets/index-D13P-GS4.js"></script>
   </head>
   <body>
     <div id="root"></div>
@@ -52,7 +52,10 @@
           } catch (e) {}
         }
         window.addEventListener("error", function (e) {
-          tampil("Error: " + (e.message || (e.target && e.target.src) || e.type));
+          var t = e.target;
+          // Galat gambar/font tidak bikin layar kosong, jadi tidak perlu ditampilkan.
+          if (t && t !== window && t.tagName && t.tagName.toUpperCase() !== "SCRIPT") return;
+          tampil("Error: " + (e.message || (t && t.src) || e.type));
         }, true);
         window.addEventListener("unhandledrejection", function (e) {
           tampil("Gagal: " + ((e.reason && (e.reason.message || e.reason)) || "unknown"));

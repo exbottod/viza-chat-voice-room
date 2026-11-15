@@ -1645,19 +1645,45 @@ const ADMIN_SEMUA = [ADMIN_EMAIL];
 const adalahAdmin = (s) => !!s && ADMIN_SEMUA.includes(String(s.email || "").toLowerCase());
 const cache = new Map();
 
-async function cfgRtdb(path) {
+async function cfgRtdb(path, env) {
   const now = Date.now();
   const lama = cache.get(path);
   if (lama && now - lama.at < 60_000) return lama.data;
   try {
     const r = await fetch(`${RTDB}/${path}.json`);
-    if (!r.ok) throw new Error("cfg " + r.status);
-    const d = await r.json();
-    const data = d && typeof d === "object" ? d : {};
-    cache.set(path, { at: now, data });
-    return data;
+    if (r.ok) {
+      const d = await r.json();
+      const data = d && typeof d === "object" ? d : {};
+      cache.set(path, { at: now, data });
+      return data;
+    }
+    // Aturan RTDB tidak membuka baca untuk sebagian path (giftCfg misalnya).
+    // Dulu kegagalan ini dianggap "kosong", jadi penanda cashback hilang dan
+    // diamond dihitung 100%. Sekarang dibaca ulang pakai akun layanan.
+    if (env) {
+      const data = await cfgRtdbSa(env, path);
+      if (Object.keys(data).length) {
+        cache.set(path, { at: now, data });
+        return data;
+      }
+    }
+    throw new Error("cfg " + r.status);
   } catch {
     return lama?.data ?? {};
+  }
+}
+
+/** Baca RTDB memakai token akun layanan (melewati aturan baca publik). */
+async function cfgRtdbSa(env, path) {
+  try {
+    const token = await tokenLayanan(env);
+    if (!token) return {};
+    const r = await fetch(`${RTDB}/${path}.json?access_token=${encodeURIComponent(token)}`);
+    if (!r.ok) return {};
+    const d = await r.json();
+    return d && typeof d === "object" ? d : {};
+  } catch {
+    return {};
   }
 }
 
@@ -2173,7 +2199,7 @@ async function cashbackGift(env, uid, p) {
 async function katalogGift(env, id) {
   const k = String(id || "").trim();
   if (!k) return null;
-  const d = await cfgRtdb("giftCfg/" + k);
+  const d = await cfgRtdb("giftCfg/" + k, env);
   const price = Math.max(0, Math.floor(Number(d?.price ?? 0)));
   if (!(price > 0)) return null;
   return {

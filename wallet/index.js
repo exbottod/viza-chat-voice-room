@@ -1992,8 +1992,13 @@ async function cashbackGift(env, uid, p) {
   // panel: "Bagian penerima gift (%)"). Sisanya untuk platform.
   const recvPct = Math.max(0, Math.min(100, Number(cfg.recvPct ?? (100 - PLATFORM_FEE_PCT))));
   const to = String(p.to ?? "").trim();
+  // Bagian penerima dihitung per satu penerima saja. Waktu gift dikirim ke
+  // beberapa orang, jumlah pada "count" sudah dikali jumlah penerima, jadi
+  // dipakai countTo (jumlah per penerima) supaya hadiah penerima tidak ikut 10x.
+  const countTo = Math.max(1, Math.min(99999, Math.floor(Number(p.countTo ?? count))));
+  const nilaiTo = price * countTo;
   const bagianPenerima = to && to !== uid
-    ? Math.floor((nilai * recvPct) / 100)
+    ? Math.floor((nilaiTo * recvPct) / 100)
     : 0;
   const recv = bagianPenerima > 0
     ? await beriCoin(env, to, bagianPenerima, "cashback_recv", null)

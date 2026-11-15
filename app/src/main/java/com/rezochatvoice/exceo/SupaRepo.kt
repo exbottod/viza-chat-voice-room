@@ -710,8 +710,15 @@ object SupaRepo {
         val parts: List<Long> = emptyList(),
     )
 
-    suspend fun giftCashback(uid: String, price: Long, count: Int, to: String = ""): CashbackRes {
+    suspend fun giftCashback(
+        uid: String,
+        price: Long,
+        count: Int,
+        to: String = "",
+        countTo: Int = 0,
+    ): CashbackRes {
         val p = uidJson(uid).put("price", price).put("count", count)
+        if (countTo > 0) p.put("countTo", countTo)
         if (to.isNotBlank()) p.put("to", to)
         val j = postRaw("gift_cashback", p)
             ?: return CashbackRes(0, 0, 0, false, "", "Server tidak merespons")

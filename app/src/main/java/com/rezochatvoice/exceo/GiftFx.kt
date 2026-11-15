@@ -238,6 +238,7 @@ object GiftFx {
                         if (g.cbPrice > 0L) g.cbPrice else g.price,
                         count * receivers.coerceAtLeast(1),
                         targetUid,
+                        countTo = count,
                     )
                 }
             } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { null }

@@ -282,16 +282,20 @@ private fun SelamatCashback(f: GiftFly) {
     }
     if (!tampil) return
 
-    // Kelipatan: dari server; kalau kosong dihitung dari nominal / harga satuan.
+    // Kelipatan: dari server; kalau kosong dihitung dari nominal / NILAI TOTAL
+    // gift (harga satuan x jumlah kirim). Dulu dibagi harga satuan saja, jadi
+    // kirim x520 dengan hadiah 1x tertulis "X520" dan terlihat seperti jumlah.
     val harga = if (f.unit > 0L) f.unit else if (f.cnt > 0) f.price / f.cnt else f.price
+    val jumlahKirim = if (f.cnt > 0) f.cnt else 1
+    val nilaiTotal = if (harga > 0L) harga * jumlahKirim else f.price
     val kaliD = if (f.kelipatanF > 0.0) f.kelipatanF else {
-        if (dapat && harga > 0L) f.cb.toDouble() / harga else 0.0
+        if (dapat && nilaiTotal > 0L) f.cb.toDouble() / nilaiTotal else 0.0
     }
     val kali = if (kaliD > 0) maxOf(1, Math.round(kaliD).toInt()) else 0
     // 0,1 ditulis "10%", 5 ditulis "x5", 1,5 ditulis "x1.5".
     val labelKali = if (kaliD > 0 && kaliD < 1) "${Math.round(kaliD * 100)}%"
     else "x" + (Math.round(kaliD * 100) / 100.0).toString().removeSuffix(".0")
-    val jumlah = if (f.cnt > 0) f.cnt else 1
+    val jumlah = jumlahKirim
     val tingkat = f.tingkat.ifBlank {
         when {
             kali >= 100 -> "Highest"

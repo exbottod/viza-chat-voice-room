@@ -80,9 +80,18 @@ fun GreedyKingScreen(
         token = try {
             FirebaseAuth.getInstance().currentUser?.getIdToken(false)?.await()?.token.orEmpty()
         } catch (e: Exception) { "" }
+        // Foto profil utama disimpan sebagai base64 di pub/{uid}/av; "photo" hanya
+        // tautan akun Google dan sering kosong. Dulu hanya "photo" yang dibaca,
+        // jadi game tetap menampilkan huruf awal nama.
         foto = try {
-            Rtdb.ref("pub/$myUid/photo").get().await()
-                .getValue(String::class.java)?.trim().orEmpty()
+            val snap = Rtdb.ref("pub/$myUid").get().await()
+            val av = snap.child("av").getValue(String::class.java)?.trim().orEmpty()
+            val url = snap.child("photo").getValue(String::class.java)?.trim().orEmpty()
+            when {
+                av.startsWith("data:image/") || av.startsWith("http") -> av
+                av.length > 100 -> "data:image/jpeg;base64," + av.replace("\n", "").replace("\r", "")
+                else -> url
+            }
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) { "" }
@@ -298,7 +307,7 @@ private fun skripFoto(url: String): String {
     return "(function(){try{" +
         "var id='vizaFoto',st=document.getElementById(id);" +
         "if(!st){st=document.createElement('style');st.id=id;(document.head||document.documentElement).appendChild(st);}" +
-        "st.textContent=\"div.h-11.w-11,div.h-20.w-20{background-image:url('" + aman + "')!important;" +
+        "st.textContent=\"div.h-11.w-11.shrink-0.bg-card,div.h-20.w-20.bg-cream{background-image:url('" + aman + "')!important;" +
         "background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;" +
         "color:transparent!important;font-size:0!important}\";" +
         "}catch(e){}})()"

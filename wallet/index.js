@@ -2163,7 +2163,13 @@ async function cashbackGift(env, uid, p) {
     // Satu undian per kiriman, lalu dikali jumlah kirim. Kirim 5 buah = 5x
     // hadiah, tetapi tidak diundi lima kali (biar combo besar tidak "rata").
     const u = undiPersen(cfg, count);
-    untung = Math.max(0, Math.min(batas, Math.floor(price * u.mult) * count));
+    // Hadiah = harga SATU gift x pengali JP. Jumlah kirim hanya mengatur
+    // peluang, bukan mengalikan hadiah. Kalau pemilik mau hadiah ikut dikali
+    // jumlah kirim, isi "jpKaliJumlah": true di pengaturan cashback.
+    // Pengali JP berlaku untuk NILAI TOTAL kiriman (harga satuan x jumlah),
+    // jadi angka di lingkaran WIN sama dengan hadiah sebenarnya.
+    const dasar = price * count;
+    untung = Math.max(0, Math.min(batas, Math.floor(dasar * u.mult)));
     undian = { jackpot: u.mult >= 5 ? 1 : 0, kelompok: u.kelompok, peluang: 100, mult: u.mult };
   } else {
     const u = undiCashback(cfg, count);

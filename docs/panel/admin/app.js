@@ -1194,7 +1194,7 @@ async function gambarRoom() {
 }
 
 /* ================= gift ================= */
-const contohGift = { name: "", emoji: "🎁", price: 100, mediaUrl: "", mediaType: "", special: false, rocket: false, cashback: false, jpRate: 0, jpMult: 0, cbRate: 0, cbPrice: 0 };
+const contohGift = { name: "", emoji: "🎁", icon: "", price: 100, mediaUrl: "", mediaType: "", special: false, rocket: false, cashback: false, jpRate: 0, jpMult: 0, cbRate: 0, cbPrice: 0 };
 
 async function gambarGift() {
   const gifts = await ambilSemua("gifts", 300);
@@ -1206,7 +1206,7 @@ async function gambarGift() {
         <div class="filter"><div class="pil on">${gifts.length} item</div></div></div>
       ${gifts.length ? `<table><tr><th>GIFT</th><th>HARGA</th><th>MEDIA</th><th>TAMBAHAN</th><th>AKSI</th></tr>
         ${gifts.map((g) => `<tr>
-          <td><div class="user"><div class="mini">${aman(g.emoji || "🎁")}</div>${aman(g.name || g.id)}</div></td>
+          <td><div class="user"><div class="mini">${g.icon ? `<img src="${aman(g.icon)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : aman(g.emoji || "🎁")}</div>${aman(g.name || g.id)}</div></td>
           <td>${rupiah(g.price)} koin</td>
           <td>${g.mediaUrl ? `<a class="aksi" href="${aman(g.mediaUrl)}" target="_blank" rel="noopener">${aman(g.mediaType || "tautan")}</a>` : "—"}</td>
           <td>${[g.special && "special", g.rocket && "rocket", g.cashback && "cashback"].filter(Boolean).map((t) => `<span class="tag aktif">${t}</span>`).join(" ") || "—"}</td>
@@ -1236,6 +1236,11 @@ function formGift(gift) {
         ${["", "image", "video", "gif"].map((t) => `<option value="${t}" ${g.mediaType === t ? "selected" : ""}>${t || "(tanpa media)"}</option>`).join("")}
       </select></div>
     </div>
+    <div class="isian" style="margin-top:10px">
+      <label>Ikon gift 1:1 (dari perangkat atau tautan)</label>
+      ${htmlSumber("gi", g.icon, "image/png,image/jpeg,image/webp")}
+      <div class="catatan">Gambar persegi (1:1). Kalau ikon diisi, emoji tidak dipakai lagi di daftar gift.</div>
+    </div>
     <div style="margin-top:10px">${htmlSumber("g", g.mediaUrl)}</div>
     <div class="grid3" style="margin-top:10px">
       <div class="isian"><label>Jackpot rate</label><input id="gJp" type="number" value="${Number(g.jpRate) || 0}"></div>
@@ -1257,6 +1262,7 @@ function formGift(gift) {
       const data = {
         name: $("gNama").value.trim(),
         emoji: $("gEmoji").value.trim() || "🎁",
+        icon: (await urlDariSumber("gi", "gift").catch(() => "")) || g.icon || "",
         price: Number($("gHarga").value) || 0,
         mediaUrl: await urlDariSumber("g", "gift"),
         mediaType: $("gJenis").value,
@@ -1270,7 +1276,18 @@ function formGift(gift) {
         diperbarui: serverTimestamp()
       };
       if (!data.name) return toast("Nama gift wajib diisi", true);
-      await setDoc(doc(db, "gifts", gift?.id || `gift_${Date.now()}`), data, { merge: true });
+      const idGift = gift?.id || `gift_${Date.now()}`;
+      await setDoc(doc(db, "gifts", idGift), data, { merge: true });
+      // Salin ke Realtime Database supaya aplikasi dan server dompet membaca data
+      // yang sama (server butuh penanda cashback untuk hitung diamond 5%).
+      try {
+        await dSet(dRef(rtdb, "giftCfg/" + idGift), {
+          name: data.name, emoji: data.emoji, icon: data.icon || "",
+          price: data.price, mediaUrl: data.mediaUrl || "", mediaType: data.mediaType || "",
+          special: !!data.special, rocket: !!data.rocket, cashback: !!data.cashback,
+          jpRate: data.jpRate, jpMult: data.jpMult, cbRate: data.cbRate, cbPrice: data.cbPrice,
+        });
+      } catch (e) { toast("Tersimpan, tapi gagal salin ke RTDB: " + (e.message || e), true); }
       catatLog(gift ? "Edit gift" : "Tambah gift", data.name);
       toast("Gift disimpan");
       gambarGift();

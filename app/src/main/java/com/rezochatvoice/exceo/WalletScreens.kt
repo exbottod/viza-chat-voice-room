@@ -179,6 +179,8 @@ data class Gift(
     val id: String,
     val name: String,
     val emoji: String,
+    /** Ikon unggahan 1:1 dari panel. Kalau diisi, tampil menggantikan emoji. */
+    val icon: String = "",
     val price: Long,
     val mediaUrl: String = "",
     val mediaType: String = "",
@@ -1297,7 +1299,14 @@ private fun GiftCell(g: Gift, selected: Boolean, modifier: Modifier, onClick: ()
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box {
-            if (g.mediaUrl.isNotBlank() && !isVideoMedia(g.mediaUrl, g.mediaType) && !isSvgaMedia(g.mediaUrl, g.mediaType)) {
+            if (g.icon.isNotBlank()) {
+                AsyncImage(
+                    model = g.icon,
+                    contentDescription = g.name,
+                    modifier = Modifier.size(38.dp).clip(RoundedCornerShape(9.dp)),
+                    contentScale = ContentScale.Crop,
+                )
+            } else if (g.mediaUrl.isNotBlank() && !isVideoMedia(g.mediaUrl, g.mediaType) && !isSvgaMedia(g.mediaUrl, g.mediaType)) {
                 AsyncImage(
                     model = g.mediaUrl,
                     contentDescription = g.name,

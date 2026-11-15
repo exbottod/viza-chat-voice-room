@@ -638,6 +638,7 @@ const CB_BAWAAN = {
     { m: 1000, n: 1799 },
   ],
   kurvaAktif: true,
+  kurvaMode: "acak",
   tiersPersen: [
     { m: 0.1, w: 50 },
     { m: 0.2, w: 25 },
@@ -854,6 +855,12 @@ async function gambarCashback() {
           <div class="isian" style="margin-top:6px"><label>Kurva JP aktif</label>
             <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="cbKurvaOn" ${cfg.kurvaAktif === false ? "" : "checked"} style="width:auto">pakai kurva 1:N</label>
           </div>
+          <div class="isian" style="margin-top:6px"><label>Cara pilih pengali</label>
+            <select id="cbKurvaMode">
+              <option value="acak" ${String(cfg.kurvaMode || "acak") === "acak" ? "selected" : ""}>Acak rata (sekali klik bisa x10)</option>
+              <option value="kurva" ${String(cfg.kurvaMode || "acak") === "kurva" ? "selected" : ""}>Ikut kurva 1:N (besar makin jarang)</option>
+            </select>
+          </div>
           <div id="cbKurvaRin"></div>
         </div>
         <div class="isian" style="margin-top:12px">
@@ -918,6 +925,7 @@ async function gambarCashback() {
       bebasZonkMulai: Math.max(0, Math.min(999, Number($("cbBebasZonk").value) || 0)),
       jpKurva: bacaKurva($("cbKurva").value),
       kurvaAktif: $("cbKurvaOn").checked,
+      kurvaMode: $("cbKurvaMode").value === "kurva" ? "kurva" : "acak",
       tiers: tiers,
       boostJumlah: bacaBoostJumlah($("cbBoost").value),
       zonkPct: Math.max(0, Math.min(90, Math.floor(Number($("cbZonk").value) || 0))),

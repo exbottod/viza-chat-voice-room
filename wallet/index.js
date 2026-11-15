@@ -2127,7 +2127,17 @@ function undiKurva(cfg, count) {
   });
   const total = bobot.reduce((a, b) => a + b.w, 0);
   let acak = Math.random() * 100;
+  // Peluang dapat sesuatu tetap mengikuti kurva (1:N). Bedanya cuma cara
+  // memilih pengalinya:
+  // - "acak" (bawaan): sekali klik bisa langsung x10 atau x1000, karena
+  //   pengali diundi rata dari daftar kurva.
+  // - "kurva": pengali besar makin jarang sesuai 1:N.
+  const mode = String(cfg?.kurvaMode || "acak").toLowerCase();
   if (acak >= total) return { mult: 0, zonk: 1, kelompok: -1 };
+  if (mode === "acak") {
+    const i = Math.floor(Math.random() * bobot.length);
+    return { mult: bobot[i].m, kelompok: i };
+  }
   for (let i = 0; i < bobot.length; i++) {
     acak -= bobot[i].w;
     if (acak <= 0) return { mult: bobot[i].m, kelompok: i };

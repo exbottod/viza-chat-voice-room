@@ -195,7 +195,7 @@ private fun GiftFlyOnce(
         giftAlpha.animateTo(0f, tween(320))
         // Tunggu pecahan selesai diputar sebelum efektor dilepas. Pecahan CSS
         // butuh sekitar 2 detik, jadi jangan dipotong terlalu cepat.
-        delay(if (f.cbOn && f.parts.isNotEmpty()) 2500L else 700L + f.parts.size * 260L)
+        delay(if (f.cbOn && f.cb > 0L) 4200L else 700L + f.parts.size * 260L)
         onDone()
     }
 
@@ -233,8 +233,20 @@ private fun GiftFlyOnce(
         }
         if (f.mult > 0 && f.cb > 0) MultBall(f.mult, f.cb, target)
     }
-    // Pecahan (koin angka) sekarang digambar pakai CSS di tengah layar.
-    if (f.cbOn && f.parts.isNotEmpty()) PecahanCss(f.parts)
+    // Efek tengah layar (CSS): pengali berputar, nominal naik, konfeti, lalu
+    // koin pecahan disebar. Nilainya tetap dari server.
+    if (f.cbOn && f.cb > 0L) {
+        val hargaSatu = if (f.unit > 0L) f.unit else if (f.cnt > 0) f.price / f.cnt else f.price
+        val kaliTampil = if (f.kelipatan > 0) f.kelipatan.toDouble()
+        else if (hargaSatu > 0L) f.cb.toDouble() / hargaSatu else 1.0
+        PecahanCss(
+            nilai = f.parts,
+            total = f.cb,
+            kali = kaliTampil,
+            emoji = f.emoji,
+            label = "",
+        )
+    }
     // Tampilan lama (pil "+angka" di bawah avatar dan banner "JP nama +angka" ungu)
     // dihapus. Yang tersisa: gift terbang, pecahan angka (SVGA), dan bola pengali.
 }

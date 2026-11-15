@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Pecahan Cashback</title>
+<title>Cashback</title>
 <style>
   html, body {
     margin: 0; padding: 0; height: 100%; width: 100%;
@@ -13,98 +13,268 @@
   }
   #stage {
     position: fixed; inset: 0;
-    display: flex; align-items: center; justify-content: center;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
   }
-  #core { position: relative; width: 0; height: 0; }
 
+  /* Kilau dasar di belakang efek. */
+  #glow {
+    position: absolute; left: 50%; top: 50%;
+    width: 280px; height: 280px; margin: -140px 0 0 -140px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 210, 77, .5) 0%, rgba(255, 170, 0, .16) 46%, transparent 72%);
+    animation: glow 2.6s ease-out forwards;
+    pointer-events: none;
+  }
+  @keyframes glow {
+    0%   { opacity: 0; transform: scale(.4); }
+    22%  { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.55); }
+  }
+
+  /* Ikon gift: muncul membal lalu memudar, di belakang angka. */
+  #gift {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 74px; line-height: 1;
+    filter: drop-shadow(0 0 22px rgba(255, 215, 0, .85));
+    animation: popGift 1.5s cubic-bezier(.175, .885, .32, 1.275) forwards;
+    pointer-events: none;
+  }
+  @keyframes popGift {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0) rotate(-18deg); }
+    35%  { opacity: 1; transform: translate(-50%, -58%) scale(1.25) rotate(8deg); }
+    60%  { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+    100% { opacity: 0; transform: translate(-50%, -62%) scale(.92); }
+  }
+
+  /* Tumpukan tengah: badge, pengali, nominal. */
+  #tengah {
+    position: relative;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 2px;
+    opacity: 0;
+    animation: masuk .35s ease-out .55s forwards;
+  }
+  @keyframes masuk {
+    from { opacity: 0; transform: scale(.82) translateY(10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 5px 16px; border-radius: 20px;
+    font-size: 12px; font-weight: 900; letter-spacing: 1.2px;
+    text-transform: uppercase;
+    background: #2ed573; color: #08240f;
+    box-shadow: 0 0 16px rgba(46, 213, 115, .55);
+  }
+  .badge.lucky {
+    background: #1e90ff; color: #04121f;
+    box-shadow: 0 0 16px rgba(30, 144, 255, .55);
+  }
+  .badge.jp {
+    background: linear-gradient(45deg, #ffd700, #ff8c00);
+    color: #3b2200;
+    box-shadow: 0 0 26px rgba(255, 196, 0, .9);
+    animation: kedip 0.7s ease-in-out infinite alternate;
+  }
+  @keyframes kedip {
+    from { box-shadow: 0 0 14px rgba(255, 196, 0, .55); }
+    to   { box-shadow: 0 0 30px rgba(255, 196, 0, 1); }
+  }
+
+  /* Pengali: angka berputar dulu, lalu berhenti di nilai sebenarnya. */
+  .mult {
+    font-size: 62px; font-weight: 900; line-height: 1.05;
+    background: linear-gradient(to bottom, #ffffff, #ffd24d 70%, #f0a100);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 6px 18px rgba(255, 200, 0, .28);
+    letter-spacing: -1px;
+    transform: scale(.9);
+  }
+  .mult.putar { animation: goyang .09s linear infinite alternate; }
+  @keyframes goyang {
+    from { transform: scale(.9) translateY(-2px); }
+    to   { transform: scale(.96) translateY(2px); }
+  }
+  .mult.berhenti { animation: henti .45s cubic-bezier(.2, .9, .3, 1) forwards; }
+  @keyframes henti {
+    0%   { transform: scale(1.28); }
+    100% { transform: scale(1); }
+  }
+
+  .amount {
+    font-size: 19px; font-weight: 900;
+    color: #2ed573;
+    text-shadow: 0 0 14px rgba(46, 213, 115, .45);
+    margin-top: 2px;
+  }
+  .amount.jp { color: #ffd24d; text-shadow: 0 0 16px rgba(255, 210, 77, .6); }
+
+  /* Pecahan koin: disebar melingkar di tengah layar. */
+  #koin {
+    position: absolute; left: 50%; top: 50%;
+    width: 0; height: 0;
+  }
   .coin {
     position: absolute; left: 0; top: 0;
     width: 74px; height: 74px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-weight: 900; font-size: 14px; letter-spacing: .2px;
     color: #4a2600;
-    background:
-      radial-gradient(circle at 32% 26%, #fff9dd 0%, #ffd24d 42%, #f0a100 76%, #b96b00 100%);
+    background: radial-gradient(circle at 32% 26%, #fff9dd 0%, #ffd24d 42%, #f0a100 76%, #b96b00 100%);
     box-shadow: 0 0 18px rgba(255, 196, 0, .85), inset 0 -4px 10px rgba(120, 60, 0, .45);
     opacity: 0;
     will-change: transform, opacity;
-    animation: pop 1.75s cubic-bezier(.2, .9, .3, 1) forwards;
+    animation: pop 1.7s cubic-bezier(.2, .9, .3, 1) forwards;
   }
   .coin::after {
     content: ""; position: absolute; inset: 5px;
     border: 2px dashed rgba(255, 255, 255, .55); border-radius: 50%;
   }
   .coin span { position: relative; z-index: 1; }
-
-  .big {
-    width: 96px; height: 96px; font-size: 16px;
-    box-shadow: 0 0 30px rgba(255, 205, 60, .95), inset 0 -5px 12px rgba(120, 60, 0, .5);
-  }
-
-  /* Satu efek inti: skala naik, mengambang sedikit, lalu memudar. */
   @keyframes pop {
-    0%   { opacity: 0; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(.25); }
-    22%  { opacity: 1; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1.2); }
+    0%   { opacity: 0; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(.3); }
+    22%  { opacity: 1; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1.16); }
     38%  { opacity: 1; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1); }
-    75%  { opacity: 1; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y) - 18px)) scale(1); }
-    100% { opacity: 0; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y) - 52px)) scale(.86); }
+    76%  { opacity: 1; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y) - 16px)) scale(1); }
+    100% { opacity: 0; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y) - 48px)) scale(.88); }
   }
 
-  /* Kilau di belakang koin, biar terasa "pecah" dari tengah. */
-  #glow {
-    position: absolute; left: 50%; top: 50%;
-    width: 240px; height: 240px; margin: -120px 0 0 -120px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 210, 77, .55) 0%, rgba(255, 170, 0, .18) 45%, transparent 72%);
-    animation: glow 1.6s ease-out forwards;
+  /* Konfeti: hanya untuk lucky dan jackpot. */
+  .particle {
+    position: fixed; left: 50%; top: 46%;
+    width: 9px; height: 9px; border-radius: 50%;
     pointer-events: none;
+    animation: explode 1.15s ease-out forwards;
   }
-  @keyframes glow {
-    0%   { opacity: 0; transform: scale(.4); }
-    30%  { opacity: 1; transform: scale(1); }
-    100% { opacity: 0; transform: scale(1.5); }
+  @keyframes explode {
+    0%   { opacity: 1; transform: translate(0, 0) scale(1); }
+    100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0); }
   }
 </style>
 </head>
 <body>
   <div id="stage">
-    <div id="core"><div id="glow"></div></div>
+    <div id="glow"></div>
+    <div id="gift">🎁</div>
+    <div id="koin"></div>
+    <div id="tengah">
+      <div class="badge" id="badge">CASHBACK</div>
+      <div class="mult" id="mult">x0</div>
+      <div class="amount" id="amount">+0</div>
+    </div>
   </div>
 <script>
-  var NILAI = __DATA__;
+  var DATA = __DATA__;
 
   function rupiah(n) {
     n = Math.round(Number(n) || 0);
     return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   }
 
-  function tampil() {
-    var core = document.getElementById("core");
-    var list = (NILAI || []).filter(function (v) { return Number(v) > 0; });
-    if (!list.length) return;
-
-    // Satu pecahan: tampil besar tepat di tengah. Lebih dari satu: disebar
-    // melingkar rapat di tengah layar seperti di aplikasi acuan.
-    var jari = list.length > 1 ? Math.min(132, 78 + list.length * 14) : 0;
-
-    list.forEach(function (v, i) {
-      var el = document.createElement("div");
-      el.className = "coin" + (list.length === 1 ? " big" : "");
-      el.innerHTML = "<span>" + rupiah(v) + "</span>";
-      var sudut = -Math.PI / 2 + (i * 2 * Math.PI) / list.length;
-      var x = Math.cos(sudut) * jari;
-      var y = Math.sin(sudut) * jari;
-      el.style.setProperty("--x", x.toFixed(1) + "px");
-      el.style.setProperty("--y", y.toFixed(1) + "px");
-      el.style.animationDelay = (i * 0.16).toFixed(2) + "s";
-      core.appendChild(el);
-    });
+  // 0.5 ditulis "50%", 5 ditulis "x5".
+  function labelKali(k) {
+    k = Number(k) || 0;
+    if (k > 0 && k < 1) return Math.round(k * 100) + "%";
+    return "x" + (Math.round(k * 100) / 100);
   }
 
-  if (document.readyState === "complete" || document.readyState === "interactive") {
-    setTimeout(tampil, 16);
+  function mulai() {
+    var total = Number(DATA.total) || 0;
+    var kali = Number(DATA.kali) || 0;
+    var jenis = (DATA.jenis || "cashback").toLowerCase();
+    var gift = DATA.emoji || "🎁";
+
+    document.getElementById("gift").textContent = gift;
+    var badge = document.getElementById("badge");
+    var mult = document.getElementById("mult");
+    var amount = document.getElementById("amount");
+
+    badge.textContent = DATA.label || "CASHBACK";
+    badge.className = "badge" + (jenis === "jp" ? " jp" : jenis === "lucky" ? " lucky" : "");
+    if (jenis === "jp") amount.className = "amount jp";
+
+    // 1. Pengali berputar dulu, makin lambat, lalu berhenti di nilai asli.
+    mult.textContent = "x0";
+    mult.classList.add("putar");
+    var t = 0;
+    var delay = 55;
+    function putar() {
+      mult.textContent = labelKali(Math.random() * Math.max(2, kali * 2));
+      t += delay;
+      delay = Math.min(240, delay * 1.22);
+      if (t < 900) setTimeout(putar, delay);
+      else {
+        mult.classList.remove("putar");
+        mult.classList.add("berhenti");
+        mult.textContent = labelKali(kali);
+        hitung(total);
+        if (jenis !== "cashback") konfeti();
+        koinPecahan(total);
+      }
+    }
+    setTimeout(putar, 700);
+
+    // 2. Nominal naik perlahan sampai angka akhir.
+    function hitung(target) {
+      var mulaiWaktu = null;
+      var durasi = 520;
+      amount.textContent = "+0";
+      function langkah(waktu) {
+        if (!mulaiWaktu) mulaiWaktu = waktu;
+        var p = Math.min(1, (waktu - mulaiWaktu) / durasi);
+        var nilai = Math.round(target * (1 - Math.pow(1 - p, 3)));
+        amount.textContent = "+" + rupiah(nilai) + (DATA.satuan || " koin");
+        if (p < 1) requestAnimationFrame(langkah);
+      }
+      requestAnimationFrame(langkah);
+    }
+
+    // 3. Pecahan koin muncul setelah pengali berhenti.
+    function koinPecahan(total) {
+      var daftar = (DATA.nilai || []).filter(function (v) { return Number(v) > 0; });
+      if (!daftar.length) return;
+      var koin = document.getElementById("koin");
+      var jari = daftar.length > 1 ? Math.min(130, 74 + daftar.length * 14) : 0;
+      daftar.forEach(function (v, i) {
+        var el = document.createElement("div");
+        el.className = "coin";
+        el.innerHTML = "<span>" + rupiah(v) + "</span>";
+        var sudut = -Math.PI / 2 + (i * 2 * Math.PI) / daftar.length;
+        el.style.setProperty("--x", (Math.cos(sudut) * jari).toFixed(1) + "px");
+        el.style.setProperty("--y", (Math.sin(sudut) * jari).toFixed(1) + "px");
+        el.style.animationDelay = (i * 0.14).toFixed(2) + "s";
+        koin.appendChild(el);
+      });
+    }
+
+    // 4. Ledakan konfeti sederhana dari tengah layar.
+    function konfeti() {
+      var warna = ["#ffd700", "#ff4757", "#2ed573", "#1e90ff", "#ff6b81", "#ffffff"];
+      for (var i = 0; i < 30; i++) {
+        var p = document.createElement("div");
+        p.className = "particle";
+        var a = Math.random() * Math.PI * 2;
+        var r = 120 + Math.random() * 190;
+        p.style.setProperty("--tx", (Math.cos(a) * r).toFixed(0) + "px");
+        p.style.setProperty("--ty", (Math.sin(a) * r).toFixed(0) + "px");
+        p.style.background = warna[i % warna.length];
+        p.style.animationDelay = (Math.random() * 0.18).toFixed(2) + "s";
+        if (i % 3 === 0) { p.style.borderRadius = "2px"; p.style.width = "6px"; p.style.height = "14px"; }
+        document.body.appendChild(p);
+        setTimeout(function (el) { return function () { el.remove(); }; }(p), 1600);
+      }
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", mulai);
   } else {
-    document.addEventListener("DOMContentLoaded", tampil);
+    setTimeout(mulai, 16);
   }
 </script>
 </body>

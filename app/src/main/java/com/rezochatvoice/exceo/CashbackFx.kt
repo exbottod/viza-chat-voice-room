@@ -279,7 +279,7 @@ private fun SelamatCashback(f: GiftFly) {
     }
 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(
+        Box(
             Modifier
                 .padding(top = 120.dp, start = 22.dp, end = 22.dp)
                 .fillMaxWidth()
@@ -302,9 +302,11 @@ private fun SelamatCashback(f: GiftFly) {
                     1.5.dp,
                     if (dapat) Color(0xFFFFD24D) else Color(0xFF616161),
                     RoundedCornerShape(18.dp),
-                )
-                .padding(horizontal = 14.dp, vertical = 13.dp),
+                ),
         ) {
+            // Latar animasi SVGA: pakai aset marquee dari APK acuan kalau ada.
+            if (dapat) LuckyMarqueeBg(Modifier.matchParentSize())
+            Column(Modifier.padding(horizontal = 14.dp, vertical = 13.dp)) {
             // Baris atas: judul + badge kelipatan dan tingkat.
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 Text(
@@ -403,8 +405,54 @@ private fun SelamatCashback(f: GiftFly) {
                     maxLines = 1,
                 )
             }
+            }
         }
     }
+}
+
+/**
+ * Latar animasi kartu pemenang (aset SVGA marquee). Kalau aset tidak ada,
+ * kartu tetap tampil dengan latar gradasi biasa.
+ */
+@Composable
+private fun LuckyMarqueeBg(modifier: Modifier = Modifier) {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val ada = remember {
+        try {
+            ctx.assets.open("cashback/lucky_gift_marquee_bg.svga").close()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+    if (!ada) return
+    androidx.compose.ui.viewinterop.AndroidView(
+        modifier = modifier.graphicsLayer { alpha = 0.5f },
+        factory = { c ->
+            com.opensource.svgaplayer.SVGAImageView(c).apply {
+                loops = 1
+                clearsAfterStop = false
+                isClickable = false
+                scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
+                val parser = com.opensource.svgaplayer.SVGAParser(c)
+                try {
+                    parser.decodeFromInputStream(
+                        c.assets.open("cashback/lucky_gift_marquee_bg.svga"),
+                        "lucky_gift_marquee_bg.svga",
+                        object : com.opensource.svgaplayer.SVGAParser.ParseCompletion {
+                            override fun onComplete(videoItem: com.opensource.svgaplayer.SVGAVideoEntity) {
+                                setVideoItem(videoItem)
+                                startAnimation()
+                            }
+
+                            override fun onError() {}
+                        },
+                        true,
+                    )
+                } catch (e: Exception) { }
+            }
+        },
+    )
 }
 
 /**

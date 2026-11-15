@@ -754,7 +754,9 @@ async function gambarCashback() {
       zonkPct: Math.max(0, Math.min(90, Math.floor(Number($("cbZonk").value) || 0))),
     };
     try {
-      await dSet(dRef(rtdb, "pub/_cashbackCfg"), baru);
+      // Disimpan lewat server dompet (kunci layanan), bukan langsung dari browser:
+      // aturan RTDB menolak tulisan dari panel, jadi dulu muncul PERMISSION_DENIED.
+      await walletAdmin({ op: "cb_cfg_set", cfg: baru });
       catatLog("Atur cashback gift", tiers.map((t) => `${t.p}% ${t.min}-${t.max}`).join(" | "));
       toast("Pengaturan cashback disimpan");
       gambarCashback();

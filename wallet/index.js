@@ -2720,6 +2720,28 @@ async function admin(env, body) {
     catch (err) { return gagal("Gagal menyimpan: " + String(err?.message ?? err)); }
   }
 
+  // ---- Cashback gift: disimpan lewat server supaya tidak kena aturan RTDB ----
+  if (op === "cb_cfg_get") {
+    return json({ ok: 1, cfg: await cfgRtdb("pub/_cashbackCfg") });
+  }
+  if (op === "cb_cfg_set") {
+    const c = p.cfg && typeof p.cfg === "object" ? p.cfg : null;
+    if (!c) return gagal("Pengaturan cashback tidak sah");
+    const token = await tokenLayanan(env);
+    if (!token) return gagal("Kunci layanan belum dipasang di server");
+    try {
+      const r = await fetch(
+        `${RTDB}/pub/_cashbackCfg.json?access_token=${encodeURIComponent(token)}`,
+        { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(c) },
+      );
+      if (!r.ok) return gagal("Gagal menyimpan cashback: HTTP " + r.status);
+    } catch (e) {
+      return gagal("Gagal menyimpan cashback: " + String(e?.message ?? e));
+    }
+    cache.delete("pub/_cashbackCfg");
+    return json({ ok: 1, cfg: c });
+  }
+
   // ---- Coin seller: pendaftaran (khusus developer) ----
   if (op === "seller_list") {
     return json({ ok: 1, seller: await daftarSeller(env, false) });

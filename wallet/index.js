@@ -2047,7 +2047,10 @@ const JP_KELOMPOK_BAWAAN = [
       { m: 10, w: 18 },
       { m: 20, w: 11 },
       { m: 50, w: 5 },
-      { m: 100, w: 1 },
+      { m: 100, w: 0.9 },
+      // Match random: 100x ke atas tetap bisa pecah besar, walau jarang.
+      { m: 500, w: 0.08 },
+      { m: 1000, w: 0.02 },
     ],
   },
   {
@@ -2059,6 +2062,10 @@ const JP_KELOMPOK_BAWAAN = [
       { m: 10, w: 9 },
       { m: 20, w: 5.5 },
       { m: 50, w: 0.5 },
+      // Kiriman besar pun masih bisa match 100x ke atas, sangat jarang.
+      { m: 100, w: 0.1 },
+      { m: 500, w: 0.01 },
+      { m: 1000, w: 0.002 },
     ],
   },
 ];

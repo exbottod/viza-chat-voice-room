@@ -624,6 +624,7 @@ const CB_BAWAAN = {
   boostJumlah: [
     { min: 1, p: 100 },
   ],
+  tanpaZonkMin: 520,
 };
 
 /** "520:78" -> kirim 520 ke atas dapat peluang 78%. */
@@ -715,13 +716,14 @@ async function gambarCashback() {
     <div class="panel" style="max-width:700px">
       <div class="panelAtas"><h3>Cashback gift</h3><div class="sub">persen dan rentang nominal</div></div>
       <div class="panelIsi">
-        <div class="catatan">Ditulis ke <b>pub/_cashbackCfg</b> dan langsung dipakai server dompet, tanpa build ulang aplikasi. Peluang menurut jumlah kirim: baris <b>520:78</b> berarti mulai kirim 520 buah, peluang dapat cashback 78% (sisanya zonk). Tiap kelompok undian ditulis <b>persen:minimal:maksimal</b>, mis. <b>70:1000:5000</b> berarti 70% dapat cashback acak 1.000 sampai 5.000. Nominal tidak dikali harga gift. Baris terakhir dianggap jackpot.</div>
+        <div class="catatan">Ditulis ke <b>pub/_cashbackCfg</b> dan langsung dipakai server dompet, tanpa build ulang aplikasi. Peluang menurut jumlah kirim: baris <b>520:78</b> berarti mulai kirim 520 buah, peluang dapat cashback 78%. Kirim banyak tidak zonk: mulai angka di kolom <b>Tanpa zonk mulai jumlah</b> (bawaan 520), peluang selalu 100%. Tiap kelompok undian ditulis <b>persen:minimal:maksimal</b>, mis. <b>70:1000:5000</b> berarti 70% dapat cashback acak 1.000 sampai 5.000. Nominal tidak dikali harga gift. Baris terakhir dianggap jackpot.</div>
         ${galat ? `<div class="catatan">${aman(galat)}</div>` : ""}
         <div class="barisIsian" style="margin-top:10px">
           <div class="isian"><label>Cashback aktif</label>
             <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="cbOn" ${cfg.on === false ? "" : "checked"} style="width:auto">aktif</label>
           </div>
           <div class="isian"><label>Bagian penerima gift (%)</label><input id="cbRecv" type="number" min="0" max="100" value="${Number(cfg.recvPct) || 0}"></div>
+          <div class="isian"><label>Tanpa zonk mulai jumlah</label><input id="cbNoZonk" type="number" min="0" value="${Number(cfg.tanpaZonkMin ?? 520) || 0}"></div>
         </div>
         <div class="isian" style="margin-top:12px">
           <label>Peluang menurut jumlah kirim (jumlah:persen, satu per baris)</label>
@@ -749,6 +751,7 @@ async function gambarCashback() {
       recvPct: Math.max(0, Math.min(100, Number($("cbRecv").value) || 0)),
       tiers: tiers,
       boostJumlah: bacaBoostJumlah($("cbBoost").value),
+      tanpaZonkMin: Math.max(0, Math.floor(Number($("cbNoZonk").value) || 0)),
     };
     try {
       await dSet(dRef(rtdb, "pub/_cashbackCfg"), baru);

@@ -1878,6 +1878,9 @@ function peluangMenurutJumlah(cfg, jumlah) {
     }))
     .filter((r) => r.p > 0)
     .sort((x, y) => x.min - y.min);
+  // Kirim banyak tidak boleh zonk: mulai jumlah tertentu peluang dipaksa 100%.
+  const tanpaZonk = Math.max(0, Math.floor(Number(cfg?.tanpaZonkMin ?? 520)));
+  if (tanpaZonk > 0 && jumlah >= tanpaZonk) return 100;
   if (!baris.length) return 100;
   const kena = baris.filter((r) => jumlah >= r.min);
   return kena.length ? kena[kena.length - 1].p : 100;
@@ -4246,7 +4249,7 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           stafAktif = Number(r[0].rows[0]?.a ?? 0);
           peran = r[1].rows.map((x) => String(x.role) + ":" + Number(x.n));
         } catch (e) { /* tabel belum ada */ }
-        return json({ ok: 1, v: "viza-2026-11-15-cashback-peluang-jumlah", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
+        return json({ ok: 1, v: "viza-2026-11-15-cashback-tanpa-zonk", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
       } catch (e) {
         return json({ ok: 0, v: "viza-2026-11-13-mandiri", db: String(e?.message ?? e) }, 500);
       }

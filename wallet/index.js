@@ -1943,10 +1943,12 @@ async function cashbackGift(env, uid, p) {
   const parts = untung > 0 ? [untung] : [];
   const amount = await beriCoin(env, uid, kredit, "cashback", null);
 
-  // Bagian penerima gift: 70% harga gift, 30% untuk platform.
+  // Penerima gift langsung dapat coin 70% dari harga gift (angka diatur dari
+  // panel: "Bagian penerima gift (%)"). Sisanya untuk platform.
+  const recvPct = Math.max(0, Math.min(100, Number(cfg.recvPct ?? (100 - PLATFORM_FEE_PCT))));
   const to = String(p.to ?? "").trim();
   const bagianPenerima = to && to !== uid
-    ? Math.floor((nilai * (100 - PLATFORM_FEE_PCT)) / 100)
+    ? Math.floor((nilai * recvPct) / 100)
     : 0;
   const recv = bagianPenerima > 0
     ? await beriCoin(env, to, bagianPenerima, "cashback_recv", null)
@@ -4262,7 +4264,7 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           stafAktif = Number(r[0].rows[0]?.a ?? 0);
           peran = r[1].rows.map((x) => String(x.role) + ":" + Number(x.n));
         } catch (e) { /* tabel belum ada */ }
-        return json({ ok: 1, v: "viza-2026-11-15-cashback-diamond5", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
+        return json({ ok: 1, v: "viza-2026-11-15-cashback-70persen", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
       } catch (e) {
         return json({ ok: 0, v: "viza-2026-11-13-mandiri", db: String(e?.message ?? e) }, 500);
       }

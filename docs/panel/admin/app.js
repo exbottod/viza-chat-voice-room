@@ -782,6 +782,7 @@ const daftarHal = {
   katalog: { judul: "Katalog game", crumb: "Dashboard / Game", gambar: gambarKatalog },
   pasang: { judul: "Pasang game", crumb: "Dashboard / Game", gambar: gambarPasang },
   bet: { judul: "Bet game", crumb: "Dashboard / Game", gambar: gambarBet },
+  greedy: { judul: "Greedy King", crumb: "Dashboard / Game", gambar: gambarGreedy },
   database: { judul: "Database", crumb: "Dashboard / Data", gambar: gambarDatabase },
   latar: { judul: "Background tab", crumb: "Dashboard / Background tab", gambar: gambarLatar },
   cs: { judul: "Customer Service", crumb: "Dashboard / Customer Service", gambar: gambarCs },
@@ -805,6 +806,7 @@ const keteranganHal = {
   aset: "Kartu VIP, frame, efek masuk, gelembung chat, medali, ID unik",
   katalog: "Game yang sudah terpasang",
   pasang: "Tambah game baru dengan alamat dan key production",
+  greedy: "Chip bet dan RTP Greedy King (75 standar, 100 sering JP)",
   bet: "Atur nilai bet tiap game",
   database: "Lihat, ubah, dan hapus dokumen Firestore",
   log: "Riwayat aksi yang dilakukan admin",
@@ -2710,6 +2712,43 @@ async function gambarPasang() {
       toast("Game terpasang");
       gambarPasang();
     } catch (e) { toast("Gagal: " + (e.code || e.message), true); }
+  };
+}
+
+/**
+ * Greedy King: chip bet dan RTP.
+ * RTP 75 = standar. Naikkan (mis. 100) supaya hasil besar (steak, pizza, salad)
+ * lebih sering keluar, jadi JP sering kena. Disimpan lewat server dompet karena
+ * aturan RTDB menolak tulisan langsung dari browser panel.
+ */
+async function gambarGreedy() {
+  let cfg = { bet: [100, 500, 1000, 5000, 50000], rtp: 75 };
+  try { cfg = Object.assign(cfg, await walletAdmin({ op: "gk_cfg_get" })); }
+  catch (e) { toast("Gagal memuat pengaturan greedy: " + (e.message || e), true); }
+  const chipTeks = (cfg.bet || []).join(", ");
+  $("isiHal").innerHTML = `
+    <div class="panel" style="max-width:620px">
+      <div class="panelAtas"><h3>Greedy King</h3><div class="sub">chip bet &amp; RTP</div></div>
+      <div class="panelIsi">
+        <div class="isian"><label>Pilihan chip bet (pisahkan dengan koma)</label>
+          <input id="gkBet" value="${aman(chipTeks)}" placeholder="100,500,1000,5000,50000"></div>
+        <div class="isian" style="margin-top:10px"><label>RTP game (%)</label>
+          <input id="gkRtp" type="number" min="40" max="200" value="${aman(String(cfg.rtp ?? 75))}"></div>
+        <div class="catatan">75 = standar. 100 = hasil besar lebih sering (JP sering kena).
+          Batas 40 sampai 200. Chip bet ikut berubah di aplikasi tanpa build ulang.</div>
+        <button class="tombol" id="gkSimpan" style="margin-top:14px">Simpan pengaturan</button>
+      </div>
+    </div>`;
+  $("gkSimpan").onclick = async () => {
+    const bet = $("gkBet").value.split(",").map((x) => Number(String(x).trim())).filter((x) => x > 0);
+    if (!bet.length) return toast("Isi minimal satu chip bet", true);
+    const rtp = Math.max(40, Math.min(200, Math.floor(Number($("gkRtp").value) || 75)));
+    try {
+      await walletAdmin({ op: "gk_cfg_set", bet, rtp });
+      catatLog("Atur Greedy", "rtp " + rtp + " | chip " + bet.join(","));
+      toast("Pengaturan Greedy disimpan");
+      gambarGreedy();
+    } catch (e) { toast("Gagal menyimpan: " + (e.message || e), true); }
   };
 }
 

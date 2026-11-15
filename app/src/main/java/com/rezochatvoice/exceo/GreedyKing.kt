@@ -114,6 +114,21 @@ fun GreedyKingScreen(
         }
     }
 
+    // Chip bet bisa diubah dari panel kapan saja; selagi game terbuka nilainya
+    // dimuat ulang dan disuntik ke halaman kalau berubah.
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(15000L)
+            val baru = try { BetCfg.load("greedyking", listOf(100L, 500L, 1000L, 5000L, 50000L)) }
+            catch (e: Exception) { null } ?: continue
+            val teks = baru.joinToString(",", "[", "]")
+            if (teks != chips) {
+                chips = teks
+                try { wvPegang.value?.evaluateJavascript("window.__gkBet=" + teks + ";", null) } catch (e: Exception) { }
+            }
+        }
+    }
+
     // Foto profil biasanya baru terbaca setelah halaman tampil, jadi disuntik ulang.
     LaunchedEffect(foto) {
         if (foto.isNotBlank()) {
@@ -248,6 +263,11 @@ fun GreedyKingScreen(
                                 // Segarkan token di halaman supaya tombol coba lagi
                                 // memakai sesi yang benar.
                                 if (foto.isNotBlank()) view.evaluateJavascript(skripFoto(foto), null)
+                                // Chip bet dari panel (betCfg/greedyking/chips) dipasang
+                                // ke halaman game supaya pilihan taruhan ikut berubah.
+                                if (chips != "[]") {
+                                    view.evaluateJavascript("window.__gkBet=" + chips + ";", null)
+                                }
                                 val tAman = token.replace("'", "")
                                 view.evaluateJavascript(
                                     "window.__GREEDY_TOKEN__='" + tAman + "';" +

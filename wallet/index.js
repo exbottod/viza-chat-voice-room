@@ -51,20 +51,53 @@ const MAKS_BET = 1000000000000;
 const roundOf = (ms) => Math.floor(ms / ROUND_MS);
 const sedangPasang = (ms) => ms % ROUND_MS < BET_MS;
 
-function pickResult(r) {
-  const total = WEIGHTS.reduce((s, [, w]) => s + w, 0);
+function pickResult(r, daftar) {
+  const rows = Array.isArray(daftar) && daftar.length ? daftar : WEIGHTS;
+  const total = rows.reduce((s, [, w]) => s + w, 0);
   let x = r * total;
-  for (const [id, w] of WEIGHTS) {
+  for (const [id, w] of rows) {
     if (x < w) return id;
     x -= w;
   }
   return "carrot";
 }
 
-async function resultFor(round) {
+// ---- Pengaturan Greedy dari panel: daftar chip bet dan RTP ----
+// RTP 75 = standar (bobot bawaan). Naikkan RTP (mis. 100) maka peluang hasil
+// bernilai besar (steak, pizza, salad) ikut naik, jadi JP lebih sering keluar.
+const GK_BAWAAN = { bet: [100, 500, 1000, 5000, 50000], rtp: 75 };
+async function gkCfg() {
+  const d = await cfgRtdb("pub/_greedyCfg");
+  let bet = Array.isArray(d?.bet) ? d.bet.map((x) => Math.floor(Number(x) || 0)).filter((x) => x > 0) : [];
+  if (!bet.length) bet = GK_BAWAAN.bet.slice();
+  bet = bet.slice(0, 8).sort((a, b) => a - b);
+  const rtp = Math.max(40, Math.min(200, Number(d?.rtp ?? GK_BAWAAN.rtp)));
+  return { bet, rtp };
+}
+
+/** Bayaran per 1 coin untuk tiap hasil (dipakai menghitung bobot RTP). */
+const ODDS_HASIL = (() => {
+  const o = {};
+  for (const d of DISHES) o[d.id] = d.odds;
+  const veg = DISHES.filter((d) => d.group === "veg").reduce((a, d) => a + d.odds, 0) + GROUP_ODDS.veg;
+  const meat = DISHES.filter((d) => d.group === "meat").reduce((a, d) => a + d.odds, 0) + GROUP_ODDS.meat;
+  o.salad = veg;
+  o.pizza = meat;
+  return o;
+})();
+
+/** Bobot hasil untuk RTP tertentu: makin tinggi RTP, makin sering hasil besar. */
+function bobotRtp(rtp) {
+  const r = Math.max(40, Math.min(200, Number(rtp) || 75));
+  const a = (r - 75) / 75; // 75 -> 0 (bawaan), 100 -> 0.33, 150 -> 1
+  if (Math.abs(a) < 1e-6) return WEIGHTS;
+  return WEIGHTS.map(([id, w]) => [id, w * Math.pow((ODDS_HASIL[id] || 5) / 5, a)]);
+}
+
+async function resultFor(round, rtp) {
   const data = new TextEncoder().encode(`${SALT}:${round}`);
   const buf = await crypto.subtle.digest("SHA-256", data);
-  return pickResult(new DataView(buf).getUint32(0) / 2 ** 32);
+  return pickResult(new DataView(buf).getUint32(0) / 2 ** 32, bobotRtp(rtp));
 }
 
 function payout(bets, result) {
@@ -152,6 +185,11 @@ async function greedyPlay(req, env, h) {
     );
     return hasil;
   };
+  // Konfigurasi game untuk aplikasi: daftar chip bet dan RTP yang berlaku.
+  if (url.pathname.endsWith("/cfg")) {
+    const c = await gkCfg();
+    return json({ ok: 1, bet: c.bet, chips: c.bet, rtp: c.rtp });
+  }
   if (url.pathname.endsWith("/top-winners") || url.pathname.endsWith("/round-winners")) {
     await siap();
     const batas = Math.min(20, Math.max(1, Number(url.searchParams.get("limit") || 8)));
@@ -244,7 +282,7 @@ async function greedyPlay(req, env, h) {
     let hasil = ada[0].rows[0]?.result;
 
     if (!hasil) {
-      hasil = await resultFor(round);
+      hasil = await resultFor(round, (await gkCfg()).rtp);
       const bets = await pipe(env, [
         { sql: "select uid, nama, pot, sum(amount) amount from greedy_bet where round = ? group by uid, pot",
           args: [I(round)] },
@@ -2720,6 +2758,39 @@ async function admin(env, body) {
     if (!Number.isFinite(e) || e < 1) return gagal("Rasio exp tidak sah");
     try { return json({ ok: 1, ...(await famCfgSimpan({ harga: h, exp_per_coin: e })) }); }
     catch (err) { return gagal("Gagal menyimpan: " + String(err?.message ?? err)); }
+  }
+
+  // ---- Greedy King: chip bet & RTP (disimpan lewat server, kunci layanan) ----
+  if (op === "gk_cfg_get") {
+    return json({ ok: 1, ...(await gkCfg()) });
+  }
+  if (op === "gk_cfg_set") {
+    const bet = (Array.isArray(p.bet) ? p.bet : String(p.bet ?? "").split(","))
+      .map((x) => Math.floor(Number(x) || 0)).filter((x) => x > 0).slice(0, 8);
+    const rtp = Math.max(40, Math.min(200, Math.floor(Number(p.rtp ?? 75))));
+    if (!bet.length) return gagal("Isi minimal satu chip bet");
+    const cfgBaru = { bet: bet.sort((a, b) => a - b), rtp };
+    const token = await tokenLayanan(env);
+    if (!token) return gagal("Kunci layanan belum dipasang di server");
+    const q = "?access_token=" + encodeURIComponent(token);
+    try {
+      const r1 = await fetch(`${RTDB}/pub/_greedyCfg.json${q}`, {
+        method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(cfgBaru),
+      });
+      if (!r1.ok) return gagal("Gagal menyimpan greedy: HTTP " + r1.status);
+      // Cermin ke betCfg/greedyking/chips supaya chip di aplikasi ikut berubah.
+      const r2 = await fetch(`${RTDB}/betCfg/greedyking/chips.json${q}`, {
+        method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(cfgBaru.bet),
+      });
+      const r3 = await fetch(`${RTDB}/pub/_betCfg/greedyking/chips.json${q}`, {
+        method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(cfgBaru.bet),
+      });
+      if (!r2.ok || !r3.ok) return json({ ok: 1, ...cfgBaru, catatan: "chip tersimpan, cermin betCfg gagal" });
+    } catch (e) {
+      return gagal("Gagal menyimpan greedy: " + String(e?.message ?? e));
+    }
+    cache.delete("pub/_greedyCfg");
+    return json({ ok: 1, ...cfgBaru });
   }
 
   // ---- Cashback gift: disimpan lewat server supaya tidak kena aturan RTDB ----

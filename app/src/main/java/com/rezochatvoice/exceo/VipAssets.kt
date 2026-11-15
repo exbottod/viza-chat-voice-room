@@ -686,9 +686,11 @@ fun VipEntryEffect(roomId: String) {
                             // dibuat selebar banner lalu digeser ke atas supaya pita gambar
                             // pas memenuhi kotak.
                             val isiTinggi = lebarBanner * SVGA_KANVAS_TINGGI
-                            Box(Modifier.fillMaxSize().clipToBounds()) {
+                            // requiredSize wajib: tanpa itu Compose memaksa kanvas setinggi kotak
+                            // banner, lalu offset menggesernya keluar dan banner jadi kosong.
+                            Box(Modifier.fillMaxSize().clipToBounds(), contentAlignment = Alignment.TopStart) {
                                 Box(
-                                    Modifier.width(lebarBanner).height(isiTinggi)
+                                    Modifier.requiredSize(lebarBanner, isiTinggi)
                                         .offset(y = -(isiTinggi * SVGA_BAND_ATAS)),
                                 ) {
                                     VipMedia(asetBanner, Modifier.fillMaxSize(), loop = true, contentScale = ContentScale.FillBounds)
@@ -715,13 +717,17 @@ fun VipEntryEffect(roomId: String) {
                     val nm = bannerName
                     if (!nm.isNullOrBlank()) {
                         Box(
-                            Modifier.matchParentSize().padding(top = (bSize.height.value * 0.06f).dp),
-                            contentAlignment = Alignment.TopCenter,
+                            // Nama di tengah pita, sebelah kanan foto profil (foto di 18% lebar).
+                            Modifier.matchParentSize().padding(
+                                start = (bSize.width.value * 0.30f).dp,
+                                end = (bSize.width.value * 0.08f).dp,
+                            ),
+                            contentAlignment = Alignment.Center,
                         ) {
                             Text(
                                 nm,
                                 color = Color(0xFFFFE9A0),
-                                fontSize = (bSize.height.value * 0.20f).coerceIn(13f, 26f).sp,
+                                fontSize = (bSize.height.value * 0.22f).coerceIn(11f, 22f).sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 textAlign = TextAlign.Center,
                                 maxLines = 1,

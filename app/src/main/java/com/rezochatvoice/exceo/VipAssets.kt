@@ -541,40 +541,43 @@ private const val SVGA_FOTO_Y = 0.565f           // pusat foto, 56% tinggi pita
  * sebagai pecahan 0..1 dari ukuran kanvas. Dipakai supaya foto dan nama ikut
  * bergerak persis di atas pita, bukan diam di tempat.
  */
-private fun ukurJalurPita(item: SVGAVideoEntity): Pair<List<Pair<Float, Float>>, Int>? = try {
-    val fps = if (item.FPS > 0) item.FPS else 30
-    val lebarKanvas = item.videoSize.width.toFloat().takeIf { it > 0f } ?: 750f
-    val tinggiKanvas = item.videoSize.height.toFloat().takeIf { it > 0f } ?: 1624f
-    val semua = item.frames ?: return null
-    val titik = ArrayList<Pair<Float, Float>>(semua.size)
-    for (fr in semua) {
-        var kiri = Float.MAX_VALUE
-        var atas = Float.MAX_VALUE
-        var kanan = -Float.MAX_VALUE
-        var bawah = -Float.MAX_VALUE
-        fr?.forEach { spr ->
-            val isi = spr?.frames?.firstOrNull() ?: return@forEach
-            val lay = isi.layout ?: return@forEach
-            val kotak = android.graphics.RectF(lay)
-            isi.transform.mapRect(kotak)
-            if (kotak.width() > 1f && kotak.height() > 1f) {
-                kiri = minOf(kiri, kotak.left)
-                kanan = maxOf(kanan, kotak.right)
-                atas = minOf(atas, kotak.top)
-                bawah = maxOf(bawah, kotak.bottom)
+private fun ukurJalurPita(item: SVGAVideoEntity): Pair<List<Pair<Float, Float>>, Int>? {
+    return try {
+        val fps = if (item.FPS > 0) item.FPS else 30
+        val semua = item.frames ?: return null
+        // Kanvas banner selalu 750 x 1624 (lihat SVGA_KANVAS_TINGGI).
+        val lebarKanvas = 750f
+        val tinggiKanvas = lebarKanvas * SVGA_KANVAS_TINGGI
+        val titik = ArrayList<Pair<Float, Float>>(semua.size)
+        for (fr in semua) {
+            var kiri = Float.MAX_VALUE
+            var atas = Float.MAX_VALUE
+            var kanan = -Float.MAX_VALUE
+            var bawah = -Float.MAX_VALUE
+            fr?.forEach { spr ->
+                val isi = spr?.frames?.firstOrNull() ?: return@forEach
+                val lay = isi.layout ?: return@forEach
+                val kotak = android.graphics.RectF(lay)
+                isi.transform.mapRect(kotak)
+                if (kotak.width() > 1f && kotak.height() > 1f) {
+                    kiri = minOf(kiri, kotak.left)
+                    kanan = maxOf(kanan, kotak.right)
+                    atas = minOf(atas, kotak.top)
+                    bawah = maxOf(bawah, kotak.bottom)
+                }
             }
+            titik.add(
+                if (kanan > kiri) {
+                    Pair(((kiri + kanan) / 2f) / lebarKanvas, ((atas + bawah) / 2f) / tinggiKanvas)
+                } else {
+                    titik.lastOrNull() ?: Pair(0.13f, 0.60f)
+                },
+            )
         }
-        titik.add(
-            if (kanan > kiri) {
-                Pair(((kiri + kanan) / 2f) / lebarKanvas, ((atas + bawah) / 2f) / tinggiKanvas)
-            } else {
-                titik.lastOrNull() ?: Pair(0.5f, 0.6f)
-            },
-        )
+        if (titik.isEmpty()) null else Pair(titik, (semua.size * 1000 / fps).coerceAtLeast(300))
+    } catch (e: Exception) {
+        null
     }
-    if (titik.isEmpty()) null else Pair(titik, (semua.size * 1000 / fps).coerceAtLeast(300))
-} catch (e: Exception) {
-    null
 }
 
 /** Banner efek masuk VIP1-9 diambil dari panel developer (bukan lagi dari APK). */

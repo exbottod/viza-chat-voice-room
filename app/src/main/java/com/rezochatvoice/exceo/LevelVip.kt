@@ -206,6 +206,21 @@ fun activeEquip(w: Wallet, slot: String): String {
     return if ((w.inv[id] ?: 0L) > System.currentTimeMillis()) id else ""
 }
 
+/**
+ * Item yang dipakai untuk efek masuk kamar. Kalau slot masih kosong (mis. pemilik
+ * SVIP yang belum pernah menekan "Pakai"), pakai item tertinggi yang dimiliki
+ * supaya banner dan efek masuk tetap tampil seperti yang diharapkan.
+ */
+fun fallbackEquip(w: Wallet, slot: String): String {
+    val cur = activeEquip(w, slot)
+    if (cur.isNotBlank()) return cur
+    val awalan = if (slot == "banner") listOf("svbn_", "vipbn_") else listOf("sve_", "vipe_")
+    val now = System.currentTimeMillis()
+    return w.inv.filter { it.value > now && awalan.any { p -> it.key.startsWith(p) } }
+        .maxByOrNull { it.key.substringAfterLast("_").toIntOrNull() ?: 0 }
+        ?.key.orEmpty()
+}
+
 /** Item ini sedang dipakai? Lencana dicek satu per satu karena bisa banyak. */
 private fun itemTerpakai(w: Wallet, slot: String, id: String): Boolean =
     if (slot == "badge") medalIdList(w.equip["badge"]).contains(id) else w.equip[slot] == id

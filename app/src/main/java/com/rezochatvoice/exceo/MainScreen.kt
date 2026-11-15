@@ -212,7 +212,7 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
             }
             dompetJob?.await()?.let { w = it; wallet = it }
             if (activeRoom?.id != room.id) return@launch
-            RoomRepo.join(room.id, myName, if (vipActive(w.vip, w.vipUntil)) w.vip else 0, activeEquip(w, "entry"), activeEquip(w, "banner"))
+            RoomRepo.join(room.id, myName, if (vipActive(w.vip, w.vipUntil)) w.vip else 0, fallbackEquip(w, "entry"), fallbackEquip(w, "banner"))
         }
     }
 

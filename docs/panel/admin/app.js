@@ -615,7 +615,7 @@ async function gambarFamily() {
 const CB_BAWAAN = {
   on: true,
   modePersen: true,
-  capPct: 1060,
+  capPct: 12000,
   recvPct: 70,
   diamondPct: 5,
   jpMin: 50000,
@@ -624,9 +624,10 @@ const CB_BAWAAN = {
     { m: 0, w: 54 },
     { m: 0.1, w: 28 },
     { m: 0.5, w: 13 },
-    { m: 1, w: 3.8 },
+    { m: 1, w: 3.6 },
     { m: 5, w: 1.1 },
-    { m: 10, w: 0.3 },
+    { m: 10, w: 0.2 },
+    { m: 100, w: 0.02 },
   ],
   tiers: [
     { p: 70, min: 1000, max: 5000 },
@@ -769,7 +770,7 @@ async function gambarCashback() {
   const tiers = Array.isArray(cfg.tiers) && cfg.tiers.length ? cfg.tiers : CB_BAWAAN.tiers;
   const boost = Array.isArray(cfg.boostJumlah) ? cfg.boostJumlah : CB_BAWAAN.boostJumlah;
   const persenAktif = cfg.modePersen !== false;
-  const capPct = Number(cfg.capPct ?? 1060) || 1060;
+  const capPct = Number(cfg.capPct ?? 12000) || 12000;
   const tierP = Array.isArray(cfg.tiersPersen) && cfg.tiersPersen.length ? cfg.tiersPersen : CB_BAWAAN.tiersPersen;
 
   $("aksiTopbar").innerHTML = '<button class="tombolAtas" id="simpanCashback">Simpan</button>';
@@ -791,7 +792,7 @@ async function gambarCashback() {
           <div class="isian"><label>Model persen (harga gift x pengali)</label>
             <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="cbPersen" ${persenAktif ? "checked" : ""} style="width:auto">pakai model persen</label>
           </div>
-          <div class="isian"><label>Batas cashback (% dari nilai gift)</label><input id="cbCap" type="number" min="100" max="5000" value="${capPct}"></div>
+          <div class="isian"><label>Batas cashback (% dari nilai gift)</label><input id="cbCap" type="number" min="100" max="100000" value="${capPct}"></div>
         </div>
         <div class="isian" style="margin-top:12px">
           <label>Tingkatan persen (pengali:bobot, satu per baris)</label>
@@ -839,7 +840,7 @@ async function gambarCashback() {
     const baru = {
       on: $("cbOn").checked,
       modePersen: $("cbPersen").checked,
-      capPct: Math.max(100, Math.min(5000, Number($("cbCap").value) || 1060)),
+      capPct: Math.max(100, Math.min(100000, Number($("cbCap").value) || 12000)),
       tiersPersen: tierPersen.length ? tierPersen : CB_BAWAAN.tiersPersen,
       recvPct: Math.max(0, Math.min(100, Number($("cbRecv").value) || 0)),
       // Penerima gift cashback: 70% coin + diamond (bawaan 5%) dari harga gift.

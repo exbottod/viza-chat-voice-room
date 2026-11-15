@@ -212,6 +212,7 @@ object GiftFx {
         var cbCnt = 0
         var cbTotal = 0L
         var cbKl = 0
+        var cbKlF = 0.0
         var cbTkt = ""
         var comboN = 0
         if (g.special) {
@@ -258,6 +259,7 @@ object GiftFx {
                 cbCnt = cb.cnt
                 cbTotal = cb.total
                 cbKl = cb.kelipatan
+                cbKlF = cb.kelipatanF
                 cbTkt = cb.tingkat
                 try {
                     Rtdb.ref("cashback/$uid/total").setValue(ServerValue.increment(cbWin))
@@ -300,6 +302,7 @@ object GiftFx {
                     "cnt" to cbCnt,
                     "total" to cbTotal,
                     "kl" to cbKl,
+                    "klf" to cbKlF,
                     "tkt" to cbTkt,
                     "combo" to comboN,
                     "asset" to cbAsset,

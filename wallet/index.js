@@ -1940,9 +1940,11 @@ const PERSEN_BAWAAN = [
   { m: 0, w: 54 },
   { m: 0.1, w: 28 },
   { m: 0.5, w: 13 },
-  { m: 1, w: 3.8 },
+  { m: 1, w: 3.6 },
   { m: 5, w: 1.1 },
-  { m: 10, w: 0.3 },
+  { m: 10, w: 0.2 },
+  // Jackpot betulan: 100x harga gift, kira-kira 1 tiap 5.000 kiriman.
+  { m: 100, w: 0.02 },
 ];
 
 /** Tingkatan persen dari panel: [{m: pengali, w: bobot}] -> bersih & terurut. */
@@ -2043,9 +2045,10 @@ async function cashbackGift(env, uid, p) {
   // (rentang nominal, tidak ikut harga gift). Bawaannya persen.
   const persenAktif = cfg?.modePersen !== false;
   // Batas atas: model persen butuh batas longgar supaya 10x benar-benar utuh
-  // (bawaan 1.060% = 10,6x nilai gift). Model nominal tetap dibatasi 50-300%.
+  // (bawaan 12.000% = 120x nilai gift) supaya JP 100x benar-benar utuh.
+  // Model nominal tetap dibatasi 50-300%.
   const capPct = persenAktif
-    ? Math.max(100, Math.min(5000, Number(cfg?.capPct ?? 1060)))
+    ? Math.max(100, Math.min(100000, Number(cfg?.capPct ?? 12000)))
     : Math.max(50, Math.min(300, Number(cfg?.capPctTetap ?? cfg?.capPct ?? 106)));
   const batas = Math.floor((nilai * capPct) / 100);
   let untung = 0;
@@ -2084,10 +2087,15 @@ async function cashbackGift(env, uid, p) {
 
   // Info tampilan kartu pemenang (gaya "Lucky Gift"): harga satuan, jumlah
   // kirim, total nilai, dan kelipatan menang terhadap harga satuan.
-  const klf = untung > 0 ? Math.round((untung / Math.max(1, price)) * 100) / 100 : 0;
+  // Kelipatan per SATU gift. Kirim 66 x 100.000 dengan hadiah 7.260.000 berarti
+  // 110.000 per gift = 1,1x, bukan 72,6x (dulu dibagi harga satu saja).
+  const klf = untung > 0
+    ? Math.round((untung / Math.max(1, price * count)) * 100) / 100
+    : 0;
   const kelipatan = untung > 0 ? Math.round(klf) : 0;
   // Label jenis hadiah untuk badge di aplikasi (Cashback / Lucky / Jackpot).
   const tingkat = untung <= 0 ? ""
+    : klf >= 100 ? "MEGA JACKPOT 100x"
     : klf >= 10 ? "MEGA JACKPOT"
     : klf >= 5 ? "LUCKY 5x"
     : klf >= 2 ? "LUCKY BONUS"

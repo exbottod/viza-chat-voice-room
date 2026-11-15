@@ -1,8 +1,16 @@
 package com.rezochatvoice.exceo
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -23,7 +31,13 @@ import kotlinx.coroutines.delay
  * dan tidak terlihat sebagai kotak hitam.
  */
 @Composable
-fun LuckyVap(modifier: Modifier = Modifier) {
+fun LuckyVap(
+    modifier: Modifier = Modifier,
+    /** Pengali dari server, mis. "x100", "x5", "10%". */
+    kaliLabel: String = "",
+    /** Total coin yang menang, ditulis di bawah pengali. */
+    koin: Long = 0L,
+) {
     val ctx = LocalContext.current
     val aset = "cashback/ha_lucky_gift_reward.mp4"
     val ada = remember {
@@ -69,5 +83,33 @@ fun LuckyVap(modifier: Modifier = Modifier) {
                 } catch (e: Exception) { }
             },
         )
+        // Angka hadiah ditulis di dalam lingkaran "WIN": pengali besar dulu,
+        // lalu nominal coin-nya. Semua angka dari server.
+        if (kaliLabel.isNotBlank() || koin > 0L) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .offset(y = 58.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                if (kaliLabel.isNotBlank()) {
+                    Text(
+                        kaliLabel.uppercase(),
+                        color = Color(0xFFFFF3C4),
+                        fontSize = 44.sp,
+                        fontWeight = FontWeight.Black,
+                    )
+                }
+                if (koin > 0L) {
+                    Text(
+                        "+" + "%,d".format(koin).replace(',', '.') + " koin",
+                        color = Color(0xFFFFD24D),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Black,
+                    )
+                }
+            }
+        }
     }
 }

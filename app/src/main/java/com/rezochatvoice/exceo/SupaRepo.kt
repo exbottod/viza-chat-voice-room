@@ -714,6 +714,8 @@ object SupaRepo {
         val cnt: Int = 0,
         val total: Long = 0L,
         val kelipatan: Int = 0,
+        // Kelipatan versi pecahan (0,1 = 10%), dihitung per satu gift.
+        val kelipatanF: Double = 0.0,
         val tingkat: String = "",
     )
 
@@ -749,6 +751,7 @@ object SupaRepo {
             cnt = j.optInt("cnt"),
             total = j.optLong("total"),
             kelipatan = j.optInt("kl"),
+            kelipatanF = j.optDouble("klf", 0.0),
             tingkat = j.optString("tkt"),
         )
     }

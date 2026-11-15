@@ -243,13 +243,17 @@ private fun GiftFlyOnce(
         val kaliTampil = if (f.kelipatanF > 0.0) f.kelipatanF
         else if (hargaSatu > 0L) f.cb.toDouble() / hargaSatu
         else if (f.kelipatan > 0) f.kelipatan.toDouble() else 1.0
-        PecahanCss(
-            nilai = f.parts,
-            total = f.cb,
-            kali = kaliTampil,
-            emoji = f.emoji,
-            label = "",
-        )
+        // Lucky/JP sudah tampil di lingkaran WIN, jadi efek tengah layar hanya
+        // untuk cashback kecil (di bawah 5x) supaya tidak dobel.
+        if (kaliTampil < 5.0) {
+            PecahanCss(
+                nilai = f.parts,
+                total = f.cb,
+                kali = kaliTampil,
+                emoji = f.emoji,
+                label = "",
+            )
+        }
     }
     // Tampilan lama (pil "+angka" di bawah avatar dan banner "JP nama +angka" ungu)
     // dihapus. Yang tersisa: gift terbang, pecahan angka (SVGA), dan bola pengali.
@@ -300,7 +304,11 @@ private fun SelamatCashback(f: GiftFly) {
 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         // Kemenangan besar: animasi hadiah VAP (aset acuan) satu layar penuh.
-        if (dapat && kali >= 5) LuckyVap(Modifier.matchParentSize())
+        // Kemenangan besar: lingkaran "WIN" dari aset, dengan pengali dan nominal
+        // coin ditulis di dalamnya (mis. "X100" + "+10.000.000 koin").
+        if (dapat && kali >= 5) {
+            LuckyVap(Modifier.matchParentSize(), kaliLabel = labelKali, koin = f.cb)
+        }
 
         // Banner pemenang: tidak pakai kotak/kartu sendiri, latarnya animasi SVGA
         // dari aset acuan, lalu terbang melewati atas room.

@@ -227,7 +227,8 @@ object GiftFx {
                 if (jp != null && jp.win > 0) jpWin = jp.win
             }
             // Cashback: server yang mengundi pecahan (RTP dan tabel diatur di panel).
-            val cb = try {
+            // Hanya untuk gift yang ditandai Cashback; gift biasa tidak diundi.
+            val cb = if (!(g.cashback || g.cbRate > 0)) null else try {
                 kotlinx.coroutines.withTimeoutOrNull(9000L) {
                     // Harga cashback dari panel; kalau kosong pakai harga gift.
                     SupaRepo.giftCashback(uid, if (g.cbPrice > 0L) g.cbPrice else g.price, count, targetUid)
@@ -280,6 +281,7 @@ object GiftFx {
                     "combo" to comboN,
                     "asset" to cbAsset,
                     "jp" to cbJp,
+                    "cbOn" to (g.cashback || g.cbRate > 0),
                     "ts" to System.currentTimeMillis(),
                 ),
             )

@@ -49,6 +49,8 @@ data class GiftFly(
     val mult: Int = 0,
     val combo: Int = 0,
     val gname: String = "",
+    /** true hanya untuk gift yang ditandai Cashback di panel. */
+    val cbOn: Boolean = false,
     val jp: Boolean,
     val ts: Long,
 )
@@ -99,6 +101,7 @@ fun GiftFlyOverlay(roomId: String, seatPoints: Map<Int, Offset>) {
                     gname = c.child("gname").getValue(String::class.java)
                         ?: c.child("gift").getValue(String::class.java) ?: "",
                     jp = c.child("jp").getValue(Boolean::class.java) ?: false,
+                    cbOn = c.child("cbOn").getValue(Boolean::class.java) ?: false,
                     ts = ts,
                     ),
                 )
@@ -126,7 +129,8 @@ fun GiftFlyOverlay(roomId: String, seatPoints: Map<Int, Offset>) {
             // (sama seperti aturan global_jackpot_banner di server contoh).
             val terakhir = flights.lastOrNull()
             // ZONK (cashback 0) juga ditampilkan, sama seperti contoh pemilik.
-            if (terakhir != null) {
+            // Gift biasa tidak boleh memunculkan dialog cashback/zonk.
+            if (terakhir != null && terakhir.cbOn) {
                 key(terakhir.ts) { SelamatCashback(terakhir) }
             }
         }

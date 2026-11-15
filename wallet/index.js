@@ -1208,8 +1208,24 @@ async function kirimGift(env, uid, p) {
  * p.each (harga gift x jumlah ketukan); kalau tidak dikirim, dibagi rata.
  * Satu penerima gagal tidak menggagalkan penerima lain maupun pengirim.
  */
-/** Diamond penerima gift cashback: 5% dari harga gift. */
+/**
+ * Diamond penerima gift cashback. Bawaannya 5% dari harga gift dan bisa diubah
+ * dari panel ("Diamond penerima gift cashback (%)"). Nilai ini yang membuat
+ * penerima punya saldo berlian untuk ditukar, terpisah dari 70% coin.
+ */
 const DIAMOND_CASHBACK_PCT = 5;
+
+/** Persen diamond penerima dari panel; kosong berarti 5%. */
+async function pctDiamondCashback() {
+  try {
+    const cfg = await cfgRtdb("pub/_cashbackCfg");
+    const v = Number(cfg?.diamondPct ?? DIAMOND_CASHBACK_PCT);
+    if (!Number.isFinite(v)) return DIAMOND_CASHBACK_PCT;
+    return Math.max(0, Math.min(100, v));
+  } catch (e) {
+    return DIAMOND_CASHBACK_PCT;
+  }
+}
 
 async function kreditPenerima(env, uid, p, price, item, room, now, req, giftCashback = false) {
   const daftar = Array.isArray(p.to) ? p.to.map((x) => String(x ?? "").trim()).filter(Boolean) : [];
@@ -1220,7 +1236,10 @@ async function kreditPenerima(env, uid, p, price, item, room, now, req, giftCash
   if (!(each > 0)) return;
   // Gift cashback: penerima tetap dapat BIASA cashback jalan, tapi diamond-nya
   // dihitung 5% dari harga gift (bukan nilai penuh seperti gift biasa).
-  const diamond = giftCashback ? Math.floor((each * DIAMOND_CASHBACK_PCT) / 100) : each;
+  // Angka persennya diambil dari panel supaya bisa diubah tanpa build.
+  const diamond = giftCashback
+    ? Math.floor((each * (await pctDiamondCashback())) / 100)
+    : each;
   for (const r of unik) {
     try {
       await pastikan(env, r);

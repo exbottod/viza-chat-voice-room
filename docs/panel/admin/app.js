@@ -617,6 +617,7 @@ const CB_BAWAAN = {
   modePersen: true,
   capPct: 1060,
   recvPct: 70,
+  diamondPct: 5,
   jpMin: 50000,
   // Model persen: hadiah = harga gift x pengali. Bobot = seberapa sering muncul.
   tiersPersen: [
@@ -736,7 +737,7 @@ function teksTierPersen(rows) {
 }
 
 /** Tabel peluang + rata-rata RTP dari model persen (per harga gift 100.000). */
-function ringkasTierPersen(rows, capPct, recvPct) {
+function ringkasTierPersen(rows, capPct, recvPct, diamondPct) {
   const total = rows.reduce((a, b) => a + b.w, 0);
   if (!total) return '<div class="catatan">Belum ada tingkatan.</div>';
   const contoh = 100000;
@@ -753,9 +754,9 @@ function ringkasTierPersen(rows, capPct, recvPct) {
         <td>${rupiah(dapat)}</td></tr>`;
     })
     .join("");
-  const totalKeluar = (rtp * 100) + (Number(recvPct) || 0) + 5;
+  const totalKeluar = (rtp * 100) + (Number(recvPct) || 0) + (Number(diamondPct) || 0);
   return `<table style="margin-top:8px"><tr><th>PENGALI</th><th>PELUANG</th><th>CONTOH GIFT 100.000</th></tr>${isi}</table>
-    <div class="catatan">Cashback rata-rata <b>${(rtp * 100).toFixed(1).replace(".", ",")}%</b> dari harga gift. Kalau penerima dapat <b>${Number(recvPct) || 0}%</b> ditambah 5% diamond, total keluar <b>${totalKeluar.toFixed(1).replace(".", ",")}%</b>, jadi platform pegang ${(100 - totalKeluar).toFixed(1).replace(".", ",")}%.</div>`;
+    <div class="catatan">Cashback rata-rata <b>${(rtp * 100).toFixed(1).replace(".", ",")}%</b> dari harga gift. Kalau penerima dapat <b>${Number(recvPct) || 0}%</b> ditambah ${Number(diamondPct) || 0}% diamond, total keluar <b>${totalKeluar.toFixed(1).replace(".", ",")}%</b>, jadi platform pegang ${(100 - totalKeluar).toFixed(1).replace(".", ",")}%.</div>`;
 }
 
 async function gambarCashback() {
@@ -783,6 +784,7 @@ async function gambarCashback() {
             <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="cbOn" ${cfg.on === false ? "" : "checked"} style="width:auto">aktif</label>
           </div>
           <div class="isian"><label>Bagian penerima gift (%)</label><input id="cbRecv" type="number" min="0" max="100" value="${Number(cfg.recvPct) || 0}"></div>
+          <div class="isian"><label>Diamond penerima gift cashback (%)</label><input id="cbDiamond" type="number" min="0" max="100" step="0.5" value="${Number(cfg.diamondPct ?? 5)}"></div>
           <div class="isian"><label>Peluang zonk (%)</label><input id="cbZonk" type="number" min="0" max="90" value="${Number(cfg.zonkPct ?? 8) || 0}"></div>
         </div>
         <div class="barisIsian" style="margin-top:12px">
@@ -794,7 +796,7 @@ async function gambarCashback() {
         <div class="isian" style="margin-top:12px">
           <label>Tingkatan persen (pengali:bobot, satu per baris)</label>
           <textarea id="cbPersenTiers" rows="6" style="width:100%;font-family:monospace">${aman(teksTierPersen(tierP))}</textarea>
-          <div id="cbPersenRin">${ringkasTierPersen(tierP, capPct, cfg.recvPct)}</div>
+          <div id="cbPersenRin">${ringkasTierPersen(tierP, capPct, cfg.recvPct, cfg.diamondPct ?? 5)}</div>
         </div>
         <div class="catatan" style="margin-top:14px">Cadangan model nominal tetap (tidak ikut harga gift). Dipakai kalau model persen dimatikan.</div>
         <div class="isian" style="margin-top:12px">
@@ -821,11 +823,13 @@ async function gambarCashback() {
       bacaTierPersen(elP.value),
       Number(elCap.value) || 0,
       Number($("cbRecv").value) || 0,
+      Number($("cbDiamond").value) || 0,
     );
   };
   elP.oninput = segarkanPersen;
   elCap.oninput = segarkanPersen;
   $("cbRecv").oninput = segarkanPersen;
+  $("cbDiamond").oninput = segarkanPersen;
 
   $("simpanCashback").onclick = async () => {
     const tiers = bacaTierCashback($("cbTiers").value);
@@ -838,6 +842,8 @@ async function gambarCashback() {
       capPct: Math.max(100, Math.min(5000, Number($("cbCap").value) || 1060)),
       tiersPersen: tierPersen.length ? tierPersen : CB_BAWAAN.tiersPersen,
       recvPct: Math.max(0, Math.min(100, Number($("cbRecv").value) || 0)),
+      // Penerima gift cashback: 70% coin + diamond (bawaan 5%) dari harga gift.
+      diamondPct: Math.max(0, Math.min(100, Number($("cbDiamond").value) || 0)),
       tiers: tiers,
       boostJumlah: bacaBoostJumlah($("cbBoost").value),
       zonkPct: Math.max(0, Math.min(90, Math.floor(Number($("cbZonk").value) || 0))),

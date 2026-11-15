@@ -342,6 +342,8 @@ private fun VipSvga(
     loop: Boolean,
     contentScale: ContentScale,
     onEnd: () -> Unit,
+    onSiap: (SVGAVideoEntity) -> Unit = {},
+    onLangkah: (Float) -> Unit = {},
 ) {
     AndroidView(
         modifier = modifier,
@@ -354,21 +356,24 @@ private fun VipSvga(
                     ContentScale.FillBounds -> android.widget.ImageView.ScaleType.FIT_XY
                     else -> android.widget.ImageView.ScaleType.FIT_CENTER
                 }
-                if (!loop) {
-                    callback = object : com.opensource.svgaplayer.SVGACallback {
-                        override fun onPause() {}
-                        override fun onFinished() {
-                            onEnd()
-                        }
+                // Callback dipasang selalu: onStep dipakai untuk menggerakkan foto
+                // dan nama mengikuti animasi banner.
+                callback = object : com.opensource.svgaplayer.SVGACallback {
+                    override fun onPause() {}
+                    override fun onFinished() {
+                        if (!loop) onEnd()
+                    }
 
-                        override fun onRepeat() {}
-                        override fun onStep(frame: Int, percentage: Double) {}
+                    override fun onRepeat() {}
+                    override fun onStep(frame: Int, percentage: Double) {
+                        onLangkah(percentage.toFloat())
                     }
                 }
                 val parser = SVGAParser(c)
                 val done = object : SVGAParser.ParseCompletion {
                     override fun onComplete(videoItem: SVGAVideoEntity) {
                         setVideoItem(videoItem)
+                        onSiap(videoItem)
                         startAnimation()
                     }
 
@@ -395,6 +400,8 @@ fun VipMedia(
     contentScale: ContentScale = ContentScale.Fit,
     onEnd: () -> Unit = {},
     sound: Boolean = false,
+    onSiap: (SVGAVideoEntity) -> Unit = {},
+    onLangkah: (Float) -> Unit = {},
 ) {
     val data by produceState<ByteArray?>(null, a.n, a.slot, a.updatedAt) {
         value = if (a.hasData) VipAssets.bytes(a) else null
@@ -403,7 +410,7 @@ fun VipMedia(
     if (!remote && data == null) return
     when (a.kind) {
         "mp4" -> VipVideo(a, data, modifier, loop, onEnd, sound)
-        "svga" -> VipSvga(a, data, modifier, loop, contentScale, onEnd)
+        "svga" -> VipSvga(a, data, modifier, loop, contentScale, onEnd, onSiap, onLangkah)
         else -> AsyncImage(
             model = if (remote) a.url else ByteBuffer.wrap(data!!),
             contentDescription = null,
@@ -528,6 +535,48 @@ private const val SVGA_FOTO_D = 0.146f           // diameter lingkaran foto / le
 private const val SVGA_FOTO_X = 0.130f           // pusat foto, 13% lebar pita
 private const val SVGA_FOTO_Y = 0.565f           // pusat foto, 56% tinggi pita
 
+/**
+ * Jalur gerak isi banner (pita) dihitung dari frame file SVGA-nya sendiri:
+ * tiap frame diambil kotak gabungan semua bagian, lalu titik tengahnya disimpan
+ * sebagai pecahan 0..1 dari ukuran kanvas. Dipakai supaya foto dan nama ikut
+ * bergerak persis di atas pita, bukan diam di tempat.
+ */
+private fun ukurJalurPita(item: SVGAVideoEntity): Pair<List<Pair<Float, Float>>, Int>? = try {
+    val fps = if (item.FPS > 0) item.FPS else 30
+    val lebarKanvas = item.videoSize.width.toFloat().takeIf { it > 0f } ?: 750f
+    val tinggiKanvas = item.videoSize.height.toFloat().takeIf { it > 0f } ?: 1624f
+    val semua = item.frames ?: return null
+    val titik = ArrayList<Pair<Float, Float>>(semua.size)
+    for (fr in semua) {
+        var kiri = Float.MAX_VALUE
+        var atas = Float.MAX_VALUE
+        var kanan = -Float.MAX_VALUE
+        var bawah = -Float.MAX_VALUE
+        fr?.forEach { spr ->
+            val isi = spr?.frames?.firstOrNull() ?: return@forEach
+            val lay = isi.layout ?: return@forEach
+            val kotak = android.graphics.RectF(lay)
+            isi.transform.mapRect(kotak)
+            if (kotak.width() > 1f && kotak.height() > 1f) {
+                kiri = minOf(kiri, kotak.left)
+                kanan = maxOf(kanan, kotak.right)
+                atas = minOf(atas, kotak.top)
+                bawah = maxOf(bawah, kotak.bottom)
+            }
+        }
+        titik.add(
+            if (kanan > kiri) {
+                Pair(((kiri + kanan) / 2f) / lebarKanvas, ((atas + bawah) / 2f) / tinggiKanvas)
+            } else {
+                titik.lastOrNull() ?: Pair(0.5f, 0.6f)
+            },
+        )
+    }
+    if (titik.isEmpty()) null else Pair(titik, (semua.size * 1000 / fps).coerceAtLeast(300))
+} catch (e: Exception) {
+    null
+}
+
 /** Banner efek masuk VIP1-9 diambil dari panel developer (bukan lagi dari APK). */
 fun vipBannerAsset(n: Int): VipAsset? = if (n in 1..9) VipAssets.get(n, "banner") else null
 
@@ -639,12 +688,22 @@ fun VipEntryEffect(roomId: String) {
             }
         }
         if (b != null) {
+            // Durasi dan jalur gerak diambil dari file banner itu sendiri (bukan angka tetap).
+            var jalur by remember(b.n, b.updatedAt) { mutableStateOf<List<Pair<Float, Float>>?>(null) }
+            var durasiMs by remember(b.n, b.updatedAt) { mutableStateOf(3000) }
+            var langkah by remember(b.n, b.updatedAt) { mutableStateOf(0f) }
             // Durasi tampil mengikuti panjang animasi SVGA (90 frame @30fps = 3 detik)
             // ditambah jeda sebentar, lalu memudar.
             LaunchedEffect(b) {
                 fade.snapTo(0f)
                 fade.animateTo(1f, tween(if (b.kind == "svga") 220 else 400))
-                delay(if (b.kind == "svga") 3200L else 2600L)
+                // Tunggu file selesai dibaca supaya durasinya benar-benar dari SVGA.
+                var tunggu = 0
+                while (jalur == null && tunggu < 25) {
+                    delay(100)
+                    tunggu++
+                }
+                delay(durasiMs.toLong())
                 fade.animateTo(0f, tween(300))
                 banner = null
                 bannerName = null
@@ -717,50 +776,77 @@ fun VipEntryEffect(roomId: String) {
                                             translationY = -gesekAtas.toPx()
                                         },
                                 ) {
-                                    VipMedia(asetBanner, Modifier.fillMaxSize(), loop = true, contentScale = ContentScale.FillBounds)
+                                    VipMedia(
+                                        asetBanner,
+                                        Modifier.fillMaxSize(),
+                                        loop = false,
+                                        contentScale = ContentScale.FillBounds,
+                                        onSiap = { item ->
+                                            val hasil = ukurJalurPita(item)
+                                            if (hasil != null) {
+                                                jalur = hasil.first
+                                                durasiMs = hasil.second
+                                            }
+                                        },
+                                        onLangkah = { langkah = it },
+                                    )
                                 }
                             }
                         } else {
                             VipMedia(asetBanner, Modifier.fillMaxSize(), loop = true, contentScale = ContentScale.Fit)
                         }
-                    // Foto profil user dipasang di ujung kiri banner (di atas bola emas).
+                    // Foto dan nama menempel di pita banner dan IKUT BERGERAK
+                    // mengikuti animasi file: titiknya diambil dari jalur frame SVGA.
+                    val jalurKini = jalur
+                    val posisi = if (jalurKini.isNullOrEmpty()) {
+                        Pair(SVGA_FOTO_X, SVGA_FOTO_Y)
+                    } else {
+                        val pos = langkah.coerceIn(0f, 1f) * (jalurKini.size - 1)
+                        val i = pos.toInt().coerceIn(0, jalurKini.size - 1)
+                        val n2 = jalurKini[(i + 1).coerceAtMost(jalurKini.size - 1)]
+                        val t = pos - i
+                        Pair(
+                            jalurKini[i].first + (n2.first - jalurKini[i].first) * t,
+                            jalurKini[i].second + (n2.second - jalurKini[i].second) * t,
+                        )
+                    }
+                    // Kanvas SVGA dipasang selebar banner, jadi pecahan x langsung
+                    // dikali lebar; sumbu y dikurangi bagian yang dipotong di atas.
+                    val lebarPita = bSize.width.value
+                    val isiPita = if (svgaBanner) lebarPita * SVGA_KANVAS_TINGGI else bSize.height.value
+                    val potongAtas = if (svgaBanner) isiPita * SVGA_BAND_ATAS else 0f
+                    val px = posisi.first * lebarPita
+                    val py = posisi.second * isiPita - potongAtas
                     val bu = bannerUid?.let { UserCache.peek(it) }
                     if (bu != null) {
-                        // Foto diletakkan tepat di lingkaran pita: pusat di 13% lebar
-                        // dan 56% tinggi pita, diameter 14,6% lebar pita (hasil ukur
-                        // frame asli banner).
-                        val lebarPita = bSize.width.value
-                        val tinggiPita = bSize.height.value
                         val av = (lebarPita * SVGA_FOTO_D).dp
                         Box(
                             Modifier
-                                .offset(
-                                    x = (lebarPita * SVGA_FOTO_X).dp - av / 2,
-                                    y = (tinggiPita * SVGA_FOTO_Y).dp - av / 2,
-                                )
+                                .offset(x = px.dp - av / 2, y = py.dp - av / 2)
                                 .size(av)
                                 .clip(CircleShape),
                             contentAlignment = Alignment.Center,
                         ) { PublicAvatar(bu, av) }
                     }
-                    // Nama user tampil di bagian ATAS banner.
+                    // Nama mengikuti titik yang sama, digeser ke kanan lingkaran foto.
                     val nm = bannerName
                     if (!nm.isNullOrBlank()) {
+                        val tinggiTeks = (bSize.height.value * 0.22f).coerceIn(11f, 22f)
                         Box(
-                            // Nama di tengah pita, mulai setelah lingkaran foto (24% lebar).
-                            Modifier.matchParentSize().padding(
-                                start = (bSize.width.value * 0.24f).dp,
-                                end = (bSize.width.value * 0.06f).dp,
-                                top = (bSize.height.value * 0.10f).dp,
-                            ),
-                            contentAlignment = Alignment.Center,
+                            Modifier
+                                .offset(
+                                    x = (px + lebarPita * SVGA_FOTO_D * 0.85f).dp,
+                                    y = (py - tinggiTeks / 2f).dp,
+                                )
+                                .width((lebarPita * 0.58f).dp),
+                            contentAlignment = Alignment.CenterStart,
                         ) {
                             Text(
                                 nm,
                                 color = Color(0xFFFFE9A0),
-                                fontSize = (bSize.height.value * 0.22f).coerceIn(11f, 22f).sp,
+                                fontSize = tinggiTeks.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                textAlign = TextAlign.Center,
+                                textAlign = TextAlign.Start,
                                 maxLines = 1,
                                 style = androidx.compose.ui.text.TextStyle(
                                     shadow = Shadow(Color(0xCC000000), blurRadius = 10f),

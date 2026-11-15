@@ -1890,12 +1890,12 @@ function peluangMenurutJumlah(cfg, jumlah) {
     .filter((r) => r.p > 0)
     .sort((x, y) => x.min - y.min);
   // Kirim banyak tidak boleh zonk: mulai jumlah tertentu peluang dipaksa 100%.
-  // Bawaan: SELALU dapat cashback (tidak ada zonk), berapa pun jumlah kirimnya.
-  const tanpaZonk = Math.max(0, Math.floor(Number(cfg?.tanpaZonkMin ?? 1)));
-  if (tanpaZonk > 0 && jumlah >= tanpaZonk) return 100;
-  if (!baris.length) return 100;
+  // Zonk jarang: peluang zonk kecil diatur dari panel (bawaan 8%).
+  const zonkPct = Math.max(0, Math.min(90, Math.floor(Number(cfg?.zonkPct ?? 8))));
   const kena = baris.filter((r) => jumlah >= r.min);
-  return kena.length ? kena[kena.length - 1].p : 100;
+  const dasar = kena.length ? kena[kena.length - 1].p : 100;
+  // Angka 100% berarti "sisa setelah zonk", jadi tetap ada peluang zonk tipis.
+  return dasar >= 100 ? Math.max(1, 100 - zonkPct) : dasar;
 }
 
 /** Undian: satu angka acak memilih kelompok, lalu nominal diundi rata di kelompok. */
@@ -4264,7 +4264,7 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           stafAktif = Number(r[0].rows[0]?.a ?? 0);
           peran = r[1].rows.map((x) => String(x.role) + ":" + Number(x.n));
         } catch (e) { /* tabel belum ada */ }
-        return json({ ok: 1, v: "viza-2026-11-15-cashback-70persen", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
+        return json({ ok: 1, v: "viza-2026-11-15-cashback-zonk-jarang", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
       } catch (e) {
         return json({ ok: 0, v: "viza-2026-11-13-mandiri", db: String(e?.message ?? e) }, 500);
       }

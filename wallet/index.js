@@ -1764,17 +1764,45 @@ const CB_DEFAULT = {
   jpMin: 1000,
 };
 
+/**
+ * Undian cashback gaya contoh: Math.random() * 100 lalu bercabang.
+ *   0..5    -> jackpot 10x lipat
+ *   5..30   -> cashback 50%
+ *   30..70  -> cashback 10%
+ *   70..100 -> tidak dapat cashback
+ * Peluang dan pengali bisa diubah dari panel (_cashbackCfg: jpPct, p50Pct,
+ * p10Pct, jpX, x50, x10). Kalau panel masih memakai tabel tier (t1..t4),
+ * tabel itu yang dipakai supaya pengaturan lama tetap jalan.
+ */
+function undiKaskade(cfg) {
+  const node = cfg || {};
+  const adaTier = ["t1", "t2", "t3", "t4"].some((k) => typeof node[k] === "object" && node[k]);
+  if (adaTier) return undiBaris(barisTier(node, Infinity));
+  const jpPct = Math.max(0, Math.min(100, Number(node.jpPct ?? 5)));
+  const p50 = Math.max(0, Math.min(100, Number(node.p50Pct ?? 25)));
+  const p10 = Math.max(0, Math.min(100, Number(node.p10Pct ?? 40)));
+  const jpX = Math.max(1, Math.min(500, Number(node.jpX ?? 10)));
+  const x50 = Math.max(0, Math.min(10, Number(node.x50 ?? 0.5)));
+  const x10 = Math.max(0, Math.min(10, Number(node.x10 ?? 0.1)));
+  const acak = Math.random() * 100; // 0 - 100%
+  if (acak <= jpPct) return { v: jpX, w: jpPct };
+  if (acak <= jpPct + p50) return { v: x50, w: p50 };
+  if (acak <= jpPct + p50 + p10) return { v: x10, w: p10 };
+  return { v: 0, w: Math.max(0, 100 - jpPct - p50 - p10) };
+}
+
 async function cashbackGift(env, uid, p) {
   let cfg = await cfgRtdb("pub/_cashbackCfg");
   const adaTier = ["t1", "t2", "t3", "t4"].some((k) => cfg && typeof cfg[k] === "object" && cfg[k]);
-  if (!adaTier) cfg = CB_DEFAULT;
+  // Tanpa tabel tier: pakai undian bercabang gaya contoh (Math.random * 100).
+  if (!adaTier) cfg = { ...CB_DEFAULT, ...cfg, t1: undefined, t2: undefined, t3: undefined, t4: undefined };
   if (cfg.on === false) return json({ ok: 1, amount: 0, off: 1 });
   const price = Math.max(0, Math.floor(Number(p.price ?? 0)));
   const count = Math.max(1, Math.min(999, Math.floor(Number(p.count ?? 1))));
   const nilai = price * count;
   if (nilai <= 0) return gagal("Nilai gift tidak valid");
 
-  const baris = undiBaris(barisTier(cfg, nilai));
+  const baris = undiKaskade(cfg);
   // Pengali boleh pecahan, mis. 0,2 berarti cashback 20% dari harga gift.
   const mult = Math.max(0, Math.min(500, Number(baris.v) || 0));
   // Total cashback = harga gift x pengali dari panel, TANPA dipotong.

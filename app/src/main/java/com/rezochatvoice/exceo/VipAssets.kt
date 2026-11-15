@@ -527,7 +527,6 @@ private const val SVGA_BAND_RASIO = 0.2973f      // 223 / 750
 private const val SVGA_FOTO_D = 0.146f           // diameter lingkaran foto / lebar pita
 private const val SVGA_FOTO_X = 0.130f           // pusat foto, 13% lebar pita
 private const val SVGA_FOTO_Y = 0.565f           // pusat foto, 56% tinggi pita
-private const val SVGA_BAND_RASIO = 0.3347f      // 251 / 750
 
 /** Banner efek masuk VIP1-9 diambil dari panel developer (bukan lagi dari APK). */
 fun vipBannerAsset(n: Int): VipAsset? = if (n in 1..9) VipAssets.get(n, "banner") else null

@@ -2950,7 +2950,7 @@ async function gambarGreedy() {
  * menolak tulisan langsung dari browser panel.
  */
 async function gambarFruit() {
-  let cfg = { bet: [1000, 5000, 10000, 50000, 100000], rtp: 97 };
+  let cfg = { bet: [1000, 5000, 10000, 50000, 100000], rtp: 88 };
   try { cfg = Object.assign(cfg, await walletAdmin({ op: "cf_cfg_get" })); }
   catch (e) { toast("Gagal memuat pengaturan Crazy Fruit: " + (e.message || e), true); }
   const chipTeks = (cfg.bet || []).join(", ");
@@ -2961,7 +2961,7 @@ async function gambarFruit() {
         <div class="isian"><label>Pilihan chip bet (pisahkan dengan koma)</label>
           <input id="cfBet" value="${aman(chipTeks)}" placeholder="1000,5000,10000,50000,100000"></div>
         <div class="isian" style="margin-top:10px"><label>RTP game (%)</label>
-          <input id="cfRtp" type="number" min="50" max="97" value="${aman(String(cfg.rtp ?? 97))}"></div>
+          <input id="cfRtp" type="number" min="50" max="120" value="${aman(String(cfg.rtp ?? 88))}"><div class="catatan">Makin kecil = pola besar (Super Lucky, apel, semangka, mangga, stroberi) makin jarang keluar. 85-90 paling aman.</div></div>
         <div class="catatan">92 = standar. 100 = pemain balik modal, 80 = keuntungan rumah lebih besar.
           Batas 50 sampai 120. Pengali buah ikut menyesuaikan otomatis, chip bet berubah tanpa build ulang.</div>
         <button class="tombol" id="cfSimpan" style="margin-top:14px">Simpan pengaturan</button>
@@ -2970,7 +2970,7 @@ async function gambarFruit() {
   $("cfSimpan").onclick = async () => {
     const bet = $("cfBet").value.split(",").map((x) => Number(String(x).trim())).filter((x) => x > 0);
     if (!bet.length) return toast("Isi minimal satu chip bet", true);
-    const rtp = Math.max(50, Math.min(97, Math.floor(Number($("cfRtp").value) || 97)));
+    const rtp = Math.max(50, Math.min(120, Math.floor(Number($("cfRtp").value) || 88)));
     try {
       await walletAdmin({ op: "cf_cfg_set", bet, rtp });
       catatLog("Atur Crazy Fruit", "rtp " + rtp + " | chip " + bet.join(","));

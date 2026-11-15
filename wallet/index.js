@@ -1936,8 +1936,10 @@ async function cashbackGift(env, uid, p) {
   // pengali. Jadi 100.000 kena 10x: saldo kembali 100.000 dan dapat +1.000.000.
   // Nominal tetap: tidak dikali harga gift, dan harga gift tetap terpakai
   // (tidak dikembalikan seperti model pengali sebelumnya).
+  // Nominal cashback DIKALI jumlah kirim: kirim 1 buah dapat nominal dasar,
+  // kirim 520 buah dapat 520x nominal dasar (sesuai permintaan pemilik).
   const undian = undiCashback(cfg, count);
-  const untung = Math.max(0, Math.floor(undian.nominal));
+  const untung = Math.max(0, Math.floor(undian.nominal * count));
   const kembali = 0;
   const kredit = untung;
   const parts = untung > 0 ? [untung] : [];

@@ -94,18 +94,7 @@ private fun fmtG(n: Long): String {
 fun GamesHub(myUid: String, roomId: String, myName: String = "", myAvatarB64: String = "", onClose: () -> Unit) {
     var open by remember { mutableStateOf("") }
     var balance by remember { mutableStateOf(0L) }
-    // Daftar game WaveGames diambil dari katalog, jadi game baru ikut tampil.
-    var waveGames by remember { mutableStateOf<List<WaveGames.Game>>(emptyList()) }
-    // true kalau daftar terbaru dari server berhasil diambil.
-    var daftarDariServer by remember { mutableStateOf(false) }
-    var muatUlang by remember { mutableStateOf(0) }
     val ctx = androidx.compose.ui.platform.LocalContext.current
-
-    LaunchedEffect(muatUlang) {
-        val segar = try { WaveGames.catalog() } catch (e: Exception) { emptyList() }
-        if (segar.isNotEmpty()) waveGames = segar
-        daftarDariServer = segar.isNotEmpty()
-    }
 
     // Semua panggilan jaringan dibungkus: kalau server atau data user bermasalah,
     // tab game tetap terbuka, bukan menutup aplikasi.
@@ -128,23 +117,19 @@ fun GamesHub(myUid: String, roomId: String, myName: String = "", myAvatarB64: St
         }
     }
 
-    // Kotak "Game Rezo" membuka game Greedy Rezo sendiri (dompet VPS).
-    // Game Wave tetap membuka halaman Wave-nya masing-masing, termasuk
-    // Greedy King #80, supaya tidak ikut tertukar dengan game Rezo.
+    // Semua game di sini milik Viza sendiri dan memakai dompet Viza.
+    // Tab game pihak ketiga (Wave) sudah dihapus dari aplikasi.
     val bukaGreedyRezo = open == "greedyking"
     val bukaSlotZeus = open == "slotzeus"
-    val waveOpen: WaveGames.Game? = if (open.startsWith("wave:") && !bukaGreedyRezo) {
-        val gid = open.removePrefix("wave:").toIntOrNull()
-        waveGames.firstOrNull { it.id == gid }
-    } else null
-
-    if (waveOpen != null) {
-        WavePlayScreen(uid = myUid, game = waveOpen, onClose = { open = "" })
-        return
-    }
+    val bukaCrazyFruit = open == "crazyfruit"
 
     when {
         bukaSlotZeus -> SlotGameScreen(onClose = { open = "" })
+        bukaCrazyFruit -> CrazyFruitScreen(
+            myUid = myUid,
+            myName = myName.ifBlank { "Player" },
+            onClose = { open = "" },
+        )
         bukaGreedyRezo -> GreedyKingScreen(
             myUid = myUid,
             myName = myName.ifBlank { "Player" },
@@ -182,40 +167,20 @@ fun GamesHub(myUid: String, roomId: String, myName: String = "", myAvatarB64: St
                         Spacer(Modifier.width(10.dp))
                         Text("〰", color = Color(0xFFB08A5A), fontSize = 14.sp)
                     }
-                    // Kalau daftar dari server gagal, munculkan tombol muat ulang
-                    // supaya game baru dari katalog WaveGames tetap bisa ditarik.
-                    if (!daftarDariServer) {
-                        Box(
-                            Modifier.fillMaxWidth().padding(bottom = 6.dp)
-                                .clickable { muatUlang++ },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                tr("Daftar game belum dari server · ketuk untuk muat ulang"),
-                                color = Color(0xFFFFC46B), fontSize = 11.sp,
-                            )
-                        }
-                    }
-
                     Column(
                         Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())
                             .padding(horizontal = 10.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
-                        // ---- Game milik Rezo sendiri (dompet Rezo, bukan Wave)
-                        GcSection("Game Rezo") {
+                        // ---- Game milik Viza (dompet Viza)
+                        GcSection("Game Viza") {
                             GcRows(
                                 listOf(
                                     GcItem("Greedy King", R.drawable.ic_game_cat, "greedyking"),
+                                    GcItem("Crazy Fruit", R.drawable.ic_game_fruit, "crazyfruit"),
                                     GcItem("Slot Zeus", R.drawable.ic_game_zeus, "slotzeus"),
                                 ),
                             ) { open = it }
-                        }
-
-                        // ---- Game WaveGames (katalog resmi Wave)
-                        if (waveGames.isNotEmpty()) GcSection("Game Wave") {
-                            // Semua game Wave tetap tampil, tidak ada yang dibuang.
-                            GcRows(waveGames.map { g -> GcItem(g.name, 0, "wave:" + g.id, g.image) }) { open = it }
                         }
 
                         // ---- Daftar peringkat

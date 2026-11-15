@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Pecahan Cashback</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; height: 100%; width: 100%;
+    background: transparent; overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  #stage {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #core { position: relative; width: 0; height: 0; }
+
+  .coin {
+    position: absolute; left: 0; top: 0;
+    width: 74px; height: 74px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 14px; letter-spacing: .2px;
+    color: #4a2600;
+    background:
+      radial-gradient(circle at 32% 26%, #fff9dd 0%, #ffd24d 42%, #f0a100 76%, #b96b00 100%);
+    box-shadow: 0 0 18px rgba(255, 196, 0, .85), inset 0 -4px 10px rgba(120, 60, 0, .45);
+    opacity: 0;
+    will-change: transform, opacity;
+    animation: pop 1.75s cubic-bezier(.2, .9, .3, 1) forwards;
+  }
+  .coin::after {
+    content: ""; position: absolute; inset: 5px;
+    border: 2px dashed rgba(255, 255, 255, .55); border-radius: 50%;
+  }
+  .coin span { position: relative; z-index: 1; }
+
+  .big {
+    width: 96px; height: 96px; font-size: 16px;
+    box-shadow: 0 0 30px rgba(255, 205, 60, .95), inset 0 -5px 12px rgba(120, 60, 0, .5);
+  }
+
+  /* Satu efek inti: skala naik, mengambang sedikit, lalu memudar. */
+  @keyframes pop {
+    0%   { opacity: 0; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(.25); }
+    22%  { opacity: 1; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1.2); }
+    38%  { opacity: 1; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1); }
+    75%  { opacity: 1; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y) - 18px)) scale(1); }
+    100% { opacity: 0; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y) - 52px)) scale(.86); }
+  }
+
+  /* Kilau di belakang koin, biar terasa "pecah" dari tengah. */
+  #glow {
+    position: absolute; left: 50%; top: 50%;
+    width: 240px; height: 240px; margin: -120px 0 0 -120px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 210, 77, .55) 0%, rgba(255, 170, 0, .18) 45%, transparent 72%);
+    animation: glow 1.6s ease-out forwards;
+    pointer-events: none;
+  }
+  @keyframes glow {
+    0%   { opacity: 0; transform: scale(.4); }
+    30%  { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.5); }
+  }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="core"><div id="glow"></div></div>
+  </div>
+<script>
+  var NILAI = __DATA__;
+
+  function rupiah(n) {
+    n = Math.round(Number(n) || 0);
+    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  }
+
+  function tampil() {
+    var core = document.getElementById("core");
+    var list = (NILAI || []).filter(function (v) { return Number(v) > 0; });
+    if (!list.length) return;
+
+    // Satu pecahan: tampil besar tepat di tengah. Lebih dari satu: disebar
+    // melingkar rapat di tengah layar seperti di aplikasi acuan.
+    var jari = list.length > 1 ? Math.min(132, 78 + list.length * 14) : 0;
+
+    list.forEach(function (v, i) {
+      var el = document.createElement("div");
+      el.className = "coin" + (list.length === 1 ? " big" : "");
+      el.innerHTML = "<span>" + rupiah(v) + "</span>";
+      var sudut = -Math.PI / 2 + (i * 2 * Math.PI) / list.length;
+      var x = Math.cos(sudut) * jari;
+      var y = Math.sin(sudut) * jari;
+      el.style.setProperty("--x", x.toFixed(1) + "px");
+      el.style.setProperty("--y", y.toFixed(1) + "px");
+      el.style.animationDelay = (i * 0.16).toFixed(2) + "s";
+      core.appendChild(el);
+    });
+  }
+
+  if (document.readyState === "complete" || document.readyState === "interactive") {
+    setTimeout(tampil, 16);
+  } else {
+    document.addEventListener("DOMContentLoaded", tampil);
+  }
+</script>
+</body>
+</html>

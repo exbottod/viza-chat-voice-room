@@ -193,8 +193,9 @@ private fun GiftFlyOnce(
         landed = true
         delay(650L)
         giftAlpha.animateTo(0f, tween(320))
-        // Tunggu pecahan selesai diputar sebelum efektor dilepas.
-        delay(maxOf(0L, 700L + f.parts.size * 260L))
+        // Tunggu pecahan selesai diputar sebelum efektor dilepas. Pecahan CSS
+        // butuh sekitar 2 detik, jadi jangan dipotong terlalu cepat.
+        delay(if (f.cbOn && f.parts.isNotEmpty()) 2500L else 700L + f.parts.size * 260L)
         onDone()
     }
 
@@ -230,10 +231,10 @@ private fun GiftFlyOnce(
         ) {
             FlyMedia(f)
         }
-        // Pecahan disebar ke seluruh layar, bukan menumpuk di avatar.
-        f.parts.forEachIndexed { i, v -> PartPop(v, i, box) }
         if (f.mult > 0 && f.cb > 0) MultBall(f.mult, f.cb, target)
     }
+    // Pecahan (koin angka) sekarang digambar pakai CSS di tengah layar.
+    if (f.cbOn && f.parts.isNotEmpty()) PecahanCss(f.parts)
     // Tampilan lama (pil "+angka" di bawah avatar dan banner "JP nama +angka" ungu)
     // dihapus. Yang tersisa: gift terbang, pecahan angka (SVGA), dan bola pengali.
 }

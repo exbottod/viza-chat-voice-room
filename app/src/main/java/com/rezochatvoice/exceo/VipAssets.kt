@@ -544,6 +544,26 @@ private const val SVGA_TEKS_Y = 972.7f           // tengah vertikal nama
 private val SVGA_FOTO_CX = floatArrayOf(830.0f, 793.4f, 755.5f, 717.2f, 678.7f, 640.3f, 601.9f, 563.8f, 525.9f, 488.3f, 451.1f, 414.4f, 378.4f, 343.1f, 308.8f, 275.9f, 245.1f, 217.6f, 197.4f, 186.9f, 179.1f, 172.8f, 167.7f, 163.3f, 159.5f, 156.2f, 153.4f, 150.8f, 148.6f, 146.5f, 144.7f, 143.1f, 141.6f, 140.3f, 139.1f, 138.1f, 137.1f, 136.2f, 135.4f, 134.7f, 134.0f, 133.4f, 132.9f, 132.4f, 131.9f, 131.5f, 131.1f, 130.7f, 130.3f, 129.9f, 129.6f, 129.2f, 128.9f, 128.5f, 128.1f, 127.7f, 127.3f, 126.9f, 126.4f, 125.8f, 125.3f, 124.6f, 123.9f, 123.1f, 122.2f, 121.2f, 120.0f, 118.8f, 117.3f, 115.7f, 113.9f, 111.7f, 109.3f, 106.4f, 103.1f, 99.0f, 94.0f, 83.8f, 64.7f, 37.2f, 1.7f, -41.4f, -91.5f, -148.1f, -210.6f, -278.1f, -349.6f, -423.1f, -495.1f, -557.0f)
 // Awal teks nama (x kiri) per frame.
 private val SVGA_TEKS_X = floatArrayOf(899.0f, 862.4f, 824.5f, 786.2f, 747.7f, 709.3f, 671.0f, 632.8f, 594.9f, 557.3f, 520.1f, 483.4f, 447.4f, 412.1f, 377.8f, 344.9f, 314.1f, 286.6f, 266.4f, 255.9f, 248.1f, 241.8f, 236.7f, 232.3f, 228.5f, 225.3f, 222.4f, 219.8f, 217.6f, 215.5f, 213.7f, 212.1f, 210.7f, 209.3f, 208.2f, 207.1f, 206.1f, 205.2f, 204.4f, 203.7f, 203.0f, 202.4f, 201.9f, 201.4f, 200.9f, 200.5f, 200.1f, 199.7f, 199.3f, 199.0f, 198.6f, 198.2f, 197.9f, 197.5f, 197.2f, 196.8f, 196.3f, 195.9f, 195.4f, 194.8f, 194.3f, 193.6f, 192.9f, 192.1f, 191.2f, 190.2f, 189.1f, 187.8f, 186.4f, 184.7f, 182.9f, 180.8f, 178.3f, 175.4f, 172.1f, 168.0f, 163.0f, 152.8f, 133.7f, 106.2f, 70.7f, 27.6f, -22.5f, -79.1f, -141.6f, -209.1f, -280.6f, -354.1f, -426.1f, -488.0f)
+/** Jalur gerak foto dan nama yang dibaca dari file banner itu sendiri. */
+private class JalurBanner(val fotoCx: FloatArray, val teksX: FloatArray)
+
+private fun jalurDariVideo(v: SVGAVideoEntity): JalurBanner? {
+    fun cari(kunci: List<String>): com.opensource.svgaplayer.SVGAVideoSpriteEntity? =
+        v.sprites.firstOrNull { sp ->
+            val k = (sp.imageKey ?: "").lowercase()
+            kunci.any { k.contains(it) }
+        }
+    val foto = cari(listOf("head", "foto", "photo", "avatar"))
+    val teks = cari(listOf("text", "nama", "name"))
+    val tengah = foto?.frames?.takeIf { it.size > 1 }?.map { f ->
+        val l = f.layout; val t = f.transform
+        if (l == null || t == null) 0f else (t.tx + l.width * t.a / 2).toFloat()
+    }?.toFloatArray()
+    val kiri = teks?.frames?.takeIf { it.size > 1 }?.map { f -> (f.transform?.tx ?: 0.0).toFloat() }?.toFloatArray()
+    if (tengah == null && kiri == null) return null
+    return JalurBanner(tengah ?: SVGA_FOTO_CX, kiri ?: SVGA_TEKS_X)
+}
+
 private fun svgaAmbil(t: FloatArray, p: Float): Float {
     val f = (p.coerceIn(0f, 1f) * (t.size - 1))
     val i = f.toInt().coerceIn(0, t.size - 1)
@@ -720,6 +740,8 @@ fun VipEntryEffect(roomId: String) {
                     val svgaBanner = asetBanner.kind == "svga"
                     // Progres animasi 0..1 dari pemutar SVGA, dipakai menggerakkan foto dan nama.
                     var progres by remember(asetBanner.n, asetBanner.updatedAt, bannerUid) { mutableStateOf(0f) }
+                    // Jalur gerak dibaca dari file itu sendiri; tabel ukur hanya cadangan.
+                    var jalur by remember(asetBanner.n, asetBanner.updatedAt) { mutableStateOf<JalurBanner?>(null) }
                     val tinggiBanner = if (svgaBanner) {
                         (SVGA_PITA_TINGGI * skala).dp
                     } else {
@@ -727,7 +749,7 @@ fun VipEntryEffect(roomId: String) {
                     }
                     val bSize = DpSize(lebarBanner, tinggiBanner)
                     Box(
-                        Modifier.size(bSize).graphicsLayer { alpha = fade.value },
+                        Modifier.size(bSize).clipToBounds().graphicsLayer { alpha = fade.value },
                     ) {
                         if (svgaBanner) {
                             // Kanvas SVGA 750x1624 tapi gambarnya hanya pita di tengah. View
@@ -755,6 +777,7 @@ fun VipEntryEffect(roomId: String) {
                                         loop = false,
                                         contentScale = ContentScale.FillBounds,
                                         onLangkah = { progres = it },
+                                        onSiap = { v -> jalur = jalurDariVideo(v) },
                                         onEnd = {
                                             // Animasi banner habis: tutup, jangan dipaksa
                                             // pakai durasi tetap seperti sebelumnya.
@@ -771,8 +794,9 @@ fun VipEntryEffect(roomId: String) {
                     // Foto dan nama menempel di pita dan IKUT BERGERAK: posisinya dibaca
                     // per frame dari jalur layer "head" dan "Text1" di file SVGA.
                     val bu = bannerUid?.let { UserCache.peek(it) }
-                    val fotoCx = svgaAmbil(SVGA_FOTO_CX, progres)
-                    val teksX = svgaAmbil(SVGA_TEKS_X, progres)
+                    val jl = jalur
+                    val fotoCx = svgaAmbil(jl?.fotoCx ?: SVGA_FOTO_CX, progres)
+                    val teksX = svgaAmbil(jl?.teksX ?: SVGA_TEKS_X, progres)
                     val pitaTengahY = (SVGA_TEKS_Y - SVGA_PITA_Y0) * skala     // titik tengah pita (dp)
                     if (bu != null) {
                         val av = (SVGA_FOTO_D * 750f * skala).dp

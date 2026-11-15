@@ -737,14 +737,19 @@ function ringkasCashback(tiers) {
 
 /* ---- Model persen: "pengali:bobot", mis. "10:0.3" ---- */
 function bacaKurva(teks) {
+  // Menerima "3 : 1:10", "3:10", "x3 1/10", "3 = 10" - semuanya jadi {m, n}.
   return String(teks || "")
     .split(/[\n;]+/)
     .map((x) => x.trim())
     .filter(Boolean)
     .map((baris) => {
-      const bersih = baris.replace(/^x/i, "").replace(/1\s*:/g, ":");
-      const bag = bersih.split(/[:=]/).map((y) => Number(String(y).replace(",", ".").trim()));
-      return { m: Number.isFinite(bag[0]) ? Math.max(0, bag[0]) : 0, n: Number.isFinite(bag[1]) ? Math.max(1, bag[1]) : 1 };
+      const angka = (baris.match(/\d+(?:[.,]\d+)?/g) || []).map((v) => Number(String(v).replace(",", ".")));
+      if (angka.length < 2) return { m: 0, n: 0 };
+      const m = angka[0];
+      let n = angka[1];
+      // Bentuk "1:N" menghasilkan tiga angka (m, 1, N): buang angka 1 di tengah.
+      if (angka.length >= 3 && angka[1] === 1) n = angka[2];
+      return { m: Math.max(0, m), n: Math.max(1, n) };
     })
     .filter((r) => r.m > 0 && r.n > 0)
     .sort((a, b) => a.m - b.m);
@@ -907,6 +912,9 @@ async function gambarCashback() {
   $("cbKembali").oninput = segarkanPersen;
 
   $("simpanCashback").onclick = async () => {
+    const kurva = bacaKurva($("cbKurva").value);
+    if (!kurva.length) return toast("Isi kurva JP, mis. 3 : 1:10", true);
+    if (kurva.every((r) => r.n <= 1)) return toast("Kurva JP belum benar. Tulis mis. 3 : 1:10", true);
     const tiers = bacaTierCashback($("cbTiers").value);
     if (!tiers.length) return toast("Isi minimal satu kelompok undian", true);
     const tierPersen = bacaTierPersen($("cbPersenTiers").value);
@@ -929,7 +937,7 @@ async function gambarCashback() {
       kembaliPct: Math.max(0, Math.min(100, Number($("cbKembali").value) || 0)),
       // Mulai jumlah kirim ini, zonk dibatalkan dan harga gift dikembalikan.
       bebasZonkMulai: Math.max(0, Math.min(999, Number($("cbBebasZonk").value) || 0)),
-      jpKurva: bacaKurva($("cbKurva").value),
+      jpKurva: kurva,
       kurvaAktif: $("cbKurvaOn").checked,
       kurvaMode: $("cbKurvaMode").value === "acak" ? "acak" : "kurva",
       tiers: tiers,

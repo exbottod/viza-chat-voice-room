@@ -355,7 +355,16 @@ fun entryAssetOf(m: RoomMsg): VipAsset? {
         val t = m.entry.removePrefix("sve_").toIntOrNull() ?: 0
         return if (t in 1..9) VipAssets.get(t, "entry") else null
     }
-    return if (m.vip in 1..9) VipAssets.get(m.vip, "entry") else null
+    if (m.vip in 1..9) VipAssets.get(m.vip, "entry")?.let { return it }
+    // Cadangan: pesan yang hanya membawa id banner (mis. "vipbn_1" / "svbn_1")
+    // tetap memakai efek masuk tingkat yang sama, supaya efek masuk tidak hilang
+    // hanya karena slot efek masuk belum dipakai.
+    val tier = when {
+        m.banner.startsWith("vipbn_") || m.banner.startsWith("svbn_") ->
+            m.banner.substringAfterLast("_").toIntOrNull() ?: 0
+        else -> 0
+    }
+    return if (tier in 1..9) VipAssets.get(tier, "entry") else null
 }
 
 /**

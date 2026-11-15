@@ -588,6 +588,13 @@ fun VipEntryEffect(roomId: String) {
         pending = null
     }
 
+    // Aset VIP dimuat dari database. Kalau pesan masuk sebelum aset siap, efek
+    // masuk dan banner jadi kosong. Untuk item VIP/store, coba ulang sebentar
+    // supaya efeknya tetap tampil (dulu hanya item sx_ yang dicoba ulang).
+    fun perluUlang(m: RoomMsg): Boolean =
+        m.entry.startsWith("sx_") || m.banner.startsWith("sx_") ||
+            m.vip in 1..9 || m.entry.isNotBlank() || m.banner.isNotBlank()
+
     DisposableEffect(roomId) {
         val reg = RoomRepo.observeMessages(roomId, 1) { list ->
             val last = list.lastOrNull()
@@ -603,7 +610,7 @@ fun VipEntryEffect(roomId: String) {
                         banner = b
                         bannerName = msgName(last).takeIf { it.isNotBlank() }
                         bannerUid = last.vipUid.takeIf { it.isNotBlank() }
-                    } else if (last.entry.startsWith("sx_") || last.banner.startsWith("sx_")) pending = last
+                    } else if (perluUlang(last)) pending = last
                 }
             } else if (last != null && last.id != lastId) {
                 lastId = last.id
@@ -614,7 +621,7 @@ fun VipEntryEffect(roomId: String) {
                     banner = b
                     bannerName = msgName(last).takeIf { it.isNotBlank() }
                         bannerUid = last.vipUid.takeIf { it.isNotBlank() }
-                } else if (last.entry.startsWith("sx_") || last.banner.startsWith("sx_")) pending = last
+                } else if (perluUlang(last)) pending = last
             }
         }
         onDispose { reg.remove() }

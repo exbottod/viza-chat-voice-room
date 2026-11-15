@@ -348,7 +348,12 @@ object WalletRepo {
         return r.error
     }
 
-    /** Kirim gift: coin berkurang, diamond pengirim bertambah sebanyak harga gift. */
+    /** Diamond yang benar-benar masuk dari kiriman gift terakhir (dari server). */
+    @Volatile
+    var lastGiftDiamond: Long = 0L
+        private set
+
+    /** Kirim gift: coin berkurang, diamond pengirim bertambah sesuai aturan server. */
     suspend fun sendGift(
         uid: String,
         price: Long,
@@ -357,7 +362,9 @@ object WalletRepo {
         to: List<String> = emptyList(),
         each: Long = 0L,
     ): String? {
+        lastGiftDiamond = 0L
         val r = SupaRepo.sendGift(uid, price, itemId, roomId, to, each)
+        lastGiftDiamond = r.dm
         r.wallet?.let { emitBackup(uid, it) }
         return r.error
     }
@@ -1633,6 +1640,7 @@ fun GiftPanel(
                                 sending = true
                                 AppScope.scope.launch {
                                     var err: String? = null
+                                    var dmServer = 0L
                                     try {
                                         err = WalletRepo.sendGift(
                                             myUid,
@@ -1642,6 +1650,7 @@ fun GiftPanel(
                                             receivers.map { it.uid },
                                             perReceiver,
                                         )
+                                        dmServer = WalletRepo.lastGiftDiamond
                                     } catch (e: kotlinx.coroutines.CancellationException) {
                                         throw e
                                     } catch (e: Exception) {
@@ -1654,9 +1663,12 @@ fun GiftPanel(
                                     }
                                     // FIX: toast sukses tampil LANGSUNG setelah dompet terpotong,
                                     // jangan menunggu ranking/pesan/fx yang bisa lambat atau gagal.
+                                    // Angka diamond diambil dari server (dm). Gift cashback
+                                    // cuma menambah 5%, bukan nilai penuh.
+                                    val dm = if (dmServer > 0L) dmServer else total
                                     Toast.makeText(
                                         context,
-                                        tr("Gift terkirim! +${fmtNum(total)} diamond"),
+                                        tr("Gift terkirim! +${fmtNum(dm)} diamond"),
                                         Toast.LENGTH_SHORT,
                                     ).show()
                                     try { RoomExtras.sendGiftMessage(roomId, myName, g, count, toText) } catch (e: Exception) { }

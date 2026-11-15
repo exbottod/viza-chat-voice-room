@@ -40,7 +40,13 @@ object SupaRepo {
     // (setara kunci anon, tanpa akses data karena RLS menutup semua tabel).
     private const val KEY = "GANTI_SUPABASE_KEY"
 
-    class Res(val wallet: Wallet?, val error: String?, val needMigrate: Boolean = false)
+    class Res(
+        val wallet: Wallet?,
+        val error: String?,
+        val needMigrate: Boolean = false,
+        /** Diamond yang benar-benar masuk (dari server), 0 kalau tidak dikirim. */
+        val dm: Long = 0L,
+    )
 
     // ---------------------------------------------------------------
     // Token login diambil dari simpanan. Mengambil token dengan "paksa
@@ -175,7 +181,9 @@ object SupaRepo {
         } catch (e: Exception) {
             return Res(null, if (code in 200..299) "Jawaban server dompet tidak terbaca" else "Server dompet error $code")
         }
-        if (o.optInt("ok") == 1) return Res(parseWallet(o.optJSONObject("w")), null)
+        if (o.optInt("ok") == 1) {
+            return Res(parseWallet(o.optJSONObject("w")), null, false, o.optLong("dm"))
+        }
         val err = o.optString("e", "")
         return Res(null, err.ifBlank { "Server sibuk, coba lagi" }, err.contains("WALLET_NOT_FOUND"))
     }

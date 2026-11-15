@@ -1151,6 +1151,16 @@ async function kirimGift(env, uid, p) {
   const item = p.itemId != null ? String(p.itemId) : null;
   const room = p.roomId != null ? String(p.roomId) : null;
 
+  // Penanda cashback dibaca sebelum transaksi supaya diamond pengirim ikut
+  // aturan panel: gift cashback hanya 5% (bisa diubah), gift biasa 100%.
+  let giftCashback = false;
+  try {
+    const kat = await katalogGift(env, item);
+    giftCashback = !!(kat && kat.cashback);
+  } catch (e) { giftCashback = false; }
+  const pctDm = await pctDiamond(giftCashback);
+  const dmMasuk = Math.max(0, Math.floor((price * pctDm) / 100));
+
   // Satu transaksi: potong coin, tambah diamond dan exp (bonus VIP),
   // lalu catat. Penanda req membuat pengulangan tidak memotong dua kali.
   const r = await pipeTrx(env, [
@@ -1164,7 +1174,7 @@ async function kirimGift(env, uid, p) {
               updated_at = ?
             where uid = ? and coins >= ?
               and not exists (select 1 from gift_req where req_id = ?)`,
-      args: [I(price), I(price), I(price), I(now), I(now), T(uid), I(price), T(req)],
+      args: [I(price), I(dmMasuk), I(price), I(now), I(now), T(uid), I(price), T(req)],
     },
     {
       sql: "insert into gift_req (req_id, uid, at) select ?, ?, ? where changes() > 0",
@@ -1187,19 +1197,16 @@ async function kirimGift(env, uid, p) {
     // ke pengirim dan penerima tidak pernah menerima apa pun (halaman Tukar
     // Berlian mereka tetap 0, terutama setelah akun direset). Sekarang setiap
     // penerima dicatat sendiri, tetap aman diulang lewat penanda req.
-    let giftCashback = false;
-    try {
-      const kat = await katalogGift(env, item);
-      giftCashback = !!(kat && kat.cashback);
-    } catch (e) { giftCashback = false; }
     await kreditPenerima(env, uid, p, price, item, room, now, req, giftCashback);
-    return ok(w);
+    // dm = diamond yang benar-benar masuk ke pengirim, dipakai aplikasi untuk
+    // teks "Gift terkirim! +X diamond" supaya angkanya tidak menebak.
+    return json({ ok: 1, w: w ?? null, dm: dmMasuk, dmPct: pctDm });
   }
   // Tidak berubah: bisa karena coin kurang atau permintaan sudah diproses.
   const cek = await pipeTrx(env, [
     { sql: "select 1 as ada from gift_req where req_id = ?", args: [T(req)] },
   ]);
-  if (cek[0].rows.length) return ok(w); // sudah pernah diproses: aman
+  if (cek[0].rows.length) return json({ ok: 1, w: w ?? null, dm: dmMasuk, dmPct: pctDm }); // sudah pernah diproses: aman
   return gagal("Coin tidak cukup. Tekan Topup");
 }
 

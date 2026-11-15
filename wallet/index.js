@@ -2073,9 +2073,18 @@ const JP_KELOMPOK_BAWAAN = [
 // Peluang JP gaya "1 dari berapa kiriman" (kurva pemilik):
 // x3 1:10, x5 1:15, x10 1:25, x20 1:40, x50 1:100, x100 1:150,
 // x200 1:300, x500 1:700, x1000 1:1799.
+// Versi aman: kirim 10 sekaligus diundi 10 kali, jadi peluangnya dibuat jauh
+// lebih jarang supaya rata-rata hadiah tetap di bawah modal.
 const KURVA_BAWAAN = [
-  [3, 10], [5, 15], [10, 25], [20, 40], [50, 100],
-  [100, 150], [200, 300], [500, 700], [1000, 1799],
+  [3, 400],
+  [5, 1000],
+  [10, 2500],
+  [20, 6000],
+  [50, 18000],
+  [100, 50000],
+  [200, 120000],
+  [500, 350000],
+  [1000, 900000],
 ];
 
 /** Tabel kurva dari panel: [{m: pengali, n: 1 dari berapa}] */

@@ -460,8 +460,15 @@ fun VipMediaSafe(
     contentScale: ContentScale = ContentScale.Fit,
     fallback: @Composable () -> Unit = {},
     batas: Boolean = false,
+    diam: Boolean = false,
 ) {
     if (a == null || (a.url.isBlank() && !a.hasData)) {
+        fallback()
+        return
+    }
+    // Daftar/ransel: animasi tidak diputar sama sekali. Yang bergerak hanya
+    // saat pratinjau dibuka, jadi HP tidak berat walau itemnya banyak.
+    if (diam && (a.kind == "mp4" || a.kind == "svga")) {
         fallback()
         return
     }
@@ -533,10 +540,10 @@ fun VipTag(n: Int, modifier: Modifier = Modifier) {
 
 /** Bingkai eksklusif VIP ditumpuk di atas avatar (tidak menangkap sentuhan). */
 @Composable
-fun VipFrame(tier: Int, size: Dp, batas: Boolean = false) {
+fun VipFrame(tier: Int, size: Dp, diam: Boolean = false) {
     if (tier !in 1..9) return
     // Kalau gambar bingkai tidak bisa dipakai, tidak ada yang digambar (avatar tetap terlihat).
-    VipMediaSafe(VipAssets.get(tier, "frame"), Modifier.requiredSize(size), loop = true, batas = batas)
+    VipMediaSafe(VipAssets.get(tier, "frame"), Modifier.requiredSize(size), loop = true, diam = diam)
 }
 
 /**

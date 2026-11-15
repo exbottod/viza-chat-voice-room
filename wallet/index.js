@@ -1912,6 +1912,47 @@ function tierCashback(cfg) {
   return bersih.length ? bersih : CASHBACK_BAWAAN;
 }
 
+// ===== Cashback model PERSEN (pengali x harga gift) =====
+// Sesuai contoh pemilik: hadiah = harga gift x pengali, jadi gift 100.000 dan
+// gift 1.000.000 otomatis ikut skala. Bobot menentukan seberapa sering tiap
+// pengali muncul. Bawaan di bawah sudah disimulasikan: cashback rata-rata
+// sekitar 21% dari harga gift, peluang 5x ke atas ~1,3%, JP 10x ~0,3%.
+const PERSEN_BAWAAN = [
+  { m: 0, w: 54 },
+  { m: 0.1, w: 28 },
+  { m: 0.5, w: 13 },
+  { m: 1, w: 3.8 },
+  { m: 5, w: 1.1 },
+  { m: 10, w: 0.3 },
+];
+
+/** Tingkatan persen dari panel: [{m: pengali, w: bobot}] -> bersih & terurut. */
+function tierPersen(cfg) {
+  const sumber = Array.isArray(cfg?.tiersPersen) ? cfg.tiersPersen : [];
+  const bersih = sumber
+    .map((r) => ({
+      m: Math.max(0, Math.min(2000, Number(r?.m ?? 0))),
+      w: Math.max(0, Number(r?.w ?? 0)),
+    }))
+    .filter((r) => r.w > 0)
+    .sort((a, b) => a.m - b.m);
+  return bersih.length ? bersih : PERSEN_BAWAAN;
+}
+
+/** Undian berbobot: satu angka acak memilih pengali. */
+function undiPersen(cfg) {
+  const tier = tierPersen(cfg);
+  const total = tier.reduce((a, b) => a + b.w, 0);
+  if (!(total > 0)) return { mult: 0, kelompok: -1 };
+  let acak = Math.random() * total;
+  for (let i = 0; i < tier.length; i++) {
+    acak -= tier[i].w;
+    if (acak <= 0) return { mult: tier[i].m, kelompok: i };
+  }
+  const akhir = tier[tier.length - 1];
+  return { mult: akhir.m, kelompok: tier.length - 1 };
+}
+
 /**
  * Peluang dapat cashback menurut JUMLAH yang dikirim dalam satu kali kirim.
  * Contoh panel: 1:70 lalu 520:78 berarti kirim 1-519 dapat peluang 70%, dan
@@ -1979,10 +2020,28 @@ async function cashbackGift(env, uid, p) {
   // Batas atas: cashback tidak boleh melebihi nilai gift (harga x jumlah).
   // Bawaannya 106% dari nilai, jadi kirim 52.000.000 paling besar dapat 55.120.000.
   // Nominal di atas batas dipotong ke batas, jadi angka raksasa (miliaran) hilang.
-  const capPct = Math.max(50, Math.min(300, Number(cfg?.capPct ?? 106)));
+  // Dua model: "persen" (hadiah = harga gift x pengali) dan "nominal tetap"
+  // (rentang nominal, tidak ikut harga gift). Bawaannya persen.
+  const persenAktif = cfg?.modePersen !== false;
+  // Batas atas: model persen butuh batas longgar supaya 10x benar-benar utuh
+  // (bawaan 1.060% = 10,6x nilai gift). Model nominal tetap dibatasi 50-300%.
+  const capPct = persenAktif
+    ? Math.max(100, Math.min(5000, Number(cfg?.capPct ?? 1060)))
+    : Math.max(50, Math.min(300, Number(cfg?.capPctTetap ?? cfg?.capPct ?? 106)));
   const batas = Math.floor((nilai * capPct) / 100);
-  const undian = undiCashback(cfg, count);
-  const untung = Math.max(0, Math.min(batas, Math.floor(undian.nominal * count)));
+  let untung = 0;
+  let undian = { jackpot: 0, kelompok: -1, peluang: 100, mult: 0 };
+  if (persenAktif) {
+    // Satu undian per kiriman, lalu dikali jumlah kirim. Kirim 5 buah = 5x
+    // hadiah, tetapi tidak diundi lima kali (biar combo besar tidak "rata").
+    const u = undiPersen(cfg);
+    untung = Math.max(0, Math.min(batas, Math.floor(price * u.mult) * count));
+    undian = { jackpot: u.mult >= 5 ? 1 : 0, kelompok: u.kelompok, peluang: 100, mult: u.mult };
+  } else {
+    const u = undiCashback(cfg, count);
+    untung = Math.max(0, Math.min(batas, Math.floor(u.nominal * count)));
+    undian = { jackpot: u.jackpot, kelompok: u.kelompok, peluang: u.peluang, mult: 0 };
+  }
   const kembali = 0;
   const kredit = untung;
   const parts = untung > 0 ? [untung] : [];
@@ -2006,8 +2065,15 @@ async function cashbackGift(env, uid, p) {
 
   // Info tampilan kartu pemenang (gaya "Lucky Gift"): harga satuan, jumlah
   // kirim, total nilai, dan kelipatan menang terhadap harga satuan.
-  const kelipatan = untung > 0 ? Math.max(1, Math.round(untung / Math.max(1, price))) : 0;
-  const tingkat = kelipatan >= 100 ? "Highest" : kelipatan >= 5 ? "Pro" : kelipatan > 0 ? "Rookie" : "";
+  const klf = untung > 0 ? Math.round((untung / Math.max(1, price)) * 100) / 100 : 0;
+  const kelipatan = untung > 0 ? Math.round(klf) : 0;
+  // Label jenis hadiah untuk badge di aplikasi (Cashback / Lucky / Jackpot).
+  const tingkat = untung <= 0 ? ""
+    : klf >= 10 ? "MEGA JACKPOT"
+    : klf >= 5 ? "LUCKY 5x"
+    : klf >= 2 ? "LUCKY BONUS"
+    : klf >= 1 ? "CASHBACK 1x"
+    : "CASHBACK " + Math.round(klf * 100) + "%";
 
   // Jackpot = kelompok terakhir (bawaan 50.000). Tidak ada pengali lagi.
   return json({
@@ -2021,6 +2087,8 @@ async function cashbackGift(env, uid, p) {
     cnt: count,
     total: nilai,
     kl: kelipatan,
+    klf: klf,
+    modePersen: persenAktif ? 1 : 0,
     tkt: tingkat,
     parts: parts.slice(0, 5),
     pecahan: parts[0] ?? 0,

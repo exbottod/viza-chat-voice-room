@@ -63,6 +63,8 @@ data class GiftFly(
     val total: Long = 0L,
     /** Kelipatan menang terhadap harga satuan (badge "x100"). */
     val kelipatan: Int = 0,
+    /** Kelipatan versi pecahan dari server (10% = 0.1), untuk animasi. */
+    val kelipatanF: Double = 0.0,
     /** Tingkat pemenang dari server: Rookie / Pro / Highest. */
     val tingkat: String = "",
 )
@@ -118,6 +120,7 @@ fun GiftFlyOverlay(roomId: String, seatPoints: Map<Int, Offset>) {
                     unit = c.child("unit").getValue(Long::class.java) ?: 0L,
                     cnt = (c.child("cnt").getValue(Long::class.java) ?: 0L).toInt(),
                     total = c.child("total").getValue(Long::class.java) ?: 0L,
+                    kelipatanF = c.child("klf").getValue(Double::class.java) ?: 0.0,
                     kelipatan = (c.child("kl").getValue(Long::class.java) ?: 0L).toInt(),
                     tingkat = c.child("tkt").getValue(String::class.java) ?: "",
                     ),
@@ -237,8 +240,9 @@ private fun GiftFlyOnce(
     // koin pecahan disebar. Nilainya tetap dari server.
     if (f.cbOn && f.cb > 0L) {
         val hargaSatu = if (f.unit > 0L) f.unit else if (f.cnt > 0) f.price / f.cnt else f.price
-        val kaliTampil = if (f.kelipatan > 0) f.kelipatan.toDouble()
-        else if (hargaSatu > 0L) f.cb.toDouble() / hargaSatu else 1.0
+        val kaliTampil = if (f.kelipatanF > 0.0) f.kelipatanF
+        else if (hargaSatu > 0L) f.cb.toDouble() / hargaSatu
+        else if (f.kelipatan > 0) f.kelipatan.toDouble() else 1.0
         PecahanCss(
             nilai = f.parts,
             total = f.cb,
@@ -276,9 +280,13 @@ private fun SelamatCashback(f: GiftFly) {
 
     // Kelipatan: dari server; kalau kosong dihitung dari nominal / harga satuan.
     val harga = if (f.unit > 0L) f.unit else if (f.cnt > 0) f.price / f.cnt else f.price
-    val kali = if (f.kelipatan > 0) f.kelipatan else {
-        if (dapat && harga > 0L) maxOf(1, Math.round(f.cb.toDouble() / harga).toInt()) else 0
+    val kaliD = if (f.kelipatanF > 0.0) f.kelipatanF else {
+        if (dapat && harga > 0L) f.cb.toDouble() / harga else 0.0
     }
+    val kali = if (kaliD > 0) maxOf(1, Math.round(kaliD).toInt()) else 0
+    // 0,1 ditulis "10%", 5 ditulis "x5", 1,5 ditulis "x1.5".
+    val labelKali = if (kaliD > 0 && kaliD < 1) "${Math.round(kaliD * 100)}%"
+    else "x" + (Math.round(kaliD * 100) / 100.0).toString().removeSuffix(".0")
     val jumlah = if (f.cnt > 0) f.cnt else 1
     val tingkat = f.tingkat.ifBlank {
         when {
@@ -327,7 +335,7 @@ private fun SelamatCashback(f: GiftFly) {
                                     .padding(horizontal = 6.dp, vertical = 1.dp),
                             ) {
                                 Text(
-                                    "x$kali",
+                                    labelKali,
                                     color = Color(0xFF3B2200),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Black,

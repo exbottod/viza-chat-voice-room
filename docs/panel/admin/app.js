@@ -614,8 +614,19 @@ async function gambarFamily() {
 // Nominal TIDAK dikali harga gift (sesuai contoh pemilik).
 const CB_BAWAAN = {
   on: true,
+  modePersen: true,
+  capPct: 1060,
   recvPct: 70,
   jpMin: 50000,
+  // Model persen: hadiah = harga gift x pengali. Bobot = seberapa sering muncul.
+  tiersPersen: [
+    { m: 0, w: 54 },
+    { m: 0.1, w: 28 },
+    { m: 0.5, w: 13 },
+    { m: 1, w: 3.8 },
+    { m: 5, w: 1.1 },
+    { m: 10, w: 0.3 },
+  ],
   tiers: [
     { p: 70, min: 1000, max: 5000 },
     { p: 25, min: 10000, max: 20000 },
@@ -701,6 +712,52 @@ function ringkasCashback(tiers) {
     <div class="catatan">Rata-rata cashback per gift: <b>${rupiah(Math.round(peluang))} coin</b>, berapa pun harga giftnya.</div>`;
 }
 
+/* ---- Model persen: "pengali:bobot", mis. "10:0.3" ---- */
+function bacaTierPersen(teks) {
+  return String(teks || "")
+    .split(/[\n;]+/)
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .map((baris) => {
+      const bag = baris.split(/[:=]/).map((y) => Number(String(y).replace(",", ".").trim()));
+      return {
+        m: Number.isFinite(bag[0]) ? Math.max(0, bag[0]) : 0,
+        w: Number.isFinite(bag[1]) ? Math.max(0, bag[1]) : 0,
+      };
+    })
+    .filter((r) => r.w > 0)
+    .sort((a, b) => a.m - b.m);
+}
+
+function teksTierPersen(rows) {
+  return (Array.isArray(rows) ? rows : [])
+    .map((r) => `${Number(r.m) || 0}:${Number(r.w) || 0}`)
+    .join("\n");
+}
+
+/** Tabel peluang + rata-rata RTP dari model persen (per harga gift 100.000). */
+function ringkasTierPersen(rows, capPct, recvPct) {
+  const total = rows.reduce((a, b) => a + b.w, 0);
+  if (!total) return '<div class="catatan">Belum ada tingkatan.</div>';
+  const contoh = 100000;
+  const batas = (contoh * (Number(capPct) || 0)) / 100;
+  let rtp = 0;
+  const isi = rows
+    .map((r) => {
+      const pct = (r.w / total) * 100;
+      const penuh = contoh * r.m;
+      const dapat = Math.min(penuh, batas);
+      rtp += (r.w / total) * (dapat / contoh);
+      return `<tr><td>${(r.m > 0 && r.m < 1 ? Math.round(r.m * 100) + "%" : "x" + r.m)}</td>
+        <td>${pct.toFixed(2).replace(".", ",")}%</td>
+        <td>${rupiah(dapat)}</td></tr>`;
+    })
+    .join("");
+  const totalKeluar = (rtp * 100) + (Number(recvPct) || 0) + 5;
+  return `<table style="margin-top:8px"><tr><th>PENGALI</th><th>PELUANG</th><th>CONTOH GIFT 100.000</th></tr>${isi}</table>
+    <div class="catatan">Cashback rata-rata <b>${(rtp * 100).toFixed(1).replace(".", ",")}%</b> dari harga gift. Kalau penerima dapat <b>${Number(recvPct) || 0}%</b> ditambah 5% diamond, total keluar <b>${totalKeluar.toFixed(1).replace(".", ",")}%</b>, jadi platform pegang ${(100 - totalKeluar).toFixed(1).replace(".", ",")}%.</div>`;
+}
+
 async function gambarCashback() {
   let cfg = CB_BAWAAN;
   let galat = "";
@@ -710,6 +767,9 @@ async function gambarCashback() {
   } catch (e) { galat = e.message || String(e); }
   const tiers = Array.isArray(cfg.tiers) && cfg.tiers.length ? cfg.tiers : CB_BAWAAN.tiers;
   const boost = Array.isArray(cfg.boostJumlah) ? cfg.boostJumlah : CB_BAWAAN.boostJumlah;
+  const persenAktif = cfg.modePersen !== false;
+  const capPct = Number(cfg.capPct ?? 1060) || 1060;
+  const tierP = Array.isArray(cfg.tiersPersen) && cfg.tiersPersen.length ? cfg.tiersPersen : CB_BAWAAN.tiersPersen;
 
   $("aksiTopbar").innerHTML = '<button class="tombolAtas" id="simpanCashback">Simpan</button>';
   $("isiHal").innerHTML = `
@@ -725,6 +785,18 @@ async function gambarCashback() {
           <div class="isian"><label>Bagian penerima gift (%)</label><input id="cbRecv" type="number" min="0" max="100" value="${Number(cfg.recvPct) || 0}"></div>
           <div class="isian"><label>Peluang zonk (%)</label><input id="cbZonk" type="number" min="0" max="90" value="${Number(cfg.zonkPct ?? 8) || 0}"></div>
         </div>
+        <div class="barisIsian" style="margin-top:12px">
+          <div class="isian"><label>Model persen (harga gift x pengali)</label>
+            <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="cbPersen" ${persenAktif ? "checked" : ""} style="width:auto">pakai model persen</label>
+          </div>
+          <div class="isian"><label>Batas cashback (% dari nilai gift)</label><input id="cbCap" type="number" min="100" max="5000" value="${capPct}"></div>
+        </div>
+        <div class="isian" style="margin-top:12px">
+          <label>Tingkatan persen (pengali:bobot, satu per baris)</label>
+          <textarea id="cbPersenTiers" rows="6" style="width:100%;font-family:monospace">${aman(teksTierPersen(tierP))}</textarea>
+          <div id="cbPersenRin">${ringkasTierPersen(tierP, capPct, cfg.recvPct)}</div>
+        </div>
+        <div class="catatan" style="margin-top:14px">Cadangan model nominal tetap (tidak ikut harga gift). Dipakai kalau model persen dimatikan.</div>
         <div class="isian" style="margin-top:12px">
           <label>Peluang menurut jumlah kirim (jumlah:persen, satu per baris)</label>
           <textarea id="cbBoost" rows="4" style="width:100%;font-family:monospace">${aman(teksBoostJumlah(boost))}</textarea>
@@ -742,12 +814,29 @@ async function gambarCashback() {
   elBoost.oninput = () => { $("cbBoostRin").innerHTML = ringkasBoostJumlah(bacaBoostJumlah(elBoost.value)); };
   const el = $("cbTiers");
   el.oninput = () => { $("cbRin").innerHTML = ringkasCashback(bacaTierCashback(el.value)); };
+  const elP = $("cbPersenTiers");
+  const elCap = $("cbCap");
+  const segarkanPersen = () => {
+    $("cbPersenRin").innerHTML = ringkasTierPersen(
+      bacaTierPersen(elP.value),
+      Number(elCap.value) || 0,
+      Number($("cbRecv").value) || 0,
+    );
+  };
+  elP.oninput = segarkanPersen;
+  elCap.oninput = segarkanPersen;
+  $("cbRecv").oninput = segarkanPersen;
 
   $("simpanCashback").onclick = async () => {
     const tiers = bacaTierCashback($("cbTiers").value);
     if (!tiers.length) return toast("Isi minimal satu kelompok undian", true);
+    const tierPersen = bacaTierPersen($("cbPersenTiers").value);
+    if ($("cbPersen").checked && !tierPersen.length) return toast("Isi tingkatan persen dulu", true);
     const baru = {
       on: $("cbOn").checked,
+      modePersen: $("cbPersen").checked,
+      capPct: Math.max(100, Math.min(5000, Number($("cbCap").value) || 1060)),
+      tiersPersen: tierPersen.length ? tierPersen : CB_BAWAAN.tiersPersen,
       recvPct: Math.max(0, Math.min(100, Number($("cbRecv").value) || 0)),
       tiers: tiers,
       boostJumlah: bacaBoostJumlah($("cbBoost").value),

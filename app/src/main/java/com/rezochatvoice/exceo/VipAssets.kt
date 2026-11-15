@@ -700,14 +700,14 @@ fun VipEntryEffect(roomId: String) {
                     // Foto profil user dipasang di ujung kiri banner (di atas bola emas).
                     val bu = bannerUid?.let { UserCache.peek(it) }
                     if (bu != null) {
-                        // Foto dibuat besar mengikuti tinggi banner supaya pas dengan hiasannya.
-                        val av = (bSize.height.value * 0.84f).dp
+                        // Foto dipaskan ke lingkaran bawaan banner (tidak digambar ulang),
+                        // jadi ukurannya kecil dan diletakkan tepat di tengah lingkaran itu.
+                        val av = (bSize.height.value * 0.44f).dp
                         Box(
                             Modifier.align(Alignment.CenterStart)
-                                .padding(start = (bSize.height.value * 0.08f).dp)
-                                .size(av + 4.dp)
-                                .clip(CircleShape)
-                                .border(2.dp, Color(0xFFFFE9A0), CircleShape),
+                                .offset(x = bSize.width * 0.18f - av / 2)
+                                .size(av)
+                                .clip(CircleShape),
                             contentAlignment = Alignment.Center,
                         ) { PublicAvatar(bu, av) }
                     }

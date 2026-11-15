@@ -1409,6 +1409,10 @@ fun StoreScreen(uid: String, wallet: Wallet, onOpenVip: () -> Unit, onBack: () -
                     if (a != null && (item.slot == "entry" || item.slot == "banner")) {
                         // Efek masuk / banner: putar penuh sekali tampil.
                         key(a.updatedAt) { VipMedia(a, Modifier.fillMaxSize(), loop = true) }
+                    } else if (a != null && (a.kind == "mp4" || a.kind == "svga")) {
+                        // Pratinjau: hanya di sini animasi diputar, karena daftar
+                        // item sengaja ditampilkan diam supaya HP tidak berat.
+                        key(a.updatedAt) { VipMedia(a, Modifier.fillMaxSize(), loop = true, contentScale = ContentScale.Fit) }
                     } else {
                         ItemPreview(item, 220.dp)
                     }

@@ -1804,12 +1804,12 @@ function undiKaskade(cfg) {
 // dan sebagian besar hasilnya ZONK.
 const CASHBACK_BAWAAN = [
   { v: 1000, w: 1 },
-  { v: 100, w: 2 },
-  { v: 50, w: 5 },
-  { v: 10, w: 12 },
-  { v: 5, w: 20 },
-  { v: 0, w: 60 },
-];
+  { v: 100, w: 1 },
+  { v: 50, w: 2 },
+  { v: 10, w: 6 },
+  { v: 5, w: 15 },
+  { v: 0, w: 75 },
+]
 const PLATFORM_FEE_PCT = 30;
 
 /** Undian pengali: satu angka acak, lalu dipilih sesuai bobot dari panel. */

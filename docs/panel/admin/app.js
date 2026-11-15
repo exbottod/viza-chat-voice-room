@@ -615,7 +615,7 @@ const CB_BAWAAN = {
   on: true,
   recvPct: 5,
   jpMin: 1000,
-  t1: { min: 0, rows: [{ v: 10, w: 5 }, { v: 0.5, w: 25 }, { v: 0.1, w: 40 }, { v: 0, w: 30 }] },
+  t1: { min: 0, rows: [{ v: 1000, w: 1 }, { v: 100, w: 1 }, { v: 50, w: 2 }, { v: 10, w: 6 }, { v: 5, w: 15 }, { v: 0, w: 75 }] },
 };
 
 function bacaBarisCashback(teks) {

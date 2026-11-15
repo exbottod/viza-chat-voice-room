@@ -1798,21 +1798,38 @@ function undiKaskade(cfg) {
 //   30 - 70% -> cashback 10% harga gift
 //   70 - 100% -> tidak dapat cashback
 // Penerima gift dapat 70% dari harga gift; 30% sisanya untuk platform.
-const CASHBACK_ATURAN = [
-  { batas: 5, mult: 10 },    // 0 - 5%
-  { batas: 30, mult: 0.5 },  // 5 - 30%
-  { batas: 70, mult: 0.1 },  // 30 - 70%
-  { batas: 100, mult: 0 },   // 70 - 100%
+// Pengali hasilnya acak (match random), bisa keluar 1000x, 100x, 50x, dan
+// seterusnya. Peluang tiap pengali diatur dari panel: "pengali:bobot".
+// Bawaan kalau panel belum diisi: 1000x jarang sekali, makin kecil makin sering,
+// dan sebagian besar hasilnya ZONK.
+const CASHBACK_BAWAAN = [
+  { v: 1000, w: 1 },
+  { v: 100, w: 2 },
+  { v: 50, w: 5 },
+  { v: 10, w: 12 },
+  { v: 5, w: 20 },
+  { v: 0, w: 60 },
 ];
 const PLATFORM_FEE_PCT = 30;
 
-/** Satu angka acak 0-100, lalu bercabang sesuai aturan di atas. */
-function undiCashback() {
-  const acak = Math.random() * 100;
-  for (const a of CASHBACK_ATURAN) {
-    if (acak <= a.batas) return a.mult;
+/** Undian pengali: satu angka acak, lalu dipilih sesuai bobot dari panel. */
+function undiCashback(cfg) {
+  const node = cfg || {};
+  const sumber = (node.t1 && Array.isArray(node.t1.rows) && node.t1.rows.length)
+    ? node.t1.rows
+    : (Array.isArray(node.rows) ? node.rows : []);
+  const baris = sumber
+    .map((r) => ({ v: Math.max(0, Math.min(1000, Number(r?.v ?? 0))), w: Math.max(0, Number(r?.w ?? 0)) }))
+    .filter((r) => r.w > 0);
+  const daftar = baris.length ? baris : CASHBACK_BAWAAN;
+  const total = daftar.reduce((a, b) => a + b.w, 0);
+  if (!total) return 0;
+  let acak = Math.random() * total; // satu angka acak 0..total
+  for (const r of daftar) {
+    acak -= r.w;
+    if (acak <= 0) return r.v;
   }
-  return 0;
+  return daftar[daftar.length - 1].v;
 }
 
 async function cashbackGift(env, uid, p) {
@@ -1829,7 +1846,7 @@ async function cashbackGift(env, uid, p) {
   // Aturan pemilik: kalau ZONK harga gift terpotong penuh 100%. Kalau dapat,
   // harga gift TIDAK terpotong (dikembalikan) lalu ditambah keuntungan sesuai
   // pengali. Jadi 100.000 kena 10x: saldo kembali 100.000 dan dapat +1.000.000.
-  const mult = undiCashback();
+  const mult = undiCashback(cfg);
   const untung = Math.max(0, Math.floor(nilai * mult)); // tampil di layar
   const kembali = untung > 0 ? nilai : 0;               // harga gift tidak terpotong
   const kredit = untung + kembali;
@@ -4154,7 +4171,7 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           stafAktif = Number(r[0].rows[0]?.a ?? 0);
           peran = r[1].rows.map((x) => String(x.role) + ":" + Number(x.n));
         } catch (e) { /* tabel belum ada */ }
-        return json({ ok: 1, v: "viza-2026-11-15-cashback-refund", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
+        return json({ ok: 1, v: "viza-2026-11-15-cashback-pengali-acak", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
       } catch (e) {
         return json({ ok: 0, v: "viza-2026-11-13-mandiri", db: String(e?.message ?? e) }, 500);
       }

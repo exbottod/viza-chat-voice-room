@@ -117,6 +117,41 @@ async function greedyPlay(req, env, h) {
   };
 
   // ---- daftar pemenang ----
+  // Nama dan foto selalu dibaca dari profil TERBARU (pub/{uid} di RTDB), bukan dari
+  // nama yang tersimpan saat taruhan. Jadi kalau pemain mengganti nama atau foto,
+  // ranking ikut berubah. Nama lama tabel hanya jadi cadangan.
+  const profilTerbaru = async (baris) => {
+    // Aturan RTDB: pub/{uid} hanya terbaca kalau login. Server memakai token
+    // service account (FIREBASE_SA_JSON atau /opt/viza-api/firebase-sa.json).
+    let tokenSa = "";
+    try { tokenSa = await tokenLayanan(env); } catch { tokenSa = ""; }
+    const hasil = await Promise.all(
+      baris.map(async (x) => {
+        let nama = String(x.display_name || "");
+        let foto = "";
+        try {
+          const r = await fetch(
+            `${RTDB}/pub/${encodeURIComponent(String(x.id))}.json` +
+              (tokenSa ? `?access_token=${encodeURIComponent(tokenSa)}` : ""),
+          );
+          if (r.ok) {
+            const d = await r.json();
+            if (d && typeof d === "object") {
+              const n = String(d.name ?? d.nama ?? "").trim();
+              if (n) nama = n;
+              const av = String(d.av ?? "").trim();
+              const url0 = String(d.photo ?? "").trim();
+              if (av.startsWith("data:image/") || av.startsWith("http")) foto = av;
+              else if (av.length > 100) foto = "data:image/jpeg;base64," + av.replace(/\s+/g, "");
+              else foto = url0;
+            }
+          }
+        } catch { /* pakai nama cadangan */ }
+        return { id: x.id, display_name: nama || "Player", avatar_url: foto, win: Number(x.win) };
+      }),
+    );
+    return hasil;
+  };
   if (url.pathname.endsWith("/top-winners") || url.pathname.endsWith("/round-winners")) {
     await siap();
     const batas = Math.min(20, Math.max(1, Number(url.searchParams.get("limit") || 8)));
@@ -126,14 +161,14 @@ async function greedyPlay(req, env, h) {
         { sql: `select uid id, nama display_name, win from greedy_menang
                 where round = ? order by win desc limit ?`, args: [I(round), I(batas)] },
       ]);
-      return json(r[0].rows.map((x) => ({ id: x.id, display_name: x.display_name, win: Number(x.win) })));
+      return json(await profilTerbaru(r[0].rows));
     }
     const sejak = Number(new Date(url.searchParams.get("since") || 0)) || 0;
     const r = await pipe(env, [
       { sql: `select uid id, nama display_name, sum(win) win from greedy_menang
               where at >= ? group by uid order by win desc limit ?`, args: [I(sejak), I(batas)] },
     ]);
-    return json(r[0].rows.map((x) => ({ id: x.id, display_name: x.display_name, win: Number(x.win) })));
+    return json(await profilTerbaru(r[0].rows));
   }
 
   if (req.method !== "POST") return gagal("Gunakan POST");
@@ -1802,34 +1837,46 @@ function undiKaskade(cfg) {
 // seterusnya. Peluang tiap pengali diatur dari panel: "pengali:bobot".
 // Bawaan kalau panel belum diisi: 1000x jarang sekali, makin kecil makin sering,
 // dan sebagian besar hasilnya ZONK.
+// ===== Cashback gift: nominal tetap (sesuai contoh pemilik) =====
+// Dua lapis acak seperti contoh: Math.random() memilih kelompok dulu, lalu
+// nominal diundi RATA di dalam rentang kelompok itu. Nominal TIDAK dikali harga
+// gift, jadi gift 1.000 dan gift 1.000.000 bisa dapat cashback yang sama.
+// Bawaan: 70% -> 1.000-5.000 | 25% -> 10.000-20.000 | 5% -> 50.000 (jackpot).
+// Semua angka diubah dari panel: pub/_cashbackCfg -> tiers.
 const CASHBACK_BAWAAN = [
-  { v: 1000, w: 1 },
-  { v: 100, w: 1 },
-  { v: 50, w: 2 },
-  { v: 10, w: 6 },
-  { v: 5, w: 15 },
-  { v: 0, w: 75 },
-]
+  { p: 70, min: 1000, max: 5000 },
+  { p: 25, min: 10000, max: 20000 },
+  { p: 5, min: 50000, max: 50000 },
+];
 const PLATFORM_FEE_PCT = 30;
 
-/** Undian pengali: satu angka acak, lalu dipilih sesuai bobot dari panel. */
+/** Kelompok cashback dari panel; kalau panel kosong pakai bawaan di atas. */
+function tierCashback(cfg) {
+  const sumber = Array.isArray(cfg?.tiers) ? cfg.tiers : [];
+  const bersih = sumber
+    .map((r) => ({
+      p: Math.max(0, Number(r?.p ?? 0)),
+      min: Math.max(0, Math.floor(Number(r?.min ?? 0))),
+      max: Math.max(0, Math.floor(Number(r?.max ?? 0))),
+    }))
+    .filter((r) => r.p > 0 && r.max > 0 && r.max >= r.min);
+  return bersih.length ? bersih : CASHBACK_BAWAAN;
+}
+
+/** Undian: satu angka acak memilih kelompok, lalu nominal diundi rata di kelompok. */
 function undiCashback(cfg) {
-  const node = cfg || {};
-  const sumber = (node.t1 && Array.isArray(node.t1.rows) && node.t1.rows.length)
-    ? node.t1.rows
-    : (Array.isArray(node.rows) ? node.rows : []);
-  const baris = sumber
-    .map((r) => ({ v: Math.max(0, Math.min(1000, Number(r?.v ?? 0))), w: Math.max(0, Number(r?.w ?? 0)) }))
-    .filter((r) => r.w > 0);
-  const daftar = baris.length ? baris : CASHBACK_BAWAAN;
-  const total = daftar.reduce((a, b) => a + b.w, 0);
-  if (!total) return 0;
-  let acak = Math.random() * total; // satu angka acak 0..total
-  for (const r of daftar) {
-    acak -= r.w;
-    if (acak <= 0) return r.v;
+  const tier = tierCashback(cfg);
+  const total = tier.reduce((a, b) => a + b.p, 0);
+  if (!(total > 0)) return { nominal: 0, jackpot: 0, kelompok: -1 };
+  let acak = Math.random() * total;
+  let pilih = tier.length - 1;
+  for (let i = 0; i < tier.length; i++) {
+    acak -= tier[i].p;
+    if (acak <= 0) { pilih = i; break; }
   }
-  return daftar[daftar.length - 1].v;
+  const t = tier[pilih];
+  const nominal = t.min + Math.floor(Math.random() * (t.max - t.min + 1));
+  return { nominal, jackpot: pilih === tier.length - 1 ? 1 : 0, kelompok: pilih };
 }
 
 async function cashbackGift(env, uid, p) {
@@ -1846,11 +1893,13 @@ async function cashbackGift(env, uid, p) {
   // Aturan pemilik: kalau ZONK harga gift terpotong penuh 100%. Kalau dapat,
   // harga gift TIDAK terpotong (dikembalikan) lalu ditambah keuntungan sesuai
   // pengali. Jadi 100.000 kena 10x: saldo kembali 100.000 dan dapat +1.000.000.
-  const mult = undiCashback(cfg);
-  const untung = Math.max(0, Math.floor(nilai * mult)); // tampil di layar
-  const kembali = untung > 0 ? nilai : 0;               // harga gift tidak terpotong
-  const kredit = untung + kembali;
-  const parts = untung > 0 ? pecahCashback(untung) : [];
+  // Nominal tetap: tidak dikali harga gift, dan harga gift tetap terpakai
+  // (tidak dikembalikan seperti model pengali sebelumnya).
+  const undian = undiCashback(cfg);
+  const untung = Math.max(0, Math.floor(undian.nominal));
+  const kembali = 0;
+  const kredit = untung;
+  const parts = untung > 0 ? [untung] : [];
   const amount = await beriCoin(env, uid, kredit, "cashback", null);
 
   // Bagian penerima gift: 70% harga gift, 30% untuk platform.
@@ -1862,20 +1911,19 @@ async function cashbackGift(env, uid, p) {
     ? await beriCoin(env, to, bagianPenerima, "cashback_recv", null)
     : 0;
 
-  const jpMin = Math.max(0, Math.floor(Number(cfg.jpMin ?? 1000)));
-  // Lencana "x" di aplikasi hanya untuk jackpot 10x; 50% dan 10% tampil lewat nominal.
-  const multTampil = Math.floor(mult);
+  // Jackpot = kelompok terakhir (bawaan 50.000). Tidak ada pengali lagi.
   return json({
     ok: 1,
     amount: untung,
     kembali,
     kredit,
-    mult: multTampil,
-    multF: mult,
+    mult: 0,
+    multF: 0,
     parts: parts.slice(0, 5),
     pecahan: parts[0] ?? 0,
     recv,
-    jp: untung >= jpMin && untung > 0 ? 1 : 0,
+    jp: undian.jackpot,
+    kelompok: undian.kelompok,
     asset: "",
   });
 }
@@ -2522,7 +2570,7 @@ async function tokenLayanan(env) {
   const kini = Math.floor(Date.now() / 1000);
   const isi = b64u(JSON.stringify({
     iss: sa.client_email,
-    scope: "https://www.googleapis.com/auth/identitytoolkit https://www.googleapis.com/auth/firebase",
+    scope: "https://www.googleapis.com/auth/identitytoolkit https://www.googleapis.com/auth/firebase https://www.googleapis.com/auth/firebase.database https://www.googleapis.com/auth/userinfo.email",
     aud: "https://oauth2.googleapis.com/token",
     iat: kini,
     exp: kini + 3600,
@@ -4171,7 +4219,7 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           stafAktif = Number(r[0].rows[0]?.a ?? 0);
           peran = r[1].rows.map((x) => String(x.role) + ":" + Number(x.n));
         } catch (e) { /* tabel belum ada */ }
-        return json({ ok: 1, v: "viza-2026-11-15-cashback-pengali-acak", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
+        return json({ ok: 1, v: "viza-2026-11-15-cashback-nominal", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
       } catch (e) {
         return json({ ok: 0, v: "viza-2026-11-13-mandiri", db: String(e?.message ?? e) }, 500);
       }

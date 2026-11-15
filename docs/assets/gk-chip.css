@@ -1,0 +1,71 @@
+/* Chip kasino bulat untuk Greedy King (dipasang di atas gaya bawaan). */
+.gk-rail .gk-chip {
+  --chip: #2563eb;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 3px solid #0b1020;
+  background:
+    repeating-conic-gradient(from 0deg, #ffffff66 0deg 12deg, transparent 12deg 24deg),
+    radial-gradient(circle at 50% 32%, #ffffff55, transparent 58%),
+    var(--chip);
+  color: #fff;
+  font: 800 11px/1 ui-sans-serif, system-ui;
+  letter-spacing: .2px;
+  text-shadow: 0 1px 1px #0008;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 0 #0b1020, inset 0 0 0 3px #ffffff44, inset 0 0 0 7px var(--chip);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.gk-rail .gk-chip::after {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border-radius: 50%;
+  border: 2px dashed #ffffffaa;
+  pointer-events: none;
+}
+.gk-rail .gk-chip:active { transform: translateY(2px) scale(.96); box-shadow: 0 1px 0 #0b1020, inset 0 0 0 3px #ffffff44, inset 0 0 0 7px var(--chip); }
+.gk-rail .gk-chip:nth-child(1) { --chip: #1d4ed8; }
+.gk-rail .gk-chip:nth-child(2) { --chip: #dc2626; }
+.gk-rail .gk-chip:nth-child(3) { --chip: #16a34a; }
+.gk-rail .gk-chip:nth-child(4) { --chip: #7c3aed; }
+.gk-rail .gk-chip:nth-child(5) { --chip: #d97706; }
+.gk-rail .gk-chip:nth-child(6) { --chip: #0891b2; }
+.gk-rail .gk-chip:nth-child(7) { --chip: #db2777; }
+.gk-rail .gk-chip:nth-child(8) { --chip: #334155; }
+/* chip yang sedang dipilih */
+.gk-rail .gk-chip.bg-accent,
+.gk-rail .gk-chip[class*="bg-accent"] {
+  transform: translateY(-3px) scale(1.08);
+  box-shadow: 0 0 0 3px #ffd24a, 0 6px 0 #0b1020, inset 0 0 0 3px #ffffff66, inset 0 0 0 7px var(--chip);
+}
+/* nominal taruhan yang menempel di pola */
+.gk-badge {
+  position: absolute;
+  top: -12px;
+  z-index: 10;
+  min-width: 30px;
+  height: 26px;
+  padding: 0 3px;
+  border-radius: 999px;
+  border: 2px solid #0b1020;
+  background:
+    radial-gradient(circle at 50% 30%, #ffffff55, transparent 62%),
+    linear-gradient(180deg, #38bdf8, #1d4ed8);
+  color: #fff;
+  font: 800 9px/1 ui-sans-serif, system-ui;
+  text-shadow: 0 1px 1px #0007;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 0 #0b1020, inset 0 0 0 2px #ffffff55;
+  animation: gkDrop .36s cubic-bezier(.2, 1.6, .4, 1);
+}
+@keyframes gkDrop {
+  0% { transform: translateY(-18px) scale(.35) rotate(-18deg); opacity: 0; }
+  65% { transform: translateY(0) scale(1.16) rotate(4deg); opacity: 1; }
+  100% { transform: translateY(0) scale(1) rotate(0deg); }
+}

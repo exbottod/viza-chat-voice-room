@@ -2094,12 +2094,21 @@ function undiPersen(cfg, count) {
   const total = tier.reduce((a, b) => a + b.w, 0);
   if (!(total > 0)) return { mult: 0, kelompok: -1 };
   let acak = Math.random() * total;
+  let pilih = tier.length - 1;
   for (let i = 0; i < tier.length; i++) {
     acak -= tier[i].w;
-    if (acak <= 0) return { mult: tier[i].m, kelompok: i };
+    if (acak <= 0) { pilih = i; break; }
   }
-  const akhir = tier[tier.length - 1];
-  return { mult: akhir.m, kelompok: tier.length - 1 };
+  const t = tier[pilih];
+  // Pengali 100x ke atas: bisa ZONK atau bisa pecah besar. Peluang zonknya
+  // diatur pemilik lewat "zonkJpPct" (bawaan 50%).
+  if (t.m >= 100) {
+    const pz = Math.max(0, Math.min(100, Number(cfg?.zonkJpPct ?? 50)));
+    if (pz > 0 && Math.random() * 100 < pz) {
+      return { mult: 0, kelompok: pilih, zonk: 1, target: t.m };
+    }
+  }
+  return { mult: t.m, kelompok: pilih };
 }
 
 /**
@@ -2191,18 +2200,18 @@ async function cashbackGift(env, uid, p) {
   const batas = Math.floor((nilai * capPct) / 100);
   let untung = 0;
   let undian = { jackpot: 0, kelompok: -1, peluang: 100, mult: 0 };
+  let jpZonk = 0;
   if (persenAktif) {
     // Satu undian per kiriman, lalu dikali jumlah kirim. Kirim 5 buah = 5x
     // hadiah, tetapi tidak diundi lima kali (biar combo besar tidak "rata").
     const u = undiPersen(cfg, count);
-    // Hadiah = harga SATU gift x pengali JP. Jumlah kirim hanya mengatur
-    // peluang, bukan mengalikan hadiah. Kalau pemilik mau hadiah ikut dikali
-    // jumlah kirim, isi "jpKaliJumlah": true di pengaturan cashback.
     // Pengali JP berlaku untuk NILAI TOTAL kiriman (harga satuan x jumlah),
     // jadi angka di lingkaran WIN sama dengan hadiah sebenarnya.
+    // Kalau undiannya ZONK di pengali 100x ke atas, untungnya nol.
     const dasar = price * count;
-    untung = Math.max(0, Math.min(batas, Math.floor(dasar * u.mult)));
-    undian = { jackpot: u.mult >= 5 ? 1 : 0, kelompok: u.kelompok, peluang: 100, mult: u.mult };
+    untung = Math.max(0, Math.min(batas, Math.floor(dasar * (u.zonk ? 0 : u.mult))));
+    jpZonk = u.zonk ? 1 : 0;
+    undian = { jackpot: u.mult >= 5 ? 1 : 0, kelompok: u.kelompok, peluang: 100, mult: u.zonk ? 0 : u.mult };
   } else {
     const u = undiCashback(cfg, count);
     untung = Math.max(0, Math.min(batas, Math.floor(u.nominal * count)));
@@ -2221,7 +2230,7 @@ async function cashbackGift(env, uid, p) {
     2,
     Math.min(999, Math.floor(Number(cfg?.bebasZonkMulai ?? 100))),
   );
-  const zonkBatal = persenAktif && count >= bebasZonkMulai && !(untung > 0);
+  const zonkBatal = persenAktif && !jpZonk && count >= bebasZonkMulai && !(untung > 0);
   const kembali = untung > 0 || zonkBatal ? Math.floor((nilai * kembaliPct) / 100) : 0;
   const kredit = kembali + untung;
   const parts = kredit > 0 ? [kredit] : [];
@@ -2269,6 +2278,7 @@ async function cashbackGift(env, uid, p) {
     kembali,
     kembaliPct,
     zonkBatal: zonkBatal ? 1 : 0,
+    zonk: jpZonk,
     kredit,
     mult: 0,
     multF: 0,

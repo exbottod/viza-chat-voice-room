@@ -1999,9 +1999,66 @@ function tierPersen(cfg) {
   return bersih.length ? bersih : PERSEN_BAWAAN;
 }
 
+// Pengali JP menurut JUMLAH kirim. Kiriman kecil boleh pecah besar
+// (10x-1000x), kiriman besar dibatasi supaya nilainya tidak meledak.
+// Pemilik minta: kirim x10 sering 1000x/500x/100x, kirim x520 cuma 10x-20x.
+const JP_KELOMPOK_BAWAAN = [
+  {
+    max: 20,
+    tiers: [
+      { m: 10, w: 40 },
+      { m: 20, w: 25 },
+      { m: 50, w: 18 },
+      { m: 100, w: 11 },
+      { m: 500, w: 5 },
+      { m: 1000, w: 1 },
+    ],
+  },
+  {
+    max: 100,
+    tiers: [
+      { m: 1, w: 40 },
+      { m: 5, w: 25 },
+      { m: 10, w: 18 },
+      { m: 20, w: 11 },
+      { m: 50, w: 5 },
+      { m: 100, w: 1 },
+    ],
+  },
+  {
+    max: 999,
+    tiers: [
+      { m: 0.5, w: 45 },
+      { m: 1, w: 25 },
+      { m: 5, w: 15 },
+      { m: 10, w: 9 },
+      { m: 20, w: 5.5 },
+      { m: 50, w: 0.5 },
+    ],
+  },
+];
+
+/** Kelompok pengali yang berlaku untuk jumlah kirim tertentu. */
+function tierMenurutJumlah(cfg, count) {
+  const sumber = Array.isArray(cfg?.tiersJumlah) ? cfg.tiersJumlah : [];
+  const pakai = sumber.length ? sumber : JP_KELOMPOK_BAWAAN;
+  const n = Math.max(1, Math.floor(Number(count) || 1));
+  for (const g of pakai) {
+    const batas = Math.max(1, Math.floor(Number(g?.max ?? 0)));
+    if (n <= batas) {
+      const rows = (Array.isArray(g?.tiers) ? g.tiers : [])
+        .map((r) => ({ m: Math.max(0, Number(r?.m ?? 0)), w: Math.max(0, Number(r?.w ?? 0)) }))
+        .filter((r) => r.w > 0)
+        .sort((a, b) => a.m - b.m);
+      if (rows.length) return rows;
+    }
+  }
+  return tierPersen(cfg);
+}
+
 /** Undian berbobot: satu angka acak memilih pengali. */
-function undiPersen(cfg) {
-  const tier = tierPersen(cfg);
+function undiPersen(cfg, count) {
+  const tier = tierMenurutJumlah(cfg, count);
   const total = tier.reduce((a, b) => a + b.w, 0);
   if (!(total > 0)) return { mult: 0, kelompok: -1 };
   let acak = Math.random() * total;
@@ -2090,7 +2147,7 @@ async function cashbackGift(env, uid, p) {
   // x188 tetapi batas diset 50x, hadiahnya terpotong dan pemain merasa rugi
   // walau pengali yang keluar x188. Jadi batas ikut naik sendiri.
   const pengaliTertinggi = persenAktif
-    ? tierPersen(cfg).reduce((a, t) => Math.max(a, t.m), 0)
+    ? tierMenurutJumlah(cfg, count).reduce((a, t) => Math.max(a, t.m), 0)
     : 0;
   const capPct = persenAktif
     ? Math.max(
@@ -2105,7 +2162,7 @@ async function cashbackGift(env, uid, p) {
   if (persenAktif) {
     // Satu undian per kiriman, lalu dikali jumlah kirim. Kirim 5 buah = 5x
     // hadiah, tetapi tidak diundi lima kali (biar combo besar tidak "rata").
-    const u = undiPersen(cfg);
+    const u = undiPersen(cfg, count);
     untung = Math.max(0, Math.min(batas, Math.floor(price * u.mult) * count));
     undian = { jackpot: u.mult >= 5 ? 1 : 0, kelompok: u.kelompok, peluang: 100, mult: u.mult };
   } else {

@@ -1326,7 +1326,7 @@ fun StoreScreen(uid: String, wallet: Wallet, onOpenVip: () -> Unit, onBack: () -
                                             Modifier.fillMaxWidth().background(if (used) Color(0xFFFFC107) else Color(0xFF1FC8B5)).padding(vertical = 8.dp),
                                             contentAlignment = Alignment.Center,
                                         ) {
-                                            GoldPill(if (used) "Lepas" else "Memakai") {
+                                            GoldPill(if (used) "Lepas" else "Pakai") {
                                                 AppScope.scope.launch {
                                                     val err = LvRepo.equip(uid, item.slot, equipBaru(wallet, item.slot, item.id))
                                                     if (err == null) PublicSync.push(uid)
@@ -1375,7 +1375,7 @@ fun StoreScreen(uid: String, wallet: Wallet, onOpenVip: () -> Unit, onBack: () -
                 val used = itemTerpakai(wallet, item.slot, item.id)
                 val exp = wallet.inv[item.id] ?: 0L
                 if (exp > now) {
-                    GoldPill(if (used) "Lepas" else "Memakai") {
+                    GoldPill(if (used) "Lepas" else "Pakai") {
                         AppScope.scope.launch {
                             val err = LvRepo.equip(uid, item.slot, equipBaru(wallet, item.slot, item.id))
                             if (err == null) PublicSync.push(uid)

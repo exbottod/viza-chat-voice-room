@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.border
@@ -123,7 +124,8 @@ fun GiftFlyOverlay(roomId: String, seatPoints: Map<Int, Offset>) {
             // dan berubah jadi JACKPOT kalau pengalinya 5x lipat ke atas
             // (sama seperti aturan global_jackpot_banner di server contoh).
             val terakhir = flights.lastOrNull()
-            if (terakhir != null && terakhir.cb > 0) {
+            // ZONK (cashback 0) juga ditampilkan, sama seperti contoh pemilik.
+            if (terakhir != null) {
                 key(terakhir.ts) { SelamatCashback(terakhir) }
             }
         }
@@ -224,9 +226,9 @@ private fun GiftFlyOnce(
 private fun SelamatCashback(f: GiftFly) {
     var tampil by remember(f.ts) { mutableStateOf(false) }
     val naik = remember(f.ts) { Animatable(0.82f) }
+    val dapat = f.cb > 0L
     val jackpot = f.mult >= 5
     LaunchedEffect(f.ts) {
-        // Tunggu gift selesai terbang dulu, baru pengumuman muncul.
         delay(780L)
         tampil = true
         naik.animateTo(1f, tween(240, easing = FastOutSlowInEasing))
@@ -234,73 +236,110 @@ private fun SelamatCashback(f: GiftFly) {
         tampil = false
     }
     if (!tampil) return
-    val isi = if (f.cb >= 1000L) "+${fmtNum(f.cb / 1000L)}K" else "+${fmtNum(f.cb)}"
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+
+    // Tampilan mengikuti contoh pemilik: nama gift dan harga di baris atas,
+    // hasil undian di tengah ("ZONK - belum beruntung" atau nominal cashback),
+    // lalu keterangan penerima di bawah.
+    val judul = when {
+        jackpot -> "JACKPOT"
+        dapat -> "CASHBACK"
+        else -> "ZONK"
+    }
+    val isiHasil = if (dapat) {
+        "${fmtNum(f.cb)} - beruntung"
+    } else {
+        "0 - belum beruntung"
+    }
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(
             Modifier
-                .padding(top = 62.dp, start = 18.dp, end = 18.dp)
+                .padding(top = 140.dp, start = 26.dp, end = 26.dp)
                 .fillMaxWidth()
                 .graphicsLayer {
                     scaleX = naik.value
                     scaleY = naik.value
                     alpha = ((naik.value - 0.82f) / 0.18f).coerceIn(0f, 1f)
                 }
-                .clip(RoundedCornerShape(18.dp))
+                .clip(RoundedCornerShape(14.dp))
                 .background(
                     if (jackpot) {
-                        androidx.compose.ui.graphics.Brush.verticalGradient(
-                            listOf(Color(0xFFB8860B), Color(0xFFFFC107), Color(0xFFB8860B)),
-                        )
+                        Brush.verticalGradient(listOf(Color(0xFFB8860B), Color(0xFFFFC107), Color(0xFFB8860B)))
                     } else {
-                        androidx.compose.ui.graphics.Brush.verticalGradient(
-                            listOf(Color(0xFF14351F), Color(0xFF1F5C37)),
-                        )
+                        Brush.verticalGradient(listOf(Color(0xFF3E2A16), Color(0xFF6B4A22)))
                     },
                 )
-                .border(2.dp, Color(0xFFFFE082), RoundedCornerShape(18.dp))
-                .padding(horizontal = 14.dp, vertical = 10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .border(1.5.dp, Color(0xFFFFE082), RoundedCornerShape(14.dp)),
         ) {
-            Text(
-                tr(if (jackpot) "🎉 JACKPOT 🎉" else "🎉 SELAMAT 🎉"),
-                color = if (jackpot) Color(0xFF4A2C00) else Color(0xFFFFE082),
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Black,
-            )
-            Spacer(Modifier.height(2.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(f.emoji.ifBlank { "🎁" }, fontSize = 26.sp)
-                Spacer(Modifier.width(8.dp))
+            // Baris 1: nama gift dan harga yang dibayar.
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Text(
-                    tr(isi),
-                    color = if (jackpot) Color(0xFF3E2200) else Color(0xFFFFD24D),
-                    fontSize = 30.sp,
+                    f.gname.ifBlank { f.emoji.ifBlank { "Gift" } },
+                    color = Color(0xFFFFF3D6),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    "-${fmtNum(f.price)} koin",
+                    color = Color(0xFFFFD24D),
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Black,
                     maxLines = 1,
                 )
-                if (f.mult > 1) {
-                    Spacer(Modifier.width(8.dp))
-                    Box(
-                        Modifier
-                            .background(
-                                Color(0xCC000000), RoundedCornerShape(8.dp),
-                            )
-                            .padding(horizontal = 8.dp, vertical = 3.dp),
-                    ) {
-                        Text(
-                            tr("x${f.mult}"),
-                            color = Color(0xFFFFE082),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Black,
+            }
+            Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0x33FFE082)))
+            // Baris 2: hasil undian.
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 9.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    Modifier
+                        .background(
+                            when {
+                                jackpot -> Color(0xFFD32F2F)
+                                dapat -> Color(0xFF2E7D32)
+                                else -> Color(0xFF424242)
+                            },
+                            RoundedCornerShape(6.dp),
                         )
-                    }
+                        .padding(horizontal = 8.dp, vertical = 3.dp),
+                ) {
+                    Text(judul, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Black)
+                }
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    isiHasil,
+                    color = if (dapat) Color(0xFFFFD24D) else Color(0xFFE0E0E0),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Black,
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f),
+                )
+                if (f.mult > 1) {
+                    Text(
+                        "x${f.mult}",
+                        color = Color(0xFFFFE082),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Black,
+                    )
                 }
             }
-            Spacer(Modifier.height(2.dp))
+            Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0x33FFE082)))
+            // Baris 3: penerima gift.
             Text(
-                tr("cashback untuk ${f.from.ifBlank { "kamu" }}"),
-                color = if (jackpot) Color(0xFF5B3600) else Color(0xFFE3E9FF),
-                fontSize = 11.sp,
+                "ke ${f.toName.ifBlank { "penerima" }}",
+                color = Color(0xFFFFF3D6),
+                fontSize = 12.sp,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
             )
         }
     }

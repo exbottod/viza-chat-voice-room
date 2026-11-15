@@ -937,8 +937,7 @@ fun RoomScreen(
                 myAvatarB64 = myAvatarB64,
             )
         }
-        // Tombol kombo bulat untuk gift cashback (klik terus untuk kirim ulang).
-        GiftComboBar(myUid, myName)
+        // Tombol kombo bulat "Beri terus" sudah dihapus sesuai permintaan pemilik.
         if (rocketOpen) RocketScreen(
             roomId = r.id,
             onDismiss = { rocketOpen = false },

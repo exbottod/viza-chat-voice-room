@@ -1791,37 +1791,69 @@ function undiKaskade(cfg) {
   return { v: 0, w: Math.max(0, 100 - jpPct - p50 - p10) };
 }
 
+// ===== Cashback gift: disamakan dengan contoh (Math.random bercabang) =====
+// Aturan undian persis seperti contoh yang dikirim pemilik:
+//   0 - 5%   -> jackpot 10x harga gift
+//   5 - 30%  -> cashback 50% harga gift
+//   30 - 70% -> cashback 10% harga gift
+//   70 - 100% -> tidak dapat cashback
+// Penerima gift dapat 70% dari harga gift; 30% sisanya untuk platform.
+const CASHBACK_ATURAN = [
+  { batas: 5, mult: 10 },    // 0 - 5%
+  { batas: 30, mult: 0.5 },  // 5 - 30%
+  { batas: 70, mult: 0.1 },  // 30 - 70%
+  { batas: 100, mult: 0 },   // 70 - 100%
+];
+const PLATFORM_FEE_PCT = 30;
+
+/** Satu angka acak 0-100, lalu bercabang sesuai aturan di atas. */
+function undiCashback() {
+  const acak = Math.random() * 100;
+  for (const a of CASHBACK_ATURAN) {
+    if (acak <= a.batas) return a.mult;
+  }
+  return 0;
+}
+
 async function cashbackGift(env, uid, p) {
   let cfg = await cfgRtdb("pub/_cashbackCfg");
-  const adaTier = ["t1", "t2", "t3", "t4"].some((k) => cfg && typeof cfg[k] === "object" && cfg[k]);
-  // Tanpa tabel tier: pakai undian bercabang gaya contoh (Math.random * 100).
-  if (!adaTier) cfg = { ...CB_DEFAULT, ...cfg, t1: undefined, t2: undefined, t3: undefined, t4: undefined };
+  if (!cfg || typeof cfg !== "object") cfg = {};
   if (cfg.on === false) return json({ ok: 1, amount: 0, off: 1 });
+
   const price = Math.max(0, Math.floor(Number(p.price ?? 0)));
   const count = Math.max(1, Math.min(999, Math.floor(Number(p.count ?? 1))));
   const nilai = price * count;
   if (nilai <= 0) return gagal("Nilai gift tidak valid");
 
-  const baris = undiKaskade(cfg);
-  // Pengali boleh pecahan, mis. 0,2 berarti cashback 20% dari harga gift.
-  const mult = Math.max(0, Math.min(500, Number(baris.v) || 0));
-  // Total cashback = harga gift x pengali dari panel, TANPA dipotong.
-  // Pecahan hanya untuk animasi (aset angka maksimal 10.000), jadi isinya
-  // potongan dari total dan jumlah akhirnya tetap total penuh.
-  const target = Math.max(0, Math.round(nilai * mult));
-  const parts = pecahCashback(target);
-  const amount = target;
+  // Undian cashback untuk pengirim gift.
+  const mult = undiCashback();
+  const target = Math.max(0, Math.floor(nilai * mult));
+  const parts = target > 0 ? pecahCashback(target) : [];
+  const amount = await beriCoin(env, uid, target, "cashback", null);
 
-  const paid = await beriCoin(env, uid, amount, "cashback", null);
-  const pct = Math.max(0, Math.min(100, Number(cfg.recvPct ?? 5)));
+  // Bagian penerima gift: 70% harga gift, 30% untuk platform.
   const to = String(p.to ?? "").trim();
-  const bonus = to ? Math.floor((nilai * pct) / 100) : 0;
-  const recv = bonus > 0 && to !== uid ? await beriCoin(env, to, bonus, "cashback_recv", null) : 0;
+  const bagianPenerima = to && to !== uid
+    ? Math.floor((nilai * (100 - PLATFORM_FEE_PCT)) / 100)
+    : 0;
+  const recv = bagianPenerima > 0
+    ? await beriCoin(env, to, bagianPenerima, "cashback_recv", null)
+    : 0;
+
   const jpMin = Math.max(0, Math.floor(Number(cfg.jpMin ?? 1000)));
-  // mult bulat dipakai aplikasi untuk bola pengali; multF nilai asli (boleh pecahan).
-  return json({ ok: 1, amount: paid, mult: Math.floor(mult), multF: mult,
-    parts: parts.slice(0, 5), pecahan: parts[0] ?? 0,
-    recv, jp: paid >= jpMin ? 1 : 0, asset: "" });
+  // Lencana "x" di aplikasi hanya untuk jackpot 10x; 50% dan 10% tampil lewat nominal.
+  const multTampil = Math.floor(mult);
+  return json({
+    ok: 1,
+    amount,
+    mult: multTampil,
+    multF: mult,
+    parts: parts.slice(0, 5),
+    pecahan: parts[0] ?? 0,
+    recv,
+    jp: amount >= jpMin && amount > 0 ? 1 : 0,
+    asset: "",
+  });
 }
 
 // ---------- Jackpot gift (diundi server) ----------
@@ -4115,7 +4147,7 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           stafAktif = Number(r[0].rows[0]?.a ?? 0);
           peran = r[1].rows.map((x) => String(x.role) + ":" + Number(x.n));
         } catch (e) { /* tabel belum ada */ }
-        return json({ ok: 1, v: "viza-2026-11-15-cashback-kaskade", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
+        return json({ ok: 1, v: "viza-2026-11-15-cashback-contoh", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
       } catch (e) {
         return json({ ok: 0, v: "viza-2026-11-13-mandiri", db: String(e?.message ?? e) }, 500);
       }

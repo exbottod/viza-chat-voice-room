@@ -535,51 +535,6 @@ private const val SVGA_FOTO_D = 0.146f           // diameter lingkaran foto / le
 private const val SVGA_FOTO_X = 0.130f           // pusat foto, 13% lebar pita
 private const val SVGA_FOTO_Y = 0.565f           // pusat foto, 56% tinggi pita
 
-/**
- * Jalur gerak isi banner (pita) dihitung dari frame file SVGA-nya sendiri:
- * tiap frame diambil kotak gabungan semua bagian, lalu titik tengahnya disimpan
- * sebagai pecahan 0..1 dari ukuran kanvas. Dipakai supaya foto dan nama ikut
- * bergerak persis di atas pita, bukan diam di tempat.
- */
-private fun ukurJalurPita(item: SVGAVideoEntity): Pair<List<Pair<Float, Float>>, Int>? {
-    return try {
-        val fps = if (item.FPS > 0) item.FPS else 30
-        val semua = item.frames ?: return null
-        // Kanvas banner selalu 750 x 1624 (lihat SVGA_KANVAS_TINGGI).
-        val lebarKanvas = 750f
-        val tinggiKanvas = lebarKanvas * SVGA_KANVAS_TINGGI
-        val titik = ArrayList<Pair<Float, Float>>(semua.size)
-        for (fr in semua) {
-            var kiri = Float.MAX_VALUE
-            var atas = Float.MAX_VALUE
-            var kanan = -Float.MAX_VALUE
-            var bawah = -Float.MAX_VALUE
-            fr?.forEach { spr ->
-                val isi = spr?.frames?.firstOrNull() ?: return@forEach
-                val lay = isi.layout ?: return@forEach
-                val kotak = android.graphics.RectF(lay)
-                isi.transform.mapRect(kotak)
-                if (kotak.width() > 1f && kotak.height() > 1f) {
-                    kiri = minOf(kiri, kotak.left)
-                    kanan = maxOf(kanan, kotak.right)
-                    atas = minOf(atas, kotak.top)
-                    bawah = maxOf(bawah, kotak.bottom)
-                }
-            }
-            titik.add(
-                if (kanan > kiri) {
-                    Pair(((kiri + kanan) / 2f) / lebarKanvas, ((atas + bawah) / 2f) / tinggiKanvas)
-                } else {
-                    titik.lastOrNull() ?: Pair(0.13f, 0.60f)
-                },
-            )
-        }
-        if (titik.isEmpty()) null else Pair(titik, (semua.size * 1000 / fps).coerceAtLeast(300))
-    } catch (e: Exception) {
-        null
-    }
-}
-
 /** Banner efek masuk VIP1-9 diambil dari panel developer (bukan lagi dari APK). */
 fun vipBannerAsset(n: Int): VipAsset? = if (n in 1..9) VipAssets.get(n, "banner") else null
 
@@ -691,22 +646,15 @@ fun VipEntryEffect(roomId: String) {
             }
         }
         if (b != null) {
-            // Durasi dan jalur gerak diambil dari file banner itu sendiri (bukan angka tetap).
-            var jalur by remember(b.n, b.updatedAt) { mutableStateOf<List<Pair<Float, Float>>?>(null) }
-            var durasiMs by remember(b.n, b.updatedAt) { mutableStateOf(3000) }
-            var langkah by remember(b.n, b.updatedAt) { mutableStateOf(0f) }
             // Durasi tampil mengikuti panjang animasi SVGA (90 frame @30fps = 3 detik)
             // ditambah jeda sebentar, lalu memudar.
             LaunchedEffect(b) {
                 fade.snapTo(0f)
                 fade.animateTo(1f, tween(if (b.kind == "svga") 220 else 400))
-                // Tunggu file selesai dibaca supaya durasinya benar-benar dari SVGA.
-                var tunggu = 0
-                while (jalur == null && tunggu < 25) {
-                    delay(100)
-                    tunggu++
-                }
-                delay(durasiMs.toLong())
+                // Durasi mengikuti file: SVGA memanggil onEnd saat animasinya habis,
+                // dan di situ banner langsung ditutup. Angka di bawah hanya jaring
+                // pengaman kalau file gagal diputar.
+                delay(if (b.kind == "svga") 12000L else 2600L)
                 fade.animateTo(0f, tween(300))
                 banner = null
                 bannerName = null
@@ -784,14 +732,13 @@ fun VipEntryEffect(roomId: String) {
                                         Modifier.fillMaxSize(),
                                         loop = false,
                                         contentScale = ContentScale.FillBounds,
-                                        onSiap = { item ->
-                                            val hasil = ukurJalurPita(item)
-                                            if (hasil != null) {
-                                                jalur = hasil.first
-                                                durasiMs = hasil.second
-                                            }
+                                        onEnd = {
+                                            // Animasi banner habis: tutup, jangan dipaksa
+                                            // pakai durasi tetap seperti sebelumnya.
+                                            banner = null
+                                            bannerName = null
+                                            bannerUid = null
                                         },
-                                        onLangkah = { langkah = it },
                                     )
                                 }
                             }
@@ -800,19 +747,7 @@ fun VipEntryEffect(roomId: String) {
                         }
                     // Foto dan nama menempel di pita banner dan IKUT BERGERAK
                     // mengikuti animasi file: titiknya diambil dari jalur frame SVGA.
-                    val jalurKini = jalur
-                    val posisi = if (jalurKini.isNullOrEmpty()) {
-                        Pair(SVGA_FOTO_X, SVGA_FOTO_Y)
-                    } else {
-                        val pos = langkah.coerceIn(0f, 1f) * (jalurKini.size - 1)
-                        val i = pos.toInt().coerceIn(0, jalurKini.size - 1)
-                        val n2 = jalurKini[(i + 1).coerceAtMost(jalurKini.size - 1)]
-                        val t = pos - i
-                        Pair(
-                            jalurKini[i].first + (n2.first - jalurKini[i].first) * t,
-                            jalurKini[i].second + (n2.second - jalurKini[i].second) * t,
-                        )
-                    }
+                    val posisi = Pair(SVGA_FOTO_X, SVGA_FOTO_Y)
                     // Kanvas SVGA dipasang selebar banner, jadi pecahan x langsung
                     // dikali lebar; sumbu y dikurangi bagian yang dipotong di atas.
                     val lebarPita = bSize.width.value

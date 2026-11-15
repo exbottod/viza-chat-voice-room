@@ -119,11 +119,8 @@ fun GiftFlyOverlay(roomId: String, seatPoints: Map<Int, Offset>) {
                     GiftFlyOnce(f, seatPoints, origin, box) { flights.remove(f) }
                 }
             }
-            // Banner biru kombo + angka kombo emas besar, gaya referensi.
-            val latest = flights.lastOrNull()
-            if (latest != null && latest.combo >= 1) {
-                key(latest.ts) { ComboBanner(latest) }
-            }
+            // Banner biru kombo dan angka kombo emas besar sudah dihapus: tampilan JP
+            // sekarang hanya gift terbang, pecahan angka SVGA, dan bola pengali.
         }
     }
 }
@@ -354,83 +351,6 @@ private fun MultBall(mult: Int, total: Long, center: Offset) {
                 color = Color(0xFF7A3E00),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
-            )
-        }
-    }
-}
-
-
-/** Banner biru: pengirim, gift, xKombo, dan total cashback (+12K) di sisi kanan. */
-@Composable
-private fun ComboBanner(f: GiftFly) {
-    var show by remember(f.ts) { mutableStateOf(true) }
-    LaunchedEffect(f.ts) {
-        kotlinx.coroutines.delay(3200)
-        show = false
-    }
-    if (!show) return
-    val k = if (f.cb >= 1000L) "+${fmtNum(f.cb / 1000L)}K" else "+${fmtNum(f.cb)}"
-    Box(Modifier.fillMaxSize()) {
-        Row(
-            Modifier
-                .align(Alignment.CenterStart)
-                .padding(top = 60.dp)
-                .fillMaxWidth(0.94f)
-                .background(
-                    androidx.compose.ui.graphics.Brush.horizontalGradient(
-                        listOf(Color(0xFF3D5AFE), Color(0xFF6C8CFF)),
-                    ),
-                    androidx.compose.foundation.shape.RoundedCornerShape(
-                        topEnd = 40.dp, bottomEnd = 40.dp, topStart = 40.dp, bottomStart = 40.dp,
-                    ),
-                )
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(f.from, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                Text(
-                    tr("ke ${f.toName.ifBlank { "semua" }}"),
-                    color = Color(0xFFE3E9FF),
-                    fontSize = 11.sp,
-                    maxLines = 1,
-                )
-            }
-            Text(f.emoji.ifBlank { "🎁" }, fontSize = 22.sp)
-            Spacer(Modifier.width(6.dp))
-            Text(
-                tr("x${f.combo}"),
-                color = Color(0xFFFFE082),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Black,
-            )
-            if (f.cb > 0) {
-                Spacer(Modifier.width(10.dp))
-                Box(
-                    Modifier
-                        .background(
-                            androidx.compose.ui.graphics.Brush.verticalGradient(
-                                listOf(Color(0xFFD50000), Color(0xFF8E0000)),
-                            ),
-                            androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
-                        )
-                        .border(
-                            2.dp, Color(0xFFFFD54F),
-                            androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
-                        )
-                        .padding(horizontal = 10.dp, vertical = 4.dp),
-                ) {
-                    Text(k, color = Color(0xFFFFE082), fontSize = 18.sp, fontWeight = FontWeight.Black)
-                }
-            }
-        }
-        if (f.combo >= 2) {
-            Text(
-                tr("${f.combo}"),
-                color = Color(0xFFFFC107),
-                fontSize = 96.sp,
-                fontWeight = FontWeight.Black,
-                modifier = Modifier.align(Alignment.Center),
             )
         }
     }

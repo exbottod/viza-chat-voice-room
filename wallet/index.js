@@ -2284,36 +2284,27 @@ async function cashbackGift(env, uid, p) {
   let untung = 0;
   let undian = { jackpot: 0, kelompok: -1, peluang: 100, mult: 0 };
   let jpZonk = 0;
+  let multMaks = 0;
+  let zonkMaks = 0;
+  let kelompokTerakhir = -1;
   if (persenAktif) {
     // Satu undian per kiriman, lalu dikali jumlah kirim. Kirim 5 buah = 5x
     // hadiah, tetapi tidak diundi lima kali (biar combo besar tidak "rata").
-    // Kirim 10 sekaligus = 10 undian, sama seperti kirim 10 kali satu-satu.
-    // Tiap gift diundi sendiri, hadiahnya harga satuan x pengali, lalu dijumlah.
-    const undianMaks = Math.max(1, Math.min(500, Math.floor(Number(cfg?.undianMaks ?? 200))));
-    const kali = Math.min(count, undianMaks);
-    let untungKasar = 0;
-    let multMaks = 0;
-    let zonkMaks = 0;
-    let kelompokTerakhir = -1;
-    // Dasar: cashback 1%-20% dari nilai gift (boleh diatur dari panel).
+    // Satu kiriman = satu undian, berapa pun jumlahnya. Kalau tiap gift
+    // diundi sendiri, kirim 10 jadi 10 undian: dasar 1-20% dibayar 10 kali
+    // (>105% nilai gift) dan peluang JP naik jadi ~95%, itu sebabnya kiriman
+    // banyak selalu pecah besar.
+    const u = cfg?.kurvaAktif === false ? undiPersen(cfg, count) : undiKurva(cfg, count);
+    kelompokTerakhir = u.kelompok;
+    const nilai = price * count;
     const minPct = Math.max(0, Math.min(100, Number(cfg?.cbMinPct ?? 1)));
     const maxPct = Math.max(minPct, Math.min(100, Number(cfg?.cbMaxPct ?? 20)));
-    for (let n = 0; n < kali; n++) {
-      const u = cfg?.kurvaAktif === false ? undiPersen(cfg, 1) : undiKurva(cfg, 1);
-      kelompokTerakhir = u.kelompok;
-      // Dasar selalu dibayar; kalau JP kena, dasar itu dikali pengali JP.
-      const dasarPct = minPct + Math.random() * (maxPct - minPct);
-      const kaliJp = u.zonk ? 1 : u.mult;
-      untungKasar += price * (dasarPct / 100) * kaliJp;
-      if (!u.zonk && u.mult > 1) {
-        if (u.mult > multMaks) multMaks = u.mult;
-      } else {
-        zonkMaks = 1;
-      }
-    }
-    // Kiriman lebih besar dari batas undian: sisanya dihitung sebanding.
-    if (count > kali) untungKasar = (untungKasar * count) / kali;
+    const dasarPct = minPct + Math.random() * (maxPct - minPct);
+    const kaliJp = u.zonk ? 1 : u.mult;
+    const untungKasar = nilai * (dasarPct / 100) * kaliJp;
     untung = Math.max(0, Math.min(batas, Math.floor(untungKasar)));
+    multMaks = !u.zonk && u.mult > 1 ? u.mult : 0;
+    zonkMaks = multMaks ? 0 : 1;
     jpZonk = 0;
     undian = { jackpot: multMaks >= 5 ? 1 : 0, kelompok: kelompokTerakhir, peluang: 100, mult: multMaks };
   } else {

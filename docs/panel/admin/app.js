@@ -620,6 +620,7 @@ const CB_BAWAAN = {
   diamondPct: 5,
   diamondBiasaPct: 100,
   kembaliPct: 100,
+  bebasZonkMulai: 100,
   jpMin: 50000,
   // Model persen: hadiah = harga gift x pengali. Bobot = seberapa sering muncul.
   tiersPersen: [
@@ -798,6 +799,7 @@ async function gambarCashback() {
           <div class="isian"><label>Diamond penerima gift cashback (%)</label><input id="cbDiamond" type="number" min="0" max="100" step="0.5" value="${Number(cfg.diamondPct ?? 5)}"></div>
           <div class="isian"><label>Diamond penerima gift biasa (%)</label><input id="cbDiamondBiasa" type="number" min="0" max="100" step="0.5" value="${Number(cfg.diamondBiasaPct ?? 100)}"></div>
           <div class="isian"><label>Kembalikan harga gift saat menang (%)</label><input id="cbKembali" type="number" min="0" max="100" step="5" value="${Number(cfg.kembaliPct ?? 100)}"></div>
+          <div class="isian"><label>Kiriman bebas zonk mulai jumlah (0 = mati)</label><input id="cbBebasZonk" type="number" min="0" max="999" step="1" value="${Number(cfg.bebasZonkMulai ?? 100)}"></div>
           <div class="isian"><label>Peluang zonk (%)</label><input id="cbZonk" type="number" min="0" max="90" value="${Number(cfg.zonkPct ?? 8) || 0}"></div>
         </div>
         <div class="barisIsian" style="margin-top:12px">
@@ -864,6 +866,8 @@ async function gambarCashback() {
       diamondBiasaPct: Math.max(0, Math.min(100, Number($("cbDiamondBiasa").value) || 0)),
       // Saat menang, harga gift dikembalikan sebanyak ini. Zonk tetap hangus.
       kembaliPct: Math.max(0, Math.min(100, Number($("cbKembali").value) || 0)),
+      // Mulai jumlah kirim ini, zonk dibatalkan dan harga gift dikembalikan.
+      bebasZonkMulai: Math.max(0, Math.min(999, Number($("cbBebasZonk").value) || 0)),
       tiers: tiers,
       boostJumlah: bacaBoostJumlah($("cbBoost").value),
       zonkPct: Math.max(0, Math.min(90, Math.floor(Number($("cbZonk").value) || 0))),

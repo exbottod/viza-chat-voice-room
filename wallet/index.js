@@ -2093,9 +2093,17 @@ async function cashbackGift(env, uid, p) {
   // Berapa persen harga gift yang dikembalikan saat menang (panel). Bawaan
   // 100%: harga gift utuh, jadi yang zonk saja yang benar-benar hangus.
   const kembaliPct = Math.max(0, Math.min(100, Number(cfg?.kembaliPct ?? 100)));
-  const kembali = untung > 0 ? Math.floor((nilai * kembaliPct) / 100) : 0;
+  // Kiriman besar (combo) tidak boleh zonk: mulai jumlah tertentu di panel,
+  // undian zonk dianggap batal dan harga gift dikembalikan. Kirim 188 atau 520
+  // buah jadi tidak bisa hangus 188x / 520x harga gift sekaligus.
+  const bebasZonkMulai = Math.max(
+    2,
+    Math.min(999, Math.floor(Number(cfg?.bebasZonkMulai ?? 100))),
+  );
+  const zonkBatal = persenAktif && count >= bebasZonkMulai && !(untung > 0);
+  const kembali = untung > 0 || zonkBatal ? Math.floor((nilai * kembaliPct) / 100) : 0;
   const kredit = kembali + untung;
-  const parts = untung > 0 ? [kredit] : [];
+  const parts = kredit > 0 ? [kredit] : [];
   const amount = await beriCoin(env, uid, kredit, "cashback", null);
 
   // Penerima gift langsung dapat coin 70% dari harga gift (angka diatur dari
@@ -2123,7 +2131,7 @@ async function cashbackGift(env, uid, p) {
     : 0;
   const kelipatan = untung > 0 ? Math.round(klf) : 0;
   // Label jenis hadiah untuk badge di aplikasi (Cashback / Lucky / Jackpot).
-  const tingkat = untung <= 0 ? ""
+  const tingkat = zonkBatal ? "DANA KEMBALI" : untung <= 0 ? ""
     : klf >= 100 ? "MEGA JACKPOT 100x"
     : klf >= 10 ? "MEGA JACKPOT"
     : klf >= 5 ? "LUCKY 5x"
@@ -2134,9 +2142,12 @@ async function cashbackGift(env, uid, p) {
   // Jackpot = kelompok terakhir (bawaan 50.000). Tidak ada pengali lagi.
   return json({
     ok: 1,
-    amount: untung,
+    // Saat zonk dibatalkan (kiriman besar), angka yang ditampilkan adalah coin
+    // yang kembali supaya aplikasi tetap menampilkan animasinya.
+    amount: zonkBatal ? kembali : untung,
     kembali,
     kembaliPct,
+    zonkBatal: zonkBatal ? 1 : 0,
     kredit,
     mult: 0,
     multF: 0,

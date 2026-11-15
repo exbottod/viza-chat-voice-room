@@ -7,10 +7,47 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Orbitron:wght@700;900&display=swap" />
-    <script type="module" crossorigin src="./assets/index-CJOs_zhF.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-BYMZ5L0E.css">
+    <style>
+      html, body, #root { height: 100%; margin: 0; padding: 0; background: #0a0f1e; overflow: hidden; }
+      #cf-info { position: fixed; left: 6px; bottom: 2px; z-index: 99998; color: #8fa3cc;
+        font: 9px/1.2 monospace; opacity: .75; pointer-events: none; }
+      #cf-error { display: none; position: fixed; inset-inline: 0; bottom: 0; z-index: 99999;
+        background: #7a1020; color: #fff; font: 12px/1.35 sans-serif; padding: 10px 12px;
+        max-height: 45%; overflow: auto; white-space: pre-wrap; word-break: break-word; }
+    </style>
+    <script type="module" crossorigin src="./assets/index-pTuLh-2g.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-BhB2gCgp.css">
   </head>
   <body>
     <div id="root"></div>
+    <div id="cf-error"></div>
+    <div id="cf-info">html…</div>
+    <script>
+      (function () {
+        var v = (navigator.userAgent.match(/Chrome\/(\d+)/) || [])[1] || "?";
+        document.getElementById("cf-info").textContent = "html ok · cr" + v;
+        window.addEventListener("load", function () {
+          document.getElementById("cf-info").textContent = "load ok · cr" + v;
+        });
+      })();
+    </script>
+    <script>
+      (function () {
+        var box = document.getElementById("cf-error");
+        function tampil(teks) {
+          try {
+            box.style.display = "block";
+            box.textContent = String(teks).slice(0, 900);
+          } catch (e) {}
+        }
+        window.addEventListener("error", function (e) {
+          tampil("Error: " + (e.message || (e.target && e.target.src) || e.type));
+        }, true);
+        window.addEventListener("unhandledrejection", function (e) {
+          tampil("Gagal: " + ((e.reason && (e.reason.message || e.reason)) || "unknown"));
+        });
+        window.__cfTampilError = tampil;
+      })();
+    </script>
   </body>
 </html>

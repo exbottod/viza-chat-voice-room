@@ -668,16 +668,16 @@ fun VipEntryEffect(roomId: String) {
                         },
                     contentAlignment = Alignment.Center,
                 ) {
-                    // Lebar maksimal 92% layar, tinggi mengikuti rasio file (dibatasi 150.dp
-                    // supaya tidak menutupi room di HP layar kecil).
-                    val lebarBanner = minOf(maxWidth * 0.94f, 400.dp)
+                    // Banner dibuat kecil saja (maksimal 70% layar / 280.dp) supaya tidak
+                    // menutupi room; tinggi mengikuti rasio file dan dibatasi 130.dp.
+                    val lebarBanner = minOf(maxWidth * 0.70f, 280.dp)
                     // b adalah properti delegasi, jadi disalin dulu supaya bisa dipakai.
                     val asetBanner = b!!
                     val svgaBanner = asetBanner.kind == "svga"
                     val tinggiBanner = if (svgaBanner) {
                         lebarBanner * SVGA_BAND_RASIO
                     } else {
-                        (lebarBanner.value / rasioBanner).dp.coerceIn(54.dp, 150.dp)
+                        (lebarBanner.value / rasioBanner).dp.coerceIn(48.dp, 130.dp)
                     }
                     val bSize = DpSize(lebarBanner, tinggiBanner)
                     Box(Modifier.size(bSize).offset(x = maxWidth * slide.value)) {

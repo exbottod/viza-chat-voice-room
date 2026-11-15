@@ -2326,7 +2326,12 @@ async function cashbackGift(env, uid, p) {
   // 100.000 kena 0,5x: saldo kembali 100.000 dan ditambah 50.000.
   // Berapa persen harga gift yang dikembalikan saat menang (panel). Bawaan
   // 100%: harga gift utuh, jadi yang zonk saja yang benar-benar hangus.
-  const kembaliPct = Math.max(0, Math.min(100, Number(cfg?.kembaliPct ?? 100)));
+  // Di model kurva (dasar 1-20% x JP), harga gift TIDAK dikembalikan: yang
+  // dibayar hanya persen cashback-nya. Kalau harga dikembalikan juga, total
+  // keluar jadi 100% + 56% dan platform nombok.
+  const kembaliPct = cfg?.kurvaAktif === false
+    ? Math.max(0, Math.min(100, Number(cfg?.kembaliPct ?? 100)))
+    : 0;
   // Kiriman besar (combo) tidak boleh zonk: mulai jumlah tertentu di panel,
   // undian zonk dianggap batal dan harga gift dikembalikan. Kirim 188 atau 520
   // buah jadi tidak bisa hangus 188x / 520x harga gift sekaligus.

@@ -147,6 +147,8 @@ fun CrazyFruitScreen(
                                     @JavascriptInterface fun chips(): String =
                                         chips.joinToString(",", "[", "]")
                                     @JavascriptInterface fun rtp(): Int = rtp
+                                    // Kecepatan internet berjalan, tampil di tempat label DEMO.
+                                    @JavascriptInterface fun kecepatan(): String = CfNet.kecepatan()
                                     @JavascriptInterface fun token() = token
                                     @JavascriptInterface fun uid() = myUid
                                     @JavascriptInterface fun nama() = namaAman
@@ -218,6 +220,40 @@ fun CrazyFruitScreen(
         ) {
             Text("Tutup", color = Color(0xFFE6ECFF), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
         }
+    }
+}
+
+/**
+ * Kecepatan internet berjalan (naik + turun) dihitung dari TrafficStats.
+ * Dipakai game untuk mengganti label DEMO dengan angka seperti "10.00k".
+ */
+private object CfNet {
+    private var terakhirByte = -1L
+    private var terakhirWaktu = 0L
+    private var nilai = "0.00k"
+
+    @Synchronized
+    fun kecepatan(): String {
+        val sekarang = System.currentTimeMillis()
+        val byte = try {
+            android.net.TrafficStats.getTotalRxBytes() + android.net.TrafficStats.getTotalTxBytes()
+        } catch (e: Exception) {
+            -1L
+        }
+        if (byte < 0) return nilai
+        if (terakhirByte < 0 || sekarang - terakhirWaktu > 5000) {
+            terakhirByte = byte
+            terakhirWaktu = sekarang
+            return nilai
+        }
+        val detik = (sekarang - terakhirWaktu) / 1000.0
+        if (detik < 0.4) return nilai
+        val perDetik = (byte - terakhirByte) / detik
+        terakhirByte = byte
+        terakhirWaktu = sekarang
+        nilai = if (perDetik >= 1024 * 1024) String.format("%.2fM", perDetik / (1024 * 1024))
+        else String.format("%.2fk", perDetik / 1024)
+        return nilai
     }
 }
 

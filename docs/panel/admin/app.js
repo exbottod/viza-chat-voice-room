@@ -627,16 +627,17 @@ const CB_BAWAAN = {
   // Ujungnya tetap ada 100x dan 1000x supaya jackpot masih bisa pecah besar.
   // Kurva JP: pengali dan "1 dari berapa kiriman".
   jpKurva: [
-    { m: 3, n: 400 },
-    { m: 5, n: 1000 },
-    { m: 10, n: 2500 },
-    { m: 20, n: 6000 },
-    { m: 50, n: 18000 },
-    { m: 100, n: 50000 },
-    { m: 200, n: 120000 },
-    { m: 500, n: 350000 },
-    { m: 1000, n: 900000 },
+    { m: 3, n: 10 },
+    { m: 5, n: 15 },
+    { m: 10, n: 25 },
+    { m: 20, n: 40 },
+    { m: 50, n: 100 },
+    { m: 100, n: 150 },
+    { m: 200, n: 300 },
+    { m: 500, n: 700 },
+    { m: 1000, n: 1799 },
   ],
+
   kurvaAktif: true,
   kurvaMode: "kurva",
   tiersPersen: [
@@ -839,6 +840,8 @@ async function gambarCashback() {
           <div class="isian"><label>Bagian penerima gift (%)</label><input id="cbRecv" type="number" min="0" max="100" value="${Number(cfg.recvPct) || 0}"></div>
           <div class="isian"><label>Diamond penerima gift cashback (%)</label><input id="cbDiamond" type="number" min="0" max="100" step="0.5" value="${Number(cfg.diamondPct ?? 5)}"></div>
           <div class="isian"><label>Diamond penerima gift biasa (%)</label><input id="cbDiamondBiasa" type="number" min="0" max="100" step="0.5" value="${Number(cfg.diamondBiasaPct ?? 100)}"></div>
+          <div class="isian"><label>Cashback dasar min (%)</label><input id="cbMinPct" type="number" min="0" max="100" step="0.5" value="${Number(cfg.cbMinPct ?? 1)}"></div>
+          <div class="isian"><label>Cashback dasar maks (%)</label><input id="cbMaxPct" type="number" min="0" max="100" step="0.5" value="${Number(cfg.cbMaxPct ?? 20)}"></div>
           <div class="isian"><label>Kembalikan harga gift saat menang (%)</label><input id="cbKembali" type="number" min="0" max="100" step="5" value="${Number(cfg.kembaliPct ?? 100)}"></div>
           <div class="isian"><label>Kiriman bebas zonk mulai jumlah (0 = mati)</label><input id="cbBebasZonk" type="number" min="0" max="999" step="1" value="${Number(cfg.bebasZonkMulai ?? 100)}"></div>
           <div class="isian"><label>Peluang zonk (%)</label><input id="cbZonk" type="number" min="0" max="90" value="${Number(cfg.zonkPct ?? 8) || 0}"></div>
@@ -920,6 +923,9 @@ async function gambarCashback() {
       // ingin semua gift hanya 5% ke diamond.
       diamondBiasaPct: Math.max(0, Math.min(100, Number($("cbDiamondBiasa").value) || 0)),
       // Saat menang, harga gift dikembalikan sebanyak ini. Zonk tetap hangus.
+      // Cashback dasar 1-20% dari nilai gift, lalu dikali pengali JP kalau kena.
+      cbMinPct: Math.max(0, Math.min(100, Number($("cbMinPct").value) || 0)),
+      cbMaxPct: Math.max(0, Math.min(100, Number($("cbMaxPct").value) || 0)),
       kembaliPct: Math.max(0, Math.min(100, Number($("cbKembali").value) || 0)),
       // Mulai jumlah kirim ini, zonk dibatalkan dan harga gift dikembalikan.
       bebasZonkMulai: Math.max(0, Math.min(999, Number($("cbBebasZonk").value) || 0)),

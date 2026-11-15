@@ -2075,16 +2075,12 @@ const JP_KELOMPOK_BAWAAN = [
 // x200 1:300, x500 1:700, x1000 1:1799.
 // Versi aman: kirim 10 sekaligus diundi 10 kali, jadi peluangnya dibuat jauh
 // lebih jarang supaya rata-rata hadiah tetap di bawah modal.
+// Kurva pemilik: cashback dasar 1-20% dari nilai gift, lalu dikali JP kalau
+// kena. Peluang JP: x3 1:10, x5 1:15, x10 1:25, x20 1:40, x50 1:100,
+// x100 1:150, x200 1:300, x500 1:700, x1000 1:1799.
 const KURVA_BAWAAN = [
-  [3, 400],
-  [5, 1000],
-  [10, 2500],
-  [20, 6000],
-  [50, 18000],
-  [100, 50000],
-  [200, 120000],
-  [500, 350000],
-  [1000, 900000],
+  [3, 10], [5, 15], [10, 25], [20, 40], [50, 100],
+  [100, 150], [200, 300], [500, 700], [1000, 1799],
 ];
 
 /** Tabel kurva dari panel: [{m: pengali, n: 1 dari berapa}] */
@@ -2299,17 +2295,26 @@ async function cashbackGift(env, uid, p) {
     let multMaks = 0;
     let zonkMaks = 0;
     let kelompokTerakhir = -1;
+    // Dasar: cashback 1%-20% dari nilai gift (boleh diatur dari panel).
+    const minPct = Math.max(0, Math.min(100, Number(cfg?.cbMinPct ?? 1)));
+    const maxPct = Math.max(minPct, Math.min(100, Number(cfg?.cbMaxPct ?? 20)));
     for (let n = 0; n < kali; n++) {
       const u = cfg?.kurvaAktif === false ? undiPersen(cfg, 1) : undiKurva(cfg, 1);
       kelompokTerakhir = u.kelompok;
-      if (u.zonk) { zonkMaks = 1; continue; }
-      untungKasar += price * u.mult;
-      if (u.mult > multMaks) multMaks = u.mult;
+      // Dasar selalu dibayar; kalau JP kena, dasar itu dikali pengali JP.
+      const dasarPct = minPct + Math.random() * (maxPct - minPct);
+      const kaliJp = u.zonk ? 1 : u.mult;
+      untungKasar += price * (dasarPct / 100) * kaliJp;
+      if (!u.zonk && u.mult > 1) {
+        if (u.mult > multMaks) multMaks = u.mult;
+      } else {
+        zonkMaks = 1;
+      }
     }
     // Kiriman lebih besar dari batas undian: sisanya dihitung sebanding.
     if (count > kali) untungKasar = (untungKasar * count) / kali;
     untung = Math.max(0, Math.min(batas, Math.floor(untungKasar)));
-    jpZonk = untung > 0 ? 0 : zonkMaks;
+    jpZonk = 0;
     undian = { jackpot: multMaks >= 5 ? 1 : 0, kelompok: kelompokTerakhir, peluang: 100, mult: multMaks };
   } else {
     const u = undiCashback(cfg, count);

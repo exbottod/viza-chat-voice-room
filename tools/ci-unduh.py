@@ -27,8 +27,11 @@ TARGET = "docs/unduh"
 
 
 def panggil(url):
-    req = urllib.request.Request(url, headers={
-        "Authorization": f"Bearer {GH}", "Accept": "application/vnd.github+json"})
+    # Tanpa token (mis. dijalankan manual) cukup pakai API publik.
+    kepala = {"Accept": "application/vnd.github+json"}
+    if GH:
+        kepala["Authorization"] = f"Bearer {GH}"
+    req = urllib.request.Request(url, headers=kepala)
     with urllib.request.urlopen(req, timeout=120) as r:
         return json.loads(r.read())
 
@@ -38,8 +41,10 @@ def unduh(url):
         def redirect_request(self, req, fp, code, msg, headers, newurl):
             return urllib.request.Request(newurl, headers={})
     op = urllib.request.build_opener(TanpaAuth)
-    req = urllib.request.Request(url, headers={
-        "Authorization": f"Bearer {GH}", "Accept": "application/octet-stream"})
+    kepala = {"Accept": "application/octet-stream"}
+    if GH:
+        kepala["Authorization"] = f"Bearer {GH}"
+    req = urllib.request.Request(url, headers=kepala)
     return op.open(req, timeout=600).read()
 
 
@@ -69,12 +74,35 @@ def ambil_apk(rilis, jenis, tmp):
     return apath, data
 
 
+def daftar_rilis(jumlah=6):
+    """Rilis terbaru sampai beberapa sebelumnya.
+
+    Daftar /releases tidak selalu memuat rilis baru (1.0.100 ke atas pernah tidak
+    muncul walau rilisnya ada), jadi rilis terbaru diambil dari /releases/latest
+    dan rilis sebelumnya dicari per nomor versi lewat /releases/tags.
+    """
+    hasil, terakhir = [], panggil(f"{API}/repos/{REPO}/releases/latest")
+    if not terakhir.get("tag_name", "").startswith("viza-"):
+        return []
+    hasil.append(terakhir)
+    angka = list(nomor(terakhir))
+    while len(hasil) < jumlah:
+        if angka[-1] > 0:
+            angka[-1] -= 1
+        else:
+            break
+        tag = "viza-" + ".".join(str(i) for i in angka)
+        try:
+            hasil.append(panggil(f"{API}/repos/{REPO}/releases/tags/{tag}"))
+        except Exception:
+            break
+    return hasil
+
+
 def main():
-    rilis = [r for r in panggil(f"{API}/repos/{REPO}/releases?per_page=30")
-             if r["tag_name"].startswith("viza-")]
+    rilis = daftar_rilis()
     if not rilis:
         print("Belum ada rilis"); return 1
-    rilis.sort(key=nomor, reverse=True)
     baru = rilis[0]
     lama = rilis[1] if len(rilis) > 1 else None
     v_baru = baru["tag_name"].replace("viza-", "")
@@ -166,7 +194,11 @@ def main():
         import time as _t
         _t.sleep(5 * (coba + 1))
     else:
-        print("Push halaman unduh tetap gagal")
+        # Dulu kegagalan push hanya dicetak lalu langkah CI tetap "sukses",
+        # akibatnya halaman unduh tertinggal di versi lama dan dialog pembaruan
+        # tidak pernah muncul. Sekarang kegagalan ini menggagalkan build.
+        print("Push halaman unduh tetap gagal: halaman unduh TIDAK terbarui", file=sys.stderr)
+        return 1
     print(f"Selesai: halaman unduh {v_baru}, patch {v_lama}->{v_baru}")
     return 0
 

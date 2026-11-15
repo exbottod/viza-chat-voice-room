@@ -13,8 +13,17 @@ GOOGLE_ID="${GOOGLE_WEB_ID:-622104139221-bv44lfoephrjvim5qr30qr3ek8klj6qg.apps.g
 # Nomor build selalu di atas rilis yang sudah ada supaya versi tidak pernah mundur.
 NOMOR="${REZO_BUILD:-}"
 if [ -z "$NOMOR" ] && [ -n "${GH_TOKEN:-}" ] && command -v gh > /dev/null 2>&1 && [ -n "${GITHUB_REPOSITORY:-}" ]; then
-  NOMOR=$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" \
-    --jq '[.[].tag_name | select(test("^viza-1\\.0\\.[0-9]+$")) | sub("viza-1\\.0\\."; "") | tonumber] | max + 1' 2>/dev/null || true)
+  # Daftar /releases bisa tidak memuat rilis terbaru, sedangkan /releases/latest
+  # selalu menunjuk rilis terakhir. Nomor berikutnya dihitung dari situ, lalu
+  # dicocokkan dengan daftar tag supaya tidak ada nomor yang terpakai dua kali.
+  LATEST=$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name' 2>/dev/null || true)
+  NOMOR=$(echo "$LATEST" | sed -n 's/^viza-1\.0\.\([0-9][0-9]*\)$/\1/p')
+  TAG_MAKS=$(gh api "repos/$GITHUB_REPOSITORY/tags?per_page=100" \
+    --jq '[.[].name | select(test("^viza-1\\.0\\.[0-9]+$")) | sub("viza-1\\.0\\."; "") | tonumber] | max' 2>/dev/null || true)
+  if [ -n "$TAG_MAKS" ] && [ "$TAG_MAKS" != "null" ]; then
+    if [ -z "$NOMOR" ] || [ "$TAG_MAKS" -gt "$NOMOR" ]; then NOMOR=$TAG_MAKS; fi
+  fi
+  if [ -n "$NOMOR" ]; then NOMOR=$(( NOMOR + 1 )); fi
 fi
 if [ -z "$NOMOR" ] || [ "$NOMOR" = "null" ]; then NOMOR=$(( ${GITHUB_RUN_NUMBER:-1} + 3 )); fi
 TMP="${RUNNER_TEMP:-/tmp}"

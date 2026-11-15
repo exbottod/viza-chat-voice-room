@@ -519,7 +519,14 @@ suspend fun ratioOf(a: VipAsset): Float {
  *  tengah (52% sampai 67% tinggi kanvas). Dipakai supaya banner tampil besar dan pas,
  *  bukan mengecil karena seluruh kanvas yang tinggi ikut dikecilkan. */
 private const val SVGA_KANVAS_TINGGI = 2.1653f   // 1624 / 750
-private const val SVGA_BAND_ATAS = 0.5197f       // 844 / 1624
+// Diukur dari frame asli banner (kanvas 750x1624): pita gambarnya ada di
+// y 848..1070 dan x 44..733. Jadi bagian atas yang harus digeser 848/1624,
+// dan tinggi pita = 223/750 dari lebar kanvas.
+private const val SVGA_BAND_ATAS = 0.5222f       // 848 / 1624
+private const val SVGA_BAND_RASIO = 0.2973f      // 223 / 750
+private const val SVGA_FOTO_D = 0.146f           // diameter lingkaran foto / lebar pita
+private const val SVGA_FOTO_X = 0.130f           // pusat foto, 13% lebar pita
+private const val SVGA_FOTO_Y = 0.565f           // pusat foto, 56% tinggi pita
 private const val SVGA_BAND_RASIO = 0.3347f      // 251 / 750
 
 /** Banner efek masuk VIP1-9 diambil dari panel developer (bukan lagi dari APK). */
@@ -615,8 +622,9 @@ fun VipEntryEffect(roomId: String) {
 
     val p = playing
     val b = banner
-    // Posisi geser banner: 1f = penuh di kanan layar, 0f = tengah, negatif = keluar kiri.
-    val slide = remember { Animatable(1f) }
+    // Banner tidak lagi digeser manual dari kanan ke kiri: animasi bawaan file
+    // SVGA sudah menggerakkan pitanya sendiri. Di sini hanya fade masuk/keluar.
+    val fade = remember { Animatable(0f) }
     if (p != null || b != null) {
         if (p != null) {
             LaunchedEffect(p) {
@@ -625,13 +633,13 @@ fun VipEntryEffect(roomId: String) {
             }
         }
         if (b != null) {
-            // Banner geser: dari kanan CEPAT ke tengah, di tengah LAMBAT,
-            // saat menutup CEPAT lagi ke kiri. Total 3 detik.
+            // Durasi tampil mengikuti panjang animasi SVGA (90 frame @30fps = 3 detik)
+            // ditambah jeda sebentar, lalu memudar.
             LaunchedEffect(b) {
-                slide.snapTo(1f)
-                slide.animateTo(0f, tween(800, easing = FastOutSlowInEasing))
-                slide.animateTo(-0.08f, tween(1400, easing = LinearEasing))
-                slide.animateTo(-1.25f, tween(800, easing = FastOutLinearInEasing))
+                fade.snapTo(0f)
+                fade.animateTo(1f, tween(if (b.kind == "svga") 220 else 400))
+                delay(if (b.kind == "svga") 3200L else 2600L)
+                fade.animateTo(0f, tween(300))
                 banner = null
                 bannerName = null
                 bannerUid = null
@@ -681,7 +689,9 @@ fun VipEntryEffect(roomId: String) {
                         (lebarBanner.value / rasioBanner).dp.coerceIn(48.dp, 130.dp)
                     }
                     val bSize = DpSize(lebarBanner, tinggiBanner)
-                    Box(Modifier.size(bSize).offset(x = maxWidth * slide.value)) {
+                    Box(
+                        Modifier.size(bSize).graphicsLayer { alpha = fade.value },
+                    ) {
                         if (svgaBanner) {
                             // Kanvas SVGA 750x1624 tapi gambarnya hanya pita di tengah. View
                             // dibuat sebesar kanvas penuh lalu digambar lewat graphicsLayer
@@ -710,12 +720,18 @@ fun VipEntryEffect(roomId: String) {
                     // Foto profil user dipasang di ujung kiri banner (di atas bola emas).
                     val bu = bannerUid?.let { UserCache.peek(it) }
                     if (bu != null) {
-                        // Foto dipaskan ke lingkaran bawaan banner (tidak digambar ulang),
-                        // jadi ukurannya kecil dan diletakkan tepat di tengah lingkaran itu.
-                        val av = (bSize.height.value * 0.44f).dp
+                        // Foto diletakkan tepat di lingkaran pita: pusat di 13% lebar
+                        // dan 56% tinggi pita, diameter 14,6% lebar pita (hasil ukur
+                        // frame asli banner).
+                        val lebarPita = bSize.width.value
+                        val tinggiPita = bSize.height.value
+                        val av = (lebarPita * SVGA_FOTO_D).dp
                         Box(
-                            Modifier.align(Alignment.CenterStart)
-                                .offset(x = bSize.width * 0.18f - av / 2)
+                            Modifier
+                                .offset(
+                                    x = (lebarPita * SVGA_FOTO_X).dp - av / 2,
+                                    y = (tinggiPita * SVGA_FOTO_Y).dp - av / 2,
+                                )
                                 .size(av)
                                 .clip(CircleShape),
                             contentAlignment = Alignment.Center,
@@ -725,10 +741,11 @@ fun VipEntryEffect(roomId: String) {
                     val nm = bannerName
                     if (!nm.isNullOrBlank()) {
                         Box(
-                            // Nama di tengah pita, sebelah kanan foto profil (foto di 18% lebar).
+                            // Nama di tengah pita, mulai setelah lingkaran foto (24% lebar).
                             Modifier.matchParentSize().padding(
-                                start = (bSize.width.value * 0.30f).dp,
-                                end = (bSize.width.value * 0.08f).dp,
+                                start = (bSize.width.value * 0.24f).dp,
+                                end = (bSize.width.value * 0.06f).dp,
+                                top = (bSize.height.value * 0.10f).dp,
                             ),
                             contentAlignment = Alignment.Center,
                         ) {

@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -33,7 +34,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.tasks.await
@@ -104,26 +107,12 @@ fun CrazyFruitScreen(
         }
     }
 
-    Box(
-        Modifier.fillMaxSize().clickable(
-            indication = null,
-            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-        ) { onClose() },
-    ) {
+    Box(Modifier.fillMaxSize().background(Color(0xFF0A0F1E))) {
         Column(
-            Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(CF_SHEET)
+            Modifier.align(Alignment.BottomCenter).fillMaxSize()
                 .navigationBarsPadding()
-                .clip(RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
-                .background(Color(0xFF0A0F1E))
-                .border(1.dp, Color(0xFF2A3550), RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                ) { },
+                .background(Color(0xFF0A0F1E)),
         ) {
-            Box(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 6.dp), contentAlignment = Alignment.Center) {
-                Box(Modifier.width(44.dp).height(4.dp).clip(RoundedCornerShape(2.dp)).background(Color(0xFF3A4763)))
-            }
             if (siap) {
                 AndroidView(
                     modifier = Modifier.fillMaxSize(),
@@ -219,11 +208,18 @@ fun CrazyFruitScreen(
                 )
             }
         }
+        Box(
+            Modifier.align(Alignment.TopEnd).padding(top = 10.dp, end = 10.dp)
+                .clip(RoundedCornerShape(50))
+                .background(Color(0xCC0A0F1E))
+                .border(1.dp, Color(0xFF3A4763), RoundedCornerShape(50))
+                .clickable { onClose() }
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+        ) {
+            Text("Tutup", color = Color(0xFFE6ECFF), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+        }
     }
 }
-
-/** Tinggi sheet game dibanding layar: pita tipis di atas tetap memperlihatkan room. */
-private const val CF_SHEET = 0.93f
 
 /** Chip bet bawaan kalau panel belum mengatur apa pun. */
 private val CF_CHIPS = listOf(1000L, 5000L, 10000L, 50000L, 100000L)
@@ -237,7 +233,7 @@ private fun alamatCrazy(token: String, uid: String, nama: String): String {
     val t = java.net.URLEncoder.encode(token, "UTF-8")
     val u = java.net.URLEncoder.encode(uid, "UTF-8")
     val n = java.net.URLEncoder.encode(nama, "UTF-8")
-    return CF_LOKAL + "?token=" + t + "&t=" + t + "&u=" + u + "&n=" + n + "&embed=half&gameId=crazyfruit&appKey=viza"
+    return CF_LOKAL + "?token=" + t + "&t=" + t + "&u=" + u + "&n=" + n + "&embed=full&gameId=crazyfruit&appKey=viza"
 }
 
 /** Permintaan HTTP dompet, dikerjakan dari sisi app supaya tidak putus di WebView. */

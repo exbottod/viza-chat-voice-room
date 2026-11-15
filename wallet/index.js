@@ -2282,14 +2282,26 @@ async function cashbackGift(env, uid, p) {
   if (persenAktif) {
     // Satu undian per kiriman, lalu dikali jumlah kirim. Kirim 5 buah = 5x
     // hadiah, tetapi tidak diundi lima kali (biar combo besar tidak "rata").
-    const u = cfg?.kurvaAktif === false ? undiPersen(cfg, count) : undiKurva(cfg, count);
-    // Pengali JP berlaku untuk NILAI TOTAL kiriman (harga satuan x jumlah),
-    // jadi angka di lingkaran WIN sama dengan hadiah sebenarnya.
-    // Kalau undiannya ZONK di pengali 100x ke atas, untungnya nol.
-    const dasar = price * count;
-    untung = Math.max(0, Math.min(batas, Math.floor(dasar * (u.zonk ? 0 : u.mult))));
-    jpZonk = u.zonk ? 1 : 0;
-    undian = { jackpot: u.mult >= 5 ? 1 : 0, kelompok: u.kelompok, peluang: 100, mult: u.zonk ? 0 : u.mult };
+    // Kirim 10 sekaligus = 10 undian, sama seperti kirim 10 kali satu-satu.
+    // Tiap gift diundi sendiri, hadiahnya harga satuan x pengali, lalu dijumlah.
+    const undianMaks = Math.max(1, Math.min(500, Math.floor(Number(cfg?.undianMaks ?? 200))));
+    const kali = Math.min(count, undianMaks);
+    let untungKasar = 0;
+    let multMaks = 0;
+    let zonkMaks = 0;
+    let kelompokTerakhir = -1;
+    for (let n = 0; n < kali; n++) {
+      const u = cfg?.kurvaAktif === false ? undiPersen(cfg, 1) : undiKurva(cfg, 1);
+      kelompokTerakhir = u.kelompok;
+      if (u.zonk) { zonkMaks = 1; continue; }
+      untungKasar += price * u.mult;
+      if (u.mult > multMaks) multMaks = u.mult;
+    }
+    // Kiriman lebih besar dari batas undian: sisanya dihitung sebanding.
+    if (count > kali) untungKasar = (untungKasar * count) / kali;
+    untung = Math.max(0, Math.min(batas, Math.floor(untungKasar)));
+    jpZonk = untung > 0 ? 0 : zonkMaks;
+    undian = { jackpot: multMaks >= 5 ? 1 : 0, kelompok: kelompokTerakhir, peluang: 100, mult: multMaks };
   } else {
     const u = undiCashback(cfg, count);
     untung = Math.max(0, Math.min(batas, Math.floor(u.nominal * count)));
@@ -2334,8 +2346,13 @@ async function cashbackGift(env, uid, p) {
   // kirim, total nilai, dan kelipatan menang terhadap harga satuan.
   // Kelipatan per SATU gift. Kirim 66 x 100.000 dengan hadiah 7.260.000 berarti
   // 110.000 per gift = 1,1x, bukan 72,6x (dulu dibagi harga satu saja).
+  // Tampilan WIN memakai pengali terbaik yang menang di kiriman ini
+  // (mis. kirim 10 buah, satu kena x10 -> tertulis x10), sedangkan nominalnya
+  // tetap jumlah seluruh hadiah.
   const klf = untung > 0
-    ? Math.round((untung / Math.max(1, price * count)) * 100) / 100
+    ? (undian.mult > 0
+      ? undian.mult
+      : Math.round((untung / Math.max(1, price * count)) * 100) / 100)
     : 0;
   const kelipatan = untung > 0 ? Math.round(klf) : 0;
   // Label jenis hadiah untuk badge di aplikasi (Cashback / Lucky / Jackpot).

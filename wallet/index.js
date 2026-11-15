@@ -2004,6 +2004,31 @@ function tierPersen(cfg) {
 // Pemilik minta: kirim x10 sering 1000x/500x/100x, kirim x520 cuma 10x-20x.
 const JP_KELOMPOK_BAWAAN = [
   {
+    // Kirim 1 buah tidak boleh pecah besar: modalnya cuma 1 gift, kalau dapat
+    // 1000x platform nombok 1000 kali lipat.
+    max: 1,
+    tiers: [
+      { m: 0.1, w: 30 },
+      { m: 0.2, w: 25 },
+      { m: 0.5, w: 20 },
+      { m: 1, w: 15 },
+      { m: 2, w: 8 },
+      { m: 5, w: 2 },
+    ],
+  },
+  {
+    // Kirim 2-5 buah: masih kecil, maksimal 20x.
+    max: 5,
+    tiers: [
+      { m: 0.5, w: 25 },
+      { m: 1, w: 30 },
+      { m: 2, w: 20 },
+      { m: 5, w: 15 },
+      { m: 10, w: 7 },
+      { m: 20, w: 3 },
+    ],
+  },
+  {
     max: 20,
     tiers: [
       { m: 10, w: 40 },

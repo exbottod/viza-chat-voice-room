@@ -2,6 +2,7 @@ package com.rezochatvoice.exceo
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -18,6 +19,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.border
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
@@ -238,21 +240,23 @@ private fun GiftFlyOnce(
 
 
 /**
- * Kartu pemenang cashback gaya "Lucky Gift": total menang besar di tengah,
- * keterangan pengiriman (jumlah x harga satuan), dan badge kelipatan + tingkat
- * (Rookie / Pro / Highest) di sisi kanan. Kalau zonk, kartu berubah jadi abu-abu
- * dengan tulisan "Belum beruntung".
+ * Banner pemenang cashback gaya "Lucky Gift".
+ *
+ * Pemilik minta kotak/kartu bawaan dihapus: yang dipakai hanya banner dari aset
+ * acuan, dan letaknya di atas room seperti banner publik yang terbang. Isinya
+ * tetap: total menang, pengiriman (jumlah x harga satuan), kelipatan, tingkat
+ * (Rookie / Pro / Highest), dan tujuan gift.
  */
 @Composable
 private fun SelamatCashback(f: GiftFly) {
     var tampil by remember(f.ts) { mutableStateOf(false) }
-    val naik = remember(f.ts) { Animatable(0.82f) }
+    val geser = remember(f.ts) { Animatable(1f) }
     val dapat = f.cb > 0L
     LaunchedEffect(f.ts) {
-        delay(780L)
+        delay(420L)
         tampil = true
-        naik.animateTo(1f, tween(240, easing = FastOutSlowInEasing))
-        delay(3200L)
+        // Banner terbang dari kanan ke kiri seperti banner publik di atas room.
+        geser.animateTo(-1f, tween(5400, easing = LinearEasing))
         tampil = false
     }
     if (!tampil) return
@@ -271,142 +275,82 @@ private fun SelamatCashback(f: GiftFly) {
             else -> ""
         }
     }
-    val judul = when {
-        !dapat -> "Belum beruntung"
-        kali >= 100 -> "HIGHEST WINNER"
-        kali >= 5 -> "PRO WINNER"
-        else -> "WINNER"
-    }
+    val layar = LocalConfiguration.current.screenWidthDp.dp
 
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        // Kemenangan besar: putar animasi hadiah VAP di belakang kartu.
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        // Kemenangan besar: animasi hadiah VAP (aset acuan) satu layar penuh.
         if (dapat && kali >= 5) LuckyVap(Modifier.matchParentSize())
+
+        // Banner pemenang: tidak pakai kotak/kartu sendiri, latarnya animasi SVGA
+        // dari aset acuan, lalu terbang melewati atas room.
         Box(
             Modifier
-                .padding(top = 120.dp, start = 22.dp, end = 22.dp)
+                .offset { IntOffset((geser.value * layar.toPx()).toInt(), 0) }
+                .padding(top = 148.dp, start = 10.dp, end = 10.dp)
                 .fillMaxWidth()
-                .graphicsLayer {
-                    scaleX = naik.value
-                    scaleY = naik.value
-                    alpha = ((naik.value - 0.82f) / 0.18f).coerceIn(0f, 1f)
-                }
-                .clip(RoundedCornerShape(18.dp))
-                .background(
-                    if (dapat) {
-                        Brush.verticalGradient(
-                            listOf(Color(0xFF2A1A3E), Color(0xFF43265F), Color(0xFF2A1A3E)),
-                        )
-                    } else {
-                        Brush.verticalGradient(listOf(Color(0xFF2B2B2B), Color(0xFF1C1C1C)))
-                    },
-                )
-                .border(
-                    1.5.dp,
-                    if (dapat) Color(0xFFFFD24D) else Color(0xFF616161),
-                    RoundedCornerShape(18.dp),
-                ),
+                .height(76.dp),
         ) {
-            // Latar animasi SVGA: pakai aset marquee dari APK acuan kalau ada.
             if (dapat) LuckyMarqueeBg(Modifier.matchParentSize())
-            Column(Modifier.padding(horizontal = 14.dp, vertical = 13.dp)) {
-            // Baris atas: judul + badge kelipatan dan tingkat.
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    if (dapat) "👑" else "🎁",
-                    fontSize = 20.sp,
-                )
-                Spacer(Modifier.width(8.dp))
+            Row(
+                Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Column(Modifier.weight(1f)) {
-                    Text(
-                        "Gift Cashback",
-                        color = Color(0xFFFFF3D6),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                    )
-                    Text(
-                        judul,
-                        color = if (dapat) Color(0xFFFFD24D) else Color(0xFFBDBDBD),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Black,
-                        maxLines = 1,
-                    )
-                }
-                if (dapat && kali > 0) {
-                    Column(horizontalAlignment = Alignment.End) {
-                        Box(
-                            Modifier
-                                .background(Color(0xFFFFD24D), RoundedCornerShape(8.dp))
-                                .padding(horizontal = 10.dp, vertical = 4.dp),
-                        ) {
-                            Text(
-                                "x$kali",
-                                color = Color(0xFF3B2200),
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Black,
-                            )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(if (dapat) "👑" else "🎁", fontSize = 15.sp)
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            "Gift Cashback",
+                            color = Color(0xFFFFF3D6),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                        )
+                        if (dapat && kali > 0) {
+                            Spacer(Modifier.width(6.dp))
+                            Box(
+                                Modifier
+                                    .background(Color(0xFFFFD24D), RoundedCornerShape(6.dp))
+                                    .padding(horizontal = 6.dp, vertical = 1.dp),
+                            ) {
+                                Text(
+                                    "x$kali",
+                                    color = Color(0xFF3B2200),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Black,
+                                )
+                            }
                         }
                         if (tingkat.isNotBlank()) {
+                            Spacer(Modifier.width(6.dp))
                             Text(
                                 tingkat,
                                 color = Color(0xFFFFE082),
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(top = 2.dp),
+                                maxLines = 1,
                             )
                         }
                     }
+                    Text(
+                        if (dapat) {
+                            "${fmtNum(f.cb)} koin · pengiriman $jumlah x ${fmtNum(harga)}"
+                        } else {
+                            "belum dapat · pengiriman $jumlah x ${fmtNum(harga)}"
+                        },
+                        color = if (dapat) Color(0xFFFFD24D) else Color(0xFFBDBDBD),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Black,
+                        maxLines = 1,
+                    )
                 }
-            }
-
-            Spacer(Modifier.height(11.dp))
-
-            // Total menang: angka besar, gaya kartu pemenang Lucky Gift.
-            Text(
-                "Total memenangkan",
-                color = Color(0xFFCBB6E8),
-                fontSize = 12.sp,
-            )
-            Text(
-                "${fmtNum(f.cb)} koin",
-                color = if (dapat) Color(0xFFFFD24D) else Color(0xFF9E9E9E),
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Black,
-                maxLines = 1,
-            )
-            Text(
-                if (dapat) {
-                    "melalui pengiriman $jumlah x ${fmtNum(harga)} koin"
-                } else {
-                    "pengiriman $jumlah x ${fmtNum(harga)} koin belum dapat cashback"
-                },
-                color = Color(0xFFCBB6E8),
-                fontSize = 12.sp,
-                modifier = Modifier.padding(top = 3.dp),
-            )
-
-            Spacer(Modifier.height(10.dp))
-            Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0x33FFE082)))
-            // Baris bawah: gift dan tujuannya (gaya keterangan di kartu Haco).
-            Row(
-                Modifier.fillMaxWidth().padding(top = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    "${f.gname.ifBlank { f.emoji.ifBlank { "Gift" } }}",
-                    color = Color(0xFFFFF3D6),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    modifier = Modifier.weight(1f),
-                )
                 Text(
                     "ke ${f.toName.ifBlank { "penerima" }}",
                     color = Color(0xFFCBB6E8),
-                    fontSize = 12.sp,
+                    fontSize = 10.sp,
                     maxLines = 1,
+                    modifier = Modifier.padding(start = 8.dp),
                 )
-            }
             }
         }
     }

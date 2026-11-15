@@ -188,6 +188,7 @@ object GiftComboSend {
                         "toUid" to t.first,
                         "seat" to t.third.toLong(),
                         "gift" to g.name,
+                        "gname" to g.name,
                         "emoji" to g.emoji,
                         "mediaUrl" to g.mediaUrl,
                         "mediaType" to g.mediaType,

@@ -96,7 +96,8 @@ fun GiftFlyOverlay(roomId: String, seatPoints: Map<Int, Offset>) {
                     mediaType = c.child("mediaType").getValue(String::class.java) ?: "",
                     mult = (c.child("mult").getValue(Long::class.java) ?: 0L).toInt(),
                     combo = (c.child("combo").getValue(Long::class.java) ?: 0L).toInt(),
-                    gname = c.child("gname").getValue(String::class.java) ?: "",
+                    gname = c.child("gname").getValue(String::class.java)
+                        ?: c.child("gift").getValue(String::class.java) ?: "",
                     jp = c.child("jp").getValue(Boolean::class.java) ?: false,
                     ts = ts,
                     ),

@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.111",
+  "versi": "1.0.113",
   "catatan": "APK arm64, armv7, dan universal build otomatis. Paket com.vizachatvoice.app, ditandatangani kunci rilis Viza.",
-  "ukuran_apk": 49085506,
-  "sha256_apk": "2f9c14205e9b6a8f454780e781d028e999f126dc0aca4c63617e156a640b5953",
+  "ukuran_apk": 49310182,
+  "sha256_apk": "235569d8bbafa8793fa388187de5fc0e5121169fd902874c73cb1adec6d844d6",
   "abis": {
     "arm64": {
-      "ukuran": 49085506,
-      "sha256": "2f9c14205e9b6a8f454780e781d028e999f126dc0aca4c63617e156a640b5953"
+      "ukuran": 49310182,
+      "sha256": "235569d8bbafa8793fa388187de5fc0e5121169fd902874c73cb1adec6d844d6"
     },
     "armv7": {
-      "ukuran": 47236660,
-      "sha256": "a9897fb32ae6c0f639de95eacfb5477f3db706d22bfc4d10d5f81fef33b56eca"
+      "ukuran": 47461328,
+      "sha256": "be9c1739b5d5f3ca675c222156a316300ab89dc8426ff0b8ecec4758faeab921"
     },
     "universal": {
-      "ukuran": 67501475,
-      "sha256": "b7b55a8ac02d276bbaebc2368aae2c2ec852d97f65f1edbe04d3734674fd7746"
+      "ukuran": 67726147,
+      "sha256": "4c9f5901ed4331afc580317f13b9730a3ade34210bd2341fe25110f557658e9e"
     }
   }
 }

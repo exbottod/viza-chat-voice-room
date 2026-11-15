@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <title>Crazy Fruit</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Orbitron:wght@700;900&display=swap" />
     <style>
       html, body, #root { height: 100%; margin: 0; padding: 0; background: #0a0f1e; overflow: hidden; }
@@ -15,8 +15,7 @@
         background: #7a1020; color: #fff; font: 12px/1.35 sans-serif; padding: 10px 12px;
         max-height: 45%; overflow: auto; white-space: pre-wrap; word-break: break-word; }
     </style>
-    <script type="module" crossorigin src="./assets/index-pTuLh-2g.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-BhB2gCgp.css">
+    <script defer src="./assets/index-BDfG_CTQ.js"></script>
   </head>
   <body>
     <div id="root"></div>
@@ -29,6 +28,18 @@
         window.addEventListener("load", function () {
           document.getElementById("cf-info").textContent = "load ok · cr" + v;
         });
+        // Diagnosa: kalau React tidak mengisi apa pun, tampilkan keadaannya.
+        setTimeout(function () {
+          try {
+            var r = document.getElementById("root");
+            var anak = r ? r.children.length : -1;
+            var tinggi = r ? Math.round(r.getBoundingClientRect().height) : -1;
+            var teks = "ok · cr" + v + " · anak" + anak + " · h" + tinggi +
+              " · " + window.innerWidth + "x" + window.innerHeight;
+            document.getElementById("cf-info").textContent = teks;
+            if (anak < 1 || tinggi < 80) tampil("Layar kosong (" + teks + ")");
+          } catch (err) {}
+        }, 4000);
       })();
     </script>
     <script>

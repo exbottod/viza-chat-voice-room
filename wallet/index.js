@@ -1826,10 +1826,15 @@ async function cashbackGift(env, uid, p) {
   if (nilai <= 0) return gagal("Nilai gift tidak valid");
 
   // Undian cashback untuk pengirim gift.
+  // Aturan pemilik: kalau ZONK harga gift terpotong penuh 100%. Kalau dapat,
+  // harga gift TIDAK terpotong (dikembalikan) lalu ditambah keuntungan sesuai
+  // pengali. Jadi 100.000 kena 10x: saldo kembali 100.000 dan dapat +1.000.000.
   const mult = undiCashback();
-  const target = Math.max(0, Math.floor(nilai * mult));
-  const parts = target > 0 ? pecahCashback(target) : [];
-  const amount = await beriCoin(env, uid, target, "cashback", null);
+  const untung = Math.max(0, Math.floor(nilai * mult)); // tampil di layar
+  const kembali = untung > 0 ? nilai : 0;               // harga gift tidak terpotong
+  const kredit = untung + kembali;
+  const parts = untung > 0 ? pecahCashback(untung) : [];
+  const amount = await beriCoin(env, uid, kredit, "cashback", null);
 
   // Bagian penerima gift: 70% harga gift, 30% untuk platform.
   const to = String(p.to ?? "").trim();
@@ -1845,13 +1850,15 @@ async function cashbackGift(env, uid, p) {
   const multTampil = Math.floor(mult);
   return json({
     ok: 1,
-    amount,
+    amount: untung,
+    kembali,
+    kredit,
     mult: multTampil,
     multF: mult,
     parts: parts.slice(0, 5),
     pecahan: parts[0] ?? 0,
     recv,
-    jp: amount >= jpMin && amount > 0 ? 1 : 0,
+    jp: untung >= jpMin && untung > 0 ? 1 : 0,
     asset: "",
   });
 }
@@ -4147,7 +4154,7 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           stafAktif = Number(r[0].rows[0]?.a ?? 0);
           peran = r[1].rows.map((x) => String(x.role) + ":" + Number(x.n));
         } catch (e) { /* tabel belum ada */ }
-        return json({ ok: 1, v: "viza-2026-11-15-cashback-contoh", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
+        return json({ ok: 1, v: "viza-2026-11-15-cashback-refund", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
       } catch (e) {
         return json({ ok: 0, v: "viza-2026-11-13-mandiri", db: String(e?.message ?? e) }, 500);
       }

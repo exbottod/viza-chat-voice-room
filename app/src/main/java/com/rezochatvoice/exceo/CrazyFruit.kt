@@ -62,7 +62,7 @@ fun CrazyFruitScreen(
 ) {
     var token by remember { mutableStateOf("") }
     var chips by remember { mutableStateOf(CF_CHIPS) }
-    var rtp by remember { mutableStateOf(92) }
+    var rtp by remember { mutableStateOf(124) }
     var siap by remember { mutableStateOf(false) }
     val wvPegang = remember { mutableStateOf<WebView?>(null) }
 
@@ -74,7 +74,7 @@ fun CrazyFruitScreen(
         }
         // Chip bet dari panel (Bet game / Crazy Fruit).
         chips = try { BetCfg.load("crazyfruit", CF_CHIPS) } catch (e: Exception) { CF_CHIPS }
-        // RTP dari panel (pub/_cfCfg/rtp). Kalau belum diatur, 92%.
+        // RTP dari panel (pub/_cfCfg/rtp). Kalau belum diatur, 124% = pengali asli.
         rtp = try {
             val snap = Rtdb.ref("pub/_cfCfg").get().await()
             val v = snap.child("rtp").getValue(Int::class.java)

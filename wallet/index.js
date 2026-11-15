@@ -1149,7 +1149,12 @@ async function kirimGift(env, uid, p) {
     // ke pengirim dan penerima tidak pernah menerima apa pun (halaman Tukar
     // Berlian mereka tetap 0, terutama setelah akun direset). Sekarang setiap
     // penerima dicatat sendiri, tetap aman diulang lewat penanda req.
-    await kreditPenerima(env, uid, p, price, item, room, now, req);
+    let giftCashback = false;
+    try {
+      const kat = await katalogGift(env, item);
+      giftCashback = !!(kat && kat.cashback);
+    } catch (e) { giftCashback = false; }
+    await kreditPenerima(env, uid, p, price, item, room, now, req, giftCashback);
     return ok(w);
   }
   // Tidak berubah: bisa karena coin kurang atau permintaan sudah diproses.
@@ -1165,13 +1170,19 @@ async function kirimGift(env, uid, p) {
  * p.each (harga gift x jumlah ketukan); kalau tidak dikirim, dibagi rata.
  * Satu penerima gagal tidak menggagalkan penerima lain maupun pengirim.
  */
-async function kreditPenerima(env, uid, p, price, item, room, now, req) {
+/** Diamond penerima gift cashback: 5% dari harga gift. */
+const DIAMOND_CASHBACK_PCT = 5;
+
+async function kreditPenerima(env, uid, p, price, item, room, now, req, giftCashback = false) {
   const daftar = Array.isArray(p.to) ? p.to.map((x) => String(x ?? "").trim()).filter(Boolean) : [];
   const unik = [...new Set(daftar)].filter((u) => u && u !== uid);
   if (!unik.length) return;
   let each = Math.trunc(Number(p.each ?? 0));
   if (!(each > 0)) each = Math.floor(price / unik.length);
   if (!(each > 0)) return;
+  // Gift cashback: penerima tetap dapat BIASA cashback jalan, tapi diamond-nya
+  // dihitung 5% dari harga gift (bukan nilai penuh seperti gift biasa).
+  const diamond = giftCashback ? Math.floor((each * DIAMOND_CASHBACK_PCT) / 100) : each;
   for (const r of unik) {
     try {
       await pastikan(env, r);
@@ -1186,7 +1197,7 @@ async function kreditPenerima(env, uid, p, price, item, room, now, req) {
                   updated_at = ?
                 where uid = ?
                   and not exists (select 1 from gift_req where req_id = ?)`,
-          args: [I(each), I(each), I(now), I(now), T(r), T(tanda)],
+          args: [I(diamond), I(each), I(now), I(now), T(r), T(tanda)],
         },
         {
           sql: "insert into gift_req (req_id, uid, at) select ?, ?, ? where changes() > 0",
@@ -1195,7 +1206,7 @@ async function kreditPenerima(env, uid, p, price, item, room, now, req) {
         {
           sql: `insert into money_tx (uid, kind, item_id, amount, room_id, created_at)
                 select ?, 'gift_in', ?, ?, ?, ? where changes() > 0`,
-          args: [T(r), item, I(each), room, I(now)],
+          args: [T(r), item, I(diamond), room, I(now)],
         },
         { sql: "commit" },
       ]);
@@ -1972,6 +1983,7 @@ async function katalogGift(env, id) {
     price,
     jpRate: Math.max(0, Math.min(100, Math.floor(Number(d?.jpRate ?? 0)))),
     jpMult: Math.max(0, Math.min(100000, Math.floor(Number(d?.jpMult ?? 0)))),
+    cashback: !!(d?.cashback || Number(d?.cbRate ?? 0) > 0),
   };
 }
 
@@ -4250,7 +4262,7 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           stafAktif = Number(r[0].rows[0]?.a ?? 0);
           peran = r[1].rows.map((x) => String(x.role) + ":" + Number(x.n));
         } catch (e) { /* tabel belum ada */ }
-        return json({ ok: 1, v: "viza-2026-11-15-cashback-tanpa-zonk", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
+        return json({ ok: 1, v: "viza-2026-11-15-cashback-diamond5", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
       } catch (e) {
         return json({ ok: 0, v: "viza-2026-11-13-mandiri", db: String(e?.message ?? e) }, 500);
       }

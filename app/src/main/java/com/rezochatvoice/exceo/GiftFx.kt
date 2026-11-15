@@ -231,7 +231,14 @@ object GiftFx {
             val cb = if (!(g.cashback || g.cbRate > 0)) null else try {
                 kotlinx.coroutines.withTimeoutOrNull(9000L) {
                     // Harga cashback dari panel; kalau kosong pakai harga gift.
-                    SupaRepo.giftCashback(uid, if (g.cbPrice > 0L) g.cbPrice else g.price, count, targetUid)
+                    // Jumlah kirim dikali jumlah penerima: kirim ke 2 orang berarti
+                    // coin terpotong 2x, jadi cashback (nominal dan batas 106%) ikut 2x.
+                    SupaRepo.giftCashback(
+                        uid,
+                        if (g.cbPrice > 0L) g.cbPrice else g.price,
+                        count * receivers.coerceAtLeast(1),
+                        targetUid,
+                    )
                 }
             } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { null }
             if (cb != null && cb.error == null && cb.amount > 0) {

@@ -525,7 +525,6 @@ fun GiftFxOverlay(roomId: String) {
                     from = c.child("from").getValue(String::class.java) ?: "",
                     gift = c.child("gift").getValue(String::class.java) ?: "",
                     emoji = c.child("emoji").getValue(String::class.java) ?: "🎁",
-                    icon = c.child("icon").getValue(String::class.java) ?: "",
                     mediaUrl = c.child("mediaUrl").getValue(String::class.java) ?: "",
                     mediaType = c.child("mediaType").getValue(String::class.java) ?: "",
                     rocket = c.child("rocket").getValue(Boolean::class.java) ?: false,

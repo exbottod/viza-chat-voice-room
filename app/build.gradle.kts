@@ -150,6 +150,8 @@ dependencies {
     implementation("io.coil-kt:coil-gif:2.7.0")
     implementation("io.coil-kt:coil-video:2.7.0")
     implementation("com.github.yyued:SVGAPlayer-Android:2.6.1")
+    // Player animasi VAP (Tencent): format .vap/.mp4 dengan jalur alpha terpisah.
+    implementation("io.github.tencent:vap:2.0.28")
     implementation("androidx.exifinterface:exifinterface:1.3.7")
 
     implementation(platform("com.google.firebase:firebase-bom:33.5.1"))

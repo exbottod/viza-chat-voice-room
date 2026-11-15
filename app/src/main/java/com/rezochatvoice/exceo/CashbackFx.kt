@@ -279,6 +279,8 @@ private fun SelamatCashback(f: GiftFly) {
     }
 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        // Kemenangan besar: putar animasi hadiah VAP di belakang kartu.
+        if (dapat && kali >= 5) LuckyVap(Modifier.matchParentSize())
         Box(
             Modifier
                 .padding(top = 120.dp, start = 22.dp, end = 22.dp)

@@ -179,8 +179,6 @@ data class Gift(
     val id: String,
     val name: String,
     val emoji: String,
-    /** Ikon unggahan 1:1 dari panel. Kalau diisi, tampil menggantikan emoji. */
-    val icon: String = "",
     val price: Long,
     val mediaUrl: String = "",
     val mediaType: String = "",
@@ -194,6 +192,8 @@ data class Gift(
     val cashback: Boolean = false,
     /** Gift roket: efek terbang melintasi layar + suara, terlihat semua orang di room. */
     val rocket: Boolean = false,
+    /** Ikon unggahan 1:1 dari panel. Kalau diisi, tampil menggantikan emoji. */
+    val icon: String = "",
 )
 
 val GIFTS = listOf(

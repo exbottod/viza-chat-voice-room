@@ -62,7 +62,12 @@ object GiftCatalog {
     private fun dibuang(g: Gift): Boolean =
         g.id in tersembunyi || g.name.trim().lowercase().startsWith("rocket")
     private fun apply() {
-        custom = (rtdbMap.values + legacyMap.values).filterNot { dibuang(it) }
+        // Gabung per id supaya gift yang ada di RTDB dan Firestore tidak tampil
+        // dua kali. Data RTDB (panel terbaru) yang menang.
+        val gabung = LinkedHashMap<String, Gift>()
+        for ((k, v) in legacyMap) gabung[k] = v
+        for ((k, v) in rtdbMap) gabung[k] = v
+        custom = gabung.values.filterNot { dibuang(it) }
         // Hanya gift yang diunggah sendiri lewat panel. Gift bawaan (GIFTS)
         // sengaja tidak ditampilkan lagi di tab Hadiah.
         list = custom

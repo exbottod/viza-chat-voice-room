@@ -627,19 +627,15 @@ const CB_BAWAAN = {
   // Ujungnya tetap ada 100x dan 1000x supaya jackpot masih bisa pecah besar.
   // Kurva JP: pengali dan "1 dari berapa kiriman".
   jpKurva: [
-    { m: 3, n: 10 },
-    { m: 5, n: 15 },
-    { m: 10, n: 25 },
-    { m: 20, n: 40 },
-    { m: 50, n: 100 },
-    { m: 100, n: 150 },
-    { m: 200, n: 300 },
-    { m: 500, n: 700 },
-    { m: 1000, n: 1799 },
+    { m: 1, n: 4 },
+    { m: 3, n: 4 },
+    { m: 5, n: 4 },
+    { m: 10, n: 4 },
   ],
 
+
   kurvaAktif: true,
-  kurvaMode: "kurva",
+  kurvaMode: "acak",
   tiersPersen: [
     { m: 0.1, w: 50 },
     { m: 0.2, w: 25 },

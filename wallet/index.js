@@ -2075,12 +2075,10 @@ const JP_KELOMPOK_BAWAAN = [
 // x200 1:300, x500 1:700, x1000 1:1799.
 // Versi aman: kirim 10 sekaligus diundi 10 kali, jadi peluangnya dibuat jauh
 // lebih jarang supaya rata-rata hadiah tetap di bawah modal.
-// Kurva pemilik: cashback dasar 1-20% dari nilai gift, lalu dikali JP kalau
-// kena. Peluang JP: x3 1:10, x5 1:15, x10 1:25, x20 1:40, x50 1:100,
-// x100 1:150, x200 1:300, x500 1:700, x1000 1:1799.
+// Pengali diundi acak dari 1x, 3x, 5x, 10x (peluang sama besar).
+// Cashback dasar tetap 1-20% dari nilai gift, lalu dikali pengali yang keluar.
 const KURVA_BAWAAN = [
-  [3, 10], [5, 15], [10, 25], [20, 40], [50, 100],
-  [100, 150], [200, 300], [500, 700], [1000, 1799],
+  [1, 4], [3, 4], [5, 4], [10, 4],
 ];
 
 /** Tabel kurva dari panel: [{m: pengali, n: 1 dari berapa}] */
@@ -2137,7 +2135,7 @@ function undiKurva(cfg, count) {
   // - "acak" (bawaan): sekali klik bisa langsung x10 atau x1000, karena
   //   pengali diundi rata dari daftar kurva.
   // - "kurva": pengali besar makin jarang sesuai 1:N.
-  const mode = String(cfg?.kurvaMode || "kurva").toLowerCase();
+  const mode = String(cfg?.kurvaMode || "acak").toLowerCase();
   if (acak >= total) return { mult: 0, zonk: 1, kelompok: -1 };
   if (mode === "acak") {
     const i = Math.floor(Math.random() * bobot.length);

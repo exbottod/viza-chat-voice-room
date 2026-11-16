@@ -1,1 +1,1 @@
-• Ikon peran di room (rumah merah-putih untuk owner, gambar orang untuk admin room) di kursi mic dan k
+• Efek masuk SVGA selalu tampil: kalau aset efek masuk untuk tingkat VIP user belum ada di panel (atau

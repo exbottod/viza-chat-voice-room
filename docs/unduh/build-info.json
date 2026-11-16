@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.189",
-  "catatan": "• Ikon peran di room (rumah merah-putih untuk owner, gambar orang untuk admin room) di kursi mic dan k",
-  "ukuran_apk": 54771146,
-  "sha256_apk": "08251debb2518fa6b715123d8dc8f2ad0252fe4ecf48e94fdf14e21e18e5366e",
+  "versi": "1.0.190",
+  "catatan": "• Efek masuk SVGA selalu tampil: kalau aset efek masuk untuk tingkat VIP user belum ada di panel (atau",
+  "ukuran_apk": 54771572,
+  "sha256_apk": "f8667308be48585c32c67ee43cb5fd16bf7d157796fbb36cdeddb70c9efd01d0",
   "abis": {
     "arm64": {
-      "ukuran": 54771146,
-      "sha256": "08251debb2518fa6b715123d8dc8f2ad0252fe4ecf48e94fdf14e21e18e5366e"
+      "ukuran": 54771572,
+      "sha256": "f8667308be48585c32c67ee43cb5fd16bf7d157796fbb36cdeddb70c9efd01d0"
     },
     "armv7": {
-      "ukuran": 52922294,
-      "sha256": "b940beda752db4e12086e90df8402a909c1ba000982fc2426b034bb1940b52a8"
+      "ukuran": 52922730,
+      "sha256": "832292fab6f78f9cabfb65aadec74f9a2b15692ccdaabfd19bd4e65848b60b90"
     },
     "universal": {
-      "ukuran": 73187108,
-      "sha256": "fffa6bbbebeb5869ed6b6a652530078029c640c4396dff10100857f754f1dd74"
+      "ukuran": 73187546,
+      "sha256": "0615dce2c3dbb84cc4423ea061d00e3c604a39e7994b52690ca55325b30ba8c9"
     }
   }
 }

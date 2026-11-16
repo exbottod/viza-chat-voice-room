@@ -1091,7 +1091,16 @@ fun StoreScreen(uid: String, wallet: Wallet, onOpenVip: () -> Unit, onBack: () -
                                                 tr("${item.days} hari"), color = Color.White, fontSize = 15.sp,
                                                 modifier = Modifier.align(Alignment.TopStart).padding(10.dp),
                                             )
-                                            Box(Modifier.align(Alignment.Center), contentAlignment = Alignment.Center) { ItemPreview(item, 110.dp) }
+                                            // Tombol play: lihat animasi penuh sebelum membeli.
+                                            Box(
+                                                Modifier.align(Alignment.TopEnd).padding(8.dp).size(26.dp).clip(CircleShape)
+                                                    .background(Color(0x66000000)).clickable { previewItem = item },
+                                                contentAlignment = Alignment.Center,
+                                            ) { Text("\u25B6", color = Color.White, fontSize = 12.sp) }
+                                            Box(
+                                                Modifier.align(Alignment.Center).clickable { previewItem = item },
+                                                contentAlignment = Alignment.Center,
+                                            ) { ItemPreview(item, 110.dp) }
                                         }
                                         Text(
                                             tr(namaItem(item)), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold,
@@ -1418,10 +1427,16 @@ fun StoreScreen(uid: String, wallet: Wallet, onOpenVip: () -> Unit, onBack: () -
                     if (a != null && (item.slot == "entry" || item.slot == "banner")) {
                         // Efek masuk / banner: putar penuh sekali tampil.
                         key(a.updatedAt) { VipMedia(a, Modifier.fillMaxSize(), loop = true) }
-                    } else if (a != null && (a.kind == "mp4" || a.kind == "svga")) {
-                        // Pratinjau: hanya di sini animasi diputar, karena daftar
-                        // item sengaja ditampilkan diam supaya HP tidak berat.
-                        key(a.updatedAt) { VipMedia(a, Modifier.fillMaxSize(), loop = true, contentScale = ContentScale.Fit) }
+                    } else if (a != null) {
+                        // Pratinjau: hanya di sini animasi diputar (SVGA, MP4, juga
+                        // WebP/GIF bergerak), karena daftar item sengaja ditampilkan
+                        // diam supaya HP tidak berat.
+                        key(a.updatedAt) {
+                            VipMedia(
+                                a, Modifier.fillMaxSize(), loop = true,
+                                contentScale = if (item.slot == "frame" || item.slot == "cardbg") ContentScale.Crop else ContentScale.Fit,
+                            )
+                        }
                     } else {
                         ItemPreview(item, 220.dp)
                     }

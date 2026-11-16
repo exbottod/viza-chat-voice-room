@@ -1674,12 +1674,26 @@ async function peranPanelWeb(env, sesi) {
         `https://firestore.googleapis.com/v1/projects/${proyek}/databases/(default)/documents/panelAdmins/${encodeURIComponent(email)}`,
         { headers: { authorization: "Bearer " + token } },
       );
+      const baca = async (jalur) => {
+        const rr = await fetch(
+          `https://firestore.googleapis.com/v1/projects/${proyek}/databases/(default)/documents/${jalur}`,
+          { headers: { authorization: "Bearer " + token } },
+        );
+        if (!rr.ok) return null;
+        const d = await rr.json();
+        const f = d.fields || {};
+        if (f.aktif && f.aktif.booleanValue === false) return "";
+        return String(f.peran?.stringValue || f.jabatanApk?.stringValue || "admin").toLowerCase();
+      };
       if (r.ok) {
         const d = await r.json();
         const f = d.fields || {};
         const aktif = f.aktif && f.aktif.booleanValue === false ? false : true;
         if (aktif) peran = String(f.peran?.stringValue || "admin").toLowerCase();
       }
+      // Cadangan: dokumen berkunci uid, lalu jabatan staf versi APK.
+      if (!peran && sesi?.uid) peran = (await baca(`panelAdmins/${encodeURIComponent(sesi.uid)}`)) || "";
+      if (!peran && sesi?.uid) peran = (await baca(`stafApk/${encodeURIComponent(sesi.uid)}`)) || "";
     }
   } catch { peran = ""; }
   cachePanelWeb.set(email, { peran, sampai: Date.now() + 60000 });
@@ -3179,9 +3193,33 @@ async function admin(env, body) {
     }
     if (!stafPanel) stafPanel = !!(await peranPanelWeb(env, sesi));
   }
-  if (!devPanel && !stafPanel) return json({ ok: 0, e: "Hanya admin" }, 403);
   const p = body.p ?? {};
   const op = String(p.op ?? "");
+
+  // Diagnosa mandiri: op "whoami" boleh dipakai sesi sah mana pun, supaya
+  // kelihatan server mengenali akun ini sebagai apa.
+  if (op === "whoami") {
+    let stafList = [];
+    try { stafList = (await peranStaf(env, sesi.uid)).map((x) => x.role); } catch { stafList = []; }
+    const web = await peranPanelWeb(env, sesi);
+    return json({
+      ok: 1,
+      uid: sesi.uid,
+      email: sesi.email || "",
+      developer: devPanel ? 1 : 0,
+      stafApk: stafList,
+      panelWeb: web || "",
+      boleh: devPanel || stafPanel || !!web ? 1 : 0,
+    });
+  }
+
+  if (!devPanel && !stafPanel) {
+    const web = await peranPanelWeb(env, sesi);
+    return json({
+      ok: 0,
+      e: `Hanya admin [email=${sesi.email || "-"} panelWeb=${web || "-"} stafApk=- dev=0]`,
+    }, 403);
+  }
   const target = String(p.uid ?? "");
   // Admin (staf tingkat atas) boleh memakai semua fitur, termasuk hapus akun.
   // Yang tetap khusus developer hanya memberi/mencabut akses panel itu sendiri.
@@ -3197,7 +3235,7 @@ async function admin(env, body) {
     ? ["panel_grant", "panel_revoke"]
     : ["panel_grant", "panel_revoke", "delete_user", "delete_users"];
   if (!devPanel && khususDev.includes(op)) {
-    return json({ ok: 0, e: "Hanya admin" }, 403);
+    return json({ ok: 0, e: `Hanya admin untuk ${op} (khusus developer)` }, 403);
   }
 
   // ---- Harga VIP (diubah dari panel developer) ----

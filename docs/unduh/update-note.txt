@@ -1,2 +1,1 @@
-• Perbaiki error kompilasi admin room: tiga fungsi bernilai ekspresi memakai return di dalam catch, di
-• Fitur admin room: pemilik room bisa menunjuk user jadi admin room lewat panel Anggota, dan admin roo
+• Ikon peran di room (rumah merah-putih untuk owner, gambar orang untuk admin room) di kursi mic dan k

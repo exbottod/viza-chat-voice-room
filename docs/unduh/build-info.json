@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.188",
-  "catatan": "• Perbaiki error kompilasi admin room: tiga fungsi bernilai ekspresi memakai return di dalam catch, di\n• Fitur admin room: pemilik room bisa menunjuk user jadi admin room lewat panel Anggota, dan admin roo",
-  "ukuran_apk": 54766123,
-  "sha256_apk": "2f6667f23ed9d54ccc7dfe44e1ff8d4c8ab31382458e702cd858cafabd1ca5eb",
+  "versi": "1.0.189",
+  "catatan": "• Ikon peran di room (rumah merah-putih untuk owner, gambar orang untuk admin room) di kursi mic dan k",
+  "ukuran_apk": 54771146,
+  "sha256_apk": "08251debb2518fa6b715123d8dc8f2ad0252fe4ecf48e94fdf14e21e18e5366e",
   "abis": {
     "arm64": {
-      "ukuran": 54766123,
-      "sha256": "2f6667f23ed9d54ccc7dfe44e1ff8d4c8ab31382458e702cd858cafabd1ca5eb"
+      "ukuran": 54771146,
+      "sha256": "08251debb2518fa6b715123d8dc8f2ad0252fe4ecf48e94fdf14e21e18e5366e"
     },
     "armv7": {
-      "ukuran": 52917285,
-      "sha256": "4d471e3d2f416e2e58d917c77dd4e3f43a188f3b69008edab31d89ff05c4c749"
+      "ukuran": 52922294,
+      "sha256": "b940beda752db4e12086e90df8402a909c1ba000982fc2426b034bb1940b52a8"
     },
     "universal": {
-      "ukuran": 73182099,
-      "sha256": "49c4c4042d0455b508b08485b4d4e39cb718bd1bf00bc4d84a409e6a74a182ba"
+      "ukuran": 73187108,
+      "sha256": "fffa6bbbebeb5869ed6b6a652530078029c640c4396dff10100857f754f1dd74"
     }
   }
 }

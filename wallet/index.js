@@ -66,8 +66,8 @@ function pickResult(r, daftar) {
 // RTP 75 = standar (bobot bawaan). Naikkan RTP (mis. 100) maka peluang hasil
 // bernilai besar (steak, pizza, salad) ikut naik, jadi JP lebih sering keluar.
 const GK_BAWAAN = { bet: [100, 500, 1000, 5000, 50000], rtp: 75 };
-async function gkCfg() {
-  const d = await cfgRtdb("pub/_greedyCfg");
+async function gkCfg(env) {
+  const d = await cfgRtdb("pub/_greedyCfg", env);
   let bet = Array.isArray(d?.bet) ? d.bet.map((x) => Math.floor(Number(x) || 0)).filter((x) => x > 0) : [];
   if (!bet.length) bet = GK_BAWAAN.bet.slice();
   bet = bet.slice(0, 8).sort((a, b) => a - b);
@@ -77,8 +77,8 @@ async function gkCfg() {
 
 /** Crazy Fruit: chip bet + RTP. Disimpan di pub/_cfCfg lewat panel. */
 const CF_BAWAAN = { bet: [1000, 5000, 10000, 50000, 100000], rtp: 92 };
-async function cfCfg() {
-  const d = await cfgRtdb("pub/_cfCfg");
+async function cfCfg(env) {
+  const d = await cfgRtdb("pub/_cfCfg", env);
   let bet = Array.isArray(d?.bet) ? d.bet.map((x) => Math.floor(Number(x) || 0)).filter((x) => x > 0) : [];
   if (!bet.length) bet = CF_BAWAAN.bet.slice();
   bet = bet.slice(0, 8).sort((a, b) => a - b);
@@ -198,7 +198,7 @@ async function greedyPlay(req, env, h) {
   };
   // Konfigurasi game untuk aplikasi: daftar chip bet dan RTP yang berlaku.
   if (url.pathname.endsWith("/cfg")) {
-    const c = await gkCfg();
+    const c = await gkCfg(env);
     return json({ ok: 1, bet: c.bet, chips: c.bet, rtp: c.rtp });
   }
   if (url.pathname.endsWith("/top-winners") || url.pathname.endsWith("/round-winners")) {
@@ -293,7 +293,7 @@ async function greedyPlay(req, env, h) {
     let hasil = ada[0].rows[0]?.result;
 
     if (!hasil) {
-      hasil = await resultFor(round, (await gkCfg()).rtp);
+      hasil = await resultFor(round, (await gkCfg(env)).rtp);
       const bets = await pipe(env, [
         { sql: "select uid, nama, pot, sum(amount) amount from greedy_bet where round = ? group by uid, pot",
           args: [I(round)] },
@@ -3378,7 +3378,7 @@ async function admin(env, body) {
 
   // ---- Greedy King: chip bet & RTP (disimpan lewat server, kunci layanan) ----
   if (op === "gk_cfg_get") {
-    return json({ ok: 1, ...(await gkCfg()) });
+    return json({ ok: 1, ...(await gkCfg(env)) });
   }
   if (op === "gk_cfg_set") {
     const bet = (Array.isArray(p.bet) ? p.bet : String(p.bet ?? "").split(","))
@@ -3410,7 +3410,7 @@ async function admin(env, body) {
   }
 
   if (op === "cf_cfg_get") {
-    return json({ ok: 1, ...(await cfCfg()) });
+    return json({ ok: 1, ...(await cfCfg(env)) });
   }
   if (op === "cf_cfg_set") {
     const bet = (Array.isArray(p.bet) ? p.bet : String(p.bet ?? "").split(","))
@@ -4253,7 +4253,7 @@ async function wavePlay(req, env) {
 
   if (ep.includes("cfpola")) {
     try {
-      const cfg = await cfCfg();
+      const cfg = await cfCfg(env);
       const nomor = Number(url.searchParams.get("ronde") || cfRondeSekarang());
       const daftar = [];
       for (let i = 0; i < 4; i++) {
@@ -4464,10 +4464,14 @@ async function cfPeringkat(env, batas, asal, mulai = 0) {
 // ronde tetap mengikuti RTP yang diatur developer.
 const CF_RTP_TITIK = [50, 85, 95, 120];
 function cfBobotPola(rtp) {
+  // Kolom = RTP 50, 85, 95, 120.
+  // RTP 85: semua pola buah dibuat hampir sama besar supaya hasilnya benar-benar
+  // diacak (tidak apel 5x lalu stroberi 5x terus), dan JP (lucky/superLucky)
+  // tetap jarang. RTP 95 ke atas baru sering mengeluarkan Lucky/Super Lucky.
   const t = {
-    orange: [26, 18, 8, 4], lemon: [26, 18, 8, 4], grapes: [26, 18, 8, 4], cherry: [26, 18, 8, 4],
-    strawberry: [6, 9, 14, 18], mango: [4, 6, 11, 15], watermelon: [2.5, 3.6, 8, 12],
-    apple: [1.2, 2, 6, 10], lucky: [0.4, 1.2, 18, 28], superLucky: [0.15, 0.6, 16, 26],
+    orange: [26, 14, 8, 4], lemon: [26, 14, 8, 4], grapes: [26, 14, 8, 4], cherry: [26, 14, 8, 4],
+    strawberry: [6, 13, 14, 18], mango: [4, 12, 11, 15], watermelon: [2.5, 11, 8, 12],
+    apple: [1.2, 9, 6, 10], lucky: [0.4, 1.0, 18, 28], superLucky: [0.15, 0.35, 16, 26],
   };
   const r = Math.max(50, Math.min(120, Number(rtp) || 92));
   let n = 0;
@@ -4489,14 +4493,26 @@ function cfPolaRonde(nomor, rtp) {
   const nama = Object.keys(bobot);
   const total = nama.reduce((a, k) => a + bobot[k], 0);
   // Acak deterministik dari nomor ronde (LCG), bukan dari HP pemain.
-  let x = (Number(nomor) * 1103515245 + 12345) % 2147483648;
-  x = (x * 1103515245 + 12345) % 2147483648;
-  let r = (x / 2147483648) * total;
-  for (const k of nama) {
-    r -= bobot[k];
-    if (r < 0) return k;
+  const ambil = (n) => {
+    let x = (Number(n) * 1103515245 + 12345) % 2147483648;
+    x = (x * 1103515245 + 12345) % 2147483648;
+    let r = (x / 2147483648) * total;
+    for (const k of nama) {
+      r -= bobot[k];
+      if (r < 0) return k;
+    }
+    return "orange";
+  };
+  let hasil = ambil(nomor);
+  // Pola yang sama tidak boleh keluar beruntun: kalau sama dengan ronde
+  // sebelumnya, ambil pola berikutnya yang berbeda.
+  const sebelum = ambil(Number(nomor) - 1);
+  if (hasil === sebelum) {
+    const i = nama.indexOf(hasil);
+    hasil = nama[(i + 1 + Math.floor(Math.abs(Math.sin(Number(nomor))) * (nama.length - 1))) % nama.length];
+    if (hasil === sebelum) hasil = nama[(i + 1) % nama.length];
   }
-  return "orange";
+  return hasil;
 }
 
 /** Pemenang ronde yang barusan selesai (seperti papan pemenang Greedy King).

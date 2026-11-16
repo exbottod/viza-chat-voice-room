@@ -62,6 +62,9 @@ data class VipAsset(
     val hasData: Boolean,
     val updatedAt: Long,
     val chunks: Int = 0,
+    /** Gambar sampul PNG (frame diam) dibuat panel dari SVGA/MP4. Dipakai untuk
+     *  tampilan kartu di luar; preview dan saat dipasang tetap berkas aslinya. */
+    val poster: String = "",
 )
 
 object VipAssets {
@@ -110,6 +113,7 @@ object VipAssets {
                     c.child("hasData").getValue(Boolean::class.java) ?: false,
                     c.child("updatedAt").getValue(Long::class.java) ?: 0L,
                     (c.child("chunks").getValue(Long::class.java) ?: 0L).toInt(),
+                    c.child("poster").getValue(String::class.java) ?: "",
                 )
             }
             apply()
@@ -136,6 +140,7 @@ object VipAssets {
                             d.getBoolean("hasData") ?: false,
                             d.getLong("updatedAt") ?: 0L,
                             (d.getLong("chunks") ?: 0L).toInt(),
+                            d.getString("poster") ?: "",
                         )
                     }
                     fsMap.clear()
@@ -468,7 +473,16 @@ fun VipMediaSafe(
     // Daftar/ransel: animasi tidak diputar sama sekali. Yang bergerak hanya
     // saat pratinjau dibuka, jadi HP tidak berat walau itemnya banyak.
     if (diam && (a.kind == "mp4" || a.kind == "svga")) {
-        fallback()
+        if (a.poster.isNotBlank()) {
+            coil.compose.AsyncImage(
+                model = a.poster,
+                contentDescription = null,
+                modifier = modifier,
+                contentScale = contentScale,
+            )
+        } else {
+            fallback()
+        }
         return
     }
     // Pratinjau di daftar: batasi jumlah animasi yang jalan bersamaan.

@@ -101,6 +101,7 @@ object StoreCatalog {
         // memunculkan item yang sudah dihapus.
         merged.putAll(fsMap)
         merged.putAll(rtdbMap)
+        merged.keys.removeAll { it.matches(Regex("^vip_\\d+_.*")) }
         if (merged.isEmpty() && items.isNotEmpty()) {
             // Jangan hapus isi yang sudah tampil hanya karena satu sumber kosong.
             return
@@ -195,6 +196,7 @@ object StoreCatalog {
                     c.child("hasData").getValue(Boolean::class.java) ?: false,
                     c.child("updatedAt").getValue(Long::class.java) ?: 0L,
                     (c.child("chunks").getValue(Long::class.java) ?: 0L).toInt(),
+                    c.child("poster").getValue(String::class.java) ?: "",
                 )
                 rtdbMap[id] = CatalogItem(
                     id, slot,
@@ -225,6 +227,9 @@ object StoreCatalog {
                     for (d in snap.documents) {
                         val id = d.getString("id") ?: continue
                         val slot = d.getString("slot") ?: continue
+                        // Aset VIP (meta=true, id vip_<tier>_<slot>) BUKAN item toko:
+                        // dipakai otomatis oleh tier VIP dan tampil di Item VIP saja.
+                        if (d.getBoolean("meta") == true || id.matches(Regex("^vip_\\d+_.*"))) continue
                         val asset = VipAsset(
                             0, "st_$id",
                             d.getString("kind") ?: "image",
@@ -232,6 +237,7 @@ object StoreCatalog {
                             d.getBoolean("hasData") ?: false,
                             d.getLong("updatedAt") ?: 0L,
                             (d.getLong("chunks") ?: 0L).toInt(),
+                            d.getString("poster") ?: "",
                         )
                         fresh[id] = CatalogItem(
                             id, slot,

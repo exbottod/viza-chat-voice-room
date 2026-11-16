@@ -499,6 +499,61 @@ async function urlDariSumber(id, folder) {
   }
 }
 
+
+/** Buat sampul PNG (frame diam) dari berkas animasi, lalu unggah ke VPS.
+ *  Dipakai APK untuk tampilan kartu di luar; preview dan saat dipasang tetap
+ *  memakai berkas animasi aslinya. Mengembalikan "" kalau tidak bisa dibuat. */
+async function buatSampul(sumberUrl, jenis, folder) {
+  try {
+    if (!sumberUrl) return "";
+    let kanvas = document.createElement("canvas");
+    const MAKS = 512;
+    if (jenis === "svga") {
+      await muatPemutarSvga();
+      const host = document.createElement("div");
+      host.style.cssText = "position:fixed;left:-9999px;top:0;width:" + MAKS + "px;height:" + MAKS + "px";
+      document.body.appendChild(host);
+      try {
+        const data = await new Promise((ok, gagal) => {
+          new window.SVGA.Parser().load(sumberUrl, ok, () => gagal(new Error("svga")));
+        });
+        const w = data.videoSize?.width || MAKS, h = data.videoSize?.height || MAKS;
+        const skala = Math.min(1, MAKS / Math.max(w, h));
+        host.style.width = Math.round(w * skala) + "px";
+        host.style.height = Math.round(h * skala) + "px";
+        const pemutar = new window.SVGA.Player(host);
+        pemutar.setVideoItem(data);
+        pemutar.setContentMode("AspectFit");
+        pemutar.stepToFrame(Math.min(Math.floor((data.frames || 1) / 3), Math.max(0, (data.frames || 1) - 1)), false);
+        await new Promise((r) => setTimeout(r, 450));
+        const cv = host.querySelector("canvas");
+        if (!cv) return "";
+        kanvas.width = cv.width; kanvas.height = cv.height;
+        kanvas.getContext("2d").drawImage(cv, 0, 0);
+        pemutar.clear && pemutar.clear();
+      } finally { host.remove(); }
+    } else if (jenis === "video") {
+      const v = document.createElement("video");
+      v.muted = true; v.playsInline = true; v.crossOrigin = "anonymous"; v.src = sumberUrl;
+      await new Promise((ok, gagal) => { v.onloadeddata = ok; v.onerror = () => gagal(new Error("video")); });
+      v.currentTime = Math.min(0.5, (v.duration || 1) / 3);
+      await new Promise((r) => { v.onseeked = r; setTimeout(r, 1200); });
+      const skala = Math.min(1, MAKS / Math.max(v.videoWidth, v.videoHeight));
+      kanvas.width = Math.round(v.videoWidth * skala); kanvas.height = Math.round(v.videoHeight * skala);
+      kanvas.getContext("2d").drawImage(v, 0, 0, kanvas.width, kanvas.height);
+    } else {
+      return "";
+    }
+    const blob = await new Promise((r) => kanvas.toBlob(r, "image/png"));
+    if (!blob || blob.size < 200) return "";
+    const berkas = new File([blob], "sampul.png", { type: "image/png" });
+    return await unggahBerkas(berkas, folder + "_sampul", () => {});
+  } catch (e) {
+    console.warn("sampul gagal dibuat:", e?.message || e);
+    return "";
+  }
+}
+
 const cabangBerkas = (url) => {
   const bersih = String(url || "").split("?")[0].toLowerCase();
   const ext = bersih.split(".").pop();
@@ -2929,8 +2984,11 @@ function formAsetVip(aset) {
       const slot = $("vSlot").value;
       const url = await urlDariSumber("v", `vip${n}`);
       if (!url) return toast("Pilih berkas atau isi tautan", true);
+      const jenisV = jenisDariUrl(url);
+      let sampul = (aset && aset.url === url && aset.poster) ? aset.poster : "";
+      if (!sampul && (jenisV === "svga" || jenisV === "mp4")) sampul = await buatSampul(url, jenisV === "mp4" ? "video" : "svga", `vip${n}`);
       await simpanVip(`vip_${n}_${slot}`, {
-        id: `vip_${n}_${slot}`, n, slot, kind: jenisDariUrl(url), url, meta: true, hasData: false,
+        id: `vip_${n}_${slot}`, n, slot, kind: jenisV, url, poster: sampul, meta: true, hasData: false,
         updatedAt: Date.now(), chunks: 0
       });
       catatLog("Simpan aset VIP", `VIP ${n} · ${namaSlot(slot)}`);
@@ -2966,13 +3024,16 @@ function formItemToko(item) {
       if (!nama) return toast("Nama item wajib diisi", true);
       const url = await urlDariSumber("i", "item");
       if (!url) return toast("Pilih berkas atau isi tautan", true);
+      const jenisI = jenisDariUrl(url);
+      let sampulItem = (item && item.url === url && item.poster) ? item.poster : "";
+      if (!sampulItem && (jenisI === "svga" || jenisI === "mp4")) sampulItem = await buatSampul(url, jenisI === "mp4" ? "video" : "svga", "item");
       const idItem = item?.id || (nama.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 20) + "_" + Date.now().toString().slice(-4));
       await simpanVip(`item_${idItem}`, {
         id: idItem, slot: $("iSlot").value, name: nama,
         price: Number($("iHarga").value) || 0,
         days: Number($("iHari").value) || 7,
         order: Number($("iUrut").value) || 0,
-        kind: jenisDariUrl(url), url, hasData: false, updatedAt: Date.now(), chunks: 0,
+        kind: jenisDariUrl(url), url, poster: sampulItem, hasData: false, updatedAt: Date.now(), chunks: 0,
         targetUid: $("iTarget").value.trim(), customId: $("iCustom").value.trim(),
         store: $("iToko").classList.contains("on")
       });

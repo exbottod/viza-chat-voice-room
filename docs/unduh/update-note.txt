@@ -1,3 +1,4 @@
-• Catatan rilis: potong rapi 4 poin teratas [skip ci]
-• Crazy Fruit: foto profil dari server Viza, panel peringkat layar penuh, catatan rilis dari tiap buil
-• Versi 1.0.170 di halaman unduh [skip ci]
+• Foto profil pemain tampil di game Crazy Fruit
+• Panel peringkat layar penuh, tidak terpotong
+• Dialog pembaruan berisi daftar perbaikan tiap versi
+• Staf manager/admin tidak lagi kena "Hanya admin"

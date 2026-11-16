@@ -1,7 +1,7 @@
 {
   "status": "ok",
   "versi": "1.0.171",
-  "catatan": "• Catatan rilis: potong rapi 4 poin teratas [skip ci]\n• Crazy Fruit: foto profil dari server Viza, panel peringkat layar penuh, catatan rilis dari tiap buil\n• Versi 1.0.170 di halaman unduh [skip ci]",
+  "catatan": "• Foto profil pemain tampil di game Crazy Fruit\n• Panel peringkat layar penuh, tidak terpotong\n• Dialog pembaruan berisi daftar perbaikan tiap versi\n• Staf manager/admin tidak lagi kena \"Hanya admin\"",
   "ukuran_apk": 54749180,
   "sha256_apk": "8c0ae77555239918d35fce7930271fab8ba78aa685e2c2606ce3e8c874961248",
   "abis": {

@@ -1,6 +1,6 @@
 /* Ronde bareng Crazy Fruit.
-   Semua HP memakai jam yang sama: ronde 30 detik (nomor ronde = jam server /
-   30 detik). Polanya diambil dari server, jadi saat pola keluar semua pemain
+   Semua HP memakai jam yang sama: siklus 43 detik (nomor ronde = jam server /
+   43 detik). Polanya diambil dari server, jadi saat pola keluar semua pemain
    di ronde itu melihat pola yang sama pada detik yang sama, dan daftar
    pemenangnya juga sama. */
 (function () {
@@ -8,7 +8,7 @@
   if (window.__cfSyncSiap) return;
   window.__cfSyncSiap = true;
 
-  var PANJANG = 30000;
+  var PANJANG = 43000;
   var pola = {}; // nomor ronde -> { cell, rtp }
   var diambil = 0;
 
@@ -31,25 +31,36 @@
     }
   }
 
+  /* Satu siklus game = taruhan 30 + hitung 5 + hasil 5 + jeda 3 = 43 detik.
+     Semua HP memakai siklus yang sama dari jam server, jadi fase dan pola
+     serempak. Nomor ronde = jam / 43 detik. */
+  var FASE = { bets: 30, calc: 5, result: 5, next: 3 };
+  var SIKLUS = FASE.bets + FASE.calc + FASE.result + FASE.next;
+  PANJANG = SIKLUS * 1000;
+
   window.__cfRondeSekarang = function () {
     return Math.floor(Date.now() / PANJANG);
   };
 
-  /** Sisa detik sampai ronde berganti, dihitung dari jam (bukan dari HP).
-      Pakai pembulatan ke bawah supaya angkanya benar-benar sampai 0 dan
-      putaran ronde jalan; dengan pembulatan ke atas nilainya melompat dari
-      1 langsung ke 30 sehingga ronde tidak pernah berputar. */
+  /* Detik yang sudah lewat di siklus ini (0..42). */
+  function posisi() {
+    return Math.floor((Date.now() % PANJANG) / 1000);
+  }
+
+  /* Sisa detik sampai ronde berganti. */
   window.__cfSisaDetik = function () {
-    var sisa = PANJANG - (Date.now() % PANJANG);
-    return Math.max(0, Math.floor(sisa / 1000));
+    return Math.max(0, SIKLUS - posisi());
   };
 
-  /* Hitung mundur fase taruhan memakai jam bersama supaya pola keluar bareng. */
+  /* Hitung mundur tiap fase dari jam bersama. Fase taruhan = 30 detik pertama
+     siklus. Fase lain tetap berjalan normal, game sendiri yang lanjut ke fase
+     berikutnya saat angkanya habis. */
   window.__cfLangkah = function (fase, nilai) {
     if (fase !== "bets") return nilai - 1;
-    var sisa = window.__cfSisaDetik();
-    // Jaga-jaga kalau fungsi ini dipanggil tepat di detik pergantian ronde.
-    if (sisa >= PANJANG / 1000) return 0;
+    var sisa = FASE.bets - posisi();
+    // Bukan di jendela taruhan: sudah lewat 30 detik di siklus ini, habiskan
+    // fase taruhan supaya game lanjut ke putaran, bukan mengulang dari awal.
+    if (sisa < 0) return 0;
     return sisa;
   };
 
@@ -67,7 +78,7 @@
 
   function simpan(list, panjang) {
     if (!Array.isArray(list)) return;
-    if (panjang > 0) PANJANG = panjang;
+    // panjang siklus dikunci di klien (43 detik), tidak ditimpa dari server
     for (var i = 0; i < list.length; i++) {
       var x = list[i];
       if (!x || !x.cell) continue;

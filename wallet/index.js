@@ -4417,7 +4417,7 @@ function cfBobotPola(rtp) {
   return out;
 }
 
-const CF_RONDE_MS = 30000; // satu ronde 30 detik, sama untuk semua HP
+const CF_RONDE_MS = 43000; // satu siklus game 43 detik (taruhan 30 + hitung 5 + hasil 5 + jeda 3), sama untuk semua HP
 function cfRondeSekarang(kini = Date.now()) {
   return Math.floor(kini / CF_RONDE_MS);
 }
@@ -4453,12 +4453,12 @@ async function cfPemenangRonde(env, batas, asal) {
   if (!nomor) {
     const rk = await pipe(env, [{ sql: `select max(at) terakhir from cf_ronde`, args: [] }]);
     const terakhir = Number(rk[0].rows[0]?.terakhir ?? 0);
-    nomor = terakhir ? Math.floor(terakhir / 30000) : 0;
+    nomor = terakhir ? Math.floor(terakhir / CF_RONDE_MS) : 0;
   }
   if (!nomor) return { ronde: 0, list: [] };
-  const mulaiRonde = nomor * 30000;
+  const mulaiRonde = nomor * CF_RONDE_MS;
   const mulai = mulaiRonde;
-  const panjang = 30000;
+  const panjang = CF_RONDE_MS;
   const pakaiNomor = true;
   const r2 = await pipe(env, [
     {

@@ -4167,8 +4167,15 @@ async function wavePlay(req, env) {
 
   if (ep.includes("cfrank")) {
     const batas = Math.min(20, Math.max(1, Number(url.searchParams.get("limit") || 10)));
+    // ?hari=1 -> peringkat hari ini (WIB) saja, dipakai dialog kemenangan.
+    const hanyaHari = String(url.searchParams.get("hari") || "") !== "";
     try {
-      const daftar = await cfPeringkat(env, batas, "https://viza.43-156-99-4.sslip.io");
+      const daftar = await cfPeringkat(
+        env,
+        batas,
+        "https://viza.43-156-99-4.sslip.io",
+        hanyaHari ? cfHariWib().mulai : 0,
+      );
       return balas({ success: true, message: "success", data: daftar });
     } catch (e) {
       return balas({ success: false, message: String(e?.message ?? e), data: [] }, 200);
@@ -4280,14 +4287,20 @@ function cfPastikan(env) {
   return cfSiap;
 }
 
-async function cfPeringkat(env, batas, asal) {
+async function cfPeringkat(env, batas, asal, mulai = 0) {
   await cfPastikan(env);
   const r = await pipe(env, [
-    {
-      sql: `select uid, max(nama) nama, sum(win) win, count(*) kali from cf_menang
-            group by uid order by win desc limit ?`,
-      args: [I(batas)],
-    },
+    mulai > 0
+      ? {
+          sql: `select uid, max(nama) nama, sum(win) win, count(*) kali from cf_menang
+                where waktu >= ? group by uid order by win desc limit ?`,
+          args: [I(mulai), I(batas)],
+        }
+      : {
+          sql: `select uid, max(nama) nama, sum(win) win, count(*) kali from cf_menang
+                group by uid order by win desc limit ?`,
+          args: [I(batas)],
+        },
   ]);
   const baris = r[0].rows || [];
   const hasil = [];
@@ -5111,7 +5124,7 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           stafAktif = Number(r[0].rows[0]?.a ?? 0);
           peran = r[1].rows.map((x) => String(x.role) + ":" + Number(x.n));
         } catch (e) { /* tabel belum ada */ }
-        return json({ ok: 1, v: "viza-2026-11-16-panel-akun", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
+        return json({ ok: 1, v: "viza-2026-11-16-top3-live", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
       } catch (e) {
         return json({ ok: 0, v: "viza-2026-11-13-mandiri", db: String(e?.message ?? e) }, 500);
       }

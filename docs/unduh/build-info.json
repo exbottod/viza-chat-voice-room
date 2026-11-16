@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.191",
-  "catatan": "• Efek masuk dan banner masuk kini dipasang bersamaan: kalau banner ada tetapi aset efek masuk tingkat",
-  "ukuran_apk": 54771407,
-  "sha256_apk": "6657a0b1d3892ce18f5018b7e067516d228f2473da2f7035aeb846fda4201c5b",
+  "versi": "1.0.192",
+  "catatan": "• Crazy Fruit: jumlah menang di panel PEMENANG RONDE INI dan SEDANG MAIN ditulis penuh dengan titik ri",
+  "ukuran_apk": 54771395,
+  "sha256_apk": "baa974dae37c059b5214fe8ee1ce3747d169f455bbaf6e64a7d7442734a822ec",
   "abis": {
     "arm64": {
-      "ukuran": 54771407,
-      "sha256": "6657a0b1d3892ce18f5018b7e067516d228f2473da2f7035aeb846fda4201c5b"
+      "ukuran": 54771395,
+      "sha256": "baa974dae37c059b5214fe8ee1ce3747d169f455bbaf6e64a7d7442734a822ec"
     },
     "armv7": {
-      "ukuran": 52922559,
-      "sha256": "b31ca244c04bc11b59763e5ee9f0418cdec640f1b903917b50d80bb2b67a75de"
+      "ukuran": 52922544,
+      "sha256": "97bf398251c948430a82ea9e0cd5b7f9a96cb75bc5587db452c5c8ce89124090"
     },
     "universal": {
-      "ukuran": 73187378,
-      "sha256": "cc53a5a4d55c25785b9a0c8f4c90fc11acdab4875bb16747e6bf622d969dbbd3"
+      "ukuran": 73187369,
+      "sha256": "cdd714ec2ae27f2a8db0dba3d586012dc32ba3616eb60e6d1011747f54eedb90"
     }
   }
 }

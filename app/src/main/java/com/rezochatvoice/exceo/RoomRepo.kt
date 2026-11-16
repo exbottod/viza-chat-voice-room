@@ -25,8 +25,15 @@ data class RoomInfo(
     val lockedSeats: List<Int> = emptyList(),
     val pinned: Boolean = false,
     val pinnedAt: Long = 0L,
+    /** Daftar admin room yang ditunjuk pemilik room. */
+    val admins: List<String> = emptyList(),
 ) {
     val locked: Boolean get() = lockHash.isNotEmpty()
+
+    /** Pemilik room atau admin room yang ditunjuk: boleh mengurus room ini. */
+    fun bolehKelola(uid: String): Boolean = uid.isNotBlank() && (ownerUid == uid || admins.contains(uid))
+
+    fun isAdminRoom(uid: String): Boolean = uid.isNotBlank() && admins.contains(uid)
 }
 
 data class Seat(val index: Int, val uid: String, val name: String, val avatarB64: String?, val muted: Boolean)
@@ -50,6 +57,60 @@ fun sha256(s: String): String =
 fun micColumns(count: Int): Int = if (count == 8 || count == 12 || count == 16) 4 else 5
 
 object RoomRepo {
+    private const val VPS = "https://viza.43-156-99-4.sslip.io"
+
+    /** Token login untuk memanggil server Viza. */
+    private suspend fun tokenLogin(): String = try {
+        FirebaseAuth.getInstance().currentUser?.getIdToken(false)?.await()?.token.orEmpty()
+    } catch (e: kotlinx.coroutines.CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        ""
+    }
+
+    /**
+     * Jalankan aksi kelola room lewat server (memakai akun layanan).
+     *
+     * Aturan Firestore dan Realtime Database di Firebase hanya mengizinkan
+     * pemilik room mengubah room. Admin room yang ditunjuk pemilik jadi ditolak
+     * di sana, jadi aksinya dijalankan di server. null = sukses.
+     */
+    suspend fun aksiKelolaRoom(
+        roomId: String,
+        aksi: String,
+        tambah: org.json.JSONObject = org.json.JSONObject(),
+    ): String? = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        try {
+            val t = tokenLogin()
+            if (t.isBlank()) return@withContext "Sesi login habis, masuk ulang"
+            val isi = org.json.JSONObject().put("t", t).put("room", roomId).put("aksi", aksi)
+            val kunci = tambah.keys()
+            while (kunci.hasNext()) {
+                val k = kunci.next()
+                isi.put(k, tambah.get(k))
+            }
+            val c = (java.net.URL(VPS + "/roomadmin").openConnection() as java.net.HttpURLConnection).apply {
+                requestMethod = "POST"
+                connectTimeout = 12000
+                readTimeout = 25000
+                doOutput = true
+                setRequestProperty("Content-Type", "application/json")
+            }
+            c.outputStream.use { it.write(isi.toString().toByteArray()) }
+            val kode = c.responseCode
+            val teks = (if (kode in 200..299) c.inputStream else c.errorStream)
+                ?.bufferedReader()?.use { it.readText() }.orEmpty()
+            if (kode !in 200..299) {
+                return@withContext "Server: " + org.json.JSONObject(teks).optString("e", "gagal ($kode)")
+            }
+            null
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            e.message ?: "Tidak bisa menghubungi server"
+        }
+    }
+
     private fun db() = FirebaseFirestore.getInstance()
     private fun roomRef(id: String) = db().collection("rooms").document(id)
 
@@ -70,6 +131,7 @@ object RoomRepo {
             lockedSeats = (get("lockedSeats") as? List<*>)?.mapNotNull { (it as? Number)?.toInt() } ?: emptyList(),
             pinned = getBoolean("pinned") ?: false,
             pinnedAt = getLong("pinnedAt") ?: 0L,
+            admins = (get("admins") as? List<*>)?.mapNotNull { it as? String } ?: emptyList(),
         )
     }
 
@@ -486,6 +548,7 @@ object RoomRepo {
     } catch (e: kotlinx.coroutines.CancellationException) {
         throw e
     } catch (e: Exception) {
+        aksiKelolaRoom(roomId, "chat") ?: return null
         e.message ?: "Gagal menghapus chat"
     }
 
@@ -612,6 +675,11 @@ object RoomRepo {
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {
+            aksiKelolaRoom(
+                roomId,
+                "ban",
+                org.json.JSONObject().put("uid", uid).put("name", name).put("durationMs", durationMs),
+            ) ?: return null
             e.message ?: "Gagal menendang user"
         }
     }
@@ -623,6 +691,7 @@ object RoomRepo {
     } catch (e: kotlinx.coroutines.CancellationException) {
         throw e
     } catch (e: Exception) {
+        aksiKelolaRoom(roomId, "unban", org.json.JSONObject().put("uid", uid)) ?: return null
         e.message ?: "Gagal membuka kick"
     }
 
@@ -712,6 +781,7 @@ object RoomRepo {
     } catch (e: kotlinx.coroutines.CancellationException) {
         throw e
     } catch (e: Exception) {
+        aksiKelolaRoom(roomId, "kursi", org.json.JSONObject().put("index", index)) ?: return null
         e.message ?: "Gagal menurunkan dari mic"
     }
 
@@ -746,7 +816,30 @@ object RoomRepo {
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {
+            aksiKelolaRoom(roomId, "simpan", org.json.JSONObject().put("micCount", n)) ?: return null
             e.message ?: "Gagal mengubah mic"
+        }
+    }
+
+    /** Jadikan / cabut admin room. Hanya pemilik room yang boleh memanggil. */
+    suspend fun setRoomAdmin(roomId: String, uid: String, jadi: Boolean): String? {
+        val lewatServer = aksiKelolaRoom(
+            roomId,
+            "admin",
+            org.json.JSONObject().put("uid", uid).put("jadi", jadi),
+        )
+        if (lewatServer == null) return null
+        // Cadangan: tulis langsung dari HP (berhasil kalau kita pemilik room).
+        return try {
+            roomRef(roomId).update(
+                "admins",
+                if (jadi) FieldValue.arrayUnion(uid) else FieldValue.arrayRemove(uid),
+            ).await()
+            null
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            lewatServer
         }
     }
 
@@ -805,11 +898,21 @@ object RoomRepo {
 
                 // Layar langsung memakai gambar baru tanpa mengunduh ulang.
                 RoomImg.simpan(roomId, photoB64, bgB64)
-                when {
+                val galat = when {
                     gambarErr != null ->
                         "Gambar gagal disimpan (" + gambarErr + "). Coba lagi, atau publikasikan rules db-rules.json."
                     !rtdbOk -> "Nama/pengumuman gagal disimpan (koneksi lambat atau ditolak rules)"
                     else -> null
+                }
+                if (galat != null && gambarErr == null) {
+                    // Admin room tidak lolos aturan Firebase, jadi dicoba lewat server.
+                    aksiKelolaRoom(
+                        roomId,
+                        "simpan",
+                        org.json.JSONObject().put("name", name).put("announcement", announcement),
+                    )
+                } else {
+                    galat
                 }
             }
         } catch (e: kotlinx.coroutines.CancellationException) {
@@ -868,6 +971,9 @@ object RoomRepo {
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {
+            // Admin room ditolak aturan RTDB: simpan lewat server.
+            aksiKelolaRoom(roomId, "kunci", org.json.JSONObject().put("lockHash", h))
+                ?: return null
             e.message ?: "Gagal mengubah kunci"
         }
     }

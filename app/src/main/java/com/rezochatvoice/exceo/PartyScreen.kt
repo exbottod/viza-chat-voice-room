@@ -87,10 +87,11 @@ fun PartyTab(
     val allRooms = rememberRooms(refreshKey)
     val soon = { msg: String -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
     val open: (RoomInfo) -> Unit = { room ->
-        if (room.locked && room.ownerUid != myUid) lockedRoom = room else onEnterRoom(room)
+        // Pemilik dan admin room tidak perlu kunci saat masuk room sendiri.
+        if (room.locked && !room.bolehKelola(myUid)) lockedRoom = room else onEnterRoom(room)
     }
     val shown = when {
-        subTab == 0 -> allRooms.filter { it.ownerUid == myUid }
+        subTab == 0 -> allRooms.filter { it.bolehKelola(myUid) }
         filter == 0 -> allRooms.filter { it.pinned || it.online > 0 }
             .sortedByDescending { it.online }
             .sortedByDescending { if (it.pinned) it.pinnedAt.coerceAtLeast(1L) else 0L }

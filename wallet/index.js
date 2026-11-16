@@ -5163,6 +5163,146 @@ export default {
       await hargaVipKini();
       return json({ ok: 1, harga: HARGA_VIP.slice(1) });
     }
+    if (url.pathname.toLowerCase() === "/roomadmin") {
+      // Aksi kelola room dari admin room. Aturan Firestore/RTDB di Firebase hanya
+      // mengizinkan pemilik room, jadi admin room ditangani di sini memakai akun
+      // layanan. Pemilik room juga boleh lewat sini.
+      if (req.method !== "POST") return json({ ok: 0, e: "Pakai POST" }, 405);
+      let bRa = {};
+      try { bRa = await req.json(); } catch { bRa = {}; }
+      const sesiRa = await sesiDariToken(String(bRa.t || ""));
+      if (!sesiRa) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
+      const uidRa = String(sesiRa.uid || "");
+      const roomRa = String(bRa.room || "").replace(/[^0-9A-Za-z_-]/g, "").slice(0, 64);
+      if (!roomRa) return json({ ok: 0, e: "Room kosong" }, 400);
+      const aksiRa = String(bRa.aksi || "").toLowerCase();
+      const tokenRa = await tokenLayanan(env);
+      if (!tokenRa) return json({ ok: 0, e: "Kunci layanan belum dipasang" }, 503);
+      const proyekRa = String(env.FIREBASE_PROJECT || "my-app-e7f8c").trim();
+      const alamatDoc = `https://firestore.googleapis.com/v1/projects/${proyekRa}/databases/(default)/documents/rooms/${encodeURIComponent(roomRa)}`;
+      let docRa = null;
+      try {
+        const rDoc = await fetch(alamatDoc, { headers: { authorization: "Bearer " + tokenRa } });
+        if (rDoc.ok) docRa = await rDoc.json();
+      } catch { docRa = null; }
+      if (!docRa) return json({ ok: 0, e: "Room tidak ditemukan" }, 404);
+      const ambilRa = (n) => {
+        const f = docRa.fields?.[n];
+        return f ? Object.values(f)[0] : "";
+      };
+      const pemilikRa = String(ambilRa("ownerUid") || "");
+      const adminRa = (docRa.fields?.admins?.arrayValue?.values || []).map((v) => String(v.stringValue || ""));
+      const pemiliknya = pemilikRa === uidRa;
+      if (!pemiliknya && !adminRa.includes(uidRa)) return json({ ok: 0, e: "Hanya owner atau admin room" }, 403);
+
+      const patchFs = async (fields) => {
+        const mask = Object.keys(fields).map((k) => "updateMask.fieldPaths=" + encodeURIComponent(k)).join("&");
+        const isi = { fields: {} };
+        for (const [k, v] of Object.entries(fields)) isi.fields[k] = { stringValue: String(v ?? "") };
+        const r = await fetch(alamatDoc + "?" + mask, {
+          method: "PATCH",
+          headers: { authorization: "Bearer " + tokenRa, "content-type": "application/json" },
+          body: JSON.stringify(isi),
+        });
+        if (!r.ok) throw new Error("Firestore " + r.status + " " + (await r.text()).slice(0, 120));
+      };
+      const patchRtdb = async (path, nilai) => {
+        const bersih = String(path).replace(/^\/+|\/+$/g, "");
+        const r = await fetch(`${RTDB}/${bersih}.json?access_token=${encodeURIComponent(tokenRa)}`, {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(nilai),
+        });
+        if (!r.ok) throw new Error("RTDB " + r.status + " " + (await r.text()).slice(0, 120));
+      };
+
+      try {
+        if (aksiRa === "admin") {
+          if (!pemiliknya) return json({ ok: 0, e: "Hanya owner room yang bisa mengatur admin" }, 403);
+          const uidA = String(bRa.uid || "").replace(/[^0-9A-Za-z_-]/g, "").slice(0, 80);
+          if (!uidA) return json({ ok: 0, e: "User tidak sah" }, 400);
+          const jadi = bRa.jadi === true || bRa.jadi === 1 || bRa.jadi === "1";
+          const baru = jadi ? Array.from(new Set([...adminRa, uidA])) : adminRa.filter((x) => x !== uidA);
+          const r = await fetch(alamatDoc + "?updateMask.fieldPaths=admins", {
+            method: "PATCH",
+            headers: { authorization: "Bearer " + tokenRa, "content-type": "application/json" },
+            body: JSON.stringify({
+              fields: { admins: { arrayValue: { values: baru.map((x) => ({ stringValue: x })) } } },
+            }),
+          });
+          if (!r.ok) throw new Error("Firestore " + r.status + " " + (await r.text()).slice(0, 120));
+          return json({ ok: 1, admins: baru });
+        }
+        if (aksiRa === "simpan") {
+          const isiFs = {};
+          if (typeof bRa.name === "string" && bRa.name.trim()) isiFs.name = bRa.name.trim().slice(0, 60);
+          if (typeof bRa.announcement === "string") isiFs.announcement = bRa.announcement.slice(0, 300);
+          if (isiFs.name || isiFs.announcement !== undefined) {
+            const rtdbIsi = {};
+            if (isiFs.name) rtdbIsi.name = isiFs.name;
+            if (isiFs.announcement !== undefined) rtdbIsi.announcement = isiFs.announcement;
+            await patchRtdb("roomsPub/" + roomRa, rtdbIsi);
+          }
+          const micBaru = Number(bRa.micCount);
+          if (Number.isFinite(micBaru) && micBaru >= 1 && micBaru <= 32) {
+            const r2 = await fetch(alamatDoc + "?updateMask.fieldPaths=micCount", {
+              method: "PATCH",
+              headers: { authorization: "Bearer " + tokenRa, "content-type": "application/json" },
+              body: JSON.stringify({ fields: { micCount: { integerValue: String(Math.round(micBaru)) } } }),
+            });
+            if (!r2.ok) throw new Error("Firestore " + r2.status + " " + (await r2.text()).slice(0, 120));
+            await patchRtdb("roomsPub/" + roomRa, { micCount: Math.round(micBaru) });
+          }
+          if (Object.keys(isiFs).length) await patchFs(isiFs);
+          return json({ ok: 1 });
+        }
+        if (aksiRa === "kunci") {
+          const h = String(bRa.lockHash || "").slice(0, 80);
+          await patchRtdb("roomsPub/" + roomRa, { lockHash: h });
+          await patchFs({ lockHash: h });
+          return json({ ok: 1 });
+        }
+        if (aksiRa === "ban") {
+          const uidB = String(bRa.uid || "").replace(/[^0-9A-Za-z_-]/g, "").slice(0, 80);
+          if (!uidB) return json({ ok: 0, e: "User tidak sah" }, 400);
+          if (uidB === pemilikRa) return json({ ok: 0, e: "Owner room tidak bisa dikeluarkan" }, 400);
+          const durasi = Math.max(0, Number(bRa.durationMs) || 0);
+          const sekarang = Date.now();
+          const until = durasi > 0 ? sekarang + durasi : 0;
+          try {
+            const kursi = await cfgRtdbSa(env, "seats/" + roomRa);
+            for (const [k, v] of Object.entries(kursi || {})) {
+              if (v && v.uid === uidB) await tulisRtdbSa(env, "seats/" + roomRa + "/" + k, null);
+            }
+          } catch { }
+          await tulisRtdbSa(env, "members/" + roomRa + "/" + uidB, null);
+          await tulisRtdbSa(env, "live/" + uidB, null);
+          await tulisRtdbSa(env, "blacklist/" + roomRa + "/" + uidB, {
+            name: String(bRa.name || "").slice(0, 60), until, at: sekarang,
+          });
+          return json({ ok: 1 });
+        }
+        if (aksiRa === "unban") {
+          const uidB = String(bRa.uid || "").replace(/[^0-9A-Za-z_-]/g, "").slice(0, 80);
+          if (!uidB) return json({ ok: 0, e: "User tidak sah" }, 400);
+          await tulisRtdbSa(env, "blacklist/" + roomRa + "/" + uidB, null);
+          return json({ ok: 1 });
+        }
+        if (aksiRa === "kursi") {
+          const idx = String(Math.max(0, Number(bRa.index) || 0));
+          await tulisRtdbSa(env, "seats/" + roomRa + "/" + idx, null);
+          try { await tulisRtdbSa(env, "micPoints/" + roomRa + "/" + idx, null); } catch { }
+          return json({ ok: 1 });
+        }
+        if (aksiRa === "chat") {
+          await tulisRtdbSa(env, "messages/" + roomRa, null);
+          return json({ ok: 1 });
+        }
+        return json({ ok: 0, e: "Aksi tidak dikenal" }, 400);
+      } catch (e) {
+        return json({ ok: 0, e: String(e?.message ?? e).slice(0, 160) }, 500);
+      }
+    }
     if (url.pathname.toLowerCase().startsWith("/musikroom")) {
       const jalurMr = url.pathname.toLowerCase();
       const ruangParam = String(url.searchParams.get("room") || "").replace(/[^0-9A-Za-z_.:-]/g, "").slice(0, 64);

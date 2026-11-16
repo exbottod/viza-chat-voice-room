@@ -171,7 +171,7 @@ fun RoomScreen(
                 // hitam; kalau tidak, cukup tulis ulang keanggotaan kita.
                 scope.launch {
                     val ban = try { RoomRepo.banOf(roomId, myUid) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { null }
-                    if (ban != null && room?.ownerUid != myUid) {
+                    if (ban != null && room?.let { it.ownerUid != myUid && !it.isAdminRoom(myUid) } != false) {
                         kickedOut = true
                     } else {
                         try { Rtdb.ref("members/" + roomId + "/" + myUid).setValue(true) } catch (e: Exception) { }
@@ -318,7 +318,7 @@ fun RoomScreen(
         val f = RoomRepo.observeBans(roomId) { list ->
             bans = list
             // Owner tidak pernah bisa ter-kick dari room miliknya sendiri.
-            if (list.any { it.uid == myUid } && !kickedOut && room?.ownerUid != myUid) kickedOut = true
+            if (list.any { it.uid == myUid } && !kickedOut && room?.let { it.ownerUid != myUid && !it.isAdminRoom(myUid) } != false) kickedOut = true
         }
         onDispose {
             resetDrafts()
@@ -381,7 +381,8 @@ fun RoomScreen(
         // Pemilik room selalu boleh. Akun developer (pemilik aplikasi) tetap bisa
         // mengatur mic/kick di room mana pun; pengguna lain hanya di room miliknya.
         val isDevAdmin = FirebaseAuth.getInstance().currentUser?.email.equals("owner@email-anda.com", ignoreCase = true)
-        val canManage = isOwner || isDevAdmin
+        val isRoomAdmin = !isOwner && r.isAdminRoom(myUid)
+        val canManage = isOwner || isRoomAdmin || isDevAdmin
         val roomIdNow = r.id
         val myUidNow = myUid
         val myNameNow = myName
@@ -1089,7 +1090,7 @@ fun RoomScreen(
                             panel = P_NONE
                         },
                     ) { Text(if (roomMuted) "🔇" else "🔊", fontSize = 24.sp) }
-                    if (isOwner) {
+                    if (canManage) {
                         RmTool("Mode kamar", onClick = { panel = P_MODE }) { GridIcon(Modifier.size(26.dp)) }
                         RmTool("Pengaturan", onClick = { panel = P_SETTINGS }) {
                             Image(painterResource(R.drawable.ic_settings), null, Modifier.size(24.dp), contentScale = ContentScale.Fit)
@@ -1113,7 +1114,7 @@ fun RoomScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    if (isOwner) {
+                    if (canManage) {
                         RmTool(
                             "Clear poin mic",
                             onClick = {
@@ -1150,13 +1151,13 @@ fun RoomScreen(
                             toast(tr("Chat dibersihkan di layar kamu"))
                         },
                     ) { Text("🧹", fontSize = 24.sp) }
-                    if (isOwner) {
+                    if (canManage) {
                         RmTool("Hapus chat semua", onClick = { panel = P_CLEAR }) { Text("🗑", fontSize = 24.sp) }
                     }
-                    if (isOwner) {
+                    if (canManage) {
                         RmTool("Daftar hitam", onClick = { panel = P_BLACKLIST }) { Text("🚫", fontSize = 24.sp) }
                     }
-                    if (isOwner) {
+                    if (canManage) {
                         RmTool("Anggota", onClick = { panel = P_MEMBERS }) { Text("👥", fontSize = 22.sp) }
                     }
                 }
@@ -1238,7 +1239,7 @@ fun RoomScreen(
                 OutlineButton(tr("Tutup")) { panel = P_NONE }
             }
         }
-        if (panel == P_MEMBERS && isOwner) {
+        if (panel == P_MEMBERS && canManage) {
             val others = members.filter { it != myUid }
             var info by remember(others) { mutableStateOf<Map<String, PublicUser?>>(emptyMap()) }
             LaunchedEffect(others) {
@@ -1251,7 +1252,13 @@ fun RoomScreen(
             RmPanel(onDismiss = { panel = P_NONE }) {
                 Text(tr("Anggota room"), color = GoldLight, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(8.dp))
-                Text(tr("Hanya owner yang bisa menurunkan dari mic atau mengeluarkan user."), color = Color(0xFFBDBDBD), fontSize = 12.sp)
+                Text(
+                    tr(
+                        if (isOwner) "Owner dan admin room bisa menurunkan dari mic atau mengeluarkan user. Tekan Jadikan admin untuk memberi akses mengurus room ini."
+                        else "Kamu admin room ini: bisa menurunkan dari mic, mengeluarkan user, dan mengurus room.",
+                    ),
+                    color = Color(0xFFBDBDBD), fontSize = 12.sp,
+                )
                 Spacer(Modifier.height(12.dp))
                 if (others.isEmpty()) {
                     Text(tr("Belum ada anggota lain"), color = Color(0xFFBDBDBD))
@@ -1261,24 +1268,45 @@ fun RoomScreen(
                             val uid = others.elementAt(i)
                             val pu = info[uid]
                             val seatIdx = seats.entries.firstOrNull { it.value.uid == uid }?.key
-                            Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                                InvAvatar(pu, uid)
-                                Spacer(Modifier.width(10.dp))
-                                Column(Modifier.weight(1f)) {
-                                    Text(pu?.name ?: ("UID " + uid), color = Color.White, fontSize = 14.sp, maxLines = 1)
-                                    Text(if (seatIdx != null) "Mic " + (seatIdx + 1) else "Penonton", color = Color(0xFF9A9A9A), fontSize = 11.sp)
+                            val adminRoom = r.isAdminRoom(uid)
+                            Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                    InvAvatar(pu, uid)
+                                    Spacer(Modifier.width(10.dp))
+                                    Column(Modifier.weight(1f)) {
+                                        Text(pu?.name ?: ("UID " + uid), color = Color.White, fontSize = 14.sp, maxLines = 1)
+                                        Text(
+                                            (if (seatIdx != null) "Mic " + (seatIdx + 1) else "Penonton") +
+                                                if (adminRoom) " · Admin room" else "",
+                                            color = if (adminRoom) GoldLight else Color(0xFF9A9A9A),
+                                            fontSize = 11.sp,
+                                        )
+                                    }
+                                    if (seatIdx != null) {
+                                        OutlineButton(tr("Turunkan")) {
+                                            scope.launch {
+                                                val err = RoomRepo.removeFromSeat(r.id, seatIdx)
+                                                toast(err ?: ((pu?.name ?: "User") + " diturunkan dari mic"))
+                                            }
+                                        }
+                                        Spacer(Modifier.width(8.dp))
+                                    }
+                                    OutlineButton(tr("Kick")) {
+                                        kickPick = uid to (pu?.name ?: "User")
+                                    }
                                 }
-                                if (seatIdx != null) {
-                                    OutlineButton(tr("Turunkan")) {
+                                // Hanya pemilik room yang boleh memberi atau mencabut akses admin room.
+                                if (isOwner) {
+                                    Spacer(Modifier.height(6.dp))
+                                    OutlineButton(tr(if (adminRoom) "Cabut admin room" else "Jadikan admin room")) {
                                         scope.launch {
-                                            val err = RoomRepo.removeFromSeat(r.id, seatIdx)
-                                            toast(err ?: ((pu?.name ?: "User") + " diturunkan dari mic"))
+                                            val err = RoomRepo.setRoomAdmin(r.id, uid, !adminRoom)
+                                            toast(
+                                                err ?: if (!adminRoom) (pu?.name ?: "User") + " jadi admin room"
+                                                else "Admin room " + (pu?.name ?: "User") + " dicabut",
+                                            )
                                         }
                                     }
-                                    Spacer(Modifier.width(8.dp))
-                                }
-                                OutlineButton(tr("Kick")) {
-                                    kickPick = uid to (pu?.name ?: "User")
                                 }
                             }
                         }

@@ -1,1 +1,2 @@
+• Musik room: kalau server /musikroom belum aktif atau gagal, keadaan lagu juga ditulis dan dibaca lew
 • Crazy Fruit: jumlah menang di panel PEMENANG RONDE INI dan SEDANG MAIN ditulis penuh dengan titik ri

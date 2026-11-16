@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.192",
-  "catatan": "• Crazy Fruit: jumlah menang di panel PEMENANG RONDE INI dan SEDANG MAIN ditulis penuh dengan titik ri",
-  "ukuran_apk": 54771395,
-  "sha256_apk": "baa974dae37c059b5214fe8ee1ce3747d169f455bbaf6e64a7d7442734a822ec",
+  "versi": "1.0.193",
+  "catatan": "• Musik room: kalau server /musikroom belum aktif atau gagal, keadaan lagu juga ditulis dan dibaca lew\n• Crazy Fruit: jumlah menang di panel PEMENANG RONDE INI dan SEDANG MAIN ditulis penuh dengan titik ri",
+  "ukuran_apk": 54772640,
+  "sha256_apk": "fc3128f55209e85d76ee8fd8b185f545c23b127e40e711527c25bb8480b2df32",
   "abis": {
     "arm64": {
-      "ukuran": 54771395,
-      "sha256": "baa974dae37c059b5214fe8ee1ce3747d169f455bbaf6e64a7d7442734a822ec"
+      "ukuran": 54772640,
+      "sha256": "fc3128f55209e85d76ee8fd8b185f545c23b127e40e711527c25bb8480b2df32"
     },
     "armv7": {
-      "ukuran": 52922544,
-      "sha256": "97bf398251c948430a82ea9e0cd5b7f9a96cb75bc5587db452c5c8ce89124090"
+      "ukuran": 52923782,
+      "sha256": "6ef10338ad0a1dd4e4865f2c8bea9cc622f32c618a74797002c07d6f11c0df3c"
     },
     "universal": {
-      "ukuran": 73187369,
-      "sha256": "cdd714ec2ae27f2a8db0dba3d586012dc32ba3616eb60e6d1011747f54eedb90"
+      "ukuran": 73188617,
+      "sha256": "01822e5af0142b2565d38b128a7a83ed986263f05ebfcd64a5a6a843c9f92f3a"
     }
   }
 }

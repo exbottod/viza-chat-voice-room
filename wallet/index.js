@@ -4210,13 +4210,9 @@ async function wavePlay(req, env) {
   if (ep.includes("cflive")) {
     try {
       let daftar = await cfRondeLive(env, 12, "https://viza.43-156-99-4.sslip.io");
-      // Kalau belum ada yang main dalam 3 menit terakhir, tampilkan papan hari ini
-      // supaya kotak tidak kosong.
-      if (!daftar.length) {
-        try {
-          daftar = await cfPeringkat(env, 3, "https://viza.43-156-99-4.sslip.io", cfHariWib().mulai);
-        } catch { daftar = []; }
-      }
+      // Kotak pemain dan pemenang hanya berisi pemain ronde itu. Peringkat
+      // harian tidak pernah dipakai di sini supaya nama pemain lama tidak
+      // muncul terus padahal sudah tidak memasang.
       let aku = null;
       if (uidLog) {
         const punya = daftar.find((x) => String(x.id) === String(uidLog));
@@ -4459,7 +4455,7 @@ async function cfPemenangRonde(env, batas, asal) {
     const r = await pipe(env, [
       {
         sql: `select uid, sum(win) win, count(*) kali, max(at) at from cf_ronde
-              where at >= ? and at < ? and win > 0 group by uid order by win desc limit ?`,
+              where at >= ? and at < ? and win > 0 and bet > 0 group by uid order by win desc limit ?`,
         args: [I(mulai), I(selesai), I(batas)],
       },
     ]);
@@ -4501,11 +4497,11 @@ async function cfRondeLive(env, batas, asal) {
   // selesai), supaya nama pemain yang sudah berhenti memasang tidak nyangkut.
   const P = CF_RONDE_MS;
   const nomorKini = cfRondeSekarang();
-  const mulai = (nomorKini - 1) * P;
+  const mulai = (nomorKini - 1) * P; // ronde berjalan + ronde yang baru selesai
   const r = await pipe(env, [
     {
       sql: `select uid, sum(win) win, count(*) kali, max(at) terakhir from cf_ronde
-            where at >= ? group by uid order by terakhir desc, win desc limit ?`,
+            where at >= ? and bet > 0 group by uid order by terakhir desc, win desc limit ?`,
       args: [I(mulai), I(batas)],
     },
   ]);

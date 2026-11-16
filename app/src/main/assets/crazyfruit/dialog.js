@@ -134,7 +134,7 @@
   function masihIkut(x) {
     var at = Number(x && x.at) || 0;
     if (!at) return true;
-    return Date.now() - at < 120000;
+    return Date.now() - at < 60000;
   }
 
   function tampil(daftar) {

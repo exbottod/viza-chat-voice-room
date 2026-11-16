@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 280" width="240" height="280">
+<defs>
+<linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2cc6ff"/><stop offset=".5" stop-color="#5b6bff"/><stop offset="1" stop-color="#b043ff"/></linearGradient>
+<radialGradient id="r" cx=".5" cy=".5" r=".6"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".5" stop-color="#bfe9ff" stop-opacity=".45"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe566"/><stop offset=".55" stop-color="#ffb81f"/><stop offset="1" stop-color="#e4720a"/></linearGradient>
+</defs>
+<rect x="6" y="6" width="228" height="268" rx="30" fill="url(#g)" stroke="#ffd34d" stroke-width="7"/>
+<rect x="6" y="6" width="228" height="268" rx="30" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="2" transform="translate(0 0)"/>
+<circle cx="120" cy="140" r="120" fill="url(#r)"/>
+<g stroke="#fff" stroke-opacity=".85" stroke-linecap="round">
+<path d="M120 30v36M120 214v36M30 140h36M174 140h36" stroke-width="6"/>
+<path d="M64 84l22 22M176 84l-22 22M64 196l22-22M176 196l-22-22" stroke-width="4"/>
+</g>
+<g fill="#fff"><circle cx="46" cy="52" r="4"/><circle cx="196" cy="62" r="5"/><circle cx="198" cy="222" r="4"/><circle cx="42" cy="226" r="5"/></g>
+<text x="120" y="162" text-anchor="middle" font-family="Arial Black,Impact,sans-serif" font-weight="900" font-size="58" font-style="italic" transform="rotate(-8 120 150)" fill="#7a3a00" stroke="#7a3a00" stroke-width="9" stroke-linejoin="round">Lucky</text>
+<text x="120" y="162" text-anchor="middle" font-family="Arial Black,Impact,sans-serif" font-weight="900" font-size="58" font-style="italic" transform="rotate(-8 120 150)" fill="url(#t)" stroke="#fff3b0" stroke-width="1.5">Lucky</text>
+</svg>

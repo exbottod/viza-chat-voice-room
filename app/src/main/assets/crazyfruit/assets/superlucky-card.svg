@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 280" width="240" height="280">
+<defs>
+<linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4fa3"/><stop offset=".35" stop-color="#ff9d3a"/><stop offset=".65" stop-color="#ffe45e"/><stop offset="1" stop-color="#52d9ff"/></linearGradient>
+<radialGradient id="r" cx=".5" cy=".5" r=".6"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".55" stop-color="#fff2c8" stop-opacity=".4"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff7b0"/><stop offset=".5" stop-color="#ffc42b"/><stop offset="1" stop-color="#e2540a"/></linearGradient>
+</defs>
+<rect x="6" y="6" width="228" height="268" rx="30" fill="url(#g)" stroke="#ffd34d" stroke-width="7"/>
+<circle cx="120" cy="140" r="120" fill="url(#r)"/>
+<g stroke="#fff" stroke-opacity=".9" stroke-linecap="round">
+<path d="M120 28v38M120 214v38M28 140h38M174 140h38" stroke-width="6"/>
+<path d="M62 82l24 24M178 82l-24 24M62 198l24-24M178 198l-24-24" stroke-width="4"/>
+</g>
+<g fill="#fff"><circle cx="44" cy="50" r="4"/><circle cx="198" cy="60" r="5"/><circle cx="200" cy="224" r="4"/><circle cx="40" cy="228" r="5"/></g>
+<g font-family="Arial Black,Impact,sans-serif" font-weight="900" font-style="italic" text-anchor="middle" transform="rotate(-8 120 140)">
+<text x="120" y="118" font-size="50" fill="#7a2a00" stroke="#7a2a00" stroke-width="9" stroke-linejoin="round">Super</text>
+<text x="120" y="118" font-size="50" fill="url(#t)" stroke="#fff3b0" stroke-width="1.5">Super</text>
+<text x="120" y="176" font-size="54" fill="#7a2a00" stroke="#7a2a00" stroke-width="9" stroke-linejoin="round">Lucky</text>
+<text x="120" y="176" font-size="54" fill="url(#t)" stroke="#fff3b0" stroke-width="1.5">Lucky</text>
+</g>
+</svg>

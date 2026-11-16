@@ -26,15 +26,11 @@
     }
   }
 
+  /* Angka hadiah selalu ditulis penuh dengan titik pemisah ribuan
+     (1.200.000.000), tidak lagi disingkat "1,2 M" atau "1,2 jt". */
   function angka(n) {
-    var v = Number(n) || 0;
-    var tulis = function (x, satuan) {
-      var s = x.toFixed(2).replace(".", ",").replace(/,00$/, "").replace(/(,\d)0$/, "$1");
-      return s + " " + satuan;
-    };
-    if (v >= 1000000000) return tulis(v / 1000000000, "M");
-    if (v >= 1000000) return tulis(v / 1000000, "jt");
-    return String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    var v = Math.round(Number(n) || 0);
+    return String(v).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   }
 
   function aman(s) {

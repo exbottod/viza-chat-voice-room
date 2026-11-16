@@ -31,15 +31,11 @@
     }
   }
 
+  /* Angka hadiah selalu ditulis penuh dengan titik pemisah ribuan
+     (1.200.000.000), tidak lagi disingkat "1,2 M" atau "1,2 jt". */
   function angka(n) {
-    var v = Number(n) || 0;
-    var tulis = function (x, satuan) {
-      var s = x.toFixed(2).replace(".", ",").replace(/,00$/, "").replace(/(,\d)0$/, "$1");
-      return s + " " + satuan;
-    };
-    if (v >= 1000000000) return tulis(v / 1000000000, "M");
-    if (v >= 1000000) return tulis(v / 1000000, "jt");
-    return String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    var v = Math.round(Number(n) || 0);
+    return String(v).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   }
 
   function aman(s) {
@@ -375,7 +371,7 @@
         '<span style="flex:1;min-width:0;font-size:.58rem;color:#dbe6fb;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
         aman(potong(lain[i].name, 11)) +
         "</span>" +
-        '<span style="font-size:.55rem;font-weight:800;color:#7fd1a0;font-variant-numeric:tabular-nums">' +
+        '<span style="font-size:.55rem;font-weight:800;color:#7fd1a0;font-variant-numeric:tabular-nums;max-width:52%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
         angka(lain[i].win) +
         "</span></div>";
     }

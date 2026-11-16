@@ -2711,6 +2711,10 @@ const ASET_CABANG = "main";
 /* Penyimpanan aset di VPS. Unggah jadi cepat karena tidak menunggu
    commit ke GitHub; file dilayani langsung lewat /aset/<nama>. */
 const ASET_DIR = "/opt/viza-api/aset";
+/* Keadaan musik tiap room disimpan di server ini, bukan di database lain,
+   supaya semua HP di room menerima lagu yang sama. Isinya hanya lagu yang
+   sedang diputar per room; hilang sendiri setelah 12 jam tanpa kabar. */
+const musikRoom = new Map();
 
 // ---------- Tautan unduhan APK ----------
 const APK_ASLI = "https://github.com/exbottod/rezo-star-voice-chat-room/releases/latest/download/REZO-STAR.apk";
@@ -5158,6 +5162,44 @@ export default {
     if (url.pathname.toLowerCase() === "/vip-harga") {
       await hargaVipKini();
       return json({ ok: 1, harga: HARGA_VIP.slice(1) });
+    }
+    if (url.pathname.toLowerCase().startsWith("/musikroom")) {
+      const jalurMr = url.pathname.toLowerCase();
+      const ruangParam = String(url.searchParams.get("room") || "").replace(/[^0-9A-Za-z_.:-]/g, "").slice(0, 64);
+      if (req.method === "GET") {
+        const sesiR = await sesiDariToken(url.searchParams.get("t") ?? "");
+        if (!sesiR) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
+        if (!ruangParam) return json({ ok: 0, e: "Room kosong" }, 400);
+        const d = musikRoom.get(ruangParam);
+        if (!d || Date.now() - d.at > 12 * 3600 * 1000) {
+          if (d) musikRoom.delete(ruangParam);
+          return json({ ok: 1, ada: 0 });
+        }
+        return json({
+          ok: 1, ada: 1, url: d.url, title: d.title,
+          playing: d.playing ? 1 : 0, pos: d.pos, lewat: Date.now() - d.at,
+        });
+      }
+      if (req.method !== "POST") return json({ ok: 0, e: "Pakai GET/POST" }, 405);
+      let bMr = {};
+      try { bMr = await req.json(); } catch { bMr = {}; }
+      const sesiMr = await sesiDariToken(String(bMr.t || url.searchParams.get("t") || ""));
+      if (!sesiMr) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
+      const ruangB = (String(bMr.room || ruangParam).replace(/[^0-9A-Za-z_.:-]/g, "") || "").slice(0, 64);
+      if (!ruangB) return json({ ok: 0, e: "Room kosong" }, 400);
+      if (jalurMr.endsWith("/hentikan")) { musikRoom.delete(ruangB); return json({ ok: 1 }); }
+      const urlMr = String(bMr.url || "").slice(0, 500);
+      if (!urlMr.startsWith("http")) return json({ ok: 0, e: "Tautan lagu tidak sah" }, 400);
+      const isi = {
+        url: urlMr,
+        title: String(bMr.title || "").slice(0, 120),
+        playing: bMr.playing === true || bMr.playing === 1 || bMr.playing === "1",
+        pos: Math.max(0, Math.min(24 * 3600 * 1000, Number(bMr.pos) || 0)),
+        at: Date.now(),
+        by: String(sesiMr.uid || "").slice(0, 60),
+      };
+      musikRoom.set(ruangB, isi);
+      return json({ ok: 1, at: isi.at });
     }
     if (url.pathname.toLowerCase() === "/musik") {
       // Lagu room disimpan langsung di VPS ini, lalu diputar dari tautan ini

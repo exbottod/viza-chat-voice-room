@@ -3,6 +3,8 @@ package com.rezochatvoice.exceo
 import android.media.MediaPlayer
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
@@ -36,7 +38,7 @@ object RoomMusicShare {
     private var urlSekarang = ""
     private var siap = false
     private var roomId = ""
-    @Volatile private var reg: Reg? = null
+    @Volatile private var pollJob: Job? = null
 
     /** Posisi musik saat ini (ms) untuk semua HP. */
     fun posisiMs(): Int {
@@ -101,20 +103,25 @@ object RoomMusicShare {
         }
     }
 
-    /** Simpan keadaan musik room supaya semua HP mengikuti. */
+    /**
+     * Simpan keadaan musik room di server VPS supaya semua HP mengikuti.
+     * Dulu disimpan di Realtime Database, tetapi aturan tulis di sana sering
+     * menolak, sehingga lagu cuma terdengar di HP pemutar. Server VPS selalu
+     * menerima, jadi semua orang di room ikut mendengar.
+     */
     suspend fun siarkan(room: String, url: String, judul: String, main: Boolean, pos: Long) {
-        if (room.isBlank()) return
+        if (room.isBlank() || url.isBlank()) return
         try {
-            Rtdb.ref("roomMusic/$room").updateChildren(
-                hashMapOf<String, Any?>(
-                    "url" to url,
-                    "title" to judul,
-                    "playing" to main,
-                    "pos" to pos,
-                    "at" to System.currentTimeMillis(),
-                    "by" to (com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: ""),
-                ),
-            ).await()
+            kirimPost(
+                "/musikroom",
+                org.json.JSONObject()
+                    .put("t", token())
+                    .put("room", room)
+                    .put("url", url)
+                    .put("title", judul)
+                    .put("playing", main)
+                    .put("pos", pos),
+            )
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) { }
@@ -122,30 +129,88 @@ object RoomMusicShare {
 
     suspend fun hentikan(room: String) {
         if (room.isBlank()) return
-        try { Rtdb.ref("roomMusic/$room").removeValue().await() } catch (e: Exception) { }
+        try {
+            kirimPost(
+                "/musikroom/hentikan",
+                org.json.JSONObject().put("t", token()).put("room", room),
+            )
+        } catch (e: Exception) { }
     }
+
+    private suspend fun token(): String =
+        try {
+            com.google.firebase.auth.FirebaseAuth.getInstance()
+                .currentUser?.getIdToken(false)?.await()?.token.orEmpty()
+        } catch (e: Exception) {
+            ""
+        }
+
+    private suspend fun kirimPost(jalur: String, isi: org.json.JSONObject): String? =
+        kotlinx.coroutines.withContext(Dispatchers.IO) {
+            val c = (URL(VPS + jalur).openConnection() as HttpURLConnection).apply {
+                requestMethod = "POST"
+                connectTimeout = 10000
+                readTimeout = 15000
+                doOutput = true
+                setRequestProperty("Content-Type", "application/json")
+            }
+            c.outputStream.use { it.write(isi.toString().toByteArray()) }
+            val kode = c.responseCode
+            val teks = (if (kode in 200..299) c.inputStream else c.errorStream)
+                ?.bufferedReader()?.use { it.readText() }
+            if (kode in 200..299) teks else null
+        }
 
     /** Mulai mengikuti musik room. Dipanggil sekali saat masuk room. */
     fun observe(room: String) {
         if (room.isBlank()) return
-        if (room == roomId && reg != null) return
+        if (room == roomId && pollJob != null) return
         lepas()
         roomId = room
-        try {
-            reg = Rtdb.listen(Rtdb.ref("roomMusic/$room")) { s ->
-                val url = s.child("url").getValue(String::class.java).orEmpty()
-                val judul = s.child("title").getValue(String::class.java).orEmpty()
-                val main = s.child("playing").getValue(Boolean::class.java) ?: false
-                val pos = s.child("pos").getValue(Long::class.java) ?: 0L
-                val at = s.child("at").getValue(Long::class.java) ?: 0L
-                terapkan(url, judul, main, pos, at)
+        pollJob = scope.launch {
+            while (true) {
+                try { muatSekali(room) } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) { }
+                delay(2000)
             }
-        } catch (e: Exception) { }
+        }
+    }
+
+    /** Ambil keadaan musik room sekali dari server. */
+    private suspend fun muatSekali(room: String) {
+        val t = token()
+        if (t.isBlank()) return
+        val teks = kotlinx.coroutines.withContext(Dispatchers.IO) {
+            val alamat = VPS + "/musikroom?room=" + java.net.URLEncoder.encode(room, "UTF-8") +
+                "&t=" + java.net.URLEncoder.encode(t, "UTF-8")
+            val c = (URL(alamat).openConnection() as HttpURLConnection).apply {
+                requestMethod = "GET"
+                connectTimeout = 10000
+                readTimeout = 15000
+            }
+            if (c.responseCode !in 200..299) return@withContext null
+            c.inputStream.bufferedReader().use { it.readText() }
+        } ?: return
+        val o = org.json.JSONObject(teks)
+        if (o.optInt("ada", 0) != 1) {
+            terapkan("", "", false, 0L, 0L)
+            return
+        }
+        val url = o.optString("url")
+        if (url.isBlank()) {
+            terapkan("", "", false, 0L, 0L)
+            return
+        }
+        val main = o.optInt("playing", 0) == 1
+        val pos = o.optLong("pos", 0L)
+        val lewat = o.optLong("lewat", 0L)
+        terapkan(url, o.optString("title"), main, pos, System.currentTimeMillis() - lewat)
     }
 
     fun lepas() {
-        try { reg?.remove() } catch (e: Exception) { }
-        reg = null
+        pollJob?.cancel()
+        pollJob = null
         roomId = ""
         try { player?.release() } catch (e: Exception) { }
         player = null

@@ -4176,32 +4176,12 @@ async function wavePlay(req, env) {
       if (req.method === "POST") {
         const winR = Math.max(0, Math.trunc(Number(body.win ?? 0)));
         const betR = Math.max(0, Math.trunc(Number(body.bet ?? 0)));
-        const nomorR = Math.max(0, Math.trunc(Number(body.ronde ?? 0))) || cfRondeSekarang();
-        await cfRondeSimpan(env, uid, String(body.cell ?? ""), winR, betR, nomorR);
+        await cfRondeSimpan(env, uid, String(body.cell ?? ""), winR, betR);
       }
       const d = await cfRondeHariIni(env, uid, batasR);
       return balas({ success: true, message: "success", data: d });
     } catch (e) {
       return balas({ success: false, message: String(e?.message ?? e), data: null });
-    }
-  }
-
-  if (ep.includes("cfpola")) {
-    try {
-      const cfg = await cfCfg();
-      const nomor = Number(url.searchParams.get("ronde") || cfRondeSekarang());
-      const daftar = [];
-      for (let i = 0; i < 4; i++) {
-        const n = nomor + i;
-        daftar.push({ ronde: n, cell: cfPolaRonde(n, cfg.rtp), mulai: n * CF_RONDE_MS, panjang: CF_RONDE_MS });
-      }
-      return balas({
-        success: true,
-        message: "success",
-        data: { ronde: nomor, panjang: CF_RONDE_MS, sekarang: cfRondeSekarang(), list: daftar, rtp: cfg.rtp },
-      });
-    } catch (e) {
-      return balas({ success: false, message: String(e?.message ?? e), data: null }, 200);
     }
   }
 
@@ -4398,73 +4378,27 @@ async function cfPeringkat(env, batas, asal, mulai = 0) {
   return hasil;
 }
 
-// ---------- Pola ronde Crazy Fruit (satu pola untuk semua pemain) ----------
-// Bobotnya sama dengan bobot di dalam game, dan RTP-nya dari panel, jadi pola
-// ronde tetap mengikuti RTP yang diatur developer.
-const CF_RTP_TITIK = [50, 85, 95, 120];
-function cfBobotPola(rtp) {
-  const t = {
-    orange: [26, 18, 8, 4], lemon: [26, 18, 8, 4], grapes: [26, 18, 8, 4], cherry: [26, 18, 8, 4],
-    strawberry: [6, 9, 14, 18], mango: [4, 6, 11, 15], watermelon: [2.5, 3.6, 8, 12],
-    apple: [1.2, 2, 6, 10], lucky: [0.4, 1.2, 18, 28], superLucky: [0.15, 0.6, 16, 26],
-  };
-  const r = Math.max(50, Math.min(120, Number(rtp) || 92));
-  let n = 0;
-  while (n < CF_RTP_TITIK.length - 2 && r > CF_RTP_TITIK[n + 1]) n++;
-  const a = Math.max(0, Math.min(1, (r - CF_RTP_TITIK[n]) / (CF_RTP_TITIK[n + 1] - CF_RTP_TITIK[n])));
-  const out = {};
-  for (const k of Object.keys(t)) out[k] = t[k][n] + (t[k][n + 1] - t[k][n]) * a;
-  return out;
-}
-
-const CF_RONDE_MS = 30000; // satu ronde 30 detik, sama untuk semua HP
-function cfRondeSekarang(kini = Date.now()) {
-  return Math.floor(kini / CF_RONDE_MS);
-}
-
-/** Pola untuk satu nomor ronde. Selalu sama untuk ronde itu, di HP mana pun. */
-function cfPolaRonde(nomor, rtp) {
-  const bobot = cfBobotPola(rtp);
-  const nama = Object.keys(bobot);
-  const total = nama.reduce((a, k) => a + bobot[k], 0);
-  // Acak deterministik dari nomor ronde (LCG), bukan dari HP pemain.
-  let x = (Number(nomor) * 1103515245 + 12345) % 2147483648;
-  x = (x * 1103515245 + 12345) % 2147483648;
-  let r = (x / 2147483648) * total;
-  for (const k of nama) {
-    r -= bobot[k];
-    if (r < 0) return k;
-  }
-  return "orange";
-}
-
 /** Pemenang ronde yang barusan selesai (seperti papan pemenang Greedy King).
  *  Ronde Crazy Fruit tidak punya nomor ronde di server, jadi ronde dibaca dari
  *  catatan terakhir: semua hasil yang masuk dalam 25 detik terakhir dianggap
  *  satu ronde. */
 async function cfPemenangRonde(env, batas, asal) {
   await cfRondePastikan(env);
-  // Nomor ronde terakhir yang sudah ada pemainnya. Semua pemain di ronde itu
-  // main dengan pola yang sama, jadi daftar pemenangnya sama di semua HP.
   const r = await pipe(env, [
-    { sql: `select max(ronde) terakhir from cf_ronde where ronde > 0`, args: [] },
+    { sql: `select max(at) terakhir from cf_ronde`, args: [] },
   ]);
-  let nomor = Number(r[0].rows[0]?.terakhir ?? 0);
-  if (!nomor) {
-    const rk = await pipe(env, [{ sql: `select max(at) terakhir from cf_ronde`, args: [] }]);
-    const terakhir = Number(rk[0].rows[0]?.terakhir ?? 0);
-    nomor = terakhir ? Math.floor(terakhir / 30000) : 0;
-  }
-  if (!nomor) return { ronde: 0, list: [] };
-  const mulaiRonde = nomor * 30000;
-  const mulai = mulaiRonde;
+  const terakhir = Number(r[0].rows[0]?.terakhir ?? 0);
+  if (!terakhir) return { ronde: 0, list: [] };
+  // Satu ronde = satu jendela 30 detik pada jam yang sama untuk semua HP, jadi
+  // semua pemain yang polanya keluar di jendela itu melihat daftar yang sama.
   const panjang = 30000;
-  const pakaiNomor = true;
+  const mulaiRonde = Math.floor(terakhir / panjang) * panjang;
+  const mulai = mulaiRonde;
   const r2 = await pipe(env, [
     {
       sql: `select uid, sum(win) win, count(*) kali, max(at) at from cf_ronde
-            where ronde = ? and win > 0 group by uid order by win desc limit ?`,
-      args: [I(nomor), I(batas)],
+            where at >= ? and at < ? and win > 0 group by uid order by win desc limit ?`,
+      args: [I(mulai), I(mulai + panjang), I(batas)],
     },
   ]);
   const rows = r2[0].rows || [];
@@ -4532,23 +4466,21 @@ function cfRondePastikan(env) {
       {
         sql: `create table if not exists cf_ronde (
             uid text not null, cell text not null default '', win integer not null default 0,
-            bet integer not null default 0, at integer not null default 0,
-            ronde integer not null default 0)`,
+            bet integer not null default 0, at integer not null default 0)`,
         args: [],
       },
-      { sql: `alter table cf_ronde add column ronde integer not null default 0`, args: [] },
       { sql: `create index if not exists cf_ronde_uid on cf_ronde (uid, at desc)`, args: [] },
     ]).catch(() => {});
   }
   return cfRondeSiap;
 }
 
-async function cfRondeSimpan(env, uid, cell, win, bet, ronde = 0) {
+async function cfRondeSimpan(env, uid, cell, win, bet) {
   await cfRondePastikan(env);
   await pipe(env, [
     {
-      sql: `insert into cf_ronde (uid, cell, win, bet, at, ronde) values (?, ?, ?, ?, ?, ?)`,
-      args: [T(uid), T(String(cell || "")), I(win), I(bet), I(Date.now()), I(ronde)],
+      sql: `insert into cf_ronde (uid, cell, win, bet, at) values (?, ?, ?, ?, ?)`,
+      args: [T(uid), T(String(cell || "")), I(win), I(bet), I(Date.now())],
     },
   ]);
 }

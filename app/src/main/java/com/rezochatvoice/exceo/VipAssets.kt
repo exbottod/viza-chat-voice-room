@@ -602,6 +602,18 @@ private fun svgaAmbil(t: FloatArray, p: Float): Float {
     return t[i] + (t[j] - t[i]) * (f - i)
 }
 
+/** Efek masuk cadangan: kalau aset untuk tingkat tertentu belum diisi di panel,
+ *  pakai aset efek masuk lain yang tersedia supaya efeknya tetap terlihat
+ *  (bukan diam tanpa penjelasan). Tingkat tertinggi dipilih lebih dulu. */
+fun entryAssetCadangan(kecuali: Int = 0): VipAsset? {
+    for (t in 9 downTo 1) {
+        if (t == kecuali) continue
+        val a = VipAssets.get(t, "entry")
+        if (a != null && (a.url.isNotBlank() || a.hasData)) return a
+    }
+    return null
+}
+
 /** Banner efek masuk VIP1-9 diambil dari panel developer (bukan lagi dari APK). */
 fun vipBannerAsset(n: Int): VipAsset? = if (n in 1..9) VipAssets.get(n, "banner") else null
 
@@ -657,6 +669,17 @@ fun VipEntryEffect(roomId: String) {
                 return@LaunchedEffect
             }
             delay(400)
+        }
+        // Aset untuk tingkat user ini memang belum ada di panel. Pakai efek masuk
+        // yang tersedia supaya pemain tetap melihat efek, tidak layar diam.
+        val cadangan = entryAssetCadangan()
+        if (cadangan != null) {
+            playing = cadangan
+            banner = bannerAssetOf(m)
+            bannerName = msgName(m).takeIf { it.isNotBlank() }
+            bannerUid = m.vipUid.takeIf { it.isNotBlank() }
+        } else {
+            VipAssets.diag["entry_kosong"] = "Efek masuk belum ada di panel untuk tingkat ini"
         }
         pending = null
     }

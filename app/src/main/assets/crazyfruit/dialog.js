@@ -96,30 +96,36 @@
     return el;
   }
 
-  function baris(no, item) {
+  /* Kartu pemenang ronde, tampilannya seperti peringkat ronde di Greedy King:
+     foto bulat, mahkota untuk juara, nama di bawah, jumlah menang di bawahnya. */
+  function kartu(no, item) {
     var medali = ["#ffd75e", "#d7dee9", "#c98a4b"];
     var warna = medali[no - 1] || "#39507d";
+    var nama = String(item.name || "Player");
     var foto = item.photo
       ? '<img src="' +
         aman(item.photo) +
         '" alt="" referrerpolicy="no-referrer" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">'
       : "";
-    var nama = String(item.name || "Player");
     return (
-      '<div style="display:flex;align-items:center;gap:.45rem;padding:.22rem 0">' +
-      '<span style="width:1.15rem;height:1.15rem;border-radius:999px;background:' +
+      '<div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:.18rem;padding:.1rem 0">' +
+      '<span style="position:relative;display:block;width:3.1rem;height:3.1rem">' +
+      '<span style="position:absolute;inset:0;border-radius:999px;overflow:hidden;background:#22345c;color:#9fb4dd;font-size:1.1rem;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid ' +
       warna +
-      ';color:#0b1020;font-size:.62rem;font-weight:900;display:flex;align-items:center;justify-content:center">' +
-      no +
-      "</span>" +
-      '<span style="position:relative;width:1.5rem;height:1.5rem;border-radius:999px;overflow:hidden;background:#22345c;color:#9fb4dd;font-size:.6rem;font-weight:700;display:flex;align-items:center;justify-content:center;border:1px solid rgba(212,161,42,.55)">' +
+      '">' +
       aman(nama.substr(0, 1).toUpperCase()) +
       foto +
       "</span>" +
-      '<span style="flex:1;min-width:0;font-size:.74rem;font-weight:700;color:#e7eefc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
+      '<span style="position:absolute;left:-.2rem;bottom:-.15rem;width:1.15rem;height:1.15rem;border-radius:999px;background:' +
+      warna +
+      ';color:#0b1020;font-size:.62rem;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px rgba(8,14,32,.85)">' +
+      (no === 1 ? "\u265B" : no) +
+      "</span>" +
+      "</span>" +
+      '<span style="font-size:.66rem;font-weight:700;color:#e7eefc;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
       aman(nama) +
       "</span>" +
-      '<span style="font-size:.76rem;font-weight:900;color:#ffd75e;font-variant-numeric:tabular-nums">' +
+      '<span style="font-size:.72rem;font-weight:900;color:#ffd75e;font-variant-numeric:tabular-nums;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
       angka(item.win) +
       "</span>" +
       "</div>"
@@ -131,11 +137,13 @@
     if (!isi) return;
     if (!daftar || !daftar.length) {
       isi.innerHTML =
-        '<div style="font-size:.68rem;color:#8fa3cc;padding:.2rem 0">Belum ada pemenang di ronde ini.</div>';
+        '<div style="font-size:.68rem;color:#8fa3cc;padding:.35rem 0;text-align:center">Belum ada pemenang di ronde ini.</div>';
       return;
     }
-    var html = "";
-    for (var i = 0; i < daftar.length && i < 5; i++) html += baris(i + 1, daftar[i]);
+    var html =
+      '<div style="display:flex;align-items:flex-start;gap:.35rem;padding:.15rem 0 .1rem">';
+    for (var i = 0; i < daftar.length && i < 3; i++) html += kartu(i + 1, daftar[i]);
+    html += "</div>";
     isi.innerHTML = html;
   }
 

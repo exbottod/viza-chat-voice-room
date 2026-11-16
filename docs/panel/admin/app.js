@@ -156,7 +156,45 @@ async function bacaB64(berkas) {
   return data.replace(/^data:[^,]+,/, "");
 }
 
+function ukuranTeks(n) {
+  const v = Number(n) || 0;
+  if (v >= 1048576) return (v / 1048576).toFixed(1).replace(".", ",") + " MB";
+  return Math.max(1, Math.round(v / 1024)) + " KB";
+}
+
+/** Gambar besar diperkecil dulu (WebP) supaya unggahan tidak lama di jaringan HP.
+    Foto/SVGA/MP4 tidak disentuh. Kalau hasil kecilnya tidak lebih kecil, pakai aslinya. */
+async function kecilkanBerkas(berkas) {
+  try {
+    if (!berkas || !/^image\/(png|jpe?g|webp)$/i.test(berkas.type || "")) return berkas;
+    if (berkas.size < 900 * 1024) return berkas;
+    if (typeof createImageBitmap !== "function") return berkas;
+    const bmp = await createImageBitmap(berkas);
+    const sisi = 1600;
+    const skala = Math.min(1, sisi / Math.max(bmp.width || 1, bmp.height || 1));
+    const w = Math.max(1, Math.round((bmp.width || 1) * skala));
+    const h = Math.max(1, Math.round((bmp.height || 1) * skala));
+    const cv = document.createElement("canvas");
+    cv.width = w; cv.height = h;
+    cv.getContext("2d").drawImage(bmp, 0, 0, w, h);
+    const blob = await new Promise((ok) => cv.toBlob(ok, "image/webp", 0.9));
+    try { bmp.close && bmp.close(); } catch (e) {}
+    if (!blob || blob.size >= berkas.size) return berkas;
+    const namaBaru = String(berkas.name || "aset").replace(/\.[^.]+$/, "") + ".webp";
+    return new File([blob], namaBaru, { type: "image/webp" });
+  } catch (e) {
+    return berkas;
+  }
+}
+
 async function unggahBerkas(berkas, folder, lapor) {
+  if (lapor) lapor(1);
+  const asliUkuran = berkas.size;
+  berkas = await kecilkanBerkas(berkas);
+  window.__unggahInfo = asliUkuran > berkas.size
+    ? ukuranTeks(asliUkuran) + " → " + ukuranTeks(berkas.size)
+    : "";
+  if (lapor) lapor(2);
   const namaAman = String(berkas.name || "aset").replace(/[^a-zA-Z0-9._-]/g, "_");
   const ekstensi = namaAman.split(".").pop().toLowerCase();
 
@@ -184,7 +222,7 @@ async function unggahBerkas(berkas, folder, lapor) {
       const kirim = () => {
       xhr.open("POST", alamat, true);
       xhr.setRequestHeader("Content-Type", berkas.type || TIPE_BERKAS[ekstensi] || "application/octet-stream");
-      xhr.timeout = 180000;
+      xhr.timeout = 300000;
       xhr.upload.onprogress = (e) => {
         if (!lapor) return;
         if (e.lengthComputable) naik(Math.min(99, Math.round((e.loaded / e.total) * 100)));
@@ -204,7 +242,7 @@ async function unggahBerkas(berkas, folder, lapor) {
       };
       xhr.ontimeout = () => {
         window.__galatVpsJaringan = true;
-        gagal(new Error("Unggahan lebih dari 3 menit, coba lagi atau kecilkan berkas"));
+        gagal(new Error("Unggahan lebih dari 5 menit, coba lagi atau kecilkan berkas"));
       };
       xhr.send(berkas);
       };
@@ -399,7 +437,9 @@ async function urlDariSumber(id, folder) {
   if (progres) progres.textContent = "mengunggah 0%";
   try {
     const url = await unggahBerkas(berkas, folder, (p) => { if (progres) progres.textContent = `mengunggah ${p}%`; });
-    if (progres) progres.textContent = "selesai diunggah";
+    if (progres) progres.textContent = window.__unggahInfo
+      ? "selesai diunggah (" + window.__unggahInfo + ")"
+      : "selesai diunggah";
     return url;
   } catch (e) {
     if (progres) progres.textContent = e?.code === "storage/unauthorized"

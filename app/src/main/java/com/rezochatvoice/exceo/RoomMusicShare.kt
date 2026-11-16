@@ -23,6 +23,8 @@ import java.net.URL
  * waktu mulai, jadi suara musik terdengar oleh semua dan tetap sejalan.
  */
 object RoomMusicShare {
+    // Lagu disimpan di VPS sendiri (/musik), bukan di storage pihak lain.
+    private const val VPS = "https://viza.43-156-99-4.sslip.io"
     private const val BASE = "https://GANTI-PROJECT-ANDA.supabase.co"
     // Kunci publishable, sama seperti RoomImages/SupaRepo.
     private const val KEY = "GANTI_SUPABASE_KEY"
@@ -44,7 +46,7 @@ object RoomMusicShare {
 
     fun durasiMs(): Int = try { player?.duration ?: -1 } catch (e: Exception) { -1 }
 
-    private var volumeLokal = 80
+    private var volumeLokal = 100
 
     /** Volume pemutar bersama (0..100). */
     fun setVolume(v: Int) {
@@ -61,31 +63,37 @@ object RoomMusicShare {
 
     fun adaLagu(): Boolean = urlSekarang.isNotBlank()
 
-    /** Unggah satu file lagu ke Supabase Storage, hasilnya tautan publik. */
+    /** Unggah satu file lagu ke VPS sendiri, hasilnya tautan publik. */
     suspend fun unggah(file: File): Pair<String?, String?> {
         return try {
-            val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+            com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
                 ?: return null to "Belum login"
-            val bytes = file.readBytes()
-            if (bytes.size > 25_000_000) return null to "Lagu terlalu besar (maks 25 MB)"
-            val bersih = file.name.replace(Regex("[^a-zA-Z0-9._-]"), "_")
-            val path = "$uid/musik_${System.currentTimeMillis()}_$bersih"
-            val conn = (URL("$BASE/storage/v1/object/$BUCKET/$path").openConnection() as HttpURLConnection).apply {
+            if (!file.exists()) return null to "Berkas lagu tidak ada"
+            if (file.length() > 30_000_000) return null to "Lagu terlalu besar (maks 30 MB)"
+            val token = com.google.firebase.auth.FirebaseAuth.getInstance()
+                .currentUser?.getIdToken(false)?.await()?.token
+                ?: return null to "Sesi login habis, coba masuk ulang"
+            val ext = (file.name.substringAfterLast('.', "mp3").lowercase().replace(Regex("[^a-z0-9]"), ""))
+                .ifBlank { "mp3" }.take(4)
+            val alamat = VPS + "/musik?t=" + java.net.URLEncoder.encode(token, "UTF-8") + "&ext=" + ext
+            val conn = (URL(alamat).openConnection() as HttpURLConnection).apply {
                 requestMethod = "POST"
-                connectTimeout = 15000
-                readTimeout = 120000
+                connectTimeout = 20000
+                readTimeout = 180000
                 doOutput = true
-                setRequestProperty("apikey", KEY)
-                setRequestProperty("Authorization", "Bearer $KEY")
+                setFixedLengthStreamingMode(file.length().toInt())
                 setRequestProperty("Content-Type", "application/octet-stream")
             }
-            conn.outputStream.use { it.write(bytes) }
-            val code = conn.responseCode
-            if (code !in 200..299) {
-                val body = conn.errorStream?.bufferedReader()?.use { it.readText() }.orEmpty()
-                return null to "Unggah gagal ($code) ${body.take(80)}"
+            file.inputStream().use { input ->
+                conn.outputStream.use { out -> input.copyTo(out, 64 * 1024) }
             }
-            "$BASE/storage/v1/object/public/$BUCKET/$path" to null
+            val code = conn.responseCode
+            val teks = (if (code in 200..299) conn.inputStream else conn.errorStream)
+                ?.bufferedReader()?.use { it.readText() }.orEmpty()
+            if (code !in 200..299) return null to "Unggah gagal ($code) " + teks.take(80)
+            val url = org.json.JSONObject(teks).optString("url")
+            if (!url.startsWith("http")) return null to "Server tidak memberi tautan lagu"
+            url to null
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -168,6 +176,16 @@ object RoomMusicShare {
             val mp = MediaPlayer()
             player = mp
             try {
+                // Aplikasi sedang dalam mode panggilan suara. Tanpa sifat audio
+                // media, lagu ikut jalur suara panggilan sehingga terdengar
+                // pelan dan tidak jelas. Dengan USAGE_MEDIA + CONTENT_TYPE_MUSIC
+                // lagu keluar lewat jalur musik seperti pemutar biasa.
+                mp.setAudioAttributes(
+                    android.media.AudioAttributes.Builder()
+                        .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .build(),
+                )
                 mp.setDataSource(url)
                 mp.setOnPreparedListener { p ->
                     siap = true

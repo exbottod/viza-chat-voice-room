@@ -2769,6 +2769,11 @@ function mimeDariExt(ext) {
   if (ext === "gif") return "image/gif";
   if (ext === "svg") return "image/svg+xml";
   if (ext === "svga") return "application/octet-stream";
+  if (ext === "mp3") return "audio/mpeg";
+  if (ext === "m4a" || ext === "aac") return "audio/mp4";
+  if (ext === "ogg" || ext === "oga" || ext === "opus") return "audio/ogg";
+  if (ext === "wav") return "audio/wav";
+  if (ext === "flac") return "audio/flac";
   return "application/octet-stream";
 }
 
@@ -5153,6 +5158,29 @@ export default {
     if (url.pathname.toLowerCase() === "/vip-harga") {
       await hargaVipKini();
       return json({ ok: 1, harga: HARGA_VIP.slice(1) });
+    }
+    if (url.pathname.toLowerCase() === "/musik") {
+      // Lagu room disimpan langsung di VPS ini, lalu diputar dari tautan ini
+      // oleh semua HP. Tidak lewat storage pihak lain, jadi cepat dan suaranya
+      // tidak dikecilkan/diubah.
+      if (req.method !== "POST") return json({ ok: 0, e: "Pakai POST" }, 405);
+      const sesiM = await sesiDariToken(url.searchParams.get("t") ?? "");
+      if (!sesiM) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
+      const extM = (url.searchParams.get("ext") || "mp3").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 4) || "mp3";
+      if (!/^(mp3|m4a|aac|ogg|oga|opus|wav|flac)$/.test(extM)) return json({ ok: 0, e: "Format lagu tidak didukung" }, 400);
+      const panjang = Number(req.headers.get("content-length") || 0);
+      if (panjang > 30 * 1024 * 1024) return json({ ok: 0, e: "Lagu lebih dari 30 MB" }, 413);
+      let bufM;
+      try { bufM = Buffer.from(await req.arrayBuffer()); }
+      catch (e) { return json({ ok: 0, e: "Isi lagu tidak terbaca" }, 400); }
+      if (!bufM.length) return json({ ok: 0, e: "Isi lagu kosong" }, 400);
+      if (bufM.length > 30 * 1024 * 1024) return json({ ok: 0, e: "Lagu lebih dari 30 MB" }, 413);
+      const uidM = String(sesiM.uid || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 40) || "umum";
+      const namaM = "musik_" + uidM + "_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) + "." + extM;
+      try {
+        await asetSimpanDisk(namaM, bufM.toString("base64"));
+        return json({ ok: 1, url: VPS_ASET + "/" + namaM, ukuran: bufM.length });
+      } catch (e) { return json({ ok: 0, e: "Gagal menyimpan lagu: " + String(e?.message ?? e) }, 500); }
     }
     if (url.pathname.toLowerCase() === "/chatimg") {
       // Gambar chat room disimpan di VPS sendiri. Supabase menolak unggahan

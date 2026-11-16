@@ -393,6 +393,13 @@ object AgoraVoice {
         return try {
             stopMusic()
             val mp = MediaPlayer()
+            // Sifat audio musik supaya jelas dan tidak ikut jalur suara panggilan.
+            mp.setAudioAttributes(
+                android.media.AudioAttributes.Builder()
+                    .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build(),
+            )
             mp.setDataSource(path)
             mp.isLooping = loop
             mp.setVolume(musicVol / 100f, musicVol / 100f)

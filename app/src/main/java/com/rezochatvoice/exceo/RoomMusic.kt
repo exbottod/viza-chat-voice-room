@@ -73,7 +73,7 @@ object MusicEngine {
     var current by mutableStateOf(-1)
     var playing by mutableStateOf(false)
     var looping by mutableStateOf(false)
-    var volume by mutableStateOf(80)
+    var volume by mutableStateOf(100)
 
     /** Pesan galat saat lagu gagal dibagikan ke room. */
     var galatMusik by mutableStateOf("")

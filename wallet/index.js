@@ -1654,6 +1654,13 @@ const ADMIN_EMAIL = "bangexx01@gmail.com";
 // Email admin yang boleh memakai panel developer (Rezo dan Viza).
 const ADMIN_SEMUA = [ADMIN_EMAIL];
 const adalahAdmin = (s) => !!s && ADMIN_SEMUA.includes(String(s.email || "").toLowerCase());
+// Staf panel (manager/admin) boleh memakai fitur panel. Hanya pengelolaan staf
+// dan penghapusan akun yang tetap khusus developer.
+async function bolehPanel(env, sesi) {
+  if (!sesi) return false;
+  if (adalahAdmin(sesi)) return true;
+  try { return (await peranStaf(env, sesi.uid)).length > 0; } catch { return false; }
+}
 const cache = new Map();
 
 async function cfgRtdb(path, env) {
@@ -2772,7 +2779,7 @@ async function panel(env, body) {
   const dev = adalahAdmin(sesi);
 
   if (aksi === "cek_galat") {
-    if (!dev) return json({ ok: 0, e: "Hanya admin" }, 403);
+    if (!(await bolehPanel(env, sesi))) return json({ ok: 0, e: "Hanya admin" }, 403);
     const r = await pipe(env, [{ sql: "select uid, aksi, pesan, at from wallet_galat order by at desc limit 30" }]);
     return json({ ok: 1, baris: r[0].rows });
   }
@@ -3149,9 +3156,6 @@ async function admin(env, body) {
     "panel_revoke",
     "delete_user",
     "delete_users",
-    "reset_all",
-    "reset_gem_all",
-    "reset_all_assets",
   ];
   if (!devPanel && khususDev.includes(op)) {
     return json({ ok: 0, e: "Hanya admin" }, 403);
@@ -4714,7 +4718,7 @@ export default {
       if (url.searchParams.get("raw") === "1") {
         const sesiR = await sesiDariToken(url.searchParams.get("t") ?? "");
         if (!sesiR) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
-        if (!adalahAdmin(sesiR)) return json({ ok: 0, e: "Hanya admin" }, 403);
+        if (!(await bolehPanel(env, sesiR))) return json({ ok: 0, e: "Hanya admin" }, 403);
         try {
           const buf = Buffer.from(await req.arrayBuffer());
           return await asetUpload(env, {
@@ -4729,14 +4733,14 @@ export default {
       if (!bA) return json({ ok: 0, e: "Body tidak valid" }, 400);
       const sesiA = await sesiDariToken(bA.t ?? "");
       if (!sesiA) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
-      if (!adalahAdmin(sesiA)) return json({ ok: 0, e: "Hanya admin" }, 403);
+      if (!(await bolehPanel(env, sesiA))) return json({ ok: 0, e: "Hanya admin" }, 403);
       try { return await asetUpload(env, bA); }
       catch (e) { return json({ ok: 0, e: String(e?.message ?? e) }, 502); }
     }
     if (url.pathname.toLowerCase() === "/aset-list") {
       const sesiL = await sesiDariToken(url.searchParams.get("t") ?? "");
       if (!sesiL) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
-      if (!adalahAdmin(sesiL)) return json({ ok: 0, e: "Hanya admin" }, 403);
+      if (!(await bolehPanel(env, sesiL))) return json({ ok: 0, e: "Hanya admin" }, 403);
       try { return json({ ok: 1, list: await asetDaftar(env) }); }
       catch (e) { return json({ ok: 0, e: String(e?.message ?? e) }, 502); }
     }
@@ -4745,7 +4749,7 @@ export default {
       if (!bH) return json({ ok: 0, e: "Body tidak valid" }, 400);
       const sesiH = await sesiDariToken(bH.t ?? "");
       if (!sesiH) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
-      if (!adalahAdmin(sesiH)) return json({ ok: 0, e: "Hanya admin" }, 403);
+      if (!(await bolehPanel(env, sesiH))) return json({ ok: 0, e: "Hanya admin" }, 403);
       const nm = String(bH.nama ?? "").replace(/[^A-Za-z0-9._-]/g, "");
       if (!nm) return json({ ok: 0, e: "Nama berkas kosong" }, 400);
       try { await asetHapus(env, nm); return json({ ok: 1, nama: nm }); }

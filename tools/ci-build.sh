@@ -128,10 +128,12 @@ if [ -n "${GH_TOKEN:-}" ] && command -v gh > /dev/null 2>&1 && [ -z "${SKIP_RELE
   CATATAN="$TMP/catatan-rilis.txt"
   {
     echo "Perbaikan di versi 1.0.$NOMOR:"
+    # Buang baris teknis: penanda skip build, pembaruan halaman unduh, dan catatan rilis.
+    bersih() { sed 's/ \[skip ci\]//g' | grep -viE 'halaman unduh|catatan rilis|^ *$' | head -6 || true; }
     if [ -n "$TAG_LAMA" ]; then
-      git log --no-merges --pretty=format:"- %s" "$TAG_LAMA"..HEAD | head -8
+      git log --no-merges --pretty=format:"- %s" "$TAG_LAMA"..HEAD | bersih
     else
-      git log --no-merges --pretty=format:"- %s" -8
+      git log --no-merges --pretty=format:"- %s" -8 | bersih
     fi
   } > "$CATATAN"
   sed -i '/^$/d' "$CATATAN"

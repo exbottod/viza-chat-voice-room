@@ -10,6 +10,13 @@ on:
         required: false
   push:
     branches: [main]
+    # Perubahan yang hanya di server VPS / panel / dokumen tidak perlu APK baru.
+    paths-ignore:
+      - "wallet/**"
+      - "docs/**"
+      - "tools/ci-unduh.py"
+      - "tools/perbarui-dompet-viza.sh"
+      - "**/*.md"
 
 permissions:
   contents: write

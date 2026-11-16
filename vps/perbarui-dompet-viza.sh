@@ -21,7 +21,8 @@ echo "== 2/4 Unduh kode baru =="
 # Nama berkas sementara harus berakhiran .mjs supaya "node --check" mau memeriksanya
 # (Node menolak ekstensi .baru dengan ERR_UNKNOWN_FILE_EXTENSION).
 BARU="$DIR/.index-baru-$$.mjs"
-curl -fsSL "$SUMBER" -o "$BARU" || { echo "unduh gagal"; rm -f "$BARU"; exit 1; }
+# Penanda waktu supaya cache GitHub tidak menyajikan kode lama.
+curl -fsSL "$SUMBER?v=$(date +%s)" -o "$BARU" || { echo "unduh gagal"; rm -f "$BARU"; exit 1; }
 node --check "$BARU" || { echo "kode baru tidak sah, dibatalkan"; rm -f "$BARU"; exit 1; }
 grep -q "async function siapTabel" "$BARU" || { echo "kode baru tidak memuat siapTabel, dibatalkan"; rm -f "$BARU"; exit 1; }
 mv "$BARU" "$DIR/index.js"
@@ -77,6 +78,13 @@ for i in $(seq 1 20); do
 done
 PORT=$(cat /var/lib/viza-port 2>/dev/null || echo 8092)
 echo -n "health lokal: "; curl -s --max-time 6 "http://127.0.0.1:$PORT/health"; echo
+echo
+VERSI=$(curl -s --max-time 3 "http://127.0.0.1:$PORT/health" | sed -n 's/.*"v":"\([^"]*\)".*/\1/p')
+echo "versi server sekarang: ${VERSI:-tidak terbaca}"
+case "$VERSI" in
+  viza-2026-11-16-email-lookup|viza-2026-11-1[7-9]*|viza-2026-1[2-9]*) echo "OK: kode terbaru sudah jalan." ;;
+  *) echo "PERINGATAN: kode lama masih jalan. Jalankan skrip ini sekali lagi." ;;
+esac
 
 echo "== 4/4 Pancing pembuatan tabel lalu periksa =="
 curl -s -o /dev/null --max-time 8 -X POST -H "content-type: application/json" -d '{}' "http://127.0.0.1:$PORT/admin"

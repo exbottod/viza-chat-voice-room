@@ -1,4 +1,1 @@
-• Skrip VPS: penanda waktu unduhan dan cek versi setelah restart
-• Panel: email sesi diambil dari Firebase Auth kalau token tidak membawanya
-• Versi server: penanda whoami
-• Panel: diagnosa whoami dan pengenalan staf lewat uid/stafApk
+• Crazy Fruit: dialog hasil menutup sendiri 3 detik dan menampilkan top 1/2/3 menang hari ini secara l

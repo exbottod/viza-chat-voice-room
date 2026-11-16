@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.173",
-  "catatan": "• Skrip VPS: penanda waktu unduhan dan cek versi setelah restart\n• Panel: email sesi diambil dari Firebase Auth kalau token tidak membawanya\n• Versi server: penanda whoami\n• Panel: diagnosa whoami dan pengenalan staf lewat uid/stafApk",
-  "ukuran_apk": 54749169,
-  "sha256_apk": "b065ed10c9d34de27ef07ff173fcce785dfe2fca093878157065874740dd84b4",
+  "versi": "1.0.174",
+  "catatan": "• Crazy Fruit: dialog hasil menutup sendiri 3 detik dan menampilkan top 1/2/3 menang hari ini secara l",
+  "ukuran_apk": 54752284,
+  "sha256_apk": "f25aba4ed20542955a990d099e1e0ee9734b7088a670bd5ebf2aca2e063a0170",
   "abis": {
     "arm64": {
-      "ukuran": 54749169,
-      "sha256": "b065ed10c9d34de27ef07ff173fcce785dfe2fca093878157065874740dd84b4"
+      "ukuran": 54752284,
+      "sha256": "f25aba4ed20542955a990d099e1e0ee9734b7088a670bd5ebf2aca2e063a0170"
     },
     "armv7": {
-      "ukuran": 52900311,
-      "sha256": "b47da2eb8da2d88f0a67718ed61b441275b5ae8eedffc73c37ac2533496dbd26"
+      "ukuran": 52903435,
+      "sha256": "f22fc2851f0ff43ac1e68bea32d03da3517fdb36a1d91e89876ae86ce23b8c7b"
     },
     "universal": {
-      "ukuran": 73165136,
-      "sha256": "0872f60b1997624c86456e7110a1358bdf85b34043ef25f24a98cc1239e1219b"
+      "ukuran": 73168256,
+      "sha256": "c37488e803ff2116cbb77528bc8cbdd8dd7a724d5af55aa7daaee9477da258c8"
     }
   }
 }

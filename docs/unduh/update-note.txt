@@ -1,1 +1,1 @@
-• Efek masuk SVGA selalu tampil: kalau aset efek masuk untuk tingkat VIP user belum ada di panel (atau
+• Efek masuk dan banner masuk kini dipasang bersamaan: kalau banner ada tetapi aset efek masuk tingkat

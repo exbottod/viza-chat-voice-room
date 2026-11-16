@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.190",
-  "catatan": "• Efek masuk SVGA selalu tampil: kalau aset efek masuk untuk tingkat VIP user belum ada di panel (atau",
-  "ukuran_apk": 54771572,
-  "sha256_apk": "f8667308be48585c32c67ee43cb5fd16bf7d157796fbb36cdeddb70c9efd01d0",
+  "versi": "1.0.191",
+  "catatan": "• Efek masuk dan banner masuk kini dipasang bersamaan: kalau banner ada tetapi aset efek masuk tingkat",
+  "ukuran_apk": 54771407,
+  "sha256_apk": "6657a0b1d3892ce18f5018b7e067516d228f2473da2f7035aeb846fda4201c5b",
   "abis": {
     "arm64": {
-      "ukuran": 54771572,
-      "sha256": "f8667308be48585c32c67ee43cb5fd16bf7d157796fbb36cdeddb70c9efd01d0"
+      "ukuran": 54771407,
+      "sha256": "6657a0b1d3892ce18f5018b7e067516d228f2473da2f7035aeb846fda4201c5b"
     },
     "armv7": {
-      "ukuran": 52922730,
-      "sha256": "832292fab6f78f9cabfb65aadec74f9a2b15692ccdaabfd19bd4e65848b60b90"
+      "ukuran": 52922559,
+      "sha256": "b31ca244c04bc11b59763e5ee9f0418cdec640f1b903917b50d80bb2b67a75de"
     },
     "universal": {
-      "ukuran": 73187546,
-      "sha256": "0615dce2c3dbb84cc4423ea061d00e3c604a39e7994b52690ca55325b30ba8c9"
+      "ukuran": 73187378,
+      "sha256": "cc53a5a4d55c25785b9a0c8f4c90fc11acdab4875bb16747e6bf622d969dbbd3"
     }
   }
 }

@@ -192,16 +192,42 @@ def main():
     if subprocess.run(["git", "diff", "--cached", "--quiet"]).returncode == 0:
         print("Tidak ada perubahan halaman unduh")
         return 0
-    subprocess.run(["git", "commit", "-m", pesan], check=True)
-    # Tarik dulu kalau ada commit lain, lalu coba push beberapa kali.
-    for coba in range(4):
-        subprocess.run(["git", "pull", "--rebase", "--autostash", "origin",
-                        os.environ.get("GITHUB_REF_NAME", "main")], check=False)
-        if subprocess.run(["git", "push"]).returncode == 0:
+    # Simpan dulu isi berkas hasil generate. Kalau ada commit lain masuk ke main
+    # saaat build berjalan, rebase dulu bentrok di berkas ini (dulu CI gagal dan
+    # halaman unduh tertinggal). Jadi: tarik main terbaru, tulis ulang berkas
+    # hasil generate, commit, push, ulangi kalau kalah balapan.
+    import time as _t
+    simpanan = {}
+    for akar, _, nama in os.walk(TARGET):
+        for f in nama:
+            fp = os.path.join(akar, f)
+            simpanan[fp] = open(fp, "rb").read()
+    cabang = os.environ.get("GITHUB_REF_NAME", "main")
+
+    def tulis_ulang():
+        for fp, isi in simpanan.items():
+            os.makedirs(os.path.dirname(fp) or ".", exist_ok=True)
+            open(fp, "wb").write(isi)
+
+    berhasil = False
+    for coba in range(6):
+        subprocess.run(["git", "rebase", "--abort"], check=False,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(["git", "fetch", "origin", cabang], check=False,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(["git", "reset", "--hard", f"origin/{cabang}"], check=False,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        tulis_ulang()
+        subprocess.run(["git", "add", "-A", TARGET], check=True)
+        if subprocess.run(["git", "diff", "--cached", "--quiet"]).returncode == 0:
+            print("Halaman unduh sudah sama dengan versi terbaru")
+            return 0
+        subprocess.run(["git", "commit", "-m", pesan], check=True)
+        if subprocess.run(["git", "push", "origin", f"HEAD:{cabang}"]).returncode == 0:
+            berhasil = True
             break
-        import time as _t
-        _t.sleep(5 * (coba + 1))
-    else:
+        _t.sleep(3 * (coba + 1))
+    if not berhasil:
         # Dulu kegagalan push hanya dicetak lalu langkah CI tetap "sukses",
         # akibatnya halaman unduh tertinggal di versi lama dan dialog pembaruan
         # tidak pernah muncul. Sekarang kegagalan ini menggagalkan build.

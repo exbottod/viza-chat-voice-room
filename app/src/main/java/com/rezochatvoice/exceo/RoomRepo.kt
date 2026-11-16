@@ -548,8 +548,7 @@ object RoomRepo {
     } catch (e: kotlinx.coroutines.CancellationException) {
         throw e
     } catch (e: Exception) {
-        aksiKelolaRoom(roomId, "chat") ?: return null
-        e.message ?: "Gagal menghapus chat"
+        if (aksiKelolaRoom(roomId, "chat") == null) null else (e.message ?: "Gagal menghapus chat")
     }
 
     suspend fun join(roomId: String, name: String, vip: Int = 0, entry: String = "", banner: String = "") {
@@ -691,8 +690,8 @@ object RoomRepo {
     } catch (e: kotlinx.coroutines.CancellationException) {
         throw e
     } catch (e: Exception) {
-        aksiKelolaRoom(roomId, "unban", org.json.JSONObject().put("uid", uid)) ?: return null
-        e.message ?: "Gagal membuka kick"
+        if (aksiKelolaRoom(roomId, "unban", org.json.JSONObject().put("uid", uid)) == null) null
+        else (e.message ?: "Gagal membuka kick")
     }
 
     fun observeBans(roomId: String, onChange: (List<RoomBan>) -> Unit): Reg =
@@ -781,8 +780,8 @@ object RoomRepo {
     } catch (e: kotlinx.coroutines.CancellationException) {
         throw e
     } catch (e: Exception) {
-        aksiKelolaRoom(roomId, "kursi", org.json.JSONObject().put("index", index)) ?: return null
-        e.message ?: "Gagal menurunkan dari mic"
+        if (aksiKelolaRoom(roomId, "kursi", org.json.JSONObject().put("index", index)) == null) null
+        else (e.message ?: "Gagal menurunkan dari mic")
     }
 
     suspend fun setSeatMuted(roomId: String, index: Int, muted: Boolean) {

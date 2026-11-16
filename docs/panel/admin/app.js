@@ -64,9 +64,51 @@ const kumpulan = (nama) => collection(db, nama);
  *  jadi semua simpan/hapus harus menulis ke keduanya. Kunci RTDB tidak boleh memuat . # $ [ ] / */
 const kunciVip = (id) => String(id).replace(/[.#$\[\]/]/g, "_");
 async function simpanVip(id, data) {
-  let galat = null;
-  try { await setDoc(doc(db, "vipConfig", id), data, { merge: true }); } catch (e) { galat = e; }
-  try { await dUpdate(dRef(rtdb, "vipCfg/" + kunciVip(id)), data); galat = null; } catch (e) { if (galat) throw e; }
+  let galatFs = null;
+  try { await setDoc(doc(db, "vipConfig", id), data, { merge: true }); } catch (e) { galatFs = e; }
+  // APK membaca RTDB lebih dulu dan MENGABAIKAN Firestore saat RTDB sudah ada.
+  // Jadi kalau tulisan RTDB gagal, item akan tampak di panel tapi tidak pernah
+  // muncul di Store aplikasi. Dulu kegagalan ini ditelan diam-diam.
+  let galatRtdb = null;
+  try {
+    await dUpdate(dRef(rtdb, "vipCfg/" + kunciVip(id)), data);
+    const cek = await dGet(dRef(rtdb, "vipCfg/" + kunciVip(id)));
+    if (!cek.exists()) galatRtdb = new Error("tulisan tidak terbaca kembali");
+  } catch (e) { galatRtdb = e; }
+  if (galatRtdb) {
+    throw new Error("Gagal menulis ke RTDB (sumber yang dibaca APK): " + (galatRtdb.message || galatRtdb));
+  }
+  if (galatFs) console.warn("vipConfig Firestore dilewati:", galatFs.code || galatFs.message);
+}
+
+/** Samakan RTDB dengan panel: item yang cuma ada di Firestore (karena tulisan
+ *  RTDB dulu gagal) disalin ke RTDB supaya muncul di Store aplikasi. */
+async function sinkronVipRtdb(daftar) {
+  if (!Array.isArray(daftar) || !daftar.length) return 0;
+  let ada;
+  try {
+    const sn = await dGet(dRef(rtdb, "vipCfg"));
+    ada = new Set();
+    if (sn.exists()) sn.forEach((c) => ada.add(c.key));
+  } catch (e) {
+    return 0;
+  }
+  let n = 0;
+  for (const it of daftar) {
+    if (!it || !it.id) continue;
+    const k = kunciVip(it.id);
+    if (ada.has(k)) continue;
+    const data = {};
+    for (const [kk, vv] of Object.entries(it)) {
+      if (kk.startsWith("_") || vv === undefined) continue;
+      data[kk] = vv;
+    }
+    try {
+      await dUpdate(dRef(rtdb, "vipCfg/" + k), data);
+      n += 1;
+    } catch (e) { /* dicoba lagi saat halaman dibuka berikutnya */ }
+  }
+  return n;
 }
 /** Hapus aset dari SEMUA tempat: dokumen Firestore bernama sama, dokumen lain
  *  yang membawa id yang sama, dan semua node RTDB dengan key atau id tersebut.
@@ -2726,6 +2768,8 @@ async function gambarAsetVps() {
 
 async function gambarAset() {
   const semua = await ambilSemuaVip(400).catch(() => []);
+  const disalin = await sinkronVipRtdb(semua);
+  if (disalin > 0) toast(disalin + " item disalin ke RTDB, sekarang terbaca APK");
   const asetVip = semua.filter((d) => d.meta === true && Number(d.n) >= 1 && Number(d.n) <= 9);
   const itemToko = semua.filter((d) => d.id && d.slot && !d.meta);
 

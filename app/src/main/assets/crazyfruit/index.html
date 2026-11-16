@@ -66,5 +66,50 @@
         window.__cfTampilError = tampil;
       })();
     </script>
+      <script>
+      // Paksa tinggi nyata (piksel) ke html, body, #root dan anak-anaknya.
+      // Persen/100vh bisa dinilai 0 di WebView tertentu; piksel dari
+      // window.innerHeight selalu benar (layar terbaca 399x822).
+      (function () {
+        function tinggi() {
+          var h = window.innerHeight || document.documentElement.clientHeight || 0;
+          if (h < 120) h = screen.height || 0;
+          return h;
+        }
+        function pasang(el, v) {
+          if (!el || !el.style) return;
+          if (el.style.getPropertyValue("height") !== v) {
+            el.style.setProperty("height", v, "important");
+            el.style.setProperty("min-height", v, "important");
+            el.style.setProperty("max-height", v, "important");
+          }
+        }
+        function jalan() {
+          var h = tinggi();
+          if (!h) return;
+          var v = h + "px";
+          pasang(document.documentElement, v);
+          pasang(document.body, v);
+          var root = document.getElementById("root");
+          pasang(root, v);
+          var a1 = root && root.firstElementChild;
+          pasang(a1, v);
+          var a2 = a1 && a1.firstElementChild;
+          pasang(a2, v);
+          var info = document.getElementById("cf-info");
+          if (info) {
+            info.textContent = "fix " + window.innerWidth + "x" + h +
+              " · root" + (root ? Math.round(root.getBoundingClientRect().height) : -1) +
+              " · a1" + (a1 ? Math.round(a1.getBoundingClientRect().height) : -1) +
+              " · a2" + (a2 ? Math.round(a2.getBoundingClientRect().height) : -1);
+          }
+        }
+        var n = 0;
+        var t = setInterval(function () { try { jalan(); } catch (e) {} if (++n > 60) clearInterval(t); }, 200);
+        window.addEventListener("resize", function () { try { jalan(); } catch (e) {} });
+        window.addEventListener("load", function () { try { jalan(); } catch (e) {} });
+        try { jalan(); } catch (e) {}
+      })();
+    </script>
   </body>
 </html>

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="id">
+<html lang="id" style="height:100%">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
@@ -8,7 +8,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Orbitron:wght@700;900&display=swap" />
     <style>
-      html, body, #root { height: 100%; margin: 0; padding: 0; background: #0a0f1e; overflow: hidden; }
+      html, body { height: 100% !important; min-height: 100% !important; margin: 0; padding: 0; background: #0a0f1e; overflow: hidden; }
+      #root { height: 100% !important; min-height: 100vh !important; }
+      #root > div { height: 100vh !important; min-height: 100vh !important; }
       #cf-info { position: fixed; left: 6px; bottom: 2px; z-index: 99998; color: #8fa3cc;
         font: 9px/1.2 monospace; opacity: .75; pointer-events: none; }
       #cf-error { display: none; position: fixed; inset-inline: 0; bottom: 0; z-index: 99999;
@@ -17,7 +19,7 @@
     </style>
     <script defer src="/assets/crazyfruit/assets/index-XzU3eA8Q.js"></script>
   </head>
-  <body>
+  <body style="height:100%;margin:0">
     <div id="root"></div>
     <div id="cf-error"></div>
     <div id="cf-info">html…</div>
@@ -34,8 +36,9 @@
             var r = document.getElementById("root");
             var anak = r ? r.children.length : -1;
             var tinggi = r ? Math.round(r.getBoundingClientRect().height) : -1;
-            var teks = "ok · cr" + v + " · anak" + anak + " · h" + tinggi +
-              " · " + window.innerWidth + "x" + window.innerHeight;
+            var anak1 = r && r.firstElementChild ? Math.round(r.firstElementChild.getBoundingClientRect().height) : -1;
+            var teks = "ok · cr" + v + " · anak" + anak + " · h" + tinggi + " · a1:" + anak1 +
+              " · css" + document.styleSheets.length + " · " + window.innerWidth + "x" + window.innerHeight;
             document.getElementById("cf-info").textContent = teks;
             if (anak < 1 || tinggi < 80) tampil("Layar kosong (" + teks + ")");
           } catch (err) {}

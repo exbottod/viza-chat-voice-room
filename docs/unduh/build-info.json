@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.186",
-  "catatan": "• Suara antar room dipisah: token suara sebelumnya hanya membaca kolom room, padahal HP mengirim chann",
-  "ukuran_apk": 54758544,
-  "sha256_apk": "cff73b7f1513031760fd2641837e9d6d5b12edb5db6956f084ce5686fae3408e",
+  "versi": "1.0.187",
+  "catatan": "• Musik room tidak terdengar di user lain: keadaan lagu dulu disimpan di Realtime Database yang sering",
+  "ukuran_apk": 54761484,
+  "sha256_apk": "d99bedd1c9e3b801296010970ce2640bd0f5c8f3b19221eb8d892e88bf179367",
   "abis": {
     "arm64": {
-      "ukuran": 54758544,
-      "sha256": "cff73b7f1513031760fd2641837e9d6d5b12edb5db6956f084ce5686fae3408e"
+      "ukuran": 54761484,
+      "sha256": "d99bedd1c9e3b801296010970ce2640bd0f5c8f3b19221eb8d892e88bf179367"
     },
     "armv7": {
-      "ukuran": 52909699,
-      "sha256": "aef90b3abc97b537a5356c14ea561cb936180d82fad7ab7cca1250e91424bbf4"
+      "ukuran": 52912632,
+      "sha256": "ef92cb542f9a1e3c9e1a51129558bdbb68656c3879d1b241892d9547bb01a5e2"
     },
     "universal": {
-      "ukuran": 73174518,
-      "sha256": "1df041ed112a24016fdf29e40ab9be0b73a49b726199b28893fa88d17bcde83f"
+      "ukuran": 73177441,
+      "sha256": "9693c7114db16bdce1a699cd92bcedf25b3602dd357479136f757ef91d8e8e40"
     }
   }
 }

@@ -1,1 +1,1 @@
-• Suara antar room dipisah: token suara sebelumnya hanya membaca kolom room, padahal HP mengirim chann
+• Musik room tidak terdengar di user lain: keadaan lagu dulu disimpan di Realtime Database yang sering

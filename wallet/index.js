@@ -1660,8 +1660,30 @@ const adalahAdmin = (s) => !!s && ADMIN_SEMUA.includes(String(s.email || "").toL
 // panel_staf (staf panel di dalam APK). Keduanya harus diakui di sini, kalau tidak
 // admin panel web selalu ditolak dengan "Hanya admin".
 const cachePanelWeb = new Map();
+// Sebagian token (login nomor HP / sesi lama) tidak membawa email. Ambil dari
+// Firebase Auth lewat service account supaya peran panel web tetap terbaca.
+async function emailSesi(env, sesi) {
+  const langsung = String(sesi?.email || "").toLowerCase();
+  if (langsung) return langsung;
+  const uid = String(sesi?.uid || "");
+  if (!uid) return "";
+  try {
+    const token = await tokenLayanan(env);
+    if (!token) return "";
+    const proyek = String(env.FIREBASE_PROJECT || "my-app-e7f8c").trim();
+    const r = await fetch(`https://identitytoolkit.googleapis.com/v1/projects/${proyek}/accounts:lookup`, {
+      method: "POST",
+      headers: { authorization: "Bearer " + token, "content-type": "application/json" },
+      body: JSON.stringify({ localId: [uid] }),
+    });
+    if (!r.ok) return "";
+    const d = await r.json();
+    return String(d?.users?.[0]?.email || "").toLowerCase();
+  } catch { return ""; }
+}
+
 async function peranPanelWeb(env, sesi) {
-  const email = String(sesi?.email || "").toLowerCase();
+  const email = await emailSesi(env, sesi);
   if (!email) return "";
   const simpan = cachePanelWeb.get(email);
   if (simpan && simpan.sampai > Date.now()) return simpan.peran;
@@ -3217,7 +3239,7 @@ async function admin(env, body) {
     const web = await peranPanelWeb(env, sesi);
     return json({
       ok: 0,
-      e: `Hanya admin [email=${sesi.email || "-"} panelWeb=${web || "-"} stafApk=- dev=0]`,
+      e: `Hanya admin [email=${(await emailSesi(env, sesi)) || "-"} panelWeb=${web || "-"} stafApk=- dev=0]`,
     }, 403);
   }
   const target = String(p.uid ?? "");
@@ -5083,7 +5105,7 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           stafAktif = Number(r[0].rows[0]?.a ?? 0);
           peran = r[1].rows.map((x) => String(x.role) + ":" + Number(x.n));
         } catch (e) { /* tabel belum ada */ }
-        return json({ ok: 1, v: "viza-2026-11-16-whoami", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
+        return json({ ok: 1, v: "viza-2026-11-16-email-lookup", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
       } catch (e) {
         return json({ ok: 0, v: "viza-2026-11-13-mandiri", db: String(e?.message ?? e) }, 500);
       }

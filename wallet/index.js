@@ -4018,6 +4018,16 @@ async function wavePlay(req, env) {
     });
   }
 
+  if (ep.includes("cfrank")) {
+    const batas = Math.min(20, Math.max(1, Number(url.searchParams.get("limit") || 10)));
+    try {
+      const daftar = await cfPeringkat(env, batas, url.origin);
+      return balas({ success: true, message: "success", data: daftar });
+    } catch (e) {
+      return balas({ success: false, message: String(e?.message ?? e), data: [] }, 200);
+    }
+  }
+
   if (ep.includes("submitflow")) {
     const amount = Math.trunc(Number(body.betAmount ?? 0));
     const kind = Math.trunc(Number(body.type ?? 0));
@@ -4044,6 +4054,20 @@ async function wavePlay(req, env) {
       return balas({ success: false, message: msg, data: { id: uid, balance: Number(pl.balance) } }, 200);
     }
     const plAkhir = await hivePemain(env, uid);
+    if (kind === 2 && amount > 0) {
+      const namaGame = String(body.gameName ?? body.gameId ?? "").toLowerCase();
+      if (namaGame.includes("crazyfruit") || namaGame.includes("fruit")) {
+        try {
+          await cfPastikan(env);
+          await pipe(env, [
+            {
+              sql: `insert into cf_menang (uid, nama, win, waktu) values (?, ?, ?, ?)`,
+              args: [T(uid), T(String(plAkhir.name || "Player")), I(amount), I(Date.now())],
+            },
+          ]);
+        } catch { /* peringkat opsional, jangan gagalkan pembayaran */ }
+      }
+    }
     return balas({
       success: true,
       message: "success",
@@ -4090,6 +4114,48 @@ async function fotoProfilRtdb(env, uid) {
     }
   } catch { hasil = ""; }
   fotoCache.set(kunci, { t: Date.now(), v: hasil });
+  return hasil;
+}
+
+// ---------- Peringkat Crazy Fruit ----------
+// Kemenangan dicatat saat dompet menerima kemenangan (submitFlow type 2), jadi
+// angkanya berasal dari server, bukan dari laporan HP pemain.
+let cfSiap = null;
+function cfPastikan(env) {
+  if (!cfSiap) {
+    cfSiap = pipe(env, [
+      { sql: `create table if not exists cf_menang (
+          uid text not null, nama text not null default '',
+          win integer not null default 0, waktu integer not null default 0)`, args: [] },
+      { sql: `create index if not exists cf_menang_win on cf_menang (win desc)`, args: [] },
+    ]).catch(() => {});
+  }
+  return cfSiap;
+}
+
+async function cfPeringkat(env, batas, asal) {
+  await cfPastikan(env);
+  const r = await pipe(env, [
+    {
+      sql: `select uid, max(nama) nama, sum(win) win, count(*) kali from cf_menang
+            group by uid order by win desc limit ?`,
+      args: [I(batas)],
+    },
+  ]);
+  const baris = r[0].rows || [];
+  const hasil = [];
+  for (const x of baris) {
+    const foto = await fotoProfilRtdb(env, x.uid);
+    let uri = "";
+    if (foto) uri = /^https?:\/\//i.test(foto) ? foto : `${asal}/avatar/${encodeURIComponent(String(x.uid))}`;
+    hasil.push({
+      id: String(x.uid),
+      name: String(x.nama ?? "").trim() || "Player",
+      win: Number(x.win ?? 0),
+      times: Number(x.kali ?? 0),
+      photo: uri,
+    });
+  }
   return hasil;
 }
 
@@ -4689,6 +4755,7 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           { sql: "select avatar from wave_players where uid = ?", args: [T(uidAv)] },
         ]);
         let av = String(rAv[0].rows[0]?.avatar ?? "").trim();
+        if (!av) av = await fotoProfilRtdb(env, uidAv);
         if (!av) return new Response("", { status: 404 });
         if (/^https?:\/\//i.test(av)) return Response.redirect(av, 302);
         av = av.replace(/^data:image\/[a-z]+;base64,/i, "").replace(/\s+/g, "");

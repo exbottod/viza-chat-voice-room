@@ -1,1 +1,4 @@
-• Crazy Fruit: dialog hasil menutup sendiri 3 detik dan menampilkan top 1/2/3 menang hari ini secara l
+• Store: gabungkan Firestore dan RTDB, field store hilang dianggap dijual, item hanya disembunyikan bi
+• Panel: tombol Cek tautan item, endpoint /aset-cek untuk memastikan berkas item masih bisa dibuka APK
+• Panel: kegagalan tulis RTDB tidak lagi disembunyikan, item lama yang hanya ada di Firestore otomatis
+• Panel aset: gambar besar dikecilkan otomatis sebelum unggah, batas waktu 5 menit, info ukuran asli

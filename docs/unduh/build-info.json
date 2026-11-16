@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.174",
-  "catatan": "• Crazy Fruit: dialog hasil menutup sendiri 3 detik dan menampilkan top 1/2/3 menang hari ini secara l",
-  "ukuran_apk": 54752284,
-  "sha256_apk": "f25aba4ed20542955a990d099e1e0ee9734b7088a670bd5ebf2aca2e063a0170",
+  "versi": "1.0.175",
+  "catatan": "• Store: gabungkan Firestore dan RTDB, field store hilang dianggap dijual, item hanya disembunyikan bi\n• Panel: tombol Cek tautan item, endpoint /aset-cek untuk memastikan berkas item masih bisa dibuka APK\n• Panel: kegagalan tulis RTDB tidak lagi disembunyikan, item lama yang hanya ada di Firestore otomatis\n• Panel aset: gambar besar dikecilkan otomatis sebelum unggah, batas waktu 5 menit, info ukuran asli",
+  "ukuran_apk": 54752339,
+  "sha256_apk": "91d1b16c76ab1a6bff00e9cb08fa566887b4ec43460da489bc97513df9f4224c",
   "abis": {
     "arm64": {
-      "ukuran": 54752284,
-      "sha256": "f25aba4ed20542955a990d099e1e0ee9734b7088a670bd5ebf2aca2e063a0170"
+      "ukuran": 54752339,
+      "sha256": "91d1b16c76ab1a6bff00e9cb08fa566887b4ec43460da489bc97513df9f4224c"
     },
     "armv7": {
-      "ukuran": 52903435,
-      "sha256": "f22fc2851f0ff43ac1e68bea32d03da3517fdb36a1d91e89876ae86ce23b8c7b"
+      "ukuran": 52903491,
+      "sha256": "a00d076df624c71456a4b1864811a80b6ed82da0d53c7a46ddec1caf6ce119c1"
     },
     "universal": {
-      "ukuran": 73168256,
-      "sha256": "c37488e803ff2116cbb77528bc8cbdd8dd7a724d5af55aa7daaee9477da258c8"
+      "ukuran": 73168304,
+      "sha256": "3156f0d1427b08373faf1ba158aaaff2a5daef48d1fdb9903281882130d09b3b"
     }
   }
 }

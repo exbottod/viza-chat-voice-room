@@ -3151,12 +3151,15 @@ async function admin(env, body) {
   const p = body.p ?? {};
   const op = String(p.op ?? "");
   const target = String(p.uid ?? "");
-  const khususDev = [
-    "panel_grant",
-    "panel_revoke",
-    "delete_user",
-    "delete_users",
-  ];
+  // Admin (staf tingkat atas) boleh memakai semua fitur, termasuk hapus akun.
+  // Yang tetap khusus developer hanya memberi/mencabut akses panel itu sendiri.
+  let stafAdmin = false;
+  if (!devPanel) {
+    try { stafAdmin = (await peranStaf(env, sesi.uid)).some((x) => x.role === "admin"); } catch { stafAdmin = false; }
+  }
+  const khususDev = stafAdmin
+    ? ["panel_grant", "panel_revoke"]
+    : ["panel_grant", "panel_revoke", "delete_user", "delete_users"];
   if (!devPanel && khususDev.includes(op)) {
     return json({ ok: 0, e: "Hanya admin" }, 403);
   }

@@ -4176,7 +4176,9 @@ async function wavePlay(req, env) {
       if (req.method === "POST") {
         const winR = Math.max(0, Math.trunc(Number(body.win ?? 0)));
         const betR = Math.max(0, Math.trunc(Number(body.bet ?? 0)));
-        const nomorR = Math.max(0, Math.trunc(Number(body.ronde ?? 0))) || cfRondeSekarang();
+        // Nomor ronde dihitung dari jam server. Angka dari HP bisa beda
+        // (mis. aplikasi versi lama tidak mengirim ronde), jadi tidak dipakai.
+        const nomorR = cfRondeSekarang();
         await cfRondeSimpan(env, uid, String(body.cell ?? ""), winR, betR, nomorR);
       }
       const d = await cfRondeHariIni(env, uid, batasR);
@@ -4444,30 +4446,38 @@ function cfPolaRonde(nomor, rtp) {
  *  satu ronde. */
 async function cfPemenangRonde(env, batas, asal) {
   await cfRondePastikan(env);
-  // Nomor ronde terakhir yang sudah ada pemainnya. Semua pemain di ronde itu
-  // main dengan pola yang sama, jadi daftar pemenangnya sama di semua HP.
-  const r = await pipe(env, [
-    { sql: `select max(ronde) terakhir from cf_ronde where ronde > 0`, args: [] },
-  ]);
-  let nomor = Number(r[0].rows[0]?.terakhir ?? 0);
-  if (!nomor) {
-    const rk = await pipe(env, [{ sql: `select max(at) terakhir from cf_ronde`, args: [] }]);
-    const terakhir = Number(rk[0].rows[0]?.terakhir ?? 0);
-    nomor = terakhir ? Math.floor(terakhir / CF_RONDE_MS) : 0;
+  // Pemenang ronde ditentukan dari WAKTU ronde itu berjalan, bukan dari nomor
+  // ronde yang dikirim HP. Dengan begitu pemenang ronde lama tidak pernah
+  // nyangkut di dialog (mis. pemain yang sudah berhenti memasang), dan pemain
+  // yang baru menang selalu masuk sebagai Top 1 sesuai nominal menangnya.
+  const P = CF_RONDE_MS;
+  const kini = Date.now();
+  const nomor = cfRondeSekarang(kini);
+  const mulaiKini = nomor * P;
+
+  const ambil = async (mulai, selesai) => {
+    const r = await pipe(env, [
+      {
+        sql: `select uid, sum(win) win, count(*) kali, max(at) at from cf_ronde
+              where at >= ? and at < ? and win > 0 group by uid order by win desc limit ?`,
+        args: [I(mulai), I(selesai), I(batas)],
+      },
+    ]);
+    return r[0].rows || [];
+  };
+
+  // Ronde yang baru selesai. Kalau di ronde itu belum ada yang menang (mis.
+  // semua kalah), pakai ronde yang sedang berjalan supaya kotak tidak kosong.
+  // Ronde berjalan dulu: kemenangan ditulis tepat saat hasil keluar, jadi
+  // pemenang ronde ini ada di jendela ronde yang sedang berjalan. Kalau belum
+  // ada (mis. sedang fase taruhan), pakai ronde sebelumnya.
+  let mulai = mulaiKini;
+  let rows = await ambil(mulai, mulaiKini + P);
+  if (!rows.length) {
+    mulai = mulaiKini - P;
+    rows = await ambil(mulai, mulaiKini);
   }
-  if (!nomor) return { ronde: 0, list: [] };
-  const mulaiRonde = nomor * CF_RONDE_MS;
-  const mulai = mulaiRonde;
-  const panjang = CF_RONDE_MS;
-  const pakaiNomor = true;
-  const r2 = await pipe(env, [
-    {
-      sql: `select uid, sum(win) win, count(*) kali, max(at) at from cf_ronde
-            where ronde = ? and win > 0 group by uid order by win desc limit ?`,
-      args: [I(nomor), I(batas)],
-    },
-  ]);
-  const rows = r2[0].rows || [];
+
   const list = [];
   for (const x of rows) {
     let nama = "Player";
@@ -4479,7 +4489,7 @@ async function cfPemenangRonde(env, batas, asal) {
     const uri = foto ? (/^https?:\/\//i.test(foto) ? foto : `${asal}/avatar/${encodeURIComponent(String(x.uid))}`) : "";
     list.push({ id: String(x.uid), name: nama, win: Number(x.win ?? 0), times: Number(x.kali ?? 0), at: Number(x.at ?? 0), photo: uri });
   }
-  return { ronde: mulaiRonde, list };
+  return { ronde: mulai, list };
 }
 
 /** Pemain yang SEDANG main sekarang (ronde berjalan) beserta kemenangan
@@ -4487,12 +4497,15 @@ async function cfPemenangRonde(env, batas, asal) {
  *  yang benar-benar sedang bermain, bukan papan harian yang lambat berubah. */
 async function cfRondeLive(env, batas, asal) {
   await cfRondePastikan(env);
-  const jendela = 3 * 60 * 1000; // pemain dianggap "lagi main" 3 menit terakhir
-  const mulai = Date.now() - jendela;
+  // Hanya pemain yang benar-benar ikut di ronde berjalan (atau ronde yang baru
+  // selesai), supaya nama pemain yang sudah berhenti memasang tidak nyangkut.
+  const P = CF_RONDE_MS;
+  const nomorKini = cfRondeSekarang();
+  const mulai = (nomorKini - 1) * P;
   const r = await pipe(env, [
     {
       sql: `select uid, sum(win) win, count(*) kali, max(at) terakhir from cf_ronde
-            where at >= ? group by uid order by win desc, terakhir desc limit ?`,
+            where at >= ? group by uid order by terakhir desc, win desc limit ?`,
       args: [I(mulai), I(batas)],
     },
   ]);
@@ -5391,7 +5404,7 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           stafAktif = Number(r[0].rows[0]?.a ?? 0);
           peran = r[1].rows.map((x) => String(x.role) + ":" + Number(x.n));
         } catch (e) { /* tabel belum ada */ }
-        return json({ ok: 1, v: "viza-2026-11-16-cek-tautan", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
+        return json({ ok: 1, v: "viza-2026-11-16-cek-tautan", rondeMs: CF_RONDE_MS, db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
       } catch (e) {
         return json({ ok: 0, v: "viza-2026-11-13-mandiri", db: String(e?.message ?? e) }, 500);
       }

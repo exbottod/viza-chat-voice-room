@@ -4185,6 +4185,37 @@ async function wavePlay(req, env) {
     }
   }
 
+  if (ep.includes("cflive")) {
+    try {
+      let daftar = await cfRondeLive(env, 12, "https://viza.43-156-99-4.sslip.io");
+      // Kalau belum ada yang main dalam 3 menit terakhir, tampilkan papan hari ini
+      // supaya kotak tidak kosong.
+      if (!daftar.length) {
+        try {
+          daftar = await cfPeringkat(env, 3, "https://viza.43-156-99-4.sslip.io", cfHariWib().mulai);
+        } catch { daftar = []; }
+      }
+      let aku = null;
+      if (uidLog) {
+        const punya = daftar.find((x) => String(x.id) === String(uidLog));
+        aku = punya || { id: String(uidLog) };
+        if (!punya) {
+          try {
+            await cfPastikan(env);
+            const rr = await pipe(env, [{ sql: "select name from wave_players where uid = ?", args: [T(uidLog)] }]);
+            aku.name = String(rr[0].rows[0]?.name ?? "").trim() || "Player";
+          } catch { aku.name = "Player"; }
+          const foto = await fotoProfilRtdb(env, uidLog);
+          aku.photo = foto ? (/^https?:\/\//i.test(foto) ? foto : `https://viza.43-156-99-4.sslip.io/avatar/${encodeURIComponent(String(uidLog))}`) : "";
+          aku.win = 0;
+        }
+      }
+      return balas({ success: true, message: "success", data: { list: daftar, top: daftar.slice(0, 3), aku, detik: 180 } });
+    } catch (e) {
+      return balas({ success: false, message: String(e?.message ?? e), data: { list: [], top: [], aku: null } }, 200);
+    }
+  }
+
   if (ep.includes("cfrank")) {
     const batas = Math.min(20, Math.max(1, Number(url.searchParams.get("limit") || 10)));
     // ?hari=1 -> peringkat hari ini (WIB) saja, dipakai dialog kemenangan.
@@ -4333,6 +4364,42 @@ async function cfPeringkat(env, batas, asal, mulai = 0) {
       name: String(x.nama ?? "").trim() || "Player",
       win: Number(x.win ?? 0),
       times: Number(x.kali ?? 0),
+      photo: uri,
+    });
+  }
+  return hasil;
+}
+
+/** Pemain yang SEDANG main sekarang (ronde berjalan) beserta kemenangan
+ *  masing-masing di ronde ini. Dipakai dialog hasil supaya TOP 3 berisi pemain
+ *  yang benar-benar sedang bermain, bukan papan harian yang lambat berubah. */
+async function cfRondeLive(env, batas, asal) {
+  await cfRondePastikan(env);
+  const jendela = 3 * 60 * 1000; // pemain dianggap "lagi main" 3 menit terakhir
+  const mulai = Date.now() - jendela;
+  const r = await pipe(env, [
+    {
+      sql: `select uid, sum(win) win, count(*) kali, max(at) terakhir from cf_ronde
+            where at >= ? group by uid order by win desc, terakhir desc limit ?`,
+      args: [I(mulai), I(batas)],
+    },
+  ]);
+  const rows = r[0].rows || [];
+  const hasil = [];
+  for (const x of rows) {
+    let nama = "Player";
+    try {
+      const rr = await pipe(env, [{ sql: "select name from wave_players where uid = ?", args: [T(x.uid)] }]);
+      nama = String(rr[0].rows[0]?.name ?? "").trim() || "Player";
+    } catch { /* nama opsional */ }
+    const foto = await fotoProfilRtdb(env, x.uid);
+    const uri = foto ? (/^https?:\/\//i.test(foto) ? foto : `${asal}/avatar/${encodeURIComponent(String(x.uid))}`) : "";
+    hasil.push({
+      id: String(x.uid),
+      name: nama,
+      win: Number(x.win ?? 0),
+      times: Number(x.kali ?? 0),
+      at: Number(x.terakhir ?? 0),
       photo: uri,
     });
   }

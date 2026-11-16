@@ -86,10 +86,13 @@
     );
     el.innerHTML =
       '<div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.35rem">' +
-      '<span style="font-size:.66rem;font-weight:800;letter-spacing:.6px;color:#ffd75e">TOP 3 MENANG HARI INI</span>' +
+      '<span style="font-size:.66rem;font-weight:800;letter-spacing:.6px;color:#ffd75e">TOP 3 RONDE INI</span>' +
       '<span style="font-size:.6rem;color:#7fd1a0">live</span>' +
       "</div>" +
-      '<div id="cf-top3-isi"><div style="font-size:.68rem;color:#8fa3cc;padding:.25rem 0">Memuat peringkat…</div></div>';
+      '<div id="cf-top3-isi"><div style="font-size:.68rem;color:#8fa3cc;padding:.25rem 0">Memuat peringkat…</div></div>' +
+      '<div id="cf-live" style="margin-top:.45rem;border-top:1px solid rgba(143,163,204,.25);padding-top:.4rem">' +
+      '<div style="font-size:.6rem;font-weight:800;letter-spacing:.5px;color:#7fd1a0;margin-bottom:.2rem">SEDANG MAIN</div>' +
+      '<div id="cf-live-isi"><div style="font-size:.66rem;color:#8fa3cc">Memuat…</div></div></div>';
     return el;
   }
 
@@ -135,8 +138,68 @@
     isi.innerHTML = html;
   }
 
+  function potong(nama, n) {
+    var s = String(nama || "Player");
+    return s.length > n ? s.substr(0, n - 1) + "…" : s;
+  }
+
+  /* Daftar pemain yang sedang bermain (ronde berjalan), dengan foto profil. */
+  function tampilLive(daftar, aku) {
+    var isi = document.getElementById("cf-live-isi");
+    if (!isi) return;
+    var lain = (daftar || []).filter(function (x) {
+      return !(aku && String(x.id) === String(aku.id));
+    });
+    if (!lain.length) {
+      isi.innerHTML = '<div style="font-size:.66rem;color:#8fa3cc">Belum ada pemain lain di ronde ini.</div>';
+      return;
+    }
+    var html = "";
+    for (var i = 0; i < lain.length && i < 6; i++) {
+      html +=
+        '<div style="display:flex;align-items:center;gap:.4rem;padding:.16rem 0">' +
+        '<span style="position:relative;width:1.25rem;height:1.25rem;border-radius:999px;overflow:hidden;background:#22345c;color:#9fb4dd;font-size:.55rem;font-weight:700;display:flex;align-items:center;justify-content:center;border:1px solid rgba(127,209,160,.6)">' +
+        aman(String(lain[i].name || "P").substr(0, 1).toUpperCase()) +
+        (lain[i].photo
+          ? '<img src="' + aman(lain[i].photo) + '" alt="" referrerpolicy="no-referrer" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">'
+          : "") +
+        "</span>" +
+        '<span style="flex:1;min-width:0;font-size:.7rem;color:#dbe6fb;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
+        aman(potong(lain[i].name, 14)) +
+        "</span>" +
+        '<span style="font-size:.68rem;font-weight:800;color:#7fd1a0;font-variant-numeric:tabular-nums">' +
+        angka(lain[i].win) +
+        "</span></div>";
+    }
+    isi.innerHTML = html;
+  }
+
+  /* Isi foto pada baris pemain di dalam dialog (yang tadinya lingkaran kosong). */
+  function pasangFotoSendiri(d, foto) {
+    if (!d || !foto) return;
+    var kandidat = d.querySelectorAll("div,span");
+    for (var i = 0; i < kandidat.length; i++) {
+      var e = kandidat[i];
+      if (e.children.length) continue;
+      if ((e.textContent || "").trim().length > 2) continue;
+      var w = e.getBoundingClientRect().width;
+      if (w < 20 || w > 70) continue;
+      var r = 0;
+      try {
+        r = parseFloat(getComputedStyle(e).borderTopLeftRadius) || 0;
+      } catch (err) {}
+      if (r < w / 2 - 2) continue;
+      if (getComputedStyle(e).backgroundImage && getComputedStyle(e).backgroundImage !== "none") continue;
+      e.style.backgroundImage = 'url("' + String(foto).replace(/"/g, "") + '")';
+      e.style.backgroundSize = "cover";
+      e.style.backgroundPosition = "center";
+      e.textContent = "";
+      break;
+    }
+  }
+
   function muatPeringkat() {
-    var alamat = dasarApi() + "/wave/game/cfRank?hari=1&limit=3&token=" + encodeURIComponent(token());
+    var alamat = dasarApi() + "/wave/game/cfLive?token=" + encodeURIComponent(token());
     var ctl = typeof AbortController === "function" ? new AbortController() : null;
     var batas = setTimeout(function () {
       try {
@@ -150,9 +213,16 @@
       })
       .then(function (j) {
         var d = j && (j.data || j.w || j);
-        if (Array.isArray(d)) tampil(d);
-        else if (d && Array.isArray(d.list)) tampil(d.list);
-        else tampil([]);
+        var daftar = [];
+        var aku = null;
+        if (Array.isArray(d)) daftar = d;
+        else if (d) {
+          daftar = Array.isArray(d.top) ? d.top : Array.isArray(d.list) ? d.list : [];
+          aku = d.aku || null;
+        }
+        tampil(daftar);
+        tampilLive(daftar, aku);
+        if (aku) pasangFotoSendiri(aktif && aktif.node, aku.photo);
       })
       .catch(function () {
         var isi = document.getElementById("cf-top3-isi");
@@ -170,6 +240,7 @@
     if (ok && ok.parentNode) ok.parentNode.insertBefore(el, ok);
     else if (d.firstElementChild) d.firstElementChild.appendChild(el);
     else d.appendChild(el);
+    aktif = { node: d, jamRangking: 0, jamHitung: 0 };
     muatPeringkat();
     var jamRangking = setInterval(function () {
       if (!d.isConnected) return;

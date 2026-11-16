@@ -1,1 +1,3 @@
-APK arm64, armv7, dan universal build otomatis. Paket com.vizachatvoice.app, ditandatangani kunci rilis Viza.
+• Catatan rilis: potong rapi 4 poin teratas [skip ci]
+• Crazy Fruit: foto profil dari server Viza, panel peringkat layar penuh, catatan rilis dari tiap buil
+• Versi 1.0.170 di halaman unduh [skip ci]

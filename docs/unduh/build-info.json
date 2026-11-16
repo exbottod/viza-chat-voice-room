@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.170",
-  "catatan": "APK arm64, armv7, dan universal build otomatis. Paket com.vizachatvoice.app, ditandatangani kunci rilis Viza.",
-  "ukuran_apk": 54748957,
-  "sha256_apk": "040e3879fde61b7ae8b5a968fbae591983949aac6a38e0a7756a7e36888e002f",
+  "versi": "1.0.171",
+  "catatan": "• Catatan rilis: potong rapi 4 poin teratas [skip ci]\n• Crazy Fruit: foto profil dari server Viza, panel peringkat layar penuh, catatan rilis dari tiap buil\n• Versi 1.0.170 di halaman unduh [skip ci]",
+  "ukuran_apk": 54749180,
+  "sha256_apk": "8c0ae77555239918d35fce7930271fab8ba78aa685e2c2606ce3e8c874961248",
   "abis": {
     "arm64": {
-      "ukuran": 54748957,
-      "sha256": "040e3879fde61b7ae8b5a968fbae591983949aac6a38e0a7756a7e36888e002f"
+      "ukuran": 54749180,
+      "sha256": "8c0ae77555239918d35fce7930271fab8ba78aa685e2c2606ce3e8c874961248"
     },
     "armv7": {
-      "ukuran": 52900105,
-      "sha256": "94a3d675832e678be1b13872144bedca7999334058256719f924007e39ce727b"
+      "ukuran": 52900324,
+      "sha256": "beb22376183e9b6b6e74e6a3e9f5ba0d84c8239d4697896e5e3519041599f516"
     },
     "universal": {
-      "ukuran": 73164915,
-      "sha256": "14b87a57acb7a8e5815b4ddf127256a09f2cbe850931815f252b75c65a1b5b43"
+      "ukuran": 73165140,
+      "sha256": "144519b017b5eb1945796c15e6df237cb83e47706392c470923e293b7b1df16d"
     }
   }
 }

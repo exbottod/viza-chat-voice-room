@@ -174,13 +174,21 @@ async function unggahBerkas(berkas, folder, lapor) {
       + "&ext=" + encodeURIComponent(ekstensi);
     const j = await new Promise((selesai, gagal) => {
       const xhr = new XMLHttpRequest();
+      // Progres tidak boleh mundur walau unggahan diulang dari awal.
+      let maks = 0;
+      const naik = (p) => {
+        if (!lapor) return;
+        if (p > maks) { maks = p; lapor(p); }
+      };
+      let coba = 0;
+      const kirim = () => {
       xhr.open("POST", alamat, true);
       xhr.setRequestHeader("Content-Type", berkas.type || TIPE_BERKAS[ekstensi] || "application/octet-stream");
       xhr.timeout = 180000;
       xhr.upload.onprogress = (e) => {
         if (!lapor) return;
-        if (e.lengthComputable) lapor(Math.min(99, Math.round((e.loaded / e.total) * 100)));
-        else lapor(50);
+        if (e.lengthComputable) naik(Math.min(99, Math.round((e.loaded / e.total) * 100)));
+        else naik(50);
       };
       xhr.onload = () => {
         let hasil = null;
@@ -188,15 +196,31 @@ async function unggahBerkas(berkas, folder, lapor) {
         if (hasil && hasil.ok && hasil.url) return selesai(hasil);
         gagal(new Error((hasil && hasil.e) || ("HTTP " + xhr.status)));
       };
-      xhr.onerror = () => gagal(new Error("Jaringan terputus saat mengunggah"));
-      xhr.ontimeout = () => gagal(new Error("Unggahan lebih dari 3 menit, coba lagi atau kecilkan berkas"));
+      xhr.onerror = () => {
+        // Jaringan HP sering putus di tengah unggahan: ulangi sekali dulu.
+        if (coba < 1) { coba += 1; setTimeout(kirim, 800); return; }
+        window.__galatVpsJaringan = true;
+        gagal(new Error("Jaringan terputus saat mengunggah"));
+      };
+      xhr.ontimeout = () => {
+        window.__galatVpsJaringan = true;
+        gagal(new Error("Unggahan lebih dari 3 menit, coba lagi atau kecilkan berkas"));
+      };
       xhr.send(berkas);
+      };
+      kirim();
     });
     if (lapor) lapor(100);
     return j.url;
   } catch (eVps) {
-    if (lapor) lapor(0);
     window.__galatVps = String(eVps?.message || eVps);
+    const putus = window.__galatVpsJaringan === true;
+    window.__galatVpsJaringan = false;
+    // Kalau server VPS MENOLAK (mis. sesi/peran), jangan diam-diam pindah ke
+    // Firebase: unggahan akan mulai dari 0% dan sering menggantung. Tampilkan
+    // alasannya supaya jelas apa yang harus dibetulkan.
+    if (!putus) throw new Error(window.__galatVps);
+    if (lapor) lapor(0);
   }
 
   // 2) Cadangan: Firebase Storage, hanya kalau VPS menolak.

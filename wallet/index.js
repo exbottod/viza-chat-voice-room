@@ -4835,17 +4835,30 @@ export default {
       // Jalur cepat: biner mentah (tanpa base64), parameter lewat query string.
       if (url.searchParams.get("raw") === "1") {
         const sesiR = await sesiDariToken(url.searchParams.get("t") ?? "");
-        if (!sesiR) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
-        if (!(await bolehPanel(env, sesiR))) return json({ ok: 0, e: "Hanya admin" }, 403);
+        const namaAset = String(url.searchParams.get("name") || "aset").slice(0, 60);
+        if (!sesiR) {
+          await logGalat(env, "", "aset-upload", "sesi tidak sah: " + namaAset);
+          return json({ ok: 0, e: "Sesi tidak sah" }, 401);
+        }
+        if (!(await bolehPanel(env, sesiR))) {
+          await logGalat(env, sesiR.uid, "aset-upload", "bukan admin: " + (sesiR.email || "-") + " / " + namaAset);
+          return json({ ok: 0, e: "Hanya admin" }, 403);
+        }
         try {
           const buf = Buffer.from(await req.arrayBuffer());
-          return await asetUpload(env, {
+          if (!buf.length) return json({ ok: 0, e: "Isi berkas kosong" }, 400);
+          const hasil = await asetUpload(env, {
             b64: buf.toString("base64"),
-            name: url.searchParams.get("name") || "aset",
+            name: namaAset,
             ext: url.searchParams.get("ext") || "png",
             gh: url.searchParams.get("gh") || "",
           });
-        } catch (e) { return json({ ok: 0, e: String(e?.message ?? e) }, 502); }
+          await logGalat(env, sesiR.uid, "aset-upload-ok", namaAset + " " + Math.round(buf.length / 1024) + " KB");
+          return hasil;
+        } catch (e) {
+          await logGalat(env, sesiR.uid, "aset-upload", String(e?.message ?? e).slice(0, 180));
+          return json({ ok: 0, e: String(e?.message ?? e) }, 502);
+        }
       }
       const bA = await req.json().catch(() => null);
       if (!bA) return json({ ok: 0, e: "Body tidak valid" }, 400);
@@ -5124,7 +5137,7 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           stafAktif = Number(r[0].rows[0]?.a ?? 0);
           peran = r[1].rows.map((x) => String(x.role) + ":" + Number(x.n));
         } catch (e) { /* tabel belum ada */ }
-        return json({ ok: 1, v: "viza-2026-11-16-top3-live", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
+        return json({ ok: 1, v: "viza-2026-11-16-aset-log", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
       } catch (e) {
         return json({ ok: 0, v: "viza-2026-11-13-mandiri", db: String(e?.message ?? e) }, 500);
       }

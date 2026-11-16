@@ -4059,16 +4059,63 @@ async function wavePlay(req, env) {
   return balas({ success: false, message: "Endpoint tidak dikenal" }, 404);
 }
 
+// Foto profil untuk game: sumber utamanya pub/{uid} di RTDB (field "av" base64
+// atau "photo" tautan), sama seperti yang dipakai aplikasi. Dulu hanya tabel
+// wave_players yang dibaca, jadi pemain yang belum pernah taruh avatar di sana
+// tampil dengan gambar rusak di layar menang. Hasilnya di-cache 10 menit supaya
+// tidak menambah satu permintaan RTDB pada setiap taruhan.
+const fotoCache = new Map();
+async function fotoProfilRtdb(env, uid) {
+  const kunci = String(uid);
+  const simpan = fotoCache.get(kunci);
+  if (simpan && Date.now() - simpan.t < 10 * 60 * 1000) return simpan.v;
+  let hasil = "";
+  try {
+    let tokenSa = "";
+    try { tokenSa = await tokenLayanan(env); } catch { tokenSa = ""; }
+    const r = await fetch(
+      `${RTDB}/pub/${encodeURIComponent(kunci)}.json` +
+        (tokenSa ? `?access_token=${encodeURIComponent(tokenSa)}` : ""),
+    );
+    if (r.ok) {
+      const d = await r.json();
+      if (d && typeof d === "object") {
+        const av = String(d.av ?? "").trim();
+        const url = String(d.photo ?? "").trim();
+        if (av.startsWith("data:image/")) hasil = av;
+        else if (av.length > 100) hasil = "data:image/jpeg;base64," + av.replace(/\s+/g, "");
+        else if (/^https?:\/\//i.test(av)) hasil = av;
+        else if (/^https?:\/\//i.test(url)) hasil = url;
+      }
+    }
+  } catch { hasil = ""; }
+  fotoCache.set(kunci, { t: Date.now(), v: hasil });
+  return hasil;
+}
+
 async function hivePemain(env, uid) {
   const r = await pipe(env, [
     { sql: "select name, avatar from wave_players where uid = ?", args: [T(uid)] },
   ]);
   const row = r[0].rows[0] ?? {};
   const w = await pastikan(env, uid);
+  let avatar = String(row.avatar ?? "").trim();
+  const foto = await fotoProfilRtdb(env, uid);
+  if (foto) {
+    avatar = foto;
+    // Simpan juga ke wave_players supaya /avatar/{uid} dan game lain ikut benar.
+    if (String(row.avatar ?? "").trim() !== foto) {
+      try {
+        await pipe(env, [
+          { sql: "update wave_players set avatar = ?, updated_at = ? where uid = ?", args: [T(foto), I(Date.now()), T(uid)] },
+        ]);
+      } catch { /* kolom boleh gagal, foto tetap dipakai dari RTDB */ }
+    }
+  }
   return {
     id: uid,
     name: String(row.name ?? "").trim() || "Player",
-    avatar: String(row.avatar ?? ""),
+    avatar,
     balance: Number(w?.coins ?? 0),
   };
 }

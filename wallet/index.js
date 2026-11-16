@@ -1652,8 +1652,14 @@ async function wavePrepare(env, uid, p) {
 const RTDB = "https://my-app-e7f8c-default-rtdb.asia-southeast1.firebasedatabase.app";
 const ADMIN_EMAIL = "bangexx01@gmail.com";
 // Email admin yang boleh memakai panel developer (Rezo dan Viza).
-const ADMIN_SEMUA = [ADMIN_EMAIL];
-const adalahAdmin = (s) => !!s && ADMIN_SEMUA.includes(String(s.email || "").toLowerCase());
+// Akun panel internal (@vizapanel.app) ikut diakui, karena panel admin Viza
+// memakai akun sendiri, bukan email pribadi pemilik.
+const ADMIN_SEMUA = [ADMIN_EMAIL, "boypanel@vizapanel.app"];
+const adalahAdmin = (s) => {
+  const e = String(s?.email || "").toLowerCase();
+  if (!e) return false;
+  return ADMIN_SEMUA.includes(e) || e.endsWith("@vizapanel.app");
+};
 // Staf panel (manager/admin) boleh memakai fitur panel. Hanya pengelolaan staf
 // dan penghapusan akun yang tetap khusus developer.
 // Peran staf panel web disimpan di Firestore panelAdmins/<email>, terpisah dari
@@ -5105,7 +5111,7 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           stafAktif = Number(r[0].rows[0]?.a ?? 0);
           peran = r[1].rows.map((x) => String(x.role) + ":" + Number(x.n));
         } catch (e) { /* tabel belum ada */ }
-        return json({ ok: 1, v: "viza-2026-11-16-email-lookup", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
+        return json({ ok: 1, v: "viza-2026-11-16-panel-akun", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
       } catch (e) {
         return json({ ok: 0, v: "viza-2026-11-13-mandiri", db: String(e?.message ?? e) }, 500);
       }

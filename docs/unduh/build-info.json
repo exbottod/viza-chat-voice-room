@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.179",
-  "catatan": "• Store: tombol play pratinjau di setiap kartu, animasi penuh (SVGA/MP4/WebP/GIF) sebelum membeli",
-  "ukuran_apk": 54753791,
-  "sha256_apk": "952a00afa69757da59eae5dbb877b9a11f8403d7066e34ea1de9682933cf9b48",
+  "versi": "1.0.180",
+  "catatan": "• Efek room (banner masuk VIP, gift, cashback, roket) tidak tampil saat halaman game terbuka\n• Crazy Fruit ronde bareng seperti Greedy King: jam ronde 30 detik disamakan dari server, satu pola pe\n• Dialog Crazy Fruit: peringkat pemenang ronde gaya Greedy King (foto bulat, mahkota juara, nama, juml\n• Revert \"Crazy Fruit ronde bareng seperti Greedy King: jam ronde 30 detik disamakan dari server, satu",
+  "ukuran_apk": 54756520,
+  "sha256_apk": "5daafa146daeefa3432254d9cc53ff015e1093c0dba5cdebfc08ecebc0f68fc4",
   "abis": {
     "arm64": {
-      "ukuran": 54753791,
-      "sha256": "952a00afa69757da59eae5dbb877b9a11f8403d7066e34ea1de9682933cf9b48"
+      "ukuran": 54756520,
+      "sha256": "5daafa146daeefa3432254d9cc53ff015e1093c0dba5cdebfc08ecebc0f68fc4"
     },
     "armv7": {
-      "ukuran": 52904943,
-      "sha256": "3e7327569f24ff17e6262fa570a3ed26eedf5a3098cb4f00ceaa3ddbcb06fc5a"
+      "ukuran": 52907668,
+      "sha256": "90e361fabf4a1fdc32a084c34f9470fe92ee496a2d6a5467d674c486e75663c5"
     },
     "universal": {
-      "ukuran": 73169755,
-      "sha256": "fde76461caca0ee1df9c9b5cdd279d53eef3298c9e1e543ce283cb1ff849e0ce"
+      "ukuran": 73172485,
+      "sha256": "7a28ab3ef8824b9847d16960460e7f75ed0a54de574e6cd7fa122bd85c5c1ff2"
     }
   }
 }

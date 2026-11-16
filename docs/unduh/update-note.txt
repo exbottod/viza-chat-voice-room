@@ -1,1 +1,2 @@
-• Musik room tidak terdengar di user lain: keadaan lagu dulu disimpan di Realtime Database yang sering
+• Perbaiki error kompilasi admin room: tiga fungsi bernilai ekspresi memakai return di dalam catch, di
+• Fitur admin room: pemilik room bisa menunjuk user jadi admin room lewat panel Anggota, dan admin roo

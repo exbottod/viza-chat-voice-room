@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.187",
-  "catatan": "• Musik room tidak terdengar di user lain: keadaan lagu dulu disimpan di Realtime Database yang sering",
-  "ukuran_apk": 54761484,
-  "sha256_apk": "d99bedd1c9e3b801296010970ce2640bd0f5c8f3b19221eb8d892e88bf179367",
+  "versi": "1.0.188",
+  "catatan": "• Perbaiki error kompilasi admin room: tiga fungsi bernilai ekspresi memakai return di dalam catch, di\n• Fitur admin room: pemilik room bisa menunjuk user jadi admin room lewat panel Anggota, dan admin roo",
+  "ukuran_apk": 54766123,
+  "sha256_apk": "2f6667f23ed9d54ccc7dfe44e1ff8d4c8ab31382458e702cd858cafabd1ca5eb",
   "abis": {
     "arm64": {
-      "ukuran": 54761484,
-      "sha256": "d99bedd1c9e3b801296010970ce2640bd0f5c8f3b19221eb8d892e88bf179367"
+      "ukuran": 54766123,
+      "sha256": "2f6667f23ed9d54ccc7dfe44e1ff8d4c8ab31382458e702cd858cafabd1ca5eb"
     },
     "armv7": {
-      "ukuran": 52912632,
-      "sha256": "ef92cb542f9a1e3c9e1a51129558bdbb68656c3879d1b241892d9547bb01a5e2"
+      "ukuran": 52917285,
+      "sha256": "4d471e3d2f416e2e58d917c77dd4e3f43a188f3b69008edab31d89ff05c4c749"
     },
     "universal": {
-      "ukuran": 73177441,
-      "sha256": "9693c7114db16bdce1a699cd92bcedf25b3602dd357479136f757ef91d8e8e40"
+      "ukuran": 73182099,
+      "sha256": "49c4c4042d0455b508b08485b4d4e39cb718bd1bf00bc4d84a409e6a74a182ba"
     }
   }
 }

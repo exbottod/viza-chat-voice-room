@@ -1,4 +1,2 @@
-• Store: gabungkan Firestore dan RTDB, field store hilang dianggap dijual, item hanya disembunyikan bi
-• Panel: tombol Cek tautan item, endpoint /aset-cek untuk memastikan berkas item masih bisa dibuka APK
-• Panel: kegagalan tulis RTDB tidak lagi disembunyikan, item lama yang hanya ada di Firestore otomatis
-• Panel aset: gambar besar dikecilkan otomatis sebelum unggah, batas waktu 5 menit, info ukuran asli
+• Frame/banner WebP dan GIF kini beranimasi: filterQuality yang mematikan animasi Coil dihapus, panel 
+• Panel: pengecilan gambar hanya untuk PNG/JPG statis, WebP/GIF/APNG animasi tidak disentuh

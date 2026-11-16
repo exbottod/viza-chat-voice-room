@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.175",
-  "catatan": "• Store: gabungkan Firestore dan RTDB, field store hilang dianggap dijual, item hanya disembunyikan bi\n• Panel: tombol Cek tautan item, endpoint /aset-cek untuk memastikan berkas item masih bisa dibuka APK\n• Panel: kegagalan tulis RTDB tidak lagi disembunyikan, item lama yang hanya ada di Firestore otomatis\n• Panel aset: gambar besar dikecilkan otomatis sebelum unggah, batas waktu 5 menit, info ukuran asli",
-  "ukuran_apk": 54752339,
-  "sha256_apk": "91d1b16c76ab1a6bff00e9cb08fa566887b4ec43460da489bc97513df9f4224c",
+  "versi": "1.0.176",
+  "catatan": "• Frame/banner WebP dan GIF kini beranimasi: filterQuality yang mematikan animasi Coil dihapus, panel \n• Panel: pengecilan gambar hanya untuk PNG/JPG statis, WebP/GIF/APNG animasi tidak disentuh",
+  "ukuran_apk": 54752230,
+  "sha256_apk": "05d3d9bf8e6df83113235d52f6157823b08ec756144381e28484460a29562880",
   "abis": {
     "arm64": {
-      "ukuran": 54752339,
-      "sha256": "91d1b16c76ab1a6bff00e9cb08fa566887b4ec43460da489bc97513df9f4224c"
+      "ukuran": 54752230,
+      "sha256": "05d3d9bf8e6df83113235d52f6157823b08ec756144381e28484460a29562880"
     },
     "armv7": {
-      "ukuran": 52903491,
-      "sha256": "a00d076df624c71456a4b1864811a80b6ed82da0d53c7a46ddec1caf6ce119c1"
+      "ukuran": 52903390,
+      "sha256": "a9ec491be264d80ca41409b2881c7a88bf33429a087ce3913444407a853afb4d"
     },
     "universal": {
-      "ukuran": 73168304,
-      "sha256": "3156f0d1427b08373faf1ba158aaaff2a5daef48d1fdb9903281882130d09b3b"
+      "ukuran": 73168206,
+      "sha256": "061086a8ea09a9e6b8386f6b670852559720c77f5c410a455997478ec1da9939"
     }
   }
 }

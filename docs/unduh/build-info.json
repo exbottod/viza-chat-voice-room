@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.176",
-  "catatan": "• Frame/banner WebP dan GIF kini beranimasi: filterQuality yang mematikan animasi Coil dihapus, panel \n• Panel: pengecilan gambar hanya untuk PNG/JPG statis, WebP/GIF/APNG animasi tidak disentuh",
-  "ukuran_apk": 54752230,
-  "sha256_apk": "05d3d9bf8e6df83113235d52f6157823b08ec756144381e28484460a29562880",
+  "versi": "1.0.178",
+  "catatan": "• Panel menulis aset ke RTDB lewat server (akun layanan) supaya tidak lagi PERMISSION_DENIED; endpoint",
+  "ukuran_apk": 54752853,
+  "sha256_apk": "b91b2420867da189c5723375ed2ff54b822e53ab1abfe69d38817c05e1a8100c",
   "abis": {
     "arm64": {
-      "ukuran": 54752230,
-      "sha256": "05d3d9bf8e6df83113235d52f6157823b08ec756144381e28484460a29562880"
+      "ukuran": 54752853,
+      "sha256": "b91b2420867da189c5723375ed2ff54b822e53ab1abfe69d38817c05e1a8100c"
     },
     "armv7": {
-      "ukuran": 52903390,
-      "sha256": "a9ec491be264d80ca41409b2881c7a88bf33429a087ce3913444407a853afb4d"
+      "ukuran": 52904000,
+      "sha256": "7dda178354a9e70b666c052486e7b88afb1fa269a3b1474638de78eb6b2a050a"
     },
     "universal": {
-      "ukuran": 73168206,
-      "sha256": "061086a8ea09a9e6b8386f6b670852559720c77f5c410a455997478ec1da9939"
+      "ukuran": 73168820,
+      "sha256": "765c082e5573f06376ce23a8918c75663d6375dc9041275c484beca58499b68f"
     }
   }
 }

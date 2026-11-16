@@ -1,2 +1,1 @@
-• Frame/banner WebP dan GIF kini beranimasi: filterQuality yang mematikan animasi Coil dihapus, panel 
-• Panel: pengecilan gambar hanya untuk PNG/JPG statis, WebP/GIF/APNG animasi tidak disentuh
+• Panel menulis aset ke RTDB lewat server (akun layanan) supaya tidak lagi PERMISSION_DENIED; endpoint

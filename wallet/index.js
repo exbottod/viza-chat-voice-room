@@ -3129,10 +3129,33 @@ async function panelBerkas(jalur) {
 async function admin(env, body) {
   const sesi = await sesiDariToken(body.t ?? "");
   if (!sesi) return json({ ok: 0, e: "Token tidak valid" }, 401);
-  if (!adalahAdmin(sesi)) return json({ ok: 0, e: "Hanya admin" }, 403);
+  // Staf panel (manager/admin) boleh memakai semua fitur panel. Hanya pengelolaan
+  // staf itu sendiri dan penghapusan akun yang tetap khusus developer.
+  const devPanel = adalahAdmin(sesi);
+  let stafPanel = false;
+  if (!devPanel) {
+    try {
+      stafPanel = (await peranStaf(env, sesi.uid)).length > 0;
+    } catch {
+      stafPanel = false;
+    }
+  }
+  if (!devPanel && !stafPanel) return json({ ok: 0, e: "Hanya admin" }, 403);
   const p = body.p ?? {};
   const op = String(p.op ?? "");
   const target = String(p.uid ?? "");
+  const khususDev = [
+    "panel_grant",
+    "panel_revoke",
+    "delete_user",
+    "delete_users",
+    "reset_all",
+    "reset_gem_all",
+    "reset_all_assets",
+  ];
+  if (!devPanel && khususDev.includes(op)) {
+    return json({ ok: 0, e: "Hanya admin" }, 403);
+  }
 
   // ---- Harga VIP (diubah dari panel developer) ----
   if (op === "vip_harga_get") {
@@ -4018,6 +4041,21 @@ async function wavePlay(req, env) {
     });
   }
 
+  if (ep.includes("cfronde")) {
+    const batasR = Math.min(60, Math.max(1, Number(url.searchParams.get("limit") || 30)));
+    try {
+      if (req.method === "POST") {
+        const winR = Math.max(0, Math.trunc(Number(body.win ?? 0)));
+        const betR = Math.max(0, Math.trunc(Number(body.bet ?? 0)));
+        await cfRondeSimpan(env, uid, String(body.cell ?? ""), winR, betR);
+      }
+      const d = await cfRondeHariIni(env, uid, batasR);
+      return balas({ success: true, message: "success", data: d });
+    } catch (e) {
+      return balas({ success: false, message: String(e?.message ?? e), data: null });
+    }
+  }
+
   if (ep.includes("cfrank")) {
     const batas = Math.min(20, Math.max(1, Number(url.searchParams.get("limit") || 10)));
     try {
@@ -4157,6 +4195,64 @@ async function cfPeringkat(env, batas, asal) {
     });
   }
   return hasil;
+}
+
+// ---------- Ronde Crazy Fruit (Today's Win + riwayat, per hari WIB) ----------
+const WIB_MS = 7 * 60 * 60 * 1000;
+function cfHariWib(kini = Date.now()) {
+  const mulai = Math.floor((kini + WIB_MS) / 86400000) * 86400000 - WIB_MS;
+  return { mulai, selesai: mulai + 86400000 };
+}
+
+let cfRondeSiap = null;
+function cfRondePastikan(env) {
+  if (!cfRondeSiap) {
+    cfRondeSiap = pipe(env, [
+      {
+        sql: `create table if not exists cf_ronde (
+            uid text not null, cell text not null default '', win integer not null default 0,
+            bet integer not null default 0, at integer not null default 0)`,
+        args: [],
+      },
+      { sql: `create index if not exists cf_ronde_uid on cf_ronde (uid, at desc)`, args: [] },
+    ]).catch(() => {});
+  }
+  return cfRondeSiap;
+}
+
+async function cfRondeSimpan(env, uid, cell, win, bet) {
+  await cfRondePastikan(env);
+  await pipe(env, [
+    {
+      sql: `insert into cf_ronde (uid, cell, win, bet, at) values (?, ?, ?, ?, ?)`,
+      args: [T(uid), T(String(cell || "")), I(win), I(bet), I(Date.now())],
+    },
+  ]);
+}
+
+// Riwayat dan total menang hanya untuk hari WIB yang sedang berjalan.
+async function cfRondeHariIni(env, uid, batas) {
+  await cfRondePastikan(env);
+  const { mulai } = cfHariWib();
+  const r = await pipe(env, [
+    {
+      sql: `select cell, win, bet, at from cf_ronde where uid = ? and at >= ? order by at desc limit ?`,
+      args: [T(uid), I(mulai), I(batas)],
+    },
+  ]);
+  const rows = r[0].rows || [];
+  let today = 0;
+  for (const x of rows) today += Number(x.win ?? 0);
+  return {
+    hari: new Date(mulai + WIB_MS).toISOString().slice(0, 10),
+    today,
+    list: rows.map((x) => ({
+      cell: String(x.cell ?? ""),
+      win: Number(x.win ?? 0),
+      bet: Number(x.bet ?? 0),
+      at: Number(x.at ?? 0),
+    })),
+  };
 }
 
 async function hivePemain(env, uid) {

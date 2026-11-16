@@ -130,11 +130,17 @@ if [ -n "${GH_TOKEN:-}" ] && command -v gh > /dev/null 2>&1 && [ -z "${SKIP_RELE
     echo "Perbaikan di versi 1.0.$NOMOR:"
     # Buang baris teknis: penanda skip build, pembaruan halaman unduh, dan catatan rilis.
     bersih() { sed 's/ \[skip ci\]//g' | grep -viE 'halaman unduh|catatan rilis|^ *$' | head -6 || true; }
+    # Ambil judul commit sejak tag terakhir. Kalau rentangnya kosong (mis. tag
+    # sudah menunjuk commit terbaru), pakai commit terakhir supaya catatan di
+    # dialog pembaruan tidak pernah jatuh ke teks umum.
+    DAFTAR=""
     if [ -n "$TAG_LAMA" ]; then
-      git log --no-merges --pretty=format:"- %s" "$TAG_LAMA"..HEAD | bersih
-    else
-      git log --no-merges --pretty=format:"- %s" -8 | bersih
+      DAFTAR="$(git log --no-merges --pretty=format:"- %s" "$TAG_LAMA"..HEAD | bersih)"
     fi
+    if [ -z "$DAFTAR" ]; then
+      DAFTAR="$(git log --no-merges --pretty=format:"- %s" -6 | bersih)"
+    fi
+    printf '%s\n' "$DAFTAR"
   } > "$CATATAN"
   sed -i '/^$/d' "$CATATAN"
   [ "$(wc -l < "$CATATAN")" -ge 2 ] || printf '%s\n' "- Perbaikan dan peningkatan aplikasi" >> "$CATATAN"

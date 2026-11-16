@@ -1,7 +1,7 @@
 {
   "status": "ok",
   "versi": "1.0.182",
-  "catatan": "• Perbaikan dan peningkatan aplikasi",
+  "catatan": "• Jam ronde Crazy Fruit real-time seperti Greedy: satu jam untuk semua HP, pola dan pemenang sama tiap\n• Timing asli tetap: taruhan 30 detik, putar, hasil, lalu dialog pemenang 3 detik dan ulang dari 30 de\n• Today Win dan riwayat tidak lagi tereset saat game dibuka ulang, reset tetap jam 00.00 WIB\n• Efek room (banner VIP, gift, cashback, roket) tidak tampil saat halaman game terbuka",
   "ukuran_apk": 54756831,
   "sha256_apk": "382438e8deb05c601f6a6f65c58095ad32ac6c98e200f77cd2f20728c37749c6",
   "abis": {

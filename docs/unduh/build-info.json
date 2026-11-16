@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.185",
-  "catatan": "• Musik room: lagu diunggah langsung ke VPS sendiri (/musik) dan diputar dari tautan VPS dengan sifat ",
-  "ukuran_apk": 54758761,
-  "sha256_apk": "986b721b1a4aa5048acdb1185c4bc3dbc03ef1299a53ee4a26da1594317a8654",
+  "versi": "1.0.186",
+  "catatan": "• Suara antar room dipisah: token suara sebelumnya hanya membaca kolom room, padahal HP mengirim chann",
+  "ukuran_apk": 54758544,
+  "sha256_apk": "cff73b7f1513031760fd2641837e9d6d5b12edb5db6956f084ce5686fae3408e",
   "abis": {
     "arm64": {
-      "ukuran": 54758761,
-      "sha256": "986b721b1a4aa5048acdb1185c4bc3dbc03ef1299a53ee4a26da1594317a8654"
+      "ukuran": 54758544,
+      "sha256": "cff73b7f1513031760fd2641837e9d6d5b12edb5db6956f084ce5686fae3408e"
     },
     "armv7": {
-      "ukuran": 52909906,
-      "sha256": "f68bf77f26ae1edc1a342210848ce9553f74f565de8c4485951beea09c8ac319"
+      "ukuran": 52909699,
+      "sha256": "aef90b3abc97b537a5356c14ea561cb936180d82fad7ab7cca1250e91424bbf4"
     },
     "universal": {
-      "ukuran": 73174725,
-      "sha256": "35f267a8f6622980fcd21cf52e7c1921bfcdb739cf77cbe00264b5bcb63c6e86"
+      "ukuran": 73174518,
+      "sha256": "1df041ed112a24016fdf29e40ab9be0b73a49b726199b28893fa88d17bcde83f"
     }
   }
 }

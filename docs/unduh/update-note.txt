@@ -1,1 +1,1 @@
-• Musik room: lagu diunggah langsung ke VPS sendiri (/musik) dan diputar dari tautan VPS dengan sifat 
+• Suara antar room dipisah: token suara sebelumnya hanya membaca kolom room, padahal HP mengirim chann

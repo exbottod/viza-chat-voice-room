@@ -656,28 +656,36 @@ fun VipEntryEffect(roomId: String) {
         return if (!n.isNullOrBlank()) n else ""
     }
 
+    /**
+     * Pasang efek masuk dan banner SEKALIGUS. Dulu, kalau banner masuk terpasang
+     * tetapi aset efek masuk belum termuat, yang tampil hanya banner dan efek
+     * masuk SVGA tidak pernah muncul. Sekarang efek masuk selalu diisi: aset
+     * tingkat user, kalau kosong pakai aset efek masuk lain yang tersedia.
+     */
+    fun pasangEfek(m: RoomMsg) {
+        val a = entryAssetOf(m)
+        val b = bannerAssetOf(m)
+        playing = a ?: entryAssetCadangan()
+        banner = b
+        bannerName = msgName(m).takeIf { it.isNotBlank() }
+        bannerUid = m.vipUid.takeIf { it.isNotBlank() }
+    }
+
     LaunchedEffect(pending) {
         val m = pending ?: return@LaunchedEffect
-        repeat(15) {
+        repeat(10) {
             val a = entryAssetOf(m)
             val b = bannerAssetOf(m)
             if (a != null || b != null) {
-                playing = a
-                banner = b
-                bannerName = msgName(m).takeIf { it.isNotBlank() }
-                bannerUid = m.vipUid.takeIf { it.isNotBlank() }
+                pasangEfek(m)
                 return@LaunchedEffect
             }
             delay(400)
         }
         // Aset untuk tingkat user ini memang belum ada di panel. Pakai efek masuk
         // yang tersedia supaya pemain tetap melihat efek, tidak layar diam.
-        val cadangan = entryAssetCadangan()
-        if (cadangan != null) {
-            playing = cadangan
-            banner = bannerAssetOf(m)
-            bannerName = msgName(m).takeIf { it.isNotBlank() }
-            bannerUid = m.vipUid.takeIf { it.isNotBlank() }
+        if (entryAssetCadangan() != null) {
+            pasangEfek(m)
         } else {
             VipAssets.diag["entry_kosong"] = "Efek masuk belum ada di panel untuk tingkat ini"
         }
@@ -702,10 +710,7 @@ fun VipEntryEffect(roomId: String) {
                     val a = entryAssetOf(last)
                     val b = bannerAssetOf(last)
                     if (a != null || b != null) {
-                        playing = a
-                        banner = b
-                        bannerName = msgName(last).takeIf { it.isNotBlank() }
-                        bannerUid = last.vipUid.takeIf { it.isNotBlank() }
+                        pasangEfek(last)
                     } else if (perluUlang(last)) pending = last
                 }
             } else if (last != null && last.id != lastId) {
@@ -713,10 +718,7 @@ fun VipEntryEffect(roomId: String) {
                 val a = entryAssetOf(last)
                 val b = bannerAssetOf(last)
                 if (a != null || b != null) {
-                    playing = a
-                    banner = b
-                    bannerName = msgName(last).takeIf { it.isNotBlank() }
-                        bannerUid = last.vipUid.takeIf { it.isNotBlank() }
+                    pasangEfek(last)
                 } else if (perluUlang(last)) pending = last
             }
         }

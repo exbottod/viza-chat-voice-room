@@ -225,22 +225,11 @@ object PanelStaffRepo {
      */
     suspend fun mintaResetNama(target: String): String? {
         if (target.isBlank()) return "ID user kosong"
-        var err: String? = null
-        try {
-            Rtdb.ref("nameReset/$target").setValue(
-                hashMapOf<String, Any?>(
-                    "at" to System.currentTimeMillis(),
-                    "by" to (com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: ""),
-                ),
-            ).await()
-        } catch (e: kotlinx.coroutines.CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            err = e.message ?: "Gagal mengirim permintaan"
-        }
-        val ok = terapkanResetNama(target)
-        if (!ok && err == null) err = "Gagal menulis nama baru ke database"
-        return err
+        // Dikerjakan server memakai akun layanan. Kalau ditulis dari HP, aturan
+        // RTDB menolaknya dengan "Permission denied".
+        val o = SupaRepo.panelCall("reset_nama", org.json.JSONObject().put("to", target))
+        if (o.optInt("ok") == 1) return null
+        return o.optString("e", "Gagal reset nama")
     }
 
     /**
@@ -318,23 +307,9 @@ object PanelStaffRepo {
      */
     suspend fun mintaResetFoto(target: String): String? {
         if (target.isBlank()) return "ID user kosong"
-        var err: String? = null
-        try {
-            Rtdb.ref("photoReset/$target").setValue(
-                hashMapOf<String, Any?>(
-                    "at" to System.currentTimeMillis(),
-                    "by" to (com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: ""),
-                ),
-            ).await()
-        } catch (e: kotlinx.coroutines.CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            err = e.message ?: "Gagal mengirim permintaan"
-        }
-        // Terapkan sekarang juga, tanpa menunggu HP penerima.
-        val ok = terapkanResetFoto(target)
-        if (!ok && err == null) err = "Gambar bawaan tidak terbaca di HP ini"
-        return err
+        val o = SupaRepo.panelCall("reset_foto", org.json.JSONObject().put("to", target))
+        if (o.optInt("ok") == 1) return null
+        return o.optString("e", "Gagal reset foto")
     }
 
     /**

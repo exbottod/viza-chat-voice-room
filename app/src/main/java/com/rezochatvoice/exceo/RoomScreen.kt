@@ -589,15 +589,17 @@ fun RoomScreen(
                                 contentAlignment = Alignment.Center,
                             ) {
                                 if (i < r.micCount) {
-                                    RmSeatView(
-                                        i,
-                                        seats[i],
-                                        seatSize,
-                                        locked = r.lockedSeats.contains(i),
-                                        emote = seats[i]?.uid?.let { emotes[it] },
-                                        emotSudahTampil = emotSudahTampil,
-                                        points = micPoints[i] ?: 0L,
-                                    ) { seatSheet = i }
+                                    ProvidePeranRoom(DataPeranRoom(r.ownerUid, r.admins)) {
+                                        RmSeatView(
+                                            i,
+                                            seats[i],
+                                            seatSize,
+                                            locked = r.lockedSeats.contains(i),
+                                            emote = seats[i]?.uid?.let { emotes[it] },
+                                            emotSudahTampil = emotSudahTampil,
+                                            points = micPoints[i] ?: 0L,
+                                        ) { seatSheet = i }
+                                    }
                                 }
                             }
                         }
@@ -666,9 +668,13 @@ fun RoomScreen(
                 }
                 items(visible, key = { it.id }) { m ->
                     if (m.img.isNotBlank()) {
-                        RmPhotoRow(m, myUid, onProfile = { uid -> profileUid = uid }, onOpen = { lihatGambar = it })
+                        ProvidePeranRoom(DataPeranRoom(r.ownerUid, r.admins)) {
+                            RmPhotoRow(m, myUid, onProfile = { uid -> profileUid = uid }, onOpen = { lihatGambar = it })
+                        }
                     } else if (m.uid.isNotEmpty()) {
-                        RmChatRow(m, myUid) { uid -> profileUid = uid }
+                        ProvidePeranRoom(DataPeranRoom(r.ownerUid, r.admins)) {
+                            RmChatRow(m, myUid) { uid -> profileUid = uid }
+                        }
                     } else {
                         RmMsgBox(m.text, if (m.text.startsWith("🎁")) Gold else if (m.text.startsWith("🚫")) Color(0xFFFF8A65) else Color.White)
                     }
@@ -1597,16 +1603,22 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
                 }
             }
         }
-        VipNameByUid(
-            seat?.name ?: (if (index == 0) "MC" else "No.${index + 1}"),
-            seat?.uid,
-            color = Color(0xFFBDBDBD),
-            fontSize = 12.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.width(size + 8.dp),
-        )
+        Row(Modifier.width(size + 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+            if (seat != null) {
+                PeranRoomIcon(seat.uid, ukuran = 12.dp)
+                if (LocalPeranRoom.current.peranDari(seat.uid) != PeranRoom.BIASA) Spacer(Modifier.width(3.dp))
+            }
+            VipNameByUid(
+                seat?.name ?: (if (index == 0) "MC" else "No.${index + 1}"),
+                seat?.uid,
+                color = Color(0xFFBDBDBD),
+                fontSize = 12.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+        }
         Text("💗 " + fmtCompact(points), color = Color.White, fontSize = 11.sp)
     }
 }
@@ -2104,6 +2116,8 @@ private fun RmChatRow(m: RoomMsg, myUid: String, onProfile: (String) -> Unit) {
         Spacer(Modifier.width(8.dp))
         Column(Modifier.weight(1f, fill = false)) {
             Row(Modifier.clickable { onProfile(m.uid) }, verticalAlignment = Alignment.CenterVertically) {
+                PeranRoomIcon(m.uid, ukuran = 14.dp)
+                if (LocalPeranRoom.current.peranDari(m.uid) != PeranRoom.BIASA) Spacer(Modifier.width(4.dp))
                 VipNameText(
                     shownName,
                     u?.vip ?: 0,
@@ -2183,6 +2197,8 @@ private fun RmPhotoRow(m: RoomMsg, myUid: String, onProfile: (String) -> Unit, o
         Spacer(Modifier.width(8.dp))
         Column(Modifier.weight(1f, fill = false)) {
             Row(Modifier.clickable { onProfile(m.uid) }, verticalAlignment = Alignment.CenterVertically) {
+                PeranRoomIcon(m.uid, ukuran = 14.dp)
+                if (LocalPeranRoom.current.peranDari(m.uid) != PeranRoom.BIASA) Spacer(Modifier.width(4.dp))
                 VipNameText(
                     shownName,
                     u?.vip ?: 0,

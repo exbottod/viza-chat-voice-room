@@ -1784,6 +1784,34 @@ async function tulisRtdbSa(env, path, nilai) {
   return true;
 }
 
+/** Tandai user diblokir di Firestore (dokumen banned/{uid}) memakai akun
+ *  layanan, supaya aplikasi benar-benar menolak login walaupun aturan Firestore
+ *  tidak mengizinkan panel menulis langsung. */
+async function tandaiBannedFs(env, uidTarget, alasan, hapus = false) {
+  const token = await tokenLayanan(env);
+  if (!token) return false;
+  const proyek = String(env.FIREBASE_PROJECT || "my-app-e7f8c").trim();
+  const dasar = `https://firestore.googleapis.com/v1/projects/${proyek}/databases/(default)/documents/banned`;
+  if (hapus) {
+    const r = await fetch(`${dasar}/${encodeURIComponent(uidTarget)}`, {
+      method: "DELETE",
+      headers: { authorization: "Bearer " + token },
+    });
+    return r.ok;
+  }
+  const r = await fetch(`${dasar}?documentId=${encodeURIComponent(uidTarget)}`, {
+    method: "POST",
+    headers: { authorization: "Bearer " + token, "content-type": "application/json" },
+    body: JSON.stringify({
+      fields: {
+        reason: { stringValue: String(alasan || "").slice(0, 140) },
+        at: { integerValue: String(Date.now()) },
+      },
+    }),
+  });
+  return r.ok;
+}
+
 /** Baca RTDB memakai token akun layanan (melewati aturan baca publik). */
 async function cfgRtdbSa(env, path) {
   try {
@@ -3116,14 +3144,40 @@ async function panel(env, body) {
         args: [T(target), T(uid), T(staf?.manager ?? ""), T(String(p.reason ?? "").slice(0, 140)), I(Date.now())],
       },
     ]);
-    return json({ ok: 1, banned: target });
+    // Cermin ke Firestore supaya HP user langsung tertolak (layar blokir).
+    let cermin = false;
+    try { cermin = await tandaiBannedFs(env, target, String(p.reason ?? "")); } catch { cermin = false; }
+    return json({ ok: 1, banned: target, cermin });
   }
 
   if (aksi === "unban") {
     const salah = butuhTarget();
     if (salah) return gagal(salah);
     await pipe(env, [{ sql: "delete from panel_ban where uid = ?", args: [T(target)] }]);
-    return json({ ok: 1, unbanned: target });
+    let cermin = false;
+    try { cermin = await tandaiBannedFs(env, target, "", true); } catch { cermin = false; }
+    return json({ ok: 1, unbanned: target, cermin });
+  }
+
+  if (aksi === "reset_nama") {
+    const salah = butuhTarget();
+    if (salah) return gagal(salah);
+    if (!(dev || peran === "manager")) return gagal("Hanya manager atau developer yang bisa reset nama");
+    // Ditulis dari server memakai akun layanan: aturan RTDB hanya mengizinkan
+    // pemilik akun menulis pub/{uid}, jadi dari HP panel selalu "Permission denied".
+    await tulisRtdbSa(env, "pub/" + target + "/name", "Unknown");
+    await tulisRtdbSa(env, "nameReset/" + target, { at: Date.now(), by: uid });
+    return json({ ok: 1, nama: "Unknown" });
+  }
+
+  if (aksi === "reset_foto") {
+    const salah = butuhTarget();
+    if (salah) return gagal(salah);
+    if (!(dev || peran === "manager")) return gagal("Hanya manager atau developer yang bisa reset foto");
+    await tulisRtdbSa(env, "pub/" + target + "/avatarB64", null);
+    await tulisRtdbSa(env, "pub/" + target + "/photo", "");
+    await tulisRtdbSa(env, "photoReset/" + target, { at: Date.now(), by: uid });
+    return json({ ok: 1 });
   }
 
   if (aksi === "bans") {

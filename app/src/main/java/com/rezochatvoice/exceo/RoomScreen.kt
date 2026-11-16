@@ -948,9 +948,9 @@ fun RoomScreen(
                 try { if (fxUid.isNotBlank()) Rtdb.ref("fxPrefs/$fxUid/rocket").setValue(true) } catch (e: Exception) { }
             },
         )
-        if (fxBannerOn) GiftBanner(r.id)
+        if (fxBannerOn && !waveOpen) GiftBanner(r.id)
         // Banner cashback terpisah: hanya saat JP 10.000 ke atas.
-        if (fxBannerOn) CashbackBanner(r.id)
+        if (fxBannerOn && !waveOpen) CashbackBanner(r.id)
         // Penanda status suara: kalau suara gagal, alasannya tampil di sini
         // (bukan hanya toast yang cepat hilang), jadi mudah dilaporkan.
         run {
@@ -965,13 +965,14 @@ fun RoomScreen(
                 }
             }
         }
-        if (fxEntryOn) VipEntryEffect(r.id)
-        if (fxGiftOn) GiftFxOverlay(r.id)
+        // Saat halaman game terbuka, efek room tidak boleh menutupi game.
+        if (fxEntryOn && !waveOpen) VipEntryEffect(r.id)
+        if (fxGiftOn && !waveOpen) GiftFxOverlay(r.id)
         // Gift terbang ke avatar penerima lalu pecahan cashback muncul di titik itu.
-        if (fxGiftOn) GiftFlyOverlay(r.id, seatPoints)
+        if (fxGiftOn && !waveOpen) GiftFlyOverlay(r.id, seatPoints)
         // Peluncuran roket 1..5 berurutan, dengan dialog hadiah bertombol Okey.
         // Build uji: dimatikan sementara untuk mencari penyebab aplikasi macet di room.
-        if (ROCKET_ROOM_UI && fxRocketOn) RocketLaunchOverlay(r.id, myUid)
+        if (ROCKET_ROOM_UI && fxRocketOn && !waveOpen) RocketLaunchOverlay(r.id, myUid)
 
         // Tombol power: keluar / minimalkan
         if (showRank) {

@@ -84,7 +84,9 @@ object StoreCatalog {
             c.readTimeout = 8000
             val code = c.responseCode
             c.disconnect()
-            code in 200..399
+            // Hanya 404/410 yang dianggap mati. Kode lain (403, 5xx, blokir sementara)
+            // jangan menyembunyikan item dari Store.
+            code !in 404..410
         } catch (e: Exception) {
             true // jaringan bermasalah: jangan sembunyikan item
         }
@@ -92,14 +94,16 @@ object StoreCatalog {
 
     private fun apply() {
         val merged = HashMap<String, CatalogItem>()
-        if (rtdbSiap) {
-            // RTDB adalah satu-satunya sumber. Item yang sudah dihapus di panel
-            // langsung hilang dari Store, tidak muncul lagi dari cache/Firestore lama.
-            merged.putAll(rtdbMap)
-            fsMap.clear()
-        } else {
-            merged.putAll(fsMap)
-            merged.putAll(rtdbMap)
+        // Gabungkan SELALU. Dulu, begitu RTDB menjawab, Firestore dibuang total.
+        // Akibatnya item yang tersimpan di Firestore saja (mis. tulisan RTDB panel
+        // gagal atau anak RTDB tanpa field store) tidak pernah muncul di Store.
+        // Panel menghapus item di kedua tempat, jadi menggabungkan tidak
+        // memunculkan item yang sudah dihapus.
+        merged.putAll(fsMap)
+        merged.putAll(rtdbMap)
+        if (merged.isEmpty() && items.isNotEmpty()) {
+            // Jangan hapus isi yang sudah tampil hanya karena satu sumber kosong.
+            return
         }
         items.clear()
         items.putAll(merged)
@@ -179,7 +183,10 @@ object StoreCatalog {
                 // panel langsung ke satu akun: tidak dijual, tapi tetap harus
                 // muncul di tas pemiliknya.
                 if (c.child("meta").getValue(Boolean::class.java) == true) continue
-                val dijual = c.child("store").getValue(Boolean::class.java) == true
+                // Tanpa field store, anggap dijual (sama seperti Firestore), supaya
+                // item lama tidak hilang dari Store hanya karena field kurang.
+                val dijual = if (c.hasChild("store"))
+                    c.child("store").getValue(Boolean::class.java) == true else true
                 val slot = c.child("slot").getValue(String::class.java) ?: continue
                 val asset = VipAsset(
                     0, "st_$id",

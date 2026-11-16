@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.182",
-  "catatan": "• Jam ronde Crazy Fruit real-time seperti Greedy: satu jam untuk semua HP, pola dan pemenang sama tiap\n• Timing asli tetap: taruhan 30 detik, putar, hasil, lalu dialog pemenang 3 detik dan ulang dari 30 de\n• Today Win dan riwayat tidak lagi tereset saat game dibuka ulang, reset tetap jam 00.00 WIB\n• Efek room (banner VIP, gift, cashback, roket) tidak tampil saat halaman game terbuka",
-  "ukuran_apk": 54756831,
-  "sha256_apk": "382438e8deb05c601f6a6f65c58095ad32ac6c98e200f77cd2f20728c37749c6",
+  "versi": "1.0.184",
+  "catatan": "• Crazy Fruit: kotak pemenang dan daftar SEDANG MAIN hanya berisi pemain yang memasang chip di ronde i",
+  "ukuran_apk": 54757255,
+  "sha256_apk": "d597058000069b3fcb0cf2ea5b9f946ea296f47dc2b8ed32132229a9b692367d",
   "abis": {
     "arm64": {
-      "ukuran": 54756831,
-      "sha256": "382438e8deb05c601f6a6f65c58095ad32ac6c98e200f77cd2f20728c37749c6"
+      "ukuran": 54757255,
+      "sha256": "d597058000069b3fcb0cf2ea5b9f946ea296f47dc2b8ed32132229a9b692367d"
     },
     "armv7": {
-      "ukuran": 52907981,
-      "sha256": "15ce6e2e06f7674021698ac856069911340b124a51a2b16e5e02eb504cbc6508"
+      "ukuran": 52908400,
+      "sha256": "2832a6c9259ae7c0f1e798f6dc58934c9416ea3510a807cdcc257ff8de9ab0d6"
     },
     "universal": {
-      "ukuran": 73172791,
-      "sha256": "2d074cc3e3047e85f9e3fe4ab881c08e77868faf25b7037adbe35a6786231d14"
+      "ukuran": 73173217,
+      "sha256": "983b0c923bd61284f6fd8d9210dcaad789e82e5d5f92c9bb8d03eb971272b45b"
     }
   }
 }

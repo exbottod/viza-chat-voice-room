@@ -1,4 +1,1 @@
-• Jam ronde Crazy Fruit real-time seperti Greedy: satu jam untuk semua HP, pola dan pemenang sama tiap
-• Timing asli tetap: taruhan 30 detik, putar, hasil, lalu dialog pemenang 3 detik dan ulang dari 30 de
-• Today Win dan riwayat tidak lagi tereset saat game dibuka ulang, reset tetap jam 00.00 WIB
-• Efek room (banner VIP, gift, cashback, roket) tidak tampil saat halaman game terbuka
+• Crazy Fruit: kotak pemenang dan daftar SEDANG MAIN hanya berisi pemain yang memasang chip di ronde i

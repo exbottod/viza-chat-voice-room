@@ -1,4 +1,4 @@
-• Foto profil pemain tampil di game Crazy Fruit
-• Panel peringkat layar penuh, tidak terpotong
-• Dialog pembaruan berisi daftar perbaikan tiap versi
-• Staf manager/admin tidak lagi kena "Hanya admin"
+• Skrip VPS: penanda waktu unduhan dan cek versi setelah restart
+• Panel: email sesi diambil dari Firebase Auth kalau token tidak membawanya
+• Versi server: penanda whoami
+• Panel: diagnosa whoami dan pengenalan staf lewat uid/stafApk

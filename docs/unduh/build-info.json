@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.171",
-  "catatan": "• Foto profil pemain tampil di game Crazy Fruit\n• Panel peringkat layar penuh, tidak terpotong\n• Dialog pembaruan berisi daftar perbaikan tiap versi\n• Staf manager/admin tidak lagi kena \"Hanya admin\"",
-  "ukuran_apk": 54749180,
-  "sha256_apk": "8c0ae77555239918d35fce7930271fab8ba78aa685e2c2606ce3e8c874961248",
+  "versi": "1.0.173",
+  "catatan": "• Skrip VPS: penanda waktu unduhan dan cek versi setelah restart\n• Panel: email sesi diambil dari Firebase Auth kalau token tidak membawanya\n• Versi server: penanda whoami\n• Panel: diagnosa whoami dan pengenalan staf lewat uid/stafApk",
+  "ukuran_apk": 54749169,
+  "sha256_apk": "b065ed10c9d34de27ef07ff173fcce785dfe2fca093878157065874740dd84b4",
   "abis": {
     "arm64": {
-      "ukuran": 54749180,
-      "sha256": "8c0ae77555239918d35fce7930271fab8ba78aa685e2c2606ce3e8c874961248"
+      "ukuran": 54749169,
+      "sha256": "b065ed10c9d34de27ef07ff173fcce785dfe2fca093878157065874740dd84b4"
     },
     "armv7": {
-      "ukuran": 52900324,
-      "sha256": "beb22376183e9b6b6e74e6a3e9f5ba0d84c8239d4697896e5e3519041599f516"
+      "ukuran": 52900311,
+      "sha256": "b47da2eb8da2d88f0a67718ed61b441275b5ae8eedffc73c37ac2533496dbd26"
     },
     "universal": {
-      "ukuran": 73165140,
-      "sha256": "144519b017b5eb1945796c15e6df237cb83e47706392c470923e293b7b1df16d"
+      "ukuran": 73165136,
+      "sha256": "0872f60b1997624c86456e7110a1358bdf85b34043ef25f24a98cc1239e1219b"
     }
   }
 }

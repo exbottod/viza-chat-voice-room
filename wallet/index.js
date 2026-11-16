@@ -4868,6 +4868,30 @@ export default {
       try { return await asetUpload(env, bA); }
       catch (e) { return json({ ok: 0, e: String(e?.message ?? e) }, 502); }
     }
+    if (url.pathname.toLowerCase() === "/aset-cek") {
+      const bC = await req.json().catch(() => null);
+      if (!bC) return json({ ok: 0, e: "Body tidak valid" }, 400);
+      const sesiC = await sesiDariToken(bC.t ?? "");
+      if (!sesiC) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
+      if (!(await bolehPanel(env, sesiC))) return json({ ok: 0, e: "Hanya admin" }, 403);
+      const alamat = String(bC.url || "").trim();
+      if (!/^https?:\/\//i.test(alamat)) return json({ ok: 0, e: "Tautan harus http atau https" }, 400);
+      try {
+        const kendali = AbortSignal.timeout ? AbortSignal.timeout(12000) : undefined;
+        let r = await fetch(alamat, { method: "HEAD", signal: kendali });
+        if (r.status === 405 || r.status === 501) r = await fetch(alamat, { method: "GET", signal: kendali });
+        const panjang = Number(r.headers.get("content-length") || 0);
+        return json({
+          ok: 1,
+          status: r.status,
+          hidup: r.status >= 200 && r.status < 400,
+          jenis: r.headers.get("content-type") || "",
+          ukuran: panjang,
+        });
+      } catch (e) {
+        return json({ ok: 0, e: "Tidak bisa dihubungi: " + String(e?.message ?? e) }, 200);
+      }
+    }
     if (url.pathname.toLowerCase() === "/aset-list") {
       const sesiL = await sesiDariToken(url.searchParams.get("t") ?? "");
       if (!sesiL) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
@@ -5137,7 +5161,7 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           stafAktif = Number(r[0].rows[0]?.a ?? 0);
           peran = r[1].rows.map((x) => String(x.role) + ":" + Number(x.n));
         } catch (e) { /* tabel belum ada */ }
-        return json({ ok: 1, v: "viza-2026-11-16-aset-log", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
+        return json({ ok: 1, v: "viza-2026-11-16-cek-tautan", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
       } catch (e) {
         return json({ ok: 0, v: "viza-2026-11-13-mandiri", db: String(e?.message ?? e) }, 500);
       }

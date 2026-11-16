@@ -2817,6 +2817,7 @@ async function gambarAset() {
             <button class="tombolKecil" data-iedit="${aman(d.id)}">Edit</button>
             <button class="tombolKecil" data-tarik="${aman(d.id)}">${d.store === false ? "Jual lagi" : "Tarik dari Store"}</button>
             <button class="tombolKecil" data-salin="${aman(d.url)}">Salin</button>
+            <button class="tombolKecil" data-icek="${aman(d.id)}">Cek</button>
             <button class="tombolKecil bahaya" data-ihapus="${aman(d.id)}" data-kunci="${aman(d._kunci || "")}">Hapus</button>
           </td>
         </tr>`).join("")}</tbody></table></div>` : '<div class="kosong">Belum ada item toko.</div>'}
@@ -2832,6 +2833,37 @@ async function gambarAset() {
   }));
   $("isiHal").querySelectorAll("[data-vedit]").forEach((b) => (b.onclick = () => formAsetVip(semua.find((x) => x.id === b.dataset.vedit))));
   $("isiHal").querySelectorAll("[data-iedit]").forEach((b) => (b.onclick = () => formItemToko(semua.find((x) => x.id === b.dataset.iedit))));
+  // Cek apakah berkas item benar-benar bisa dibuka. APK MENYEMBUNYIKAN item yang
+  // tautannya mati, jadi ini penyebab paling sering "item tidak muncul di Store".
+  const cekTautan = async (it, tombol) => {
+    if (!it) return;
+    const asli = tombol.textContent;
+    tombol.disabled = true;
+    tombol.textContent = "Cek…";
+    try {
+      const t = await auth.currentUser?.getIdToken();
+      const r = await fetch(DOMPET_BASE + "/aset-cek", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ t, url: it.url }),
+      });
+      const j = await r.json().catch(() => null);
+      if (!j || !j.ok) throw new Error((j && j.e) || ("HTTP " + r.status));
+      if (j.hidup) {
+        toast("Tautan hidup (HTTP " + j.status + (j.ukuran ? ", " + ukuranTeks(j.ukuran) : "") + ")");
+        tombol.textContent = "OK";
+      } else {
+        toast("Tautan MATI (HTTP " + j.status + "), item disembunyikan dari Store. Unggah ulang berkasnya.", true);
+        tombol.textContent = "Mati";
+      }
+    } catch (e) {
+      toast("Cek gagal: " + (e?.message || e), true);
+      tombol.textContent = asli;
+    } finally {
+      tombol.disabled = false;
+    }
+  };
+  $("isiHal").querySelectorAll("[data-icek]").forEach((b) => (b.onclick = () => cekTautan(semua.find((x) => x.id === b.dataset.icek), b)));
   const hapusAset = async (id, kunci, pesan, tombol) => {
     if (!confirm(pesan)) return;
     const baris = tombol?.closest("tr");

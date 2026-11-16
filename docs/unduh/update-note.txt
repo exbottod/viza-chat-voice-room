@@ -1,1 +1,5 @@
-APK arm64, armv7, dan universal build otomatis. Paket com.vizachatvoice.app, ditandatangani kunci rilis Viza.
+Versi 1.0.166
+- Greedy King: pola di roda tampil bulat, bukan kotak
+- Item VIP: satu kartu per tingkat, kembar VIP/SVIP tidak tampil dobel
+- Item VIP: kartu diam, animasi diputar saat tombol play ditekan
+- Fruit Party: tampilan penuh, CSS ditanam langsung di halaman

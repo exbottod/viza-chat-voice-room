@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.184",
-  "catatan": "• Crazy Fruit: kotak pemenang dan daftar SEDANG MAIN hanya berisi pemain yang memasang chip di ronde i",
-  "ukuran_apk": 54757255,
-  "sha256_apk": "d597058000069b3fcb0cf2ea5b9f946ea296f47dc2b8ed32132229a9b692367d",
+  "versi": "1.0.185",
+  "catatan": "• Musik room: lagu diunggah langsung ke VPS sendiri (/musik) dan diputar dari tautan VPS dengan sifat ",
+  "ukuran_apk": 54758761,
+  "sha256_apk": "986b721b1a4aa5048acdb1185c4bc3dbc03ef1299a53ee4a26da1594317a8654",
   "abis": {
     "arm64": {
-      "ukuran": 54757255,
-      "sha256": "d597058000069b3fcb0cf2ea5b9f946ea296f47dc2b8ed32132229a9b692367d"
+      "ukuran": 54758761,
+      "sha256": "986b721b1a4aa5048acdb1185c4bc3dbc03ef1299a53ee4a26da1594317a8654"
     },
     "armv7": {
-      "ukuran": 52908400,
-      "sha256": "2832a6c9259ae7c0f1e798f6dc58934c9416ea3510a807cdcc257ff8de9ab0d6"
+      "ukuran": 52909906,
+      "sha256": "f68bf77f26ae1edc1a342210848ce9553f74f565de8c4485951beea09c8ac319"
     },
     "universal": {
-      "ukuran": 73173217,
-      "sha256": "983b0c923bd61284f6fd8d9210dcaad789e82e5d5f92c9bb8d03eb971272b45b"
+      "ukuran": 73174725,
+      "sha256": "35f267a8f6622980fcd21cf52e7c1921bfcdb739cf77cbe00264b5bcb63c6e86"
     }
   }
 }

@@ -1,1 +1,1 @@
-• Crazy Fruit: kotak pemenang dan daftar SEDANG MAIN hanya berisi pemain yang memasang chip di ronde i
+• Musik room: lagu diunggah langsung ke VPS sendiri (/musik) dan diputar dari tautan VPS dengan sifat 

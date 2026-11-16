@@ -4210,7 +4210,15 @@ async function wavePlay(req, env) {
           aku.win = 0;
         }
       }
-      return balas({ success: true, message: "success", data: { list: daftar, top: daftar.slice(0, 3), aku, detik: 180 } });
+      let pemenang = { ronde: 0, list: [] };
+      try {
+        pemenang = await cfPemenangRonde(env, 8, "https://viza.43-156-99-4.sslip.io");
+      } catch { /* papan pemenang opsional */ }
+      return balas({
+        success: true,
+        message: "success",
+        data: { list: daftar, top: pemenang.list.slice(0, 3), pemenang: pemenang.list, ronde: pemenang.ronde, aku, detik: 180 },
+      });
     } catch (e) {
       return balas({ success: false, message: String(e?.message ?? e), data: { list: [], top: [], aku: null } }, 200);
     }
@@ -4368,6 +4376,40 @@ async function cfPeringkat(env, batas, asal, mulai = 0) {
     });
   }
   return hasil;
+}
+
+/** Pemenang ronde yang barusan selesai (seperti papan pemenang Greedy King).
+ *  Ronde Crazy Fruit tidak punya nomor ronde di server, jadi ronde dibaca dari
+ *  catatan terakhir: semua hasil yang masuk dalam 25 detik terakhir dianggap
+ *  satu ronde. */
+async function cfPemenangRonde(env, batas, asal) {
+  await cfRondePastikan(env);
+  const r = await pipe(env, [
+    { sql: `select max(at) terakhir from cf_ronde`, args: [] },
+  ]);
+  const terakhir = Number(r[0].rows[0]?.terakhir ?? 0);
+  if (!terakhir) return { ronde: 0, list: [] };
+  const mulai = terakhir - 25000;
+  const r2 = await pipe(env, [
+    {
+      sql: `select uid, sum(win) win, count(*) kali, max(at) at from cf_ronde
+            where at >= ? and win > 0 group by uid order by win desc limit ?`,
+      args: [I(mulai), I(batas)],
+    },
+  ]);
+  const rows = r2[0].rows || [];
+  const list = [];
+  for (const x of rows) {
+    let nama = "Player";
+    try {
+      const rr = await pipe(env, [{ sql: "select name from wave_players where uid = ?", args: [T(x.uid)] }]);
+      nama = String(rr[0].rows[0]?.name ?? "").trim() || "Player";
+    } catch { /* nama opsional */ }
+    const foto = await fotoProfilRtdb(env, x.uid);
+    const uri = foto ? (/^https?:\/\//i.test(foto) ? foto : `${asal}/avatar/${encodeURIComponent(String(x.uid))}`) : "";
+    list.push({ id: String(x.uid), name: nama, win: Number(x.win ?? 0), times: Number(x.kali ?? 0), at: Number(x.at ?? 0), photo: uri });
+  }
+  return { ronde: terakhir, list };
 }
 
 /** Pemain yang SEDANG main sekarang (ronde berjalan) beserta kemenangan

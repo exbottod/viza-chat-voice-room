@@ -86,7 +86,7 @@
     );
     el.innerHTML =
       '<div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.35rem">' +
-      '<span style="font-size:.66rem;font-weight:800;letter-spacing:.6px;color:#ffd75e">TOP 3 RONDE INI</span>' +
+      '<span style="font-size:.66rem;font-weight:800;letter-spacing:.6px;color:#ffd75e">PEMENANG RONDE INI</span>' +
       '<span style="font-size:.6rem;color:#7fd1a0">live</span>' +
       "</div>" +
       '<div id="cf-top3-isi"><div style="font-size:.68rem;color:#8fa3cc;padding:.25rem 0">Memuat peringkat…</div></div>' +
@@ -98,6 +98,7 @@
 
   function baris(no, item) {
     var medali = ["#ffd75e", "#d7dee9", "#c98a4b"];
+    var warna = medali[no - 1] || "#39507d";
     var foto = item.photo
       ? '<img src="' +
         aman(item.photo) +
@@ -107,7 +108,7 @@
     return (
       '<div style="display:flex;align-items:center;gap:.45rem;padding:.22rem 0">' +
       '<span style="width:1.15rem;height:1.15rem;border-radius:999px;background:' +
-      medali[no - 1] +
+      warna +
       ';color:#0b1020;font-size:.62rem;font-weight:900;display:flex;align-items:center;justify-content:center">' +
       no +
       "</span>" +
@@ -130,11 +131,11 @@
     if (!isi) return;
     if (!daftar || !daftar.length) {
       isi.innerHTML =
-        '<div style="font-size:.68rem;color:#8fa3cc;padding:.2rem 0">Belum ada pemenang hari ini.</div>';
+        '<div style="font-size:.68rem;color:#8fa3cc;padding:.2rem 0">Belum ada pemenang di ronde ini.</div>';
       return;
     }
     var html = "";
-    for (var i = 0; i < daftar.length && i < 3; i++) html += baris(i + 1, daftar[i]);
+    for (var i = 0; i < daftar.length && i < 5; i++) html += baris(i + 1, daftar[i]);
     isi.innerHTML = html;
   }
 
@@ -215,12 +216,16 @@
         var d = j && (j.data || j.w || j);
         var daftar = [];
         var aku = null;
-        if (Array.isArray(d)) daftar = d;
-        else if (d) {
-          daftar = Array.isArray(d.top) ? d.top : Array.isArray(d.list) ? d.list : [];
+        var menang = [];
+        if (Array.isArray(d)) {
+          daftar = d;
+          menang = d;
+        } else if (d) {
+          daftar = Array.isArray(d.list) ? d.list : [];
+          menang = Array.isArray(d.pemenang) ? d.pemenang : Array.isArray(d.top) ? d.top : [];
           aku = d.aku || null;
         }
-        tampil(daftar);
+        tampil(menang);
         tampilLive(daftar, aku);
         if (aku) pasangFotoSendiri(aktif && aktif.node, aku.photo);
       })

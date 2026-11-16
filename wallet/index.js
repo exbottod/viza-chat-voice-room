@@ -1656,10 +1656,41 @@ const ADMIN_SEMUA = [ADMIN_EMAIL];
 const adalahAdmin = (s) => !!s && ADMIN_SEMUA.includes(String(s.email || "").toLowerCase());
 // Staf panel (manager/admin) boleh memakai fitur panel. Hanya pengelolaan staf
 // dan penghapusan akun yang tetap khusus developer.
+// Peran staf panel web disimpan di Firestore panelAdmins/<email>, terpisah dari
+// panel_staf (staf panel di dalam APK). Keduanya harus diakui di sini, kalau tidak
+// admin panel web selalu ditolak dengan "Hanya admin".
+const cachePanelWeb = new Map();
+async function peranPanelWeb(env, sesi) {
+  const email = String(sesi?.email || "").toLowerCase();
+  if (!email) return "";
+  const simpan = cachePanelWeb.get(email);
+  if (simpan && simpan.sampai > Date.now()) return simpan.peran;
+  let peran = "";
+  try {
+    const token = await tokenLayanan(env);
+    if (token) {
+      const proyek = String(env.FIREBASE_PROJECT || "my-app-e7f8c").trim();
+      const r = await fetch(
+        `https://firestore.googleapis.com/v1/projects/${proyek}/databases/(default)/documents/panelAdmins/${encodeURIComponent(email)}`,
+        { headers: { authorization: "Bearer " + token } },
+      );
+      if (r.ok) {
+        const d = await r.json();
+        const f = d.fields || {};
+        const aktif = f.aktif && f.aktif.booleanValue === false ? false : true;
+        if (aktif) peran = String(f.peran?.stringValue || "admin").toLowerCase();
+      }
+    }
+  } catch { peran = ""; }
+  cachePanelWeb.set(email, { peran, sampai: Date.now() + 60000 });
+  return peran;
+}
+
 async function bolehPanel(env, sesi) {
   if (!sesi) return false;
   if (adalahAdmin(sesi)) return true;
-  try { return (await peranStaf(env, sesi.uid)).length > 0; } catch { return false; }
+  try { if ((await peranStaf(env, sesi.uid)).length > 0) return true; } catch { /* lanjut */ }
+  return !!(await peranPanelWeb(env, sesi));
 }
 const cache = new Map();
 
@@ -3146,6 +3177,7 @@ async function admin(env, body) {
     } catch {
       stafPanel = false;
     }
+    if (!stafPanel) stafPanel = !!(await peranPanelWeb(env, sesi));
   }
   if (!devPanel && !stafPanel) return json({ ok: 0, e: "Hanya admin" }, 403);
   const p = body.p ?? {};
@@ -3156,6 +3188,10 @@ async function admin(env, body) {
   let stafAdmin = false;
   if (!devPanel) {
     try { stafAdmin = (await peranStaf(env, sesi.uid)).some((x) => x.role === "admin"); } catch { stafAdmin = false; }
+    if (!stafAdmin) {
+      const pw = await peranPanelWeb(env, sesi);
+      stafAdmin = pw === "admin" || pw === "owner";
+    }
   }
   const khususDev = stafAdmin
     ? ["panel_grant", "panel_revoke"]
@@ -5009,7 +5045,7 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           stafAktif = Number(r[0].rows[0]?.a ?? 0);
           peran = r[1].rows.map((x) => String(x.role) + ":" + Number(x.n));
         } catch (e) { /* tabel belum ada */ }
-        return json({ ok: 1, v: "viza-2026-11-15-diamond-5persen", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
+        return json({ ok: 1, v: "viza-2026-11-16-panel-web-admin", db: 1, proj: PROJ_SAH, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
       } catch (e) {
         return json({ ok: 0, v: "viza-2026-11-13-mandiri", db: String(e?.message ?? e) }, 500);
       }

@@ -5398,7 +5398,11 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
       }
       let isiLk = {};
       try { isiLk = await req.json(); } catch { isiLk = {}; }
-      const roomLk = (String(isiLk.room || url.searchParams.get("room") || "umum").replace(/[^0-9A-Za-z_.:-]/g, "") || "umum").slice(0, 64);
+      // HP mengirim nama room di kolom "channel". Dulu hanya "room" yang dibaca,
+      // jadi semua room jatuh ke satu room "umum" dan suara tembus antar room.
+      const roomLk = (String(
+        isiLk.room || isiLk.channel || url.searchParams.get("room") || url.searchParams.get("channel") || "umum",
+      ).replace(/[^0-9A-Za-z_.:-]/g, "") || "umum").slice(0, 64);
       const namaLk = String(isiLk.name || "").slice(0, 40);
       const kiniLk = Math.floor(Date.now() / 1000);
       const klaimLk = {

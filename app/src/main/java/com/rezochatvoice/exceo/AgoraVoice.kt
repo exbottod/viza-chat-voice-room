@@ -229,7 +229,13 @@ object AgoraVoice {
                     setRequestProperty("Authorization", "Bearer $idToken")
                     setRequestProperty("Content-Type", "application/json")
                 }
-                c.outputStream.use { it.write(JSONObject().put("channel", channel).toString().toByteArray()) }
+                // Server membaca "room" (versi baru) dan "channel" (versi lama).
+                // Dikirim dua-duanya supaya room tidak pernah jatuh ke room umum.
+                c.outputStream.use {
+                    it.write(
+                        JSONObject().put("room", channel).put("channel", channel).toString().toByteArray(),
+                    )
+                }
                 if (c.responseCode == 200) {
                     val o = JSONObject(c.inputStream.bufferedReader().readText())
                     return Tok(o.getString("token"), o.getString("url"))

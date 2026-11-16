@@ -208,9 +208,17 @@ function ukuranTeks(n) {
     Foto/SVGA/MP4 tidak disentuh. Kalau hasil kecilnya tidak lebih kecil, pakai aslinya. */
 async function kecilkanBerkas(berkas) {
   try {
-    if (!berkas || !/^image\/(png|jpe?g|webp)$/i.test(berkas.type || "")) return berkas;
+    // HANYA PNG/JPG statis yang boleh dikecilkan. WebP/GIF bisa berisi animasi
+    // dan menggambarnya ulang di canvas membuangnya jadi satu gambar diam.
+    if (!berkas || !/^image\/(png|jpe?g)$/i.test(berkas.type || "")) return berkas;
     if (berkas.size < 900 * 1024) return berkas;
     if (typeof createImageBitmap !== "function") return berkas;
+    // PNG animasi (APNG) juga punya chunk acTL: jangan disentuh.
+    if (/png/i.test(berkas.type)) {
+      const kepala = new Uint8Array(await berkas.slice(0, 65536).arrayBuffer());
+      const teks = new TextDecoder("latin1").decode(kepala);
+      if (teks.indexOf("acTL") !== -1) return berkas;
+    }
     const bmp = await createImageBitmap(berkas);
     const sisi = 1600;
     const skala = Math.min(1, sisi / Math.max(bmp.width || 1, bmp.height || 1));

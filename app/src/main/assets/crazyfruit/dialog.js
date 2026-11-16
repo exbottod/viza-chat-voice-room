@@ -89,10 +89,7 @@
       '<span style="font-size:.66rem;font-weight:800;letter-spacing:.6px;color:#ffd75e">PEMENANG RONDE INI</span>' +
       '<span id="cf-top3-jam" style="font-size:.6rem;color:#7fd1a0">live</span>' +
       "</div>" +
-      '<div id="cf-top3-isi"><div style="font-size:.68rem;color:#8fa3cc;padding:.25rem 0">Memuat peringkat…</div></div>' +
-      '<div id="cf-live" style="margin-top:.45rem;border-top:1px solid rgba(143,163,204,.25);padding-top:.4rem">' +
-      '<div style="font-size:.6rem;font-weight:800;letter-spacing:.5px;color:#7fd1a0;margin-bottom:.2rem">SEDANG MAIN</div>' +
-      '<div id="cf-live-isi"><div style="font-size:.66rem;color:#8fa3cc">Memuat…</div></div></div>';
+      '<div id="cf-top3-isi"><div style="font-size:.68rem;color:#8fa3cc;padding:.25rem 0">Memuat peringkat…</div></div>';
     return el;
   }
 
@@ -132,10 +129,19 @@
     );
   }
 
+  /* Hanya pemain yang masih ikut ronde sekarang. Baris lama (pemain yang sudah
+     berhenti memasang) dibuang supaya tidak nyangkut di papan pemenang. */
+  function masihIkut(x) {
+    var at = Number(x && x.at) || 0;
+    if (!at) return true;
+    return Date.now() - at < 120000;
+  }
+
   function tampil(daftar) {
     var isi = document.getElementById("cf-top3-isi");
     if (!isi) return;
-    if (!daftar || !daftar.length) {
+    daftar = (daftar || []).filter(masihIkut);
+    if (!daftar.length) {
       isi.innerHTML =
         '<div style="font-size:.68rem;color:#8fa3cc;padding:.35rem 0;text-align:center">Belum ada pemenang di ronde ini.</div>';
       return;
@@ -157,6 +163,7 @@
     var isi = document.getElementById("cf-live-isi");
     if (!isi) return;
     var lain = (daftar || []).filter(function (x) {
+      if (!masihIkut(x)) return false;
       return !(aku && String(x.id) === String(aku.id));
     });
     if (!lain.length) {
@@ -316,7 +323,86 @@
     buka(d);
   }
 
+  /* ---------- SEDANG MAIN di halaman game ---------- */
+  function buatPanelLive() {
+    if (document.getElementById("cf-panel-main")) return;
+    var el = document.createElement("div");
+    el.id = "cf-panel-main";
+    el.setAttribute(
+      "style",
+      [
+        "position:fixed",
+        "left:.35rem",
+        "bottom:3.4rem",
+        "width:8.6rem",
+        "max-width:46%",
+        "z-index:2147482000",
+        "pointer-events:none",
+        "border-radius:.7rem",
+        "border:1px solid rgba(143,163,204,.3)",
+        "background:rgba(8,14,32,.78)",
+        "padding:.3rem .38rem .34rem",
+        "font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif",
+      ].join(";"),
+    );
+    el.innerHTML =
+      '<div style="font-size:.55rem;font-weight:800;letter-spacing:.5px;color:#7fd1a0;margin-bottom:.15rem">SEDANG MAIN</div>' +
+      '<div id="cf-panel-main-isi"><div style="font-size:.58rem;color:#8fa3cc">Memuat…</div></div>';
+    document.body.appendChild(el);
+  }
+
+  function isiPanelLive(daftar, aku) {
+    var isi = document.getElementById("cf-panel-main-isi");
+    if (!isi) return;
+    var lain = (daftar || []).filter(function (x) {
+      if (!masihIkut(x)) return false;
+      return !(aku && String(x.id) === String(aku.id));
+    });
+    if (!lain.length) {
+      isi.innerHTML = '<div style="font-size:.58rem;color:#8fa3cc">Belum ada pemain lain.</div>';
+      return;
+    }
+    var html = "";
+    for (var i = 0; i < lain.length && i < 4; i++) {
+      html +=
+        '<div style="display:flex;align-items:center;gap:.25rem;padding:.1rem 0">' +
+        '<span style="position:relative;width:1rem;height:1rem;border-radius:999px;overflow:hidden;flex:0 0 auto;background:#22345c;color:#9fb4dd;font-size:.5rem;font-weight:700;display:flex;align-items:center;justify-content:center;border:1px solid rgba(127,209,160,.6)">' +
+        aman(String(lain[i].name || "P").substr(0, 1).toUpperCase()) +
+        (lain[i].photo
+          ? '<img src="' + aman(lain[i].photo) + '" alt="" referrerpolicy="no-referrer" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">'
+          : "") +
+        "</span>" +
+        '<span style="flex:1;min-width:0;font-size:.58rem;color:#dbe6fb;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
+        aman(potong(lain[i].name, 11)) +
+        "</span>" +
+        '<span style="font-size:.55rem;font-weight:800;color:#7fd1a0;font-variant-numeric:tabular-nums">' +
+        angka(lain[i].win) +
+        "</span></div>";
+    }
+    isi.innerHTML = html;
+  }
+
+  function muatPanelLive() {
+    var alamat = dasarApi() + "/wave/game/cfLive?token=" + encodeURIComponent(token());
+    fetch(alamat)
+      .then(function (r) {
+        return r.json();
+      })
+      .then(function (j) {
+        var d = j && (j.data || j.w || j);
+        if (!d || Array.isArray(d)) return;
+        isiPanelLive(Array.isArray(d.list) ? d.list : [], d.aku || null);
+      })
+      .catch(function () {});
+  }
+
   function mulai() {
+    buatPanelLive();
+    muatPanelLive();
+    setInterval(function () {
+      if (document.hidden) return;
+      muatPanelLive();
+    }, 5000);
     try {
       new MutationObserver(periksa).observe(document.documentElement, {
         childList: true,

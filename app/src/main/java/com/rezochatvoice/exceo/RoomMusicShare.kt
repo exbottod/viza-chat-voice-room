@@ -39,6 +39,8 @@ object RoomMusicShare {
     private var siap = false
     private var roomId = ""
     @Volatile private var pollJob: Job? = null
+    private var reg: Reg? = null
+    private var stempel = 0L
 
     /** Posisi musik saat ini (ms) untuk semua HP. */
     fun posisiMs(): Int {
@@ -111,8 +113,9 @@ object RoomMusicShare {
      */
     suspend fun siarkan(room: String, url: String, judul: String, main: Boolean, pos: Long) {
         if (room.isBlank() || url.isBlank()) return
+        var terkirim = false
         try {
-            kirimPost(
+            val balasan = kirimPost(
                 "/musikroom",
                 org.json.JSONObject()
                     .put("t", token())
@@ -122,19 +125,43 @@ object RoomMusicShare {
                     .put("playing", main)
                     .put("pos", pos),
             )
+            terkirim = balasan != null
         } catch (e: CancellationException) {
             throw e
-        } catch (e: Exception) { }
+        } catch (e: Exception) {
+            terkirim = false
+        }
+        // Cadangan: server bisa belum diperbarui atau sedang sibuk. Tulis juga ke
+        // Realtime Database supaya HP lain tetap menerima lagunya.
+        if (!terkirim) {
+            try {
+                Rtdb.ref("roomMusic/$room").updateChildren(
+                    hashMapOf<String, Any?>(
+                        "url" to url,
+                        "title" to judul,
+                        "playing" to main,
+                        "pos" to pos,
+                        "at" to System.currentTimeMillis(),
+                    ),
+                ).await()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) { }
+        }
     }
 
     suspend fun hentikan(room: String) {
         if (room.isBlank()) return
+        var beres = false
         try {
-            kirimPost(
+            beres = kirimPost(
                 "/musikroom/hentikan",
                 org.json.JSONObject().put("t", token()).put("room", room),
-            )
-        } catch (e: Exception) { }
+            ) != null
+        } catch (e: Exception) { beres = false }
+        if (!beres) {
+            try { Rtdb.ref("roomMusic/$room").removeValue().await() } catch (e: Exception) { }
+        }
     }
 
     private suspend fun token(): String =
@@ -164,7 +191,7 @@ object RoomMusicShare {
     /** Mulai mengikuti musik room. Dipanggil sekali saat masuk room. */
     fun observe(room: String) {
         if (room.isBlank()) return
-        if (room == roomId && pollJob != null) return
+        if (room == roomId && (pollJob != null || reg != null)) return
         lepas()
         roomId = room
         pollJob = scope.launch {
@@ -175,6 +202,29 @@ object RoomMusicShare {
                 delay(2000)
             }
         }
+        // Jalur cadangan: Realtime Database. Dipakai kalau server belum diperbarui
+        // atau lagu disiarkan oleh versi aplikasi yang masih memakai RTDB.
+        try {
+            reg = Rtdb.listen(Rtdb.ref("roomMusic/$room")) { s ->
+                val url = s.child("url").getValue(String::class.java).orEmpty()
+                val judul = s.child("title").getValue(String::class.java).orEmpty()
+                val main = s.child("playing").getValue(Boolean::class.java) ?: false
+                val pos = (s.child("pos").value as? Number)?.toLong() ?: 0L
+                val at = (s.child("at").value as? Number)?.toLong() ?: 0L
+                if (url.isBlank()) {
+                    if (at == 0L) terapkanSumber("", "", false, 0L, 0L)
+                } else {
+                    terapkanSumber(url, judul, main, pos, at)
+                }
+            }
+        } catch (e: Exception) { }
+    }
+
+    /** Pakai keadaan musik yang paling baru dari server maupun RTDB. */
+    private fun terapkanSumber(url: String, judul: String, main: Boolean, pos: Long, at: Long) {
+        if (at > 0L && at < stempel - 2000L) return
+        if (at > 0L) stempel = at
+        terapkan(url, judul, main, pos, at)
     }
 
     /** Ambil keadaan musik room sekali dari server. */
@@ -194,23 +244,26 @@ object RoomMusicShare {
         } ?: return
         val o = org.json.JSONObject(teks)
         if (o.optInt("ada", 0) != 1) {
-            terapkan("", "", false, 0L, 0L)
+            terapkanSumber("", "", false, 0L, 0L)
             return
         }
         val url = o.optString("url")
         if (url.isBlank()) {
-            terapkan("", "", false, 0L, 0L)
+            terapkanSumber("", "", false, 0L, 0L)
             return
         }
         val main = o.optInt("playing", 0) == 1
         val pos = o.optLong("pos", 0L)
         val lewat = o.optLong("lewat", 0L)
-        terapkan(url, o.optString("title"), main, pos, System.currentTimeMillis() - lewat)
+        terapkanSumber(url, o.optString("title"), main, pos, System.currentTimeMillis() - lewat)
     }
 
     fun lepas() {
         pollJob?.cancel()
         pollJob = null
+        try { reg?.remove() } catch (e: Exception) { }
+        reg = null
+        stempel = 0L
         roomId = ""
         try { player?.release() } catch (e: Exception) { }
         player = null

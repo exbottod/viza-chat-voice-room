@@ -35,16 +35,22 @@
     return Math.floor(Date.now() / PANJANG);
   };
 
-  /** Sisa detik sampai ronde berganti, dihitung dari jam (bukan dari HP). */
+  /** Sisa detik sampai ronde berganti, dihitung dari jam (bukan dari HP).
+      Pakai pembulatan ke bawah supaya angkanya benar-benar sampai 0 dan
+      putaran ronde jalan; dengan pembulatan ke atas nilainya melompat dari
+      1 langsung ke 30 sehingga ronde tidak pernah berputar. */
   window.__cfSisaDetik = function () {
     var sisa = PANJANG - (Date.now() % PANJANG);
-    return Math.max(0, Math.ceil(sisa / 1000));
+    return Math.max(0, Math.floor(sisa / 1000));
   };
 
   /* Hitung mundur fase taruhan memakai jam bersama supaya pola keluar bareng. */
   window.__cfLangkah = function (fase, nilai) {
     if (fase !== "bets") return nilai - 1;
-    return window.__cfSisaDetik();
+    var sisa = window.__cfSisaDetik();
+    // Jaga-jaga kalau fungsi ini dipanggil tepat di detik pergantian ronde.
+    if (sisa >= PANJANG / 1000) return 0;
+    return sisa;
   };
 
   /* Pola ronde sekarang. Kalau belum sempat diambil, kembalikan null supaya

@@ -13,7 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -80,7 +79,6 @@ fun FamTag3D(fam: String, modifier: Modifier = Modifier) {
             contentDescription = fam,
             modifier = Modifier.matchParentSize(),
             contentScale = ContentScale.FillBounds,
-            filterQuality = FilterQuality.High,
         )
         Row(Modifier.matchParentSize(), verticalAlignment = Alignment.CenterVertically) {
             Spacer(Modifier.weight(0.36f))

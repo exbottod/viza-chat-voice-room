@@ -417,7 +417,6 @@ fun VipMedia(
             imageLoader = rememberVipLoader(),
             modifier = modifier,
             contentScale = contentScale,
-            filterQuality = androidx.compose.ui.graphics.FilterQuality.High,
             onError = { r ->
                 VipAssets.diag["${a.n}_${a.slot}"] =
                     (if (remote) a.url.substringAfter("//").take(60) else "data") + " -> " +
@@ -500,7 +499,6 @@ fun VipMediaSafe(
             imageLoader = rememberVipLoader(),
             modifier = modifier,
             contentScale = contentScale,
-            filterQuality = androidx.compose.ui.graphics.FilterQuality.High,
             onError = { gagal = true },
         )
         return

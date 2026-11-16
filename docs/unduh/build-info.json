@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.178",
-  "catatan": "• Panel menulis aset ke RTDB lewat server (akun layanan) supaya tidak lagi PERMISSION_DENIED; endpoint",
-  "ukuran_apk": 54752853,
-  "sha256_apk": "b91b2420867da189c5723375ed2ff54b822e53ab1abfe69d38817c05e1a8100c",
+  "versi": "1.0.179",
+  "catatan": "• Store: tombol play pratinjau di setiap kartu, animasi penuh (SVGA/MP4/WebP/GIF) sebelum membeli",
+  "ukuran_apk": 54753791,
+  "sha256_apk": "952a00afa69757da59eae5dbb877b9a11f8403d7066e34ea1de9682933cf9b48",
   "abis": {
     "arm64": {
-      "ukuran": 54752853,
-      "sha256": "b91b2420867da189c5723375ed2ff54b822e53ab1abfe69d38817c05e1a8100c"
+      "ukuran": 54753791,
+      "sha256": "952a00afa69757da59eae5dbb877b9a11f8403d7066e34ea1de9682933cf9b48"
     },
     "armv7": {
-      "ukuran": 52904000,
-      "sha256": "7dda178354a9e70b666c052486e7b88afb1fa269a3b1474638de78eb6b2a050a"
+      "ukuran": 52904943,
+      "sha256": "3e7327569f24ff17e6262fa570a3ed26eedf5a3098cb4f00ceaa3ddbcb06fc5a"
     },
     "universal": {
-      "ukuran": 73168820,
-      "sha256": "765c082e5573f06376ce23a8918c75663d6375dc9041275c484beca58499b68f"
+      "ukuran": 73169755,
+      "sha256": "fde76461caca0ee1df9c9b5cdd279d53eef3298c9e1e543ce283cb1ff849e0ce"
     }
   }
 }

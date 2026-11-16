@@ -1,1 +1,1 @@
-• Panel menulis aset ke RTDB lewat server (akun layanan) supaya tidak lagi PERMISSION_DENIED; endpoint
+• Store: tombol play pratinjau di setiap kartu, animasi penuh (SVGA/MP4/WebP/GIF) sebelum membeli

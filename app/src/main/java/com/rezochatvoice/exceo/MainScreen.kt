@@ -168,6 +168,19 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
         }
     }
 
+    var memuatHalaman by remember { mutableStateOf(false) }
+    // Loading singkat setiap halaman dibuka: ganti tab, dompet, store, VIP
+    // center, profil orang lain, family, dan halaman lain.
+    androidx.compose.runtime.LaunchedEffect(
+        selected, overlay, showWallet, showStore, showVip, showLevel, showProps,
+        showGlory, familyFull, showSellers, showSellerPanel, showAgency,
+        fullProfileUid, chatWith, kickNote,
+    ) {
+        memuatHalaman = true
+        kotlinx.coroutines.delay(600)
+        memuatHalaman = false
+    }
+
     fun enterRoom(room: RoomInfo) {
         if (activeRoom?.id == room.id) {
             minimized = false
@@ -449,12 +462,6 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
     }
 
     // Loading singkat setiap berpindah halaman, supaya transisi terasa jelas.
-    var memuatHalaman by remember { mutableStateOf(false) }
-    androidx.compose.runtime.LaunchedEffect(selected) {
-        memuatHalaman = true
-        kotlinx.coroutines.delay(550)
-        memuatHalaman = false
-    }
 
     CompositionLocalProvider(LocalActions provides actions) {
         Box(Modifier.fillMaxSize()) {
@@ -571,8 +578,6 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
                         )
                         }
                     }
-                    // Loading khas Viza saat halaman baru dibuka.
-                    if (memuatHalaman) VizaLoadingLayar()
                 }
             }
 
@@ -838,6 +843,8 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
             NetworkBanner()
             BanGate(uid = uid, onSignOut = onSignOutClick, onBanned = { if (activeRoom != null) exitRoom() })
             UpdateGate()
+            // Loading khas Viza, digambar paling atas supaya menutupi halaman mana pun.
+            if (memuatHalaman) VizaLoadingLayar()
         }
     }
 }

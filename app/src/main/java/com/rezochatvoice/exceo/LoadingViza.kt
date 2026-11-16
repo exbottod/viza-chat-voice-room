@@ -74,16 +74,16 @@ fun VizaLoading(modifier: Modifier = Modifier, ukuran: Dp = 96.dp, latar: Color?
             }
             // Lima batang suara di tengah, tingginya bergantian mengikuti denyut.
             Row(
-                horizontalArrangement = Arrangement.spacedBy(ukuran.value * 0.045f),
+                horizontalArrangement = Arrangement.spacedBy(ukuran * 0.045f),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 val pola = listOf(0.45f, 0.85f, 1f, 0.7f, 0.4f)
                 pola.forEachIndexed { i, dasar ->
-                    val tinggi = ukuran.value * 0.22f * (dasar + 0.35f * denyut * if (i % 2 == 0) 1f else -1f + 0.35f)
+                    val tinggi = ukuran * (0.22f * (dasar + 0.25f * denyut))
                     Box(
                         Modifier
-                            .width(ukuran.value.dp * 0.035f)
-                            .height(tinggi.coerceIn(ukuran.value * 0.08f, ukuran.value * 0.3f).dp)
+                            .width(ukuran * 0.035f)
+                            .height(tinggi)
                             .clip(RoundedCornerShape(50))
                             .background(hijau),
                     )

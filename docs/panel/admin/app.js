@@ -63,6 +63,23 @@ const kumpulan = (nama) => collection(db, nama);
 /** Aset VIP & item toko: APK membaca RTDB vipCfg lebih dulu (Firestore hanya cadangan),
  *  jadi semua simpan/hapus harus menulis ke keduanya. Kunci RTDB tidak boleh memuat . # $ [ ] / */
 const kunciVip = (id) => String(id).replace(/[.#$\[\]/]/g, "_");
+
+/** Tulis/hapus simpul RTDB lewat server dompet (akun layanan). Jauh lebih andal
+ *  daripada menulis langsung dari browser, yang sering ditolak aturan Firebase
+ *  dengan "PERMISSION_DENIED". */
+async function tulisRtdbServer(path, data, hapus = false) {
+  const t = await auth.currentUser?.getIdToken();
+  if (!t) throw new Error("Sesi panel tidak ditemukan, coba keluar lalu masuk lagi");
+  const r = await fetch(DOMPET_BASE + "/panel-rtdb", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ t, path, data: hapus ? null : data, hapus }),
+  });
+  const j = await r.json().catch(() => null);
+  if (!j || !j.ok) throw new Error((j && j.e) || ("HTTP " + r.status));
+  return true;
+}
+
 async function simpanVip(id, data) {
   let galatFs = null;
   try { await setDoc(doc(db, "vipConfig", id), data, { merge: true }); } catch (e) { galatFs = e; }
@@ -70,11 +87,17 @@ async function simpanVip(id, data) {
   // Jadi kalau tulisan RTDB gagal, item akan tampak di panel tapi tidak pernah
   // muncul di Store aplikasi. Dulu kegagalan ini ditelan diam-diam.
   let galatRtdb = null;
+  // 1) Jalur utama: server memakai akun layanan, tidak kena aturan tulis Firebase.
   try {
-    await dUpdate(dRef(rtdb, "vipCfg/" + kunciVip(id)), data);
-    const cek = await dGet(dRef(rtdb, "vipCfg/" + kunciVip(id)));
-    if (!cek.exists()) galatRtdb = new Error("tulisan tidak terbaca kembali");
-  } catch (e) { galatRtdb = e; }
+    await tulisRtdbServer("vipCfg/" + kunciVip(id), data);
+  } catch (eServer) {
+    // 2) Cadangan: tulis langsung dari browser (hanya jalan kalau aturan mengizinkan).
+    try {
+      await dUpdate(dRef(rtdb, "vipCfg/" + kunciVip(id)), data);
+      const cek = await dGet(dRef(rtdb, "vipCfg/" + kunciVip(id)));
+      if (!cek.exists()) galatRtdb = new Error("tulisan tidak terbaca kembali");
+    } catch (e) { galatRtdb = new Error((e.message || e) + " / server: " + (eServer.message || eServer)); }
+  }
   if (galatRtdb) {
     throw new Error("Gagal menulis ke RTDB (sumber yang dibaca APK): " + (galatRtdb.message || galatRtdb));
   }
@@ -134,7 +157,11 @@ async function hapusVip(id, kunci) {
         if (c.key === id || c.key === (kunci || "") || c.key === kunciVip(id) || v.id === id) sasaran.push(c.key);
       });
       for (const k of sasaran) {
-        try { await dRemove(dRef(rtdb, "vipCfg/" + k)); } catch (e) { galat.push("rtdb " + k); }
+        try {
+          await tulisRtdbServer("vipCfg/" + k, null, true);
+        } catch (eS) {
+          try { await dRemove(dRef(rtdb, "vipCfg/" + k)); } catch (e) { galat.push("rtdb " + k); }
+        }
       }
     }
   } catch (e) { galat.push("rtdb: " + (e.message || e)); }

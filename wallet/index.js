@@ -1764,6 +1764,26 @@ async function cfgRtdb(path, env) {
   }
 }
 
+/** Tulis/hapus simpul RTDB memakai token akun layanan. Dipakai panel supaya
+ *  penyimpanan aset tidak bergantung pada aturan tulis RTDB di Firebase (yang
+ *  masih memakai email contoh, sehingga panel selalu ditolak PERMISSION_DENIED). */
+async function tulisRtdbSa(env, path, nilai) {
+  const token = await tokenLayanan(env);
+  if (!token) throw new Error("akun layanan belum siap");
+  const bersih = String(path || "").replace(/^\/+|\/+$/g, "");
+  if (!bersih || bersih.includes("..")) throw new Error("path tidak sah");
+  const alamat = `${RTDB}/${bersih}.json?access_token=${encodeURIComponent(token)}`;
+  const r = nilai === null
+    ? await fetch(alamat, { method: "DELETE" })
+    : await fetch(alamat, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(nilai),
+      });
+  if (!r.ok) throw new Error("RTDB " + r.status + " " + (await r.text()).slice(0, 120));
+  return true;
+}
+
 /** Baca RTDB memakai token akun layanan (melewati aturan baca publik). */
 async function cfgRtdbSa(env, path) {
   try {
@@ -4867,6 +4887,35 @@ export default {
       if (!(await bolehPanel(env, sesiA))) return json({ ok: 0, e: "Hanya admin" }, 403);
       try { return await asetUpload(env, bA); }
       catch (e) { return json({ ok: 0, e: String(e?.message ?? e) }, 502); }
+    }
+    // Panel menulis aset/konfigurasi lewat server (akun layanan), jadi tidak
+    // lagi kena "PERMISSION_DENIED" dari aturan tulis RTDB di Firebase.
+    if (url.pathname.toLowerCase() === "/panel-rtdb") {
+      if (req.method !== "POST") return json({ ok: 0, e: "Gunakan POST" }, 405);
+      const b = await req.json().catch(() => null);
+      if (!b) return json({ ok: 0, e: "Body tidak valid" }, 400);
+      const sesiP = await sesiDariToken(b.t ?? "");
+      if (!sesiP) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
+      try {
+        if (!(await bolehPanel(env, sesiP))) {
+          const emailP = await emailSesi(env, sesiP);
+          return json({ ok: 0, e: "Hanya admin [email=" + (emailP || "-") + "]" }, 403);
+        }
+      } catch (e) {
+        return json({ ok: 0, e: "Hanya admin" }, 403);
+      }
+      const jalur = String(b.path || "");
+      // Batasi: panel hanya boleh menulis cabang pengaturan, bukan data user.
+      if (!/^(vipCfg|banners|pengumuman|giftCfg|betCfg|signinCfg|cashbackCfg|_owner)\//.test(jalur)) {
+        return json({ ok: 0, e: "Path tidak diizinkan" }, 400);
+      }
+      try {
+        await tulisRtdbSa(env, jalur, b.hapus ? null : (b.data ?? null));
+        return json({ ok: 1 });
+      } catch (e) {
+        await logGalat(env, sesiP.uid, "panel-rtdb", jalur + " " + String(e?.message ?? e).slice(0, 140));
+        return json({ ok: 0, e: String(e?.message ?? e) }, 502);
+      }
     }
     if (url.pathname.toLowerCase() === "/aset-cek") {
       const bC = await req.json().catch(() => null);

@@ -1,4 +1,1 @@
-• Efek room (banner masuk VIP, gift, cashback, roket) tidak tampil saat halaman game terbuka
-• Crazy Fruit ronde bareng seperti Greedy King: jam ronde 30 detik disamakan dari server, satu pola pe
-• Dialog Crazy Fruit: peringkat pemenang ronde gaya Greedy King (foto bulat, mahkota juara, nama, juml
-• Revert "Crazy Fruit ronde bareng seperti Greedy King: jam ronde 30 detik disamakan dari server, satu
+• Perbaikan dan peningkatan aplikasi

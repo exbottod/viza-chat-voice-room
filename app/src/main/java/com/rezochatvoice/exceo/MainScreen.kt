@@ -448,6 +448,14 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
         TabBgs.refresh()
     }
 
+    // Loading singkat setiap berpindah halaman, supaya transisi terasa jelas.
+    var memuatHalaman by remember { mutableStateOf(false) }
+    androidx.compose.runtime.LaunchedEffect(selected) {
+        memuatHalaman = true
+        kotlinx.coroutines.delay(550)
+        memuatHalaman = false
+    }
+
     CompositionLocalProvider(LocalActions provides actions) {
         Box(Modifier.fillMaxSize()) {
             // Background mengikuti tab yang sedang aktif (diatur dari Panel Developer).
@@ -563,6 +571,8 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
                         )
                         }
                     }
+                    // Loading khas Viza saat halaman baru dibuka.
+                    if (memuatHalaman) VizaLoadingLayar()
                 }
             }
 

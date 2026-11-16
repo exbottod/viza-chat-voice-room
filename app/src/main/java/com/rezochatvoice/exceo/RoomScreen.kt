@@ -161,6 +161,13 @@ fun RoomScreen(
     // --- Owner bisa mengeluarkan user: kalau keanggotaan kita hilang, keluar dari room.
     var joinedOnce by remember { mutableStateOf(false) }
     var kickedOut by remember { mutableStateOf(false) }
+    // Loading singkat saat masuk room, sampai kursi dan chat tampil.
+    var siapRoom by remember { mutableStateOf(false) }
+    androidx.compose.runtime.LaunchedEffect(roomId) {
+        siapRoom = false
+        kotlinx.coroutines.delay(1100)
+        siapRoom = true
+    }
     LaunchedEffect(roomId, myUid) {
         val reg = Rtdb.listen(Rtdb.ref("members/" + roomId + "/" + myUid)) { snap ->
             if (snap.exists()) {
@@ -972,6 +979,8 @@ fun RoomScreen(
                 }
             }
         }
+        // Loading khas Viza saat room sedang dimuat.
+        if (!siapRoom) VizaLoadingLayar()
         // Saat halaman game terbuka, efek room tidak boleh menutupi game.
         if (fxEntryOn && !waveOpen) VipEntryEffect(r.id)
         if (fxGiftOn && !waveOpen) GiftFxOverlay(r.id)

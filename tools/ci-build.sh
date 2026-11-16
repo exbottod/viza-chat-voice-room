@@ -122,12 +122,26 @@ ls -l "$TMP"/viza-chat-*.zip
 # 5) Release GitHub (dilewati kalau tidak ada token, mis. saat uji lokal)
 if [ -n "${GH_TOKEN:-}" ] && command -v gh > /dev/null 2>&1 && [ -z "${SKIP_RELEASE:-}" ]; then
   TAG="viza-1.0.$NOMOR"
+  # Catatan rilis dibaca dari judul commit sejak tag terakhir, supaya dialog
+  # pembaruan di APK menampilkan daftar perbaikan yang benar-benar berubah.
+  TAG_LAMA="$(git tag --list 'viza-1.0.*' --sort=-v:refname | head -1)"
+  CATATAN="$TMP/catatan-rilis.txt"
+  {
+    echo "Perbaikan di versi 1.0.$NOMOR:"
+    if [ -n "$TAG_LAMA" ]; then
+      git log --no-merges --pretty=format:"- %s" "$TAG_LAMA"..HEAD | head -8
+    else
+      git log --no-merges --pretty=format:"- %s" -8
+    fi
+  } > "$CATATAN"
+  sed -i '/^$/d' "$CATATAN"
+  [ "$(wc -l < "$CATATAN")" -ge 2 ] || printf '%s\n' "- Perbaikan dan peningkatan aplikasi" >> "$CATATAN"
   if gh release view "$TAG" > /dev/null 2>&1; then
     gh release upload "$TAG" "$TMP"/viza-chat-arm64.apk "$TMP"/viza-chat-armv7.apk "$TMP"/viza-chat-universal.apk "$TMP"/viza-chat-arm64.zip "$TMP"/viza-chat-armv7.zip "$TMP"/viza-chat-universal.zip --clobber
   else
     gh release create "$TAG" "$TMP"/viza-chat-arm64.apk "$TMP"/viza-chat-armv7.apk "$TMP"/viza-chat-universal.apk "$TMP"/viza-chat-arm64.zip "$TMP"/viza-chat-armv7.zip "$TMP"/viza-chat-universal.zip \
       --title "Viza Chat 1.0.$NOMOR" \
-      --notes "APK arm64, armv7, dan universal build otomatis. Paket $PAKET, ditandatangani kunci rilis Viza." \
+      --notes-file "$CATATAN" \
       --latest
   fi
   echo "Release: $TAG"

@@ -3996,7 +3996,7 @@ const waveFoto = (uid, a) => {
   const v = String(a ?? "").trim();
   if (!v) return "";
   if (/^https?:\/\//i.test(v)) return v;
-  return `https://43-156-99-4.sslip.io/avatar/${encodeURIComponent(String(uid))}`;
+  return `https://viza.43-156-99-4.sslip.io/avatar/${encodeURIComponent(String(uid))}`;
 };
 
 async function wavePlay(req, env) {
@@ -4059,7 +4059,7 @@ async function wavePlay(req, env) {
   if (ep.includes("cfrank")) {
     const batas = Math.min(20, Math.max(1, Number(url.searchParams.get("limit") || 10)));
     try {
-      const daftar = await cfPeringkat(env, batas, url.origin);
+      const daftar = await cfPeringkat(env, batas, "https://viza.43-156-99-4.sslip.io");
       return balas({ success: true, message: "success", data: daftar });
     } catch (e) {
       return balas({ success: false, message: String(e?.message ?? e), data: [] }, 200);

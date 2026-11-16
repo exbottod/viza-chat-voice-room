@@ -54,26 +54,29 @@
       "style",
       [
         "position:fixed",
-        "inset:0",
+        "left:0",
+        "top:0",
+        "width:" + (window.innerWidth || 360) + "px",
+        "height:" + (window.innerHeight || 640) + "px",
         "z-index:2147483000",
         "display:none",
-        "align-items:flex-end",
-        "justify-content:center",
+        "align-items:stretch",
+        "justify-content:flex-start",
         "background:rgba(4,8,20,.72)",
         "font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif",
       ].join(";"),
     );
     p.innerHTML =
-      '<div id="cf-rank-box" style="width:100%;max-width:26rem;max-height:82vh;overflow:hidden;display:flex;flex-direction:column;background:#0d1830;border:2px solid #d4a12a;border-radius:18px 18px 0 0;box-shadow:0 -8px 40px rgba(0,0,0,.6);transform:translateY(14px);opacity:0;transition:transform .18s ease,opacity .18s ease">' +
-      '<div style="display:flex;align-items:center;gap:.5rem;padding:.7rem .9rem;border-bottom:1px solid rgba(212,161,42,.35);background:#122040">' +
+      '<div id="cf-rank-box" style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:hidden;display:flex;flex-direction:column;background:#0d1830;border:0;border-radius:0;box-shadow:none;opacity:0;transition:opacity .16s ease">' +
+      '<div style="display:flex;align-items:center;gap:.5rem;padding:calc(.7rem + env(safe-area-inset-top,0px)) .9rem .7rem;border-bottom:1px solid rgba(212,161,42,.35);background:#122040">' +
       '<div style="font-size:.95rem;font-weight:800;color:#ffd75e;letter-spacing:.3px">PERINGKAT PEMENANG</div>' +
       '<div style="font-size:.62rem;color:#8fa3cc;margin-top:2px">Crazy Fruit · total kemenangan</div>' +
       '<div style="flex:1"></div>' +
-      '<button id="cf-rank-tutup" aria-label="Close" style="width:2rem;height:2rem;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font-size:1rem;line-height:1">×</button>' +
+      '<button id="cf-rank-tutup" aria-label="Close" style="width:2.4rem;height:2.4rem;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font-size:1rem;line-height:1">×</button>' +
       "</div>" +
-      '<div id="cf-rank-isi" style="overflow-y:auto;-webkit-overflow-scrolling:touch;padding:.45rem .5rem .8rem;color:#e7eefc"></div>' +
+      '<div id="cf-rank-isi" style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:.45rem .5rem calc(1rem + env(safe-area-inset-bottom,0px));color:#e7eefc"></div>' +
       "</div>";
-    document.body.appendChild(p);
+    (document.documentElement || document.body).appendChild(p);
     p.addEventListener("click", function (e) {
       if (e.target === p || e.target.id === "cf-rank-tutup") tutup();
     });
@@ -85,7 +88,6 @@
     if (!p) return;
     var box = document.getElementById("cf-rank-box");
     if (box) {
-      box.style.transform = "translateY(14px)";
       box.style.opacity = "0";
     }
     setTimeout(function () {
@@ -168,17 +170,26 @@
     var box = document.getElementById("cf-rank-box");
     var isi = document.getElementById("cf-rank-isi");
     if (isi) isi.innerHTML = barisMuat();
+    p.style.width = (window.innerWidth || 360) + "px";
+    p.style.height = (window.innerHeight || 640) + "px";
     p.style.display = "flex";
+    if (box) {
+      box.style.width = "100%";
+      box.style.height = "100%";
+      box.style.maxHeight = "none";
+    }
     requestAnimationFrame(function () {
       if (box) {
-        box.style.transform = "translateY(0)";
         box.style.opacity = "1";
       }
     });
     var tk = token();
     var alamat = dasarApi() + "/wave/game/cfRank?limit=10&token=" + encodeURIComponent(tk);
-    fetch(alamat, { headers: { Authorization: "Bearer " + tk } })
+    var ctl = typeof AbortController === "function" ? new AbortController() : null;
+    var batas = setTimeout(function () { try { if (ctl) ctl.abort(); } catch (e) {} }, 10000);
+    fetch(alamat, ctl ? { signal: ctl.signal } : {})
       .then(function (r) {
+        clearTimeout(batas);
         return r.json();
       })
       .then(function (j) {

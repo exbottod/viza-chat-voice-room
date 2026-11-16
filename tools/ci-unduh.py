@@ -123,7 +123,15 @@ def main():
     if not apk_utama:
         apk_utama = os.path.join(tmp, "arm64.apk")
 
-    catatan = (baru.get("body") or f"Viza Chat {v_baru}").strip().splitlines()[0][:220]
+    # Dialog pembaruan menampilkan isi catatan rilis. Ambil poin perbaikan
+    # (baris berawalan "-") supaya pengguna membaca apa yang berubah, bukan
+    # kalimat pembuka saja.
+    baris = [b.strip() for b in (baru.get("body") or "").splitlines() if b.strip()]
+    poin = [b.lstrip("-*\u2022 ").strip() for b in baris if b[:1] in "-*\u2022"]
+    if poin:
+        catatan = "\n".join("\u2022 " + x[:80] for x in poin[:5])[:460]
+    else:
+        catatan = (baris[0] if baris else f"Viza Chat {v_baru}")[:220]
     # "status": "ok" wajib: APK hanya menampilkan dialog pembaruan kalau kolom ini ada.
     info = {"status": "ok", "versi": v_baru, "catatan": catatan,
             "ukuran_apk": abis.get("arm64", {}).get("ukuran", 0),

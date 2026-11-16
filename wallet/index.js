@@ -4389,12 +4389,16 @@ async function cfPemenangRonde(env, batas, asal) {
   ]);
   const terakhir = Number(r[0].rows[0]?.terakhir ?? 0);
   if (!terakhir) return { ronde: 0, list: [] };
-  const mulai = terakhir - 25000;
+  // Satu ronde = satu jendela 30 detik pada jam yang sama untuk semua HP, jadi
+  // semua pemain yang polanya keluar di jendela itu melihat daftar yang sama.
+  const panjang = 30000;
+  const mulaiRonde = Math.floor(terakhir / panjang) * panjang;
+  const mulai = mulaiRonde;
   const r2 = await pipe(env, [
     {
       sql: `select uid, sum(win) win, count(*) kali, max(at) at from cf_ronde
-            where at >= ? and win > 0 group by uid order by win desc limit ?`,
-      args: [I(mulai), I(batas)],
+            where at >= ? and at < ? and win > 0 group by uid order by win desc limit ?`,
+      args: [I(mulai), I(mulai + panjang), I(batas)],
     },
   ]);
   const rows = r2[0].rows || [];
@@ -4409,7 +4413,7 @@ async function cfPemenangRonde(env, batas, asal) {
     const uri = foto ? (/^https?:\/\//i.test(foto) ? foto : `${asal}/avatar/${encodeURIComponent(String(x.uid))}`) : "";
     list.push({ id: String(x.uid), name: nama, win: Number(x.win ?? 0), times: Number(x.kali ?? 0), at: Number(x.at ?? 0), photo: uri });
   }
-  return { ronde: terakhir, list };
+  return { ronde: mulaiRonde, list };
 }
 
 /** Pemain yang SEDANG main sekarang (ronde berjalan) beserta kemenangan

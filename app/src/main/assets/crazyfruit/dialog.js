@@ -87,7 +87,7 @@
     el.innerHTML =
       '<div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.35rem">' +
       '<span style="font-size:.66rem;font-weight:800;letter-spacing:.6px;color:#ffd75e">PEMENANG RONDE INI</span>' +
-      '<span style="font-size:.6rem;color:#7fd1a0">live</span>' +
+      '<span id="cf-top3-jam" style="font-size:.6rem;color:#7fd1a0">live</span>' +
       "</div>" +
       '<div id="cf-top3-isi"><div style="font-size:.68rem;color:#8fa3cc;padding:.25rem 0">Memuat peringkat…</div></div>' +
       '<div id="cf-live" style="margin-top:.45rem;border-top:1px solid rgba(143,163,204,.25);padding-top:.4rem">' +
@@ -227,6 +227,16 @@
         }
         tampil(menang);
         tampilLive(daftar, aku);
+        var jam = document.getElementById("cf-top3-jam");
+        if (jam) {
+          var rn = d && Number(d.ronde);
+          if (rn > 0) {
+            var tgl = new Date(rn);
+            var jj = ("0" + tgl.getHours()).slice(-2) + ":" + ("0" + tgl.getMinutes()).slice(-2);
+            jam.textContent = "live · ronde " + jj;
+            jam.style.color = "#7fd1a0";
+          }
+        }
         if (aku) pasangFotoSendiri(aktif && aktif.node, aku.photo);
       })
       .catch(function () {
@@ -247,10 +257,19 @@
     else d.appendChild(el);
     aktif = { node: d, jamRangking: 0, jamHitung: 0 };
     muatPeringkat();
+    // Hasil ronde dikirim ke server tepat saat pola keluar, kadang mendarat
+    // beberapa ratus milidetik setelah dialog tampil. Ambil ulang cepat supaya
+    // daftar pemenang langsung real time.
+    setTimeout(function () {
+      if (d.isConnected) muatPeringkat();
+    }, 400);
+    setTimeout(function () {
+      if (d.isConnected) muatPeringkat();
+    }, 1200);
     var jamRangking = setInterval(function () {
       if (!d.isConnected) return;
       muatPeringkat();
-    }, 2000);
+    }, 1500);
     var sisa = DETIK;
     var pegang = ok; // tombol ditahan, teksnya berubah jadi "OK · 2s" dan seterusnya
     if (pegang) pegang.textContent = "OK · " + sisa + "s";

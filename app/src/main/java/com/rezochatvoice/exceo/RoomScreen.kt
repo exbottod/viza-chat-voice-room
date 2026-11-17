@@ -620,8 +620,8 @@ fun RoomScreen(
             }
 
             // Pengumuman dan notifikasi masuk
-            // Banner kemenangan game (terbang di atas daftar chat publik).
-            if (fxGameOn) GameWinBanner()
+            // Banner kemenangan game digambar di lapisan paling atas layar utama
+            // (GameWinBannerHost di MainScreen), jadi tidak dipasang lagi di sini.
 
             // Tab "Semua | Obrolan": bisa diklik atau digeser kiri/kanan di daftar chat.
             Row(

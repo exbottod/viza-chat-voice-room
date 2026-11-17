@@ -703,15 +703,23 @@ fun RoomScreen(
                 // tersimpan di HP dan di server), sehingga terlihat "tidak muncul di
                 // user lain". Sekarang ikonnya selalu tampil selama panel mengizinkan;
                 // yang mengikuti saklar user hanya animasi meluncurnya.
-                if (ROCKET_ROOM_UI) RocketRail(
-                    roomId = r.id,
-                    onOpen = { rocketOpen = true },
+                Column(
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
                         .zIndex(10f)
                         .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.End))
                         .padding(end = 14.dp, bottom = 10.dp),
-                )
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    if (ROCKET_ROOM_UI) RocketRail(
+                        roomId = r.id,
+                        onOpen = { rocketOpen = true },
+                        modifier = Modifier,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    // Ikon reward room (Koin banyak) tepat di bawah tombol roket.
+                    RewardRoomRoomIcon(onClick = { RewardRoomOpen.buka() })
+                }
             }
 
             // Bar bawah

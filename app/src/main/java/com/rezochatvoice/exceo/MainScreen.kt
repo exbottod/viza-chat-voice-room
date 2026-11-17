@@ -46,6 +46,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import com.google.firebase.auth.FirebaseAuth
@@ -615,6 +616,14 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
                     name = myName,
                     onBack = { overlay = OV_NONE },
                 )
+            }
+
+            // Halaman reward room (Koin banyak): dibuka dari ikon di dalam room
+            // atau dari banner di atas tab Party.
+            if (RewardRoomOpen.terbuka) {
+                Box(Modifier.fillMaxSize().zIndex(40f)) {
+                    RewardRoomScreen(myUid = uid, onClose = { RewardRoomOpen.terbuka = false })
+                }
             }
 
             // Banner roket: kelihatan di mana pun, bisa diketuk untuk masuk ke room

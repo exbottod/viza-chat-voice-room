@@ -1168,6 +1168,7 @@ const daftarHal = {
   greedy: { judul: "Greedy King", crumb: "Dashboard / Game", gambar: gambarGreedy },
   fruit: { judul: "Crazy Fruit", crumb: "Dashboard / Game", gambar: gambarFruit },
   roket: { judul: "Hadiah roket", crumb: "Dashboard / Hadiah roket", gambar: gambarRoket },
+  reward: { judul: "Reward room", crumb: "Dashboard / Reward room", gambar: gambarReward },
   database: { judul: "Database", crumb: "Dashboard / Data", gambar: gambarDatabase },
   latar: { judul: "Background tab", crumb: "Dashboard / Background tab", gambar: gambarLatar },
   cs: { judul: "Customer Service", crumb: "Dashboard / Customer Service", gambar: gambarCs },
@@ -1194,6 +1195,7 @@ const keteranganHal = {
   greedy: "Chip bet dan RTP Greedy King (75 standar, 100 sering JP)",
   fruit: "Chip bet dan RTP Crazy Fruit (92 standar, makin tinggi makin sering menang)",
   roket: "Hadiah tiap roket level 1-5 dan hadiah peringkat Top 1, Top 2, Top 3",
+  reward: "Hadiah mingguan room: tabel tingkat aliran koin, banner, dan ikon",
   bet: "Atur nilai bet tiap game",
   database: "Lihat, ubah, dan hapus dokumen Firestore",
   log: "Riwayat aksi yang dilakukan admin",
@@ -4050,4 +4052,222 @@ function formCekIn(nomor, h) {
       gambarCekIn();
     } catch (e) { toast("Gagal menyimpan: " + (e.code || e.message), "gagal"); }
   });
+}
+
+/* ================= reward room (Koin banyak) ================= */
+/** Panggil server reward room. Panel memakai token login untuk izin admin. */
+async function rewardAdmin(p) {
+  const u = auth.currentUser;
+  if (!u) throw new Error("Belum login");
+  const t = await u.getIdToken();
+  const res = await fetch(DOMPET_BASE + "/rewardroom", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...p, t })
+  });
+  const out = await res.json().catch(() => ({}));
+  if (!out.ok) throw new Error(out.e || ("HTTP " + res.status));
+  return out;
+}
+
+let rewardDraf = null;
+
+async function gambarReward() {
+  $("aksiTopbar").innerHTML = "";
+  $("isiHal").innerHTML = '<div class="kosong">Memuat reward room…</div>';
+  let cfg = { aktif: true, banner: "", ikon: "", aturan: "", tiers: [] };
+  let lalu = null;
+  try {
+    const d = await rewardAdmin({ do: "info", uid: "-" });
+    cfg = {
+      aktif: d.aktif !== false,
+      banner: d.banner || "",
+      ikon: d.ikon || "",
+      aturan: d.aturan || "",
+      tiers: Array.isArray(d.tiers) ? d.tiers : []
+    };
+    lalu = d.lalu || null;
+  } catch (e) {
+    toast("Gagal memuat reward room: " + (e.message || e), true);
+  }
+  rewardDraf = cfg.tiers.map((t) => ({ ...t }));
+  renderReward(cfg, lalu);
+}
+
+function barisTier(t, i) {
+  return `<tr data-i="${i}">
+    <td>${i + 1}</td>
+    <td><input class="rwAliran" type="number" min="0" value="${Number(t.aliran || 0)}"></td>
+    <td><input class="rwPemilik" type="number" min="0" value="${Number(t.pemilik || 0)}"></td>
+    <td><input class="rwTop" type="number" min="1" max="15" value="${Number(t.top || 1)}"></td>
+    <td><input class="rwOrang" type="number" min="0" value="${Number(t.perOrang || 0)}"></td>
+    <td><button class="polos rwHapus" title="Hapus baris">✕</button></td>
+  </tr>`;
+}
+
+function renderReward(cfg, lalu) {
+  const pemenangLalu = (lalu && Array.isArray(lalu.pemenang)) ? lalu.pemenang : [];
+  $("isiHal").innerHTML = `
+    <div class="panel" style="max-width:880px">
+      <div class="panelAtas"><h3>Reward room (Koin banyak)</h3><div class="sub">mingguan, otomatis</div></div>
+      <div class="panelIsi">
+        <div class="catatan">Periode dihitung Senin 00:00 sampai Minggu 23:59 WIB. Hadiah dibagikan otomatis
+          Senin 00:05 WIB ke dompet pemenang, dan pemberitahuan dikirim ke chat Customer Service mereka.
+          Aliran koin dihitung dari gift yang dibelanjakan di dalam room.</div>
+
+        <div class="grid3" style="margin-top:14px">
+          <div class="isian"><label>Acara</label>
+            <select id="rwAktif">
+              <option value="1"${cfg.aktif ? " selected" : ""}>Aktif</option>
+              <option value="0"${!cfg.aktif ? " selected" : ""}>Mati</option>
+            </select>
+          </div>
+          <div class="isian"><label>Gambar banner (tab Party + latar halaman)</label>
+            <input id="rwBannerFile" type="file" accept="image/*">
+          </div>
+          <div class="isian"><label>Gambar ikon (di dalam room)</label>
+            <input id="rwIkonFile" type="file" accept="image/*">
+          </div>
+        </div>
+        <div class="grid3" style="margin-top:8px">
+          <div class="catatan">Banner: <span id="rwBannerKet">${cfg.banner ? "sudah diunggah" : "belum diunggah"}</span></div>
+          <div class="catatan">Ikon: <span id="rwIkonKet">${cfg.ikon ? "sudah diunggah" : "belum diunggah"}</span></div>
+          <div class="catatan">Rasio banner 720x214, ikon 211x130.</div>
+        </div>
+        <div id="rwProgres" class="catatan" style="margin-top:6px"></div>
+
+        <h4 style="margin-top:18px">Tabel hadiah</h4>
+        <div class="catatan">Aliran koin dan hadiah dalam satuan coin. Top = jumlah kontributor yang dibayar
+          (1 sampai 15). Satu user hanya menerima satu hadiah per minggu, dari tingkat tertinggi.</div>
+        <table class="tabel" style="margin-top:8px;width:100%">
+          <thead><tr>
+            <th>#</th><th>Aliran koin</th><th>Hadiah pemilik</th><th>Top</th><th>Hadiah/orang</th><th></th>
+          </tr></thead>
+          <tbody id="rwTier">${rewardDraf.map(barisTier).join("")}</tbody>
+        </table>
+        <div style="margin-top:8px">
+          <button class="polos" id="rwTambah">+ Tambah tingkat</button>
+        </div>
+
+        <h4 style="margin-top:18px">Aturan yang tampil di aplikasi</h4>
+        <div class="isian"><textarea id="rwAturan" rows="6" style="width:100%">${aman(cfg.aturan)}</textarea></div>
+
+        <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="tombol" id="rwSimpan">Simpan pengaturan</button>
+          <button class="polos" id="rwCek">Lihat pemenang periode ini</button>
+          <button class="polos" id="rwBagikan">Bagikan periode ini sekarang</button>
+        </div>
+
+        <h4 style="margin-top:18px">Pemenang periode lalu</h4>
+        <div id="rwLalu">${
+          pemenangLalu.length
+            ? pemenangLalu.map((p) => `<div class="catatan" style="margin-top:4px">
+                ${aman(p.name || "-")} · ${aman(p.pos || "-")} · ${aman(p.room || "-")} ·
+                <b>${rupiah(p.coin || 0)}</b> coin</div>`).join("")
+            : '<div class="catatan">Belum ada hadiah yang dibagikan.</div>'
+        }</div>
+        <div id="rwHasil" style="margin-top:14px"></div>
+      </div>
+    </div>`;
+
+  const ambilTier = () => {
+    const out = [];
+    document.querySelectorAll("#rwTier tr").forEach((tr) => {
+      out.push({
+        aliran: Number(tr.querySelector(".rwAliran").value) || 0,
+        pemilik: Number(tr.querySelector(".rwPemilik").value) || 0,
+        top: Number(tr.querySelector(".rwTop").value) || 1,
+        perOrang: Number(tr.querySelector(".rwOrang").value) || 0
+      });
+    });
+    return out.filter((t) => t.aliran > 0).sort((a, b) => a.aliran - b.aliran);
+  };
+  const gambarUlangTabel = () => {
+    $("rwTier").innerHTML = rewardDraf.map(barisTier).join("");
+    ikatTabel();
+  };
+  const ikatTabel = () => {
+    document.querySelectorAll("#rwTier tr").forEach((tr) => {
+      tr.querySelector(".rwHapus").onclick = () => {
+        rewardDraf.splice(Number(tr.dataset.i), 1);
+        gambarUlangTabel();
+      };
+    });
+  };
+  ikatTabel();
+
+  $("rwTambah").onclick = () => {
+    rewardDraf.push({ aliran: 0, pemilik: 0, top: 1, perOrang: 0 });
+    gambarUlangTabel();
+  };
+
+  const unggah = async (file, folder, ketId) => {
+    const lapor = (p) => { $("rwProgres").textContent = p > 0 && p < 100 ? "Mengunggah gambar… " + p + "%" : (p >= 100 ? "Selesai diunggah" : ""); };
+    try {
+      const hasil = await unggahBerkas(file, folder, lapor);
+      const url = hasil && hasil.url ? hasil.url : "";
+      if (!url) throw new Error("URL gambar tidak diterima server");
+      $(ketId).textContent = "sudah diunggah";
+      $("rwProgres").textContent = "";
+      return url;
+    } catch (e) {
+      $("rwProgres").textContent = "";
+      toast("Gagal mengunggah: " + (e.message || e), true);
+      return "";
+    }
+  };
+
+  $("rwSimpan").onclick = async () => {
+    try {
+      let banner = cfg.banner || "";
+      let ikon = cfg.ikon || "";
+      const fb = $("rwBannerFile").files?.[0];
+      if (fb) { banner = await unggah(fb, "reward-banner", "rwBannerKet"); if (!banner) return; }
+      const fi = $("rwIkonFile").files?.[0];
+      if (fi) { ikon = await unggah(fi, "reward-ikon", "rwIkonKet"); if (!ikon) return; }
+      const tiers = ambilTier();
+      if (!tiers.length) return toast("Isi minimal satu tingkat hadiah", true);
+      await rewardAdmin({
+        do: "simpan",
+        aktif: Number($("rwAktif").value),
+        banner, ikon,
+        aturan: $("rwAturan").value,
+        tiers
+      });
+      catatLog("Atur reward room", tiers.length + " tingkat, banner " + (banner ? "ada" : "kosong"));
+      toast("Pengaturan reward room disimpan");
+      gambarReward();
+    } catch (e) {
+      toast("Gagal menyimpan: " + (e.message || e), true);
+    }
+  };
+
+  $("rwCek").onclick = async () => {
+    try {
+      const d = await rewardAdmin({ do: "pemenang" });
+      const rooms = Array.isArray(d.rooms) ? d.rooms : [];
+      $("rwHasil").innerHTML = rooms.length
+        ? `<div class="catatan">Periode ${aman(d.periode?.key || "")} — ${rooms.length} room dengan aliran koin.</div>`
+          + rooms.map((r) => `<div class="catatan" style="margin-top:4px">
+              <b>${aman(r.nama || "-")}</b> · aliran ${rupiah(r.aliran || 0)} · tingkat ${Number(r.level || 0)} ·
+              hadiah pemilik ${rupiah(r.tier?.pemilik || 0)} · ${(r.kontributor || []).length} kontributor dibayar</div>`).join("")
+        : '<div class="catatan">Belum ada aliran koin di periode ini.</div>';
+    } catch (e) {
+      toast("Gagal memuat pemenang: " + (e.message || e), true);
+    }
+  };
+
+  $("rwBagikan").onclick = async () => {
+    const yakin = prompt("Hadiah periode ini akan langsung masuk ke dompet pemenang dan tidak bisa dibatalkan. Ketik BAGIKAN untuk lanjut.");
+    if (String(yakin || "").trim().toUpperCase() !== "BAGIKAN") return toast("Dibatalkan", true);
+    try {
+      const d = await rewardAdmin({ do: "bagikan" });
+      const h = d.hasil || {};
+      catatLog("Bagikan reward room", "periode " + (h.key || "-") + " total " + (h.total || 0));
+      toast(h.sudah ? "Periode ini sudah pernah dibagikan" : "Hadiah dibagikan: " + rupiah(h.total || 0) + " coin ke " + (h.pemenang || 0) + " pemenang");
+      gambarReward();
+    } catch (e) {
+      toast("Gagal membagikan: " + (e.message || e), true);
+    }
+  };
 }

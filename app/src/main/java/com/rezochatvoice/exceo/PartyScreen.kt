@@ -146,6 +146,10 @@ fun PartyTab(
         } else {
             if (subTab == 1) {
                 item(span = { GridItemSpan(maxLineSpan) }) { BannerPager() }
+                // Banner Koin banyak: diketuk membuka halaman reward room.
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    RewardRoomPartyBanner(onClick = { RewardRoomOpen.buka() })
+                }
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     RankRow(onClick = { when (it) { "Top Sawer" -> showRank = true; "Family" -> showFamilyRank = true; else -> soon("$it segera hadir") } })
                 }

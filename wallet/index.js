@@ -1826,6 +1826,381 @@ async function cfgRtdbSa(env, path) {
   }
 }
 
+// ---------- Reward Room (Koin banyak) mingguan ----------
+// Aturan owner: periode Senin 00:00 - Minggu 23:59 WIB, 20 tingkat aliran koin,
+// hadiah untuk pemilik kamar dan Top kontributor, satu hadiah per user per
+// minggu (diambil dari level tertinggi), dibagikan otomatis Senin 00:05 WIB,
+// dan pemenang mendapat pesan resmi di chat Customer Service.
+const TIER_BAWAAN = [
+  { aliran: 7200000, pemilik: 836000, top: 2, perOrang: 152000 },
+  { aliran: 21000000, pemilik: 2600000, top: 2, perOrang: 330000 },
+  { aliran: 43200000, pemilik: 5400000, top: 2, perOrang: 580000 },
+  { aliran: 75600000, pemilik: 7600000, top: 3, perOrang: 780000 },
+  { aliran: 154800000, pemilik: 14700000, top: 3, perOrang: 1450000 },
+  { aliran: 298800000, pemilik: 26200000, top: 4, perOrang: 2250000 },
+  { aliran: 612000000, pemilik: 49300000, top: 4, perOrang: 5310000 },
+  { aliran: 1010000000, pemilik: 74700000, top: 5, perOrang: 7910000 },
+  { aliran: 1470000000, pemilik: 102500000, top: 6, perOrang: 10130000 },
+  { aliran: 2010000000, pemilik: 128400000, top: 7, perOrang: 13120000 },
+  { aliran: 2700000000, pemilik: 165900000, top: 8, perOrang: 15630000 },
+  { aliran: 3850000000, pemilik: 214700000, top: 9, perOrang: 20100000 },
+  { aliran: 5400000000, pemilik: 295700000, top: 10, perOrang: 24800000 },
+  { aliran: 7720000000, pemilik: 386600000, top: 15, perOrang: 26400000 },
+  { aliran: 11520000000, pemilik: 582500000, top: 15, perOrang: 39000000 },
+  { aliran: 16200000000, pemilik: 812000000, top: 15, perOrang: 55000000 },
+  { aliran: 21600000000, pemilik: 1080000000, top: 15, perOrang: 73000000 },
+  { aliran: 28800000000, pemilik: 1440000000, top: 15, perOrang: 97000000 },
+  { aliran: 36000000000, pemilik: 1800000000, top: 15, perOrang: 121000000 },
+  { aliran: 43200000000, pemilik: 2170000000, top: 15, perOrang: 145000000 },
+];
+const ATURAN_BAWAAN = `1. Waktu acara dihitung per minggu, Senin 00:00 sampai Minggu 23:59 WIB.
+2. Aliran koin dihitung dari coin yang dibelanjakan di dalam room (gift). Top up dan cashback tidak dihitung.
+3. Mencapai tingkat aliran koin, pemilik kamar dan Top kontributor mendapat hadiah sesuai tabel.
+4. Satu pengguna hanya menerima satu hadiah per minggu, diambil dari tingkat tertinggi.
+5. Pelanggaran membatalkan hadiah dan akun dapat dibanned.
+6. Hadiah dibagikan otomatis setiap Senin 00:05 WIB dan pemberitahuan muncul di chat Customer Service.`;
+
+/** Periode mingguan WIB yang sedang berjalan. */
+function periodeReward(now = Date.now()) {
+  const t = now + 7 * 3600 * 1000;
+  const d = new Date(t);
+  const hari = (d.getUTCDay() + 6) % 7; // 0 = Senin
+  const mulaiWib = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - hari);
+  const mulai = mulaiWib - 7 * 3600 * 1000;
+  return { key: new Date(mulaiWib).toISOString().slice(0, 10), mulai, selesai: mulai + 7 * 86400000 };
+}
+
+async function bacaRtdbNilai(env, path) {
+  try {
+    const token = await tokenLayanan(env);
+    if (!token) return null;
+    const r = await fetch(`${RTDB}/${String(path).replace(/^\/+/, "")}.json?access_token=${encodeURIComponent(token)}`);
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+async function patchRtdbSa(env, path, nilai) {
+  const token = await tokenLayanan(env);
+  if (!token) throw new Error("akun layanan belum siap");
+  const r = await fetch(`${RTDB}/${String(path).replace(/^\/+/, "")}.json?access_token=${encodeURIComponent(token)}`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(nilai),
+  });
+  if (!r.ok) throw new Error("RTDB " + r.status);
+  return true;
+}
+
+async function rewardCfg(env) {
+  const d = (await cfgRtdbSa(env, "rewardRoom/cfg")) || {};
+  const mentah = Array.isArray(d.tiers) ? d.tiers : [];
+  const tiers = (mentah.length ? mentah : TIER_BAWAAN)
+    .map((t) => ({
+      aliran: Math.max(0, Math.trunc(Number(t.aliran) || 0)),
+      pemilik: Math.max(0, Math.trunc(Number(t.pemilik) || 0)),
+      top: Math.max(1, Math.min(15, Math.trunc(Number(t.top) || 1))),
+      perOrang: Math.max(0, Math.trunc(Number(t.perOrang) || 0)),
+    }))
+    .sort((a, b) => a.aliran - b.aliran);
+  return {
+    aktif: d.aktif === false || d.aktif === 0 ? false : true,
+    banner: String(d.banner || ""),
+    ikon: String(d.ikon || ""),
+    aturan: String(d.aturan || ATURAN_BAWAAN),
+    tiers,
+  };
+}
+
+async function siapReward(env) {
+  await pipe(env, [
+    { sql: `create table if not exists reward_bagi (
+              periode text primary key, at integer, total integer, pemenang integer
+            )` },
+  ]);
+}
+
+/** Hitung aliran koin per room dan pemenangnya (tanpa membayar). */
+async function hitungReward(env, periode, cfg) {
+  const r = await pipe(env, [
+    {
+      sql: `select room_id, uid, sum(amount) as v from money_tx
+            where kind = 'gift' and room_id is not null and room_id <> ''
+              and created_at >= ? and created_at < ?
+            group by room_id, uid`,
+      args: [I(periode.mulai), I(periode.selesai)],
+    },
+  ]);
+  const per = new Map();
+  for (const row of r[0].rows) {
+    const rid = String(row.room_id || "");
+    if (!rid) continue;
+    const v = Math.max(0, Math.trunc(Number(row.v) || 0));
+    if (v <= 0) continue;
+    let e = per.get(rid);
+    if (!e) { e = { roomId: rid, total: 0, users: new Map() }; per.set(rid, e); }
+    e.total += v;
+    e.users.set(String(row.uid), (e.users.get(String(row.uid)) || 0) + v);
+  }
+  // roomsPub dibaca sekali per menit: halaman reward sering dibuka, sedangkan
+  // simpul ini berisi semua room (berat kalau dibaca tiap permintaan).
+  const kiniCache = Date.now();
+  if (!globalThis.__vizaRoomsCache || kiniCache - globalThis.__vizaRoomsCache.at > 60000) {
+    globalThis.__vizaRoomsCache = { at: kiniCache, data: (await cfgRtdbSa(env, "roomsPub")) || {} };
+  }
+  const roomsPub = globalThis.__vizaRoomsCache.data || {};
+  const tiers = cfg.tiers;
+  const rooms = [];
+  for (const e of per.values()) {
+    const info = roomsPub[e.roomId] || {};
+    let idx = -1;
+    for (let i = 0; i < tiers.length; i++) if (e.total >= tiers[i].aliran) idx = i;
+    const tier = idx >= 0 ? tiers[idx] : null;
+    const daftar = [...e.users.entries()]
+      .map(([uid, coin]) => ({ uid, coin }))
+      .sort((a, b) => b.coin - a.coin);
+    rooms.push({
+      roomId: e.roomId,
+      nama: String(info.name || info.nama || "Room"),
+      ownerUid: String(info.ownerUid || info.owner || ""),
+      aliran: e.total,
+      level: idx + 1,
+      tier,
+      kontributor: tier ? daftar.slice(0, tier.top) : [],
+      semuaKontributor: daftar.slice(0, 15),
+    });
+  }
+  rooms.sort((a, b) => b.aliran - a.aliran);
+  return rooms;
+}
+
+/** Nama tampilan user dari RTDB pub/{uid}/name. */
+async function namaUser(env, uid) {
+  const n = await bacaRtdbNilai(env, `pub/${uid}/name`);
+  return typeof n === "string" && n.trim() ? n.trim() : String(uid).slice(0, 8);
+}
+
+/** Pesan resmi di chat Customer Service milik pemenang. */
+async function kabarCs(env, uid, teks) {
+  try {
+    let cs = await bacaRtdbNilai(env, "_cs/uid");
+    if (typeof cs !== "string" || !cs.trim()) cs = await bacaRtdbNilai(env, "_owner/uid");
+    if (typeof cs !== "string" || !cs.trim() || cs === uid) return false;
+    const id = [String(uid), String(cs)].sort().join("_");
+    const now = Date.now();
+    await patchRtdbSa(env, `chats/${id}/messages/${now}${Math.floor(Math.random() * 1000)}`, {
+      from: String(cs), text: String(teks).slice(0, 500), at: now,
+    });
+    await patchRtdbSa(env, `chats/${id}`, {
+      members: { [String(uid)]: true, [String(cs)]: true },
+      names: { [String(uid)]: await namaUser(env, uid), [String(cs)]: "Customer Service" },
+      lastText: String(teks).slice(0, 500), lastAt: now,
+    });
+    await patchRtdbSa(env, `chatsByUser/${uid}/${id}`, {
+      otherUid: String(cs), otherName: "Customer Service", otherId: "100001",
+      lastText: String(teks).slice(0, 500), lastAt: now, lastFrom: String(cs),
+    });
+    await patchRtdbSa(env, `chatsByUser/${cs}/${id}`, {
+      otherUid: String(uid), otherName: await namaUser(env, uid), otherId: "",
+      lastText: String(teks).slice(0, 500), lastAt: now, lastFrom: String(cs),
+    });
+    return true;
+  } catch { return false; }
+}
+
+/** Bagikan hadiah satu periode, sekali saja. */
+async function bagikanReward(env, periode, paksa = false) {
+  await siapReward(env);
+  const sudah = await pipe(env, [{ sql: "select periode from reward_bagi where periode = ?", args: [T(periode.key)] }]);
+  if (sudah[0].rows.length) return { ok: 1, sudah: 1, key: periode.key };
+  const cfg = await rewardCfg(env);
+  if (!cfg.aktif && !paksa) return { ok: 1, mati: 1, key: periode.key };
+  const rooms = await hitungReward(env, periode, cfg);
+  // Satu hadiah per user: ambil nilai terbesar (level tertinggi).
+  const hadiah = new Map();
+  const tambah = (uid, coin, pos, room, level, jenis) => {
+    if (!uid || coin <= 0) return;
+    const lama = hadiah.get(uid);
+    if (lama && lama.coin >= coin) return;
+    hadiah.set(uid, { uid, coin, pos, room, level, jenis });
+  };
+  for (const rm of rooms) {
+    if (!rm.tier) continue;
+    tambah(rm.ownerUid, rm.tier.pemilik, "Pemilik kamar", rm.nama, rm.level, "pemilik");
+    rm.kontributor.forEach((k, i) => {
+      tambah(k.uid, rm.tier.perOrang, `Top ${i + 1} kontributor`, rm.nama, rm.level, "kontributor");
+    });
+  }
+  let total = 0;
+  const pemenang = [];
+  for (const h of hadiah.values()) {
+    total += h.coin;
+    pemenang.push(h);
+  }
+  pemenang.sort((a, b) => b.coin - a.coin);
+  for (const h of pemenang) {
+    await beriCoin(env, h.uid, h.coin, "reward_room", "reward_room");
+    const teks = `Hadiah Koin Banyak periode ${periode.key} sudah masuk.\n`
+      + `Kamar: ${h.room}\n`
+      + `Posisi: ${h.pos}\n`
+      + `Tingkat: ${h.level} (aliran koin tercapai)\n`
+      + `Hadiah: ${h.coin.toLocaleString("id-ID")} coin\n\n`
+      + `Coin sudah ditambahkan ke dompet Anda.`;
+    await kabarCs(env, h.uid, teks);
+  }
+  await pipe(env, [
+    {
+      sql: "insert into reward_bagi (periode, at, total, pemenang) values (?, ?, ?, ?)",
+      args: [T(periode.key), I(Date.now()), I(total), I(pemenang.length)],
+    },
+  ]);
+  const simpan = {
+    key: periode.key,
+    mulai: periode.mulai,
+    selesai: periode.selesai,
+    at: Date.now(),
+    total,
+    pemenang: [],
+    rooms: rooms.slice(0, 100).map((r) => ({
+      roomId: r.roomId, nama: r.nama, aliran: r.aliran, level: r.level,
+    })),
+  };
+  const namaPemenang = [];
+  for (const h of pemenang) {
+    namaPemenang.push({ uid: h.uid, name: await namaUser(env, h.uid), coin: h.coin, pos: h.pos, room: h.room, level: h.level });
+  }
+  simpan.pemenang = namaPemenang;
+  await tulisRtdbSa(env, `rewardRoom/hasil/${periode.key}`, simpan).catch(() => {});
+  return { ok: 1, key: periode.key, total, pemenang: pemenang.length };
+}
+
+/** Penutupan otomatis: Senin 00:05 WIB bagikan periode yang baru berakhir. */
+async function jalanReward(env) {
+  if (!env || !env.FIREBASE_SA_JSON && !env.FIREBASE_SA_PATH) {
+    // env tanpa kunci layanan tetap boleh: tokenLayanan membacanya dari berkas.
+  }
+  const cfg = await rewardCfg(env);
+  if (!cfg.aktif) return;
+  const kini = periodeReward();
+  const batas = kini.mulai + 5 * 60000;
+  if (Date.now() < batas) return;
+  const lalu = { key: periodeReward(kini.mulai - 1000).key, mulai: kini.mulai - 7 * 86400000, selesai: kini.mulai };
+  await bagikanReward(env, lalu).catch(() => {});
+}
+
+/** API reward room: dipakai aplikasi (info) dan panel (simpan/pemenang). */
+async function rewardRoomApi(env, req) {
+  const b = await req.json().catch(() => ({}));
+  const do_ = String(b.do || "info").toLowerCase();
+  await siapReward(env).catch(() => {});
+  const cfg = await rewardCfg(env);
+  const sesi = b.t ? await sesiDariToken(String(b.t)) : null;
+  const peran = sesi ? await bolehPanel(env, sesi) : false;
+
+  if (do_ === "simpan" || do_ === "pemenang" || do_ === "bagikan") {
+    if (!peran) return json({ ok: 0, e: "Hanya admin panel" });
+  }
+  if (do_ === "simpan") {
+    const isi = {};
+    if (b.aktif !== undefined) isi.aktif = !!Number(b.aktif);
+    if (b.banner !== undefined) isi.banner = String(b.banner || "");
+    if (b.ikon !== undefined) isi.ikon = String(b.ikon || "");
+    if (b.aturan !== undefined) isi.aturan = String(b.aturan || "").slice(0, 2000);
+    if (Array.isArray(b.tiers)) {
+      isi.tiers = b.tiers.map((t) => ({
+        aliran: Math.max(0, Math.trunc(Number(t.aliran) || 0)),
+        pemilik: Math.max(0, Math.trunc(Number(t.pemilik) || 0)),
+        top: Math.max(1, Math.min(15, Math.trunc(Number(t.top) || 1))),
+        perOrang: Math.max(0, Math.trunc(Number(t.perOrang) || 0)),
+      }));
+    }
+    const lama = (await cfgRtdbSa(env, "rewardRoom/cfg")) || {};
+    await tulisRtdbSa(env, "rewardRoom/cfg", { ...lama, ...isi });
+    return json({ ok: 1 });
+  }
+  if (do_ === "pemenang") {
+    const periode = b.key ? { key: String(b.key), mulai: 0, selesai: 0 } : periodeReward();
+    if (!b.key) {
+      const rooms = await hitungReward(env, periode, cfg);
+      return json({
+        ok: 1,
+        periode,
+        rooms: rooms.slice(0, 100).map((r) => ({
+          roomId: r.roomId, nama: r.nama, aliran: r.aliran, level: r.level,
+          pemilik: r.ownerUid, tier: r.tier,
+          kontributor: r.kontributor,
+        })),
+      });
+    }
+    const hsl = await bacaRtdbNilai(env, `rewardRoom/hasil/${periode.key}`);
+    return json({ ok: 1, hasil: hsl || null });
+  }
+  if (do_ === "bagikan") {
+    const p = b.key
+      ? { key: String(b.key), mulai: Number(b.mulai) || 0, selesai: Number(b.selesai) || 0 }
+      : periodeReward();
+    if (b.key && (!p.mulai || !p.selesai)) {
+      const mulai = Date.parse(String(b.key) + "T00:00:00+07:00");
+      p.mulai = mulai - 7 * 86400000;
+      p.selesai = mulai;
+    }
+    const hasil = await bagikanReward(env, p, true);
+    return json({ ok: 1, hasil });
+  }
+  const uid = String(b.uid || "").trim();
+  const periode = periodeReward();
+  const laluKey = periodeReward(periode.mulai - 1000).key;
+  const rooms = await hitungReward(env, periode, cfg);
+  const kamarSaya = [];
+  for (const rm of rooms) {
+    const sayaOwner = rm.ownerUid && rm.ownerUid === uid;
+    const sayaKontributor = rm.semuaKontributor.some((k) => k.uid === uid);
+    if (!sayaOwner && !sayaKontributor) continue;
+    const posisiSaya = rm.semuaKontributor.findIndex((k) => k.uid === uid) + 1;
+    kamarSaya.push({
+      roomId: rm.roomId,
+      nama: rm.nama,
+      aliran: rm.aliran,
+      level: rm.level,
+      pemilik: sayaOwner,
+      hadiahPemilik: rm.tier ? rm.tier.pemilik : 0,
+      hadiahKontributor: rm.tier ? rm.tier.perOrang : 0,
+      posisiSaya,
+      dalamHadiah: posisiSaya > 0 && rm.tier ? posisiSaya <= rm.tier.top : false,
+      kontributor: rm.semuaKontributor.map((k, i) => ({
+        uid: k.uid, coin: k.coin,
+        pos: i + 1,
+        hadiah: rm.tier && i < rm.tier.top ? rm.tier.perOrang : 0,
+      })),
+    });
+  }
+  const hasilLalu = (await bacaRtdbNilai(env, `rewardRoom/hasil/${laluKey}`)) || null;
+  return json({
+    ok: 1,
+    aktif: cfg.aktif,
+    banner: cfg.banner,
+    ikon: cfg.ikon,
+    aturan: cfg.aturan,
+    tiers: cfg.tiers,
+    periode,
+    kamarSaya,
+    peringkat: rooms.slice(0, 100).map((r, i) => ({
+      pos: i + 1, roomId: r.roomId, nama: r.nama, aliran: r.aliran, level: r.level,
+    })),
+    lalu: hasilLalu,
+  });
+}
+
+// Penutupan otomatis berjalan di proses Node VPS (bukan di Cloudflare Worker).
+if (typeof setInterval === "function" && !globalThis.__vizaRewardJam) {
+  globalThis.__vizaRewardJam = setInterval(() => {
+    const env = globalThis.__vizaEnv;
+    if (!env) return;
+    jalanReward(env).catch(() => {});
+  }, 5 * 60 * 1000);
+  if (typeof globalThis.__vizaRewardJam.unref === "function") globalThis.__vizaRewardJam.unref();
+}
+
 // ---------- Hadiah: coin, VIP, item VIP ----------
 async function beriCoin(env, uid, coins, kind, itemId) {
   const n = Math.trunc(Number(coins) || 0);
@@ -5192,6 +5567,7 @@ h1{font-size:20px}ul{line-height:2.2;padding-left:18px}a{color:#f5c542}</style><
 
 export default {
   async fetch(req, env) {
+    globalThis.__vizaEnv = env;
     const url = new URL(req.url);
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
     await siapTabel(env).catch(() => {});
@@ -5205,6 +5581,10 @@ export default {
       const b = await req.json().catch(() => null);
       if (!b) return json({ ok: 0, e: "Body tidak valid" }, 400);
       return await panel(env, b);
+    }
+    if (url.pathname.toLowerCase() === "/rewardroom") {
+      try { return await rewardRoomApi(env, req); }
+      catch (e) { return gagal(String(e?.message ?? "Reward room sibuk")); }
     }
     if (url.pathname === "/seller") {
       const b = await req.json().catch(() => null);

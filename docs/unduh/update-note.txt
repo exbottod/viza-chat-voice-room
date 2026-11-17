@@ -1,3 +1,6 @@
-• Banner pemenang game: perbaiki sintaks dan sambungkan saklar Efek game
-• Perbaiki build: buang panggilan banner lama di RoomScreen
-• Banner pemenang game Top 1/2/3 terbang di semua halaman
+• Tab emot di room kini punya tombol + untuk menambah emot baru langsung dari room
+• Tambah emot bisa dari berkas gambar di HP (PNG, GIF, WEBP, JPG) atau dari tautan gambar https
+• Emot yang ditambahkan langsung muncul di tab emot room untuk semua orang, tanpa update aplikasi
+• Hanya developer dan staf panel yang melihat tombol tambah emot
+• Emot tetap dikirim dengan mengetuk gambarnya saat sudah naik mic
+• Banner pemenang game Top 1/2/3 dan saklar "Efek game" di Blok Efek tetap seperti versi sebelumnya

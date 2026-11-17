@@ -261,6 +261,11 @@ fun RoomScreen(
     val emotSudahTampil = remember { mutableStateListOf<String>() }
     var customEmotes by remember { mutableStateOf<List<RoomEmote>>(emptyList()) }
     LaunchedEffect(roomId) { customEmotes = RoomEmotes.load() }
+    // Tambah emot dari dalam room (unggah berkas atau tautan). Hanya developer
+    // dan staf panel, sama seperti pengelolaan aset lain.
+    var tambahEmotOpen by remember { mutableStateOf(false) }
+    var bolehTambahEmot by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { bolehTambahEmot = EmotTambah.boleh() }
     var draft by remember(roomId) { mutableStateOf(RoomChatCache.ambilDraf(roomId)) }
     LaunchedEffect(roomId, draft) { RoomChatCache.simpanDraf(roomId, draft) }
     var profileUid by remember { mutableStateOf<String?>(null) }
@@ -731,7 +736,20 @@ fun RoomScreen(
                         } else {
                             scope.launch { RoomExtras.sendEmote(r.id, myUid, e)?.let { toast(it) } }
                         }
-                })
+                },
+                    onTambah = if (bolehTambahEmot) ({ tambahEmotOpen = true }) else null,
+                )
+            }
+            if (tambahEmotOpen) {
+                DialogTambahEmot(
+                    onTutup = { tambahEmotOpen = false },
+                    onSelesai = {
+                        scope.launch {
+                            customEmotes = RoomEmotes.load(force = true)
+                            toast(tr("Emot baru sudah ditambahkan"))
+                        }
+                    },
+                )
             }
             if (typing) {
                 RoomTypingBar(

@@ -238,7 +238,7 @@ fun RoomTypingBar(
 }
 
 @Composable
-fun RoomEmoteBar(emotes: List<RoomEmote> = emptyList(), onPick: (String) -> Unit) {
+fun RoomEmoteBar(emotes: List<RoomEmote> = emptyList(), onPick: (String) -> Unit, onTambah: (() -> Unit)? = null) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -257,6 +257,17 @@ fun RoomEmoteBar(emotes: List<RoomEmote> = emptyList(), onPick: (String) -> Unit
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.size(34.dp).clickable { onPick(em.url) }.padding(2.dp),
             )
+        }
+        // Tombol tambah emot (developer dan staf panel): unggah berkas atau tautan.
+        if (onTambah != null) {
+            Box(
+                Modifier
+                    .size(34.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color(0x33FFFFFF))
+                    .clickable { onTambah() },
+                contentAlignment = Alignment.Center,
+            ) { Text("+", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold) }
         }
     }
 }

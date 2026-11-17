@@ -4139,12 +4139,15 @@ function renderReward(cfg, lalu) {
         <h4 style="margin-top:18px">Tabel hadiah</h4>
         <div class="catatan">Aliran koin dan hadiah dalam satuan coin. Top = jumlah kontributor yang dibayar
           (1 sampai 15). Satu user hanya menerima satu hadiah per minggu, dari tingkat tertinggi.</div>
-        <table class="tabel" style="margin-top:8px;width:100%">
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:8px">
+        <table class="tabel" style="width:100%;min-width:620px">
           <thead><tr>
             <th>#</th><th>Aliran koin</th><th>Hadiah pemilik</th><th>Top</th><th>Hadiah/orang</th><th></th>
           </tr></thead>
           <tbody id="rwTier">${rewardDraf.map(barisTier).join("")}</tbody>
         </table>
+        </div>
+        <div class="catatan">Geser tabel ke samping untuk melihat semua kolom.</div>
         <div style="margin-top:8px">
           <button class="polos" id="rwTambah">+ Tambah tingkat</button>
         </div>
@@ -4205,7 +4208,8 @@ function renderReward(cfg, lalu) {
     const lapor = (p) => { $("rwProgres").textContent = p > 0 && p < 100 ? "Mengunggah gambar… " + p + "%" : (p >= 100 ? "Selesai diunggah" : ""); };
     try {
       const hasil = await unggahBerkas(file, folder, lapor);
-      const url = hasil && hasil.url ? hasil.url : "";
+      // unggahBerkas mengembalikan URL sebagai teks, bukan objek.
+      const url = typeof hasil === "string" ? hasil.trim() : (hasil && hasil.url ? hasil.url : "");
       if (!url) throw new Error("URL gambar tidak diterima server");
       $(ketId).textContent = "sudah diunggah";
       $("rwProgres").textContent = "";

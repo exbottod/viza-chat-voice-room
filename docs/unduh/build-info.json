@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.211",
-  "catatan": "• Banner game lewat server VPS + kirim item dari panel staf",
-  "ukuran_apk": 54999714,
-  "sha256_apk": "79931f6dae1e042591c10f35e92ad4d69367743c97b508007f8bd7f87dcafbb8",
+  "versi": "1.0.212",
+  "catatan": "• Panel staf bisa akses semua: cadangan Firestore lewat server",
+  "ukuran_apk": 54999715,
+  "sha256_apk": "587884389f3feac179feca41e413a8ff0a6b6b51518fab698d909943497a44df",
   "abis": {
     "arm64": {
-      "ukuran": 54999714,
-      "sha256": "79931f6dae1e042591c10f35e92ad4d69367743c97b508007f8bd7f87dcafbb8"
+      "ukuran": 54999715,
+      "sha256": "587884389f3feac179feca41e413a8ff0a6b6b51518fab698d909943497a44df"
     },
     "armv7": {
-      "ukuran": 53150877,
-      "sha256": "e8ea2e7862b64ad9f35ec0948a5e68ea3accc5f4d7ee9eb39acaa3aff8cb2a50"
+      "ukuran": 53150872,
+      "sha256": "60788923fcf7063f1be9ccc3b108c5d5492405e7030e0f18fcf33c6ff15eb663"
     },
     "universal": {
-      "ukuran": 73415674,
-      "sha256": "7f54b6b536aa33199b4d1e2376ce4d0b8f8999f67427f5b8b8de3046d4807e3d"
+      "ukuran": 73415677,
+      "sha256": "501befde83a1baa41bb3ce47949f39d029a47361320795cc72a44bd6f6c8f23c"
     }
   }
 }

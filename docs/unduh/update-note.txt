@@ -1,5 +1,1 @@
-• Panel staf: manager/admin kini bisa membuka semua halaman, membaca dan menyimpan data
-• Baca/tulis Firestore lewat server (akun layanan) kalau aturan Firebase menolak akun staf, jadi tidak lagi muncul "Gagal memuat data / permission-denied"
-• Pencarian ID user (ID angka, ID unik, UID) juga lewat server kalau Firestore menolak
-• Aturan Firestore diperbarui: staf panel yang terdaftar diakui seperti developer
-• Kirim lencana/medali/frame/banner dari panel tetap lewat server
+• Panel staf bisa akses semua: cadangan Firestore lewat server

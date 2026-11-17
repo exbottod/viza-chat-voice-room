@@ -85,6 +85,18 @@ object RoomFeed {
         regs.forEach { it.remove() }
         regs = emptyList()
     }
+
+    private var cobaTerakhir = 0L
+
+    /** Coba pasang ulang pendengar kalau daftar room masih kosong.
+     *  Dulu pendengar yang gagal dipasang saat aplikasi baru dibuka (token login
+     *  belum siap) membuat daftar room kosong terus sampai aplikasi ditutup. */
+    fun cobaLagi() {
+        val t = System.currentTimeMillis()
+        if (t - cobaTerakhir < 4000L) return
+        cobaTerakhir = t
+        restart()
+    }
 }
 
 @Composable
@@ -93,6 +105,15 @@ fun rememberRooms(refreshKey: Int = 0): List<RoomInfo> {
     LaunchedEffect(refreshKey) { if (refreshKey > 0) RoomFeed.restart() }
     val rooms = RoomFeed.rooms
     val online = RoomFeed.online
+    // Daftar kosong jangan dibiarkan: coba sambung ulang beberapa kali.
+    LaunchedEffect(rooms.isEmpty()) {
+        var n = 0
+        while (rooms.isEmpty() && n < 5) {
+            kotlinx.coroutines.delay(1500)
+            RoomFeed.cobaLagi()
+            n++
+        }
+    }
     return remember(rooms, online) { rooms.map { it.copy(online = online[it.id] ?: 0) } }
 }
 

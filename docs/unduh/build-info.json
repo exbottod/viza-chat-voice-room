@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.209",
-  "catatan": "• Banner pemenang game: perbaiki sintaks dan sambungkan saklar Efek game\n• Perbaiki build: buang panggilan banner lama di RoomScreen\n• Banner pemenang game Top 1/2/3 terbang di semua halaman",
-  "ukuran_apk": 54986792,
-  "sha256_apk": "7e26cbb88e3998fd4907950bf4e4817ff1665ea8f6fd849e3f6e523599e45070",
+  "versi": "1.0.210",
+  "catatan": "• Perbaiki impor FontWeight di tombol tambah emot\n• Tambah emot dari dalam room: unggah berkas atau tautan",
+  "ukuran_apk": 54998371,
+  "sha256_apk": "e616bac4e917c1f3d12a282491efac4a9abb7a9bb88926071ff85bde12c07d00",
   "abis": {
     "arm64": {
-      "ukuran": 54986792,
-      "sha256": "7e26cbb88e3998fd4907950bf4e4817ff1665ea8f6fd849e3f6e523599e45070"
+      "ukuran": 54998371,
+      "sha256": "e616bac4e917c1f3d12a282491efac4a9abb7a9bb88926071ff85bde12c07d00"
     },
     "armv7": {
-      "ukuran": 53137940,
-      "sha256": "717ef6401a316f1a9883d14eaa372ab44538c49fafe8ae515413ae38e7ea68ca"
+      "ukuran": 53149534,
+      "sha256": "d7af294ddc31182fffea77aee3b1e2c532b9d2c59618ff11395a4082be5fc648"
     },
     "universal": {
-      "ukuran": 73402743,
-      "sha256": "0a9dba532cf39ec7d2ef16b749db16a414fbf4b9ac24f3fcd1c39acc0d4e2eb0"
+      "ukuran": 73414336,
+      "sha256": "bd532f47c8b169d9d9fc790e9f4db48a0282dfa816b5bbd79c76ff4e646be34b"
     }
   }
 }

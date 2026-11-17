@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.212",
-  "catatan": "• Panel staf bisa akses semua: cadangan Firestore lewat server",
-  "ukuran_apk": 54999715,
-  "sha256_apk": "587884389f3feac179feca41e413a8ff0a6b6b51518fab698d909943497a44df",
+  "versi": "1.0.213",
+  "catatan": "• Banner pemenang game memakai pelat unggahan apa adanya\n• Banner pemenang Greedy King dan Crazy Fruit per ronde\n• Panel: halaman Emote room sendiri (unggah, daftar, hapus)\n• Panel: slot Emote room di Aset & VIP dan Buat & kirim item",
+  "ukuran_apk": 54999830,
+  "sha256_apk": "b4289cec79bf59dbea80ae4f4cb2963674962fb58929ed183f36ed5e89f7b034",
   "abis": {
     "arm64": {
-      "ukuran": 54999715,
-      "sha256": "587884389f3feac179feca41e413a8ff0a6b6b51518fab698d909943497a44df"
+      "ukuran": 54999830,
+      "sha256": "b4289cec79bf59dbea80ae4f4cb2963674962fb58929ed183f36ed5e89f7b034"
     },
     "armv7": {
-      "ukuran": 53150872,
-      "sha256": "60788923fcf7063f1be9ccc3b108c5d5492405e7030e0f18fcf33c6ff15eb663"
+      "ukuran": 53150996,
+      "sha256": "7af15c6058ea74363af785675fcf58e5f8f8e213a77e6dee4d30f404123dc923"
     },
     "universal": {
-      "ukuran": 73415677,
-      "sha256": "501befde83a1baa41bb3ce47949f39d029a47361320795cc72a44bd6f6c8f23c"
+      "ukuran": 73415801,
+      "sha256": "09ca4a22386d19c1ac81320c51db378f644976eb0fb43509637ac4862b9f208d"
     }
   }
 }

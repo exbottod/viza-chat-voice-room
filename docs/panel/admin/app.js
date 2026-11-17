@@ -2370,6 +2370,17 @@ async function gambarWallet() {
         return;
       }
       const p = { op: opTerpilih, uid };
+      // Tombol massal wajib dikonfirmasi dengan mengetik HAPUS: dulu sekali
+      // terpencet, seluruh saldo coin user langsung kosong.
+      if (["reset_all", "reset_gem_all", "reset_all_assets"].includes(opTerpilih)) {
+        const tulis = prompt("PERINGATAN: ini mengosongkan data SEMUA user. Ketik HAPUS untuk lanjut.");
+        if (String(tulis || "").trim().toUpperCase() !== "HAPUS") {
+          $("wHasil").textContent = "Dibatalkan.";
+          t.disabled = false; t.textContent = "Jalankan";
+          return;
+        }
+        p.konfirmasi = "HAPUS";
+      }
       if (opTerpilih === "add") { p.coins = jumlah; }
       if (opTerpilih === "vip") { p.tier = Number($("wTier").value) || 1; p.days = Number($("wHari").value) || 30; }
       const out = await walletAdmin(p);

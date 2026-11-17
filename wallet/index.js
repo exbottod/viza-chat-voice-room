@@ -1891,6 +1891,18 @@ function undiAny(cfg, levels, days) {
   return null;
 }
 
+/** Catatan siapa yang melakukan reset coin/diamond, supaya kalau saldo hilang
+ *  ketahuan sumbernya (panel, tombol apa, jam berapa). */
+async function catatReset(env, op, oleh, target, jumlah) {
+  await pipe(env, [{
+    sql: "create table if not exists reset_log (id integer primary key autoincrement, op text, oleh text, target text, jumlah integer, at integer)",
+  }]);
+  await pipe(env, [{
+    sql: "insert into reset_log (op, oleh, target, jumlah, at) values (?, ?, ?, ?, ?)",
+    args: [T(op), T(oleh || ""), T(target || ""), I(jumlah || 0), I(Date.now())],
+  }]);
+}
+
 /** Klaim hadiah roket: peluncur, penonton, atau papan peringkat. */
 // ---------- Kartu hadiah (Props) ----------
 /** Tabel kartu hadiah roket. Dibuat otomatis kalau belum ada. */
@@ -3911,6 +3923,11 @@ async function admin(env, body) {
     const gem = op.includes("gem");
     const semua = op.endsWith("_all");
     if (!semua && !target) return gagal("uid kosong");
+    // Reset SEMUA user hanya jalan kalau panel mengirim konfirmasi "HAPUS".
+    // Dulu tombolnya bisa terpencet tanpa sengaja dan seluruh saldo coin hilang.
+    if (semua && String(p.konfirmasi ?? "") !== "HAPUS") {
+      return gagal('Reset semua user butuh konfirmasi. Kirim konfirmasi "HAPUS"');
+    }
     const kolom = gem ? "diamonds" : "coins";
     await pipe(env, [
       {
@@ -3920,6 +3937,7 @@ async function admin(env, body) {
         args: semua ? [I(Date.now())] : [I(Date.now()), T(target)],
       },
     ]);
+    try { await catatReset(env, op, uid, target || "(semua)", semua ? -1 : 1); } catch { /* log opsional */ }
     if (semua) return json({ ok: 1 });
     return ok(await pastikan(env, target));
   }
@@ -3932,7 +3950,10 @@ async function admin(env, body) {
     if (p.level) bagian.push("level");
     if (p.coins) bagian.push("coin");
     if (p.gems) bagian.push("diamond");
-    if (!bagian.length) return gagal("Pilih dulu apa yang mau dibersihkan");
+    if (!bagian.length) return gagal("Pilih dulu apa yang mau dibersihkan")
+    if (op === "reset_all_assets" && String(p.konfirmasi ?? "") !== "HAPUS") {
+      return gagal('Reset aset semua user butuh konfirmasi. Kirim konfirmasi "HAPUS"')
+    };
     const set = [];
     const args = [];
     if (p.coins) { set.push("coins = 0"); }

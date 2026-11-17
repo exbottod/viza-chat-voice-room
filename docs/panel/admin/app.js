@@ -1167,6 +1167,7 @@ const daftarHal = {
   bet: { judul: "Bet game", crumb: "Dashboard / Game", gambar: gambarBet },
   greedy: { judul: "Greedy King", crumb: "Dashboard / Game", gambar: gambarGreedy },
   fruit: { judul: "Crazy Fruit", crumb: "Dashboard / Game", gambar: gambarFruit },
+  roket: { judul: "Hadiah roket", crumb: "Dashboard / Hadiah roket", gambar: gambarRoket },
   database: { judul: "Database", crumb: "Dashboard / Data", gambar: gambarDatabase },
   latar: { judul: "Background tab", crumb: "Dashboard / Background tab", gambar: gambarLatar },
   cs: { judul: "Customer Service", crumb: "Dashboard / Customer Service", gambar: gambarCs },
@@ -1192,6 +1193,7 @@ const keteranganHal = {
   pasang: "Tambah game baru dengan alamat dan key production",
   greedy: "Chip bet dan RTP Greedy King (75 standar, 100 sering JP)",
   fruit: "Chip bet dan RTP Crazy Fruit (92 standar, makin tinggi makin sering menang)",
+  roket: "Hadiah tiap roket level 1-5 dan hadiah peringkat Top 1, Top 2, Top 3",
   bet: "Atur nilai bet tiap game",
   database: "Lihat, ubah, dan hapus dokumen Firestore",
   log: "Riwayat aksi yang dilakukan admin",
@@ -3212,6 +3214,71 @@ async function gambarFruit() {
       catatLog("Atur Crazy Fruit", "rtp " + rtp + " | chip " + bet.join(","));
       toast("Pengaturan Crazy Fruit disimpan");
       gambarFruit();
+    } catch (e) { toast("Gagal menyimpan: " + (e.message || e), true); }
+  };
+}
+
+async function gambarRoket() {
+  let cfg = { lv: {}, rank: {} };
+  try { cfg = Object.assign(cfg, await walletAdmin({ op: "rocket_cfg_get" })); }
+  catch (e) { toast("Gagal memuat hadiah roket: " + (e.message || e), true); }
+  const isiLv = (n) => {
+    let html = "";
+    for (let k = 1; k <= 6; k++) {
+      const x = cfg.lv?.[n]?.["r" + k] || {};
+      html += `<div class="grid3" style="margin-top:6px">
+        <div class="catatan" style="align-self:center">Hadiah ${k}</div>
+        <div class="isian"><label>Coin</label><input id="rk${n}_${k}c" type="number" min="0" value="${Number(x.coins || 0)}"></div>
+        <div class="isian"><label>VIP (0 = tanpa VIP)</label><input id="rk${n}_${k}v" type="number" min="0" max="9" value="${Number(x.vip || 0)}"></div>
+      </div>`;
+    }
+    return html;
+  };
+  const isiRank = (k, nama) => {
+    const x = cfg.rank?.[k] || {};
+    return `<div class="grid3" style="margin-top:6px">
+      <div class="catatan" style="align-self:center">${nama}</div>
+      <div class="isian"><label>Coin</label><input id="tp${k}c" type="number" min="0" value="${Number(x.coins || 0)}"></div>
+      <div class="isian"><label>VIP (0 = tanpa VIP)</label><input id="tp${k}v" type="number" min="0" max="9" value="${Number(x.vip || 0)}"></div>
+    </div>`;
+  };
+  $("isiHal").innerHTML = `
+    <div class="panel" style="max-width:760px">
+      <div class="panelAtas"><h3>Hadiah roket</h3><div class="sub">level 1-5 &amp; peringkat</div></div>
+      <div class="panelIsi">
+        <div class="catatan">Hadiah roket 1 sampai 5: setiap roket punya 6 kartu hadiah. Saat roket meluncur,
+          satu kartu dipilih acak untuk peluncurnya. Isi 0 kalau tidak dipakai.</div>
+        ${[1, 2, 3, 4, 5].map((n) => `<h4 style="margin-top:16px">Roket level ${n}</h4>${isiLv(n)}`).join("")}
+        <h4 style="margin-top:18px">Hadiah peringkat (papan roket)</h4>
+        <div class="catatan">Diberikan ke Top 1, Top 2, dan Top 3 penyumbang energi roket.</div>
+        ${isiRank(1, "Top 1")}${isiRank(2, "Top 2")}${isiRank(3, "Top 3")}${isiRank(4, "Top 4 (cadangan)")}
+        <button class="tombol" id="rkSimpan" style="margin-top:16px">Simpan hadiah roket</button>
+      </div>
+    </div>`;
+  $("rkSimpan").onclick = async () => {
+    const lv = {}, rank = {};
+    for (let n = 1; n <= 5; n++) {
+      lv[n] = {};
+      for (let k = 1; k <= 6; k++) {
+        lv[n]["r" + k] = {
+          coins: Math.max(0, Math.floor(Number($(`rk${n}_${k}c`).value) || 0)),
+          vip: Math.max(0, Math.min(9, Math.floor(Number($(`rk${n}_${k}v`).value) || 0))),
+          days: 30,
+        };
+      }
+    }
+    for (let k = 1; k <= 4; k++) {
+      rank[k] = {
+        coins: Math.max(0, Math.floor(Number($(`tp${k}c`).value) || 0)),
+        vip: Math.max(0, Math.min(9, Math.floor(Number($(`tp${k}v`).value) || 0))),
+        days: 30,
+      };
+    }
+    try {
+      await walletAdmin({ op: "rocket_cfg_set", lv, rank });
+      catatLog("Atur hadiah roket", "Top1 " + rank[1].coins + " | Top2 " + rank[2].coins + " | Top3 " + rank[3].coins);
+      toast("Hadiah roket disimpan");
+      gambarRoket();
     } catch (e) { toast("Gagal menyimpan: " + (e.message || e), true); }
   };
 }

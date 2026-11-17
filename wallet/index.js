@@ -3441,6 +3441,81 @@ async function admin(env, body) {
     return json({ ok: 1, ...cfgBaru });
   }
 
+  // ---- Roket: hadiah tiap level (1-5) dan hadiah peringkat Top 1-3 ----
+  if (op === "rocket_cfg_get") {
+    const pub = await cfgRtdb("pub/_rocketCfg", env);
+    const akar = await cfgRtdb("rocketCfg", env);
+    const lv = {};
+    for (let n = 1; n <= 5; n++) {
+      const a = (akar["lv" + n] && typeof akar["lv" + n] === "object") ? akar["lv" + n] : {};
+      const b = (pub["lv" + n] && typeof pub["lv" + n] === "object") ? pub["lv" + n] : {};
+      const gab = {};
+      for (let k = 1; k <= 6; k++) {
+        const x = b["r" + k] ?? b["p" + k] ?? a["r" + k] ?? a["p" + k];
+        gab["r" + k] = {
+          coins: Math.max(0, Math.floor(Number(x?.coins ?? 0))),
+          vip: Math.max(0, Math.min(9, Math.floor(Number(x?.vip ?? 0)))),
+          days: Math.max(0, Math.floor(Number(x?.days ?? 30))),
+        };
+      }
+      lv[n] = gab;
+    }
+    const rank = {};
+    for (let k = 1; k <= 4; k++) {
+      const x = pub?.rank?.["t" + k] ?? akar?.rank?.["t" + k];
+      rank[k] = {
+        coins: Math.max(0, Math.floor(Number(x?.coins ?? 0))),
+        vip: Math.max(0, Math.min(9, Math.floor(Number(x?.vip ?? 0)))),
+        days: Math.max(0, Math.floor(Number(x?.days ?? 30))),
+      };
+    }
+    return json({ ok: 1, lv, rank });
+  }
+  if (op === "rocket_cfg_set") {
+    const brt = (x) => {
+      const coins = Math.max(0, Math.floor(Number(x?.coins ?? 0)));
+      const vip = Math.max(0, Math.min(9, Math.floor(Number(x?.vip ?? 0))));
+      const days = Math.max(0, Math.min(3650, Math.floor(Number(x?.days ?? 30))));
+      return { coins, vip, days };
+    };
+    const lvMasuk = p.lv && typeof p.lv === "object" ? p.lv : {};
+    const rankMasuk = p.rank && typeof p.rank === "object" ? p.rank : {};
+    const lv = {};
+    for (let n = 1; n <= 5; n++) {
+      lv["lv" + n] = {};
+      for (let k = 1; k <= 6; k++) lv["lv" + n]["r" + k] = brt(lvMasuk?.[n]?.["r" + k] ?? lvMasuk?.[n]?.[k]);
+    }
+    const rank = {};
+    for (let k = 1; k <= 4; k++) rank["t" + k] = brt(rankMasuk?.[k] ?? rankMasuk?.["t" + k]);
+    const token = await tokenLayanan(env);
+    if (!token) return gagal("Kunci layanan belum dipasang di server");
+    const q = "?access_token=" + encodeURIComponent(token);
+    try {
+      // Dua tempat: "rocketCfg" dibaca aplikasi, "pub/_rocketCfg" dipakai server
+      // saat membagikan hadiah roket dan hadiah peringkat.
+      for (const [jalur, isi] of [
+        ["rocketCfg", ""],
+        ["pub/_rocketCfg", ""],
+      ]) {
+        for (const kunci of Object.keys(lv)) {
+          const r = await fetch(`${RTDB}/${jalur}/${kunci}.json${q}`, {
+            method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(lv[kunci]),
+          });
+          if (!r.ok) return gagal("Gagal menyimpan hadiah roket: HTTP " + r.status);
+        }
+        const r2 = await fetch(`${RTDB}/${jalur}/rank.json${q}`, {
+          method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(rank),
+        });
+        if (!r2.ok) return gagal("Gagal menyimpan hadiah peringkat: HTTP " + r2.status);
+      }
+    } catch (e) {
+      return gagal("Gagal menyimpan roket: " + String(e?.message ?? e));
+    }
+    cache.delete("pub/_rocketCfg");
+    cache.delete("rocketCfg");
+    return json({ ok: 1, lv, rank });
+  }
+
   // ---- Cashback gift: disimpan lewat server supaya tidak kena aturan RTDB ----
   if (op === "cb_cfg_get") {
     return json({ ok: 1, cfg: await cfgRtdb("pub/_cashbackCfg") });

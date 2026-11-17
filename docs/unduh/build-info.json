@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.201",
-  "catatan": "• Loading halaman hanya dipicu saat pindah halaman (tidak lagi ikut status lain), SVGA dilepas dari me",
-  "ukuran_apk": 54775717,
-  "sha256_apk": "d3ac7a256d3db0854b41f4123f2f79e644373138807b8cecad4017fe5cce1d1a",
+  "versi": "1.0.202",
+  "catatan": "• Perbaiki build (rawSeats), lencana dan medal tidak lagi hilang-muncul saat profil di-refresh, gift S\n• Masuk room langsung normal: loading dilepas begitu kursi terbaca, dan efek SVGA baru diputar 1,4 det",
+  "ukuran_apk": 54778070,
+  "sha256_apk": "4e892273a7afb532a99f927ac76b1b535487238e0c772df222717493d668d0ca",
   "abis": {
     "arm64": {
-      "ukuran": 54775717,
-      "sha256": "d3ac7a256d3db0854b41f4123f2f79e644373138807b8cecad4017fe5cce1d1a"
+      "ukuran": 54778070,
+      "sha256": "4e892273a7afb532a99f927ac76b1b535487238e0c772df222717493d668d0ca"
     },
     "armv7": {
-      "ukuran": 52926867,
-      "sha256": "c3d3f97896c75c677b77e31df56a53fb80b588fc6da6e847c672b92ea2055c19"
+      "ukuran": 52929221,
+      "sha256": "12427ce12ff5211575307c8afa6e021501ee719f918ba29a0c4e8429529b5a12"
     },
     "universal": {
-      "ukuran": 73191679,
-      "sha256": "956722e33ae2988a82452a4d9a71e77640881445afacda1f65c0db1f2810a994"
+      "ukuran": 73194047,
+      "sha256": "d51ac4426fc3f463343de6203223bd6d7009ddfee9c76b7d7e1aa07f0c1e7a48"
     }
   }
 }

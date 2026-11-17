@@ -1,1 +1,2 @@
-• Loading halaman hanya dipicu saat pindah halaman (tidak lagi ikut status lain), SVGA dilepas dari me
+• Perbaiki build (rawSeats), lencana dan medal tidak lagi hilang-muncul saat profil di-refresh, gift S
+• Masuk room langsung normal: loading dilepas begitu kursi terbaca, dan efek SVGA baru diputar 1,4 det

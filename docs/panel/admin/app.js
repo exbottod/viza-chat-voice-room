@@ -3164,6 +3164,9 @@ function formAsetVip(aset) {
       </select></div>
     </div>
     <div style="margin-top:12px">${htmlSumber("v", d.url)}</div>
+    <div class="isian" style="margin-top:10px"><label>Sampul PNG (ikon di Ransel/Store)</label>
+      <input id="vSampul" value="${aman(d.poster || "")}" placeholder="https://.../sampul.png"></div>
+    <div class="catatan">Sampul PNG ini yang tampil sebagai ikon kartu di Ransel dan Store. Saat pratinjau dibuka, animasi aslinya tetap diputar. Kalau dikosongkan, aplikasi membuat sampul otomatis dari frame animasi.</div>
     <div class="catatan"><b>Kartu VIP</b> ada di slot <b>Kartu profil VIP (latar kartu)</b>. Gambar atau animasi itu tampil di belakang nama dan medali pada semua sheet profil, otomatis sesuai tier VIP user. Ukuran yang cocok: lebar sekitar 3 banding tinggi 2, misalnya 900x600.<br>Berkas PNG, WEBP, GIF, MP4, atau SVGA. Hasil unggahan langsung dipakai aplikasi untuk tier dan slot ini.</div>`,
     async () => {
       const n = Number($("vTier").value);
@@ -3171,7 +3174,8 @@ function formAsetVip(aset) {
       const url = await urlDariSumber("v", `vip${n}`);
       if (!url) return toast("Pilih berkas atau isi tautan", true);
       const jenisV = jenisDariUrl(url);
-      let sampul = (aset && aset.url === url && aset.poster) ? aset.poster : "";
+      let sampul = (document.getElementById("vSampul")?.value || "").trim();
+      if (!sampul && aset && aset.url === url && aset.poster) sampul = aset.poster;
       if (!sampul && (jenisV === "svga" || jenisV === "mp4")) sampul = await buatSampul(url, jenisV === "mp4" ? "video" : "svga", `vip${n}`);
       await simpanVip(`vip_${n}_${slot}`, {
         id: `vip_${n}_${slot}`, n, slot, kind: jenisV, url, poster: sampul, meta: true, hasData: false,
@@ -3193,6 +3197,8 @@ function formItemToko(item) {
       </select></div>
     </div>
     <div style="margin-top:12px">${htmlSumber("i", d.url)}</div>
+    <div class="isian" style="margin-top:10px"><label>Sampul PNG (ikon di Ransel/Store)</label>
+      <input id="iSampul" value="${aman(d.poster || "")}" placeholder="https://.../sampul.png"></div>
     <div class="grid3" style="margin-top:10px">
       <div class="isian"><label>Harga (koin)</label><input id="iHarga" type="number" value="${Number(d.price) || 0}"></div>
       <div class="isian"><label>Berlaku (hari)</label><input id="iHari" type="number" value="${Number(d.days) || 7}"></div>
@@ -3211,7 +3217,8 @@ function formItemToko(item) {
       const url = await urlDariSumber("i", "item");
       if (!url) return toast("Pilih berkas atau isi tautan", true);
       const jenisI = jenisDariUrl(url);
-      let sampulItem = (item && item.url === url && item.poster) ? item.poster : "";
+      let sampulItem = (document.getElementById("iSampul")?.value || "").trim();
+      if (!sampulItem && item && item.url === url && item.poster) sampulItem = item.poster;
       if (!sampulItem && (jenisI === "svga" || jenisI === "mp4")) sampulItem = await buatSampul(url, jenisI === "mp4" ? "video" : "svga", "item");
       const idItem = item?.id || (nama.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 20) + "_" + Date.now().toString().slice(-4));
       await simpanVip(`item_${idItem}`, {

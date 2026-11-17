@@ -898,10 +898,20 @@ private fun EntryPreview(item: StoreItem, size: Dp) {
                 contentAlignment = Alignment.Center,
             ) { }
         } else {
-            Box(
-                Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp)).background(Color(0x22FFFFFF)),
-                contentAlignment = Alignment.Center,
-            ) { Text("\u2728", fontSize = (size.value * 0.46f).sp) }
+            // Ikon di luar memakai sampul PNG unggahan panel (frame animasi diam),
+            // bukan lagi kotak kosong dengan emoji.
+            key(dyn?.updatedAt) {
+                VipMediaSafe(
+                    dyn, Modifier.fillMaxSize(), loop = false,
+                    contentScale = ContentScale.Fit, diam = true,
+                    fallback = {
+                        Box(
+                            Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp)).background(Color(0x22FFFFFF)),
+                            contentAlignment = Alignment.Center,
+                        ) { Text("\u2728", fontSize = (size.value * 0.46f).sp) }
+                    },
+                )
+            }
             Box(
                 Modifier.align(Alignment.BottomEnd).padding(2.dp)
                     .clip(CircleShape).background(Color(0xCC000000))
@@ -941,7 +951,7 @@ private fun ItemPreview(item: StoreItem, size: Dp = 70.dp) {
                     contentAlignment = Alignment.Center,
                 ) { Text(tr("\uD83D\uDC64"), fontSize = (size.value * 0.28f).sp) }
                 key(dyn.updatedAt) {
-                    VipMediaSafe(dyn, Modifier.requiredSize(size), loop = false,
+                    VipMediaSafe(dyn, Modifier.requiredSize(size), loop = false, diam = true,
                         fallback = {
                             Box(
                                 Modifier.size(size).clip(CircleShape)

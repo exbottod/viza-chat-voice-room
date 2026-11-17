@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.194",
-  "catatan": "• Crazy Fruit: pengaturan chip bet/RTP tidak lagi balik ke bawaan (pembacaan cfg kini memakai akun lay",
-  "ukuran_apk": 54772687,
-  "sha256_apk": "9e3c58bfaf72b829c9319fe6375d3c892c6f3c88defab4f78c021244662fa13b",
+  "versi": "1.0.195",
+  "catatan": "• Loading Viza diperluas: tampil di atas halaman mana pun saat dibuka (tab Family, profil orang, store\n• Tambahkan loading khas Viza (busur hijau berputar dengan batang suara): tampil saat berpindah halama",
+  "ukuran_apk": 54776676,
+  "sha256_apk": "4741b5e4a89c0d2072858260d37065587a7b5a111cc7de69b382152cf49172ac",
   "abis": {
     "arm64": {
-      "ukuran": 54772687,
-      "sha256": "9e3c58bfaf72b829c9319fe6375d3c892c6f3c88defab4f78c021244662fa13b"
+      "ukuran": 54776676,
+      "sha256": "4741b5e4a89c0d2072858260d37065587a7b5a111cc7de69b382152cf49172ac"
     },
     "armv7": {
-      "ukuran": 52923843,
-      "sha256": "41f22402f9acf526b149127c7ca940ae3056571e80a375efe8a20c0cd9f6cb62"
+      "ukuran": 52927823,
+      "sha256": "7eee43f7a731be1e830e3fe516dfc7147c0396e39f09227fa65a29e260047e4f"
     },
     "universal": {
-      "ukuran": 73188658,
-      "sha256": "b6242a661ad291bae7672caac8ccc1aff87999b78b62704e702918a31752a6f6"
+      "ukuran": 73192638,
+      "sha256": "5cff0a59955050020e33cfc1fe12ddb89aa6bd4995dc438c36ebe0fd083c581c"
     }
   }
 }

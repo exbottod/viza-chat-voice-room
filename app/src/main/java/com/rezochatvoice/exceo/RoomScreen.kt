@@ -245,7 +245,7 @@ fun RoomScreen(
                 if (snap.hasChild("gift")) snap.child("gift").getValue(Boolean::class.java)?.let { fxGiftOn = it; fxLocal.edit().putBoolean("gift", it).apply() }
                 if (snap.hasChild("banner")) snap.child("banner").getValue(Boolean::class.java)?.let { fxBannerOn = it; fxLocal.edit().putBoolean("banner", it).apply() }
                 if (snap.hasChild("rocket")) snap.child("rocket").getValue(Boolean::class.java)?.let { fxRocketOn = it; fxLocal.edit().putBoolean("rocket", it).apply() }
-                if (snap.hasChild("game")) snap.child("game").getValue(Boolean::class.java)?.let { fxGameOn = it; fxLocal.edit().putBoolean("game", it).apply() }
+                if (snap.hasChild("game")) snap.child("game").getValue(Boolean::class.java)?.let { fxGameOn = it; fxLocal.edit().putBoolean("game", it).apply(); GameBanner.simpanSaklar(context, it) }
             }
             onDispose { reg.remove() }
         }
@@ -1344,7 +1344,11 @@ fun RoomScreen(
                         "gift" -> fxGiftOn = nilai
                         "banner" -> fxBannerOn = nilai
                         "rocket" -> fxRocketOn = nilai
-                        "game" -> fxGameOn = nilai
+                        "game" -> {
+                            fxGameOn = nilai
+                            // Banner pemenang game di luar room ikut mati/nyala.
+                            GameBanner.simpanSaklar(context, nilai)
+                        }
                     }
                     fxLocal.edit().putBoolean(kunci, nilai).apply()
                     if (fxUid.isNotBlank()) Rtdb.ref("fxPrefs/$fxUid/$kunci").setValue(nilai)
@@ -1418,7 +1422,7 @@ private fun RmBlokEfek(
     ) { onChange("rocket", it) }
     RmEfekBaris(
         tr("Efek game"),
-        tr("Jika dimatikan, banner kemenangan game tidak ditampilkan."),
+        tr("Jika dimatikan, banner pemenang game tidak muncul, baik di dalam room maupun di halaman lain."),
         peringatan = tr("Ini tidak mengubah hasil game, hanya sembunyikan banner."),
         on = game,
     ) { onChange("game", it) }

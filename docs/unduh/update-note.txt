@@ -1,4 +1,5 @@
 • Banner pemenang game: Top 1/2/3 ronde Greedy King dan Crazy Fruit terbang di atas layar, foto di kiri, nama di tengah, coin menang di kanan dengan ikon game kecil di bawahnya
 • Banner masuk dari kanan, diam 3 detik, lalu keluar ke kiri, tampil bergantian kalau pemenangnya lebih dari satu
 • Banner terlihat di dalam room maupun di luar room (tab Party, Moment, Family, Pesan, Saya)
+• Blok Efek di room: saklar "Efek game" bisa mematikan banner pemenang game, berlaku di dalam dan di luar room
 • Panel: slot unggah gambar pelat banner pemenang game di halaman Greedy King dan Crazy Fruit

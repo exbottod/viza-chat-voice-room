@@ -82,36 +82,77 @@ object GameBanner {
         }
     }
 
+    /** Saklar efek game di blok efek room. Kalau dimatikan, banner tidak muncul. */
+    @Volatile var aktif: Boolean = true
+
+    /** Simpan saklar dari blok efek room supaya berlaku juga di luar room. */
+    fun simpanSaklar(ctx: android.content.Context, aktifkan: Boolean) {
+        aktif = aktifkan
+        try {
+            ctx.getSharedPreferences("fx_global", android.content.Context.MODE_PRIVATE)
+                .edit().putBoolean("game", aktifkan).apply()
+        } catch (e: Exception) {
+        }
+    }
+
+    /** Baca saklar terakhir yang dipilih di blok efek. */
+    fun muatSaklar(ctx: android.content.Context) {
+        try {
+            aktif = ctx.getSharedPreferences("fx_global", android.content.Context.MODE_PRIVATE)
+                .getBoolean("game", true)
+        } catch (e: Exception) {
+            aktif = true
+        }
+    }
+
+    /** Buang antrean (dipakai saat efek game dimatikan). */
+    fun kosongkan() {
+        antre.clear()
+    }
+
     /** Mulai mendengar kemenangan game dari server. */
     fun dengarkan() {
         if (mulai) return
         mulai = true
-        try {
-            Rtdb.listen(Rtdb.ref(NODE).limitToLast(15)) { snap ->
-                val baru = mutableListOf<Item>()
-                for (c in snap.children) {
-                    val id = c.key ?: continue
-                    if (pernah.contains(id)) continue
-                    val ts = (c.child("ts").value as? Number)?.toLong() ?: 0L
-                    tandai(id)
-                    // Kejadian lama tidak ditampilkan saat aplikasi baru dibuka.
-                    if (ts > 0 && System.currentTimeMillis() - ts > 30_000L) continue
-                    val amount = (c.child("amount").value as? Number)?.toLong() ?: 0L
-                    if (amount <= 0L) continue
-                    baru.add(
-                        Item(
-                            id = id,
-                            name = c.child("name").getValue(String::class.java) ?: "Player",
-                            av = c.child("av").getValue(String::class.java) ?: "",
-                            amount = amount,
-                            game = (c.child("game").getValue(String::class.java) ?: "").lowercase(),
-                            pos = (c.child("pos").value as? Number)?.toInt() ?: 0,
-                            ts = ts,
-                        ),
-                    )
+        val baca: (com.google.firebase.database.DataSnapshot) -> Unit = { snap ->
+            val baru = ArrayList<Item>()
+            for (c in snap.children) {
+                val id = c.key
+                if (id == null) {
+                    continue
                 }
-                baru.sortedBy { it.ts }.forEach { antre.add(it) }
-            })
+                if (pernah.contains(id)) {
+                    continue
+                }
+                val ts = (c.child("ts").value as? Number)?.toLong() ?: 0L
+                tandai(id)
+                val basi = ts > 0L && System.currentTimeMillis() - ts > 30_000L
+                val amount = (c.child("amount").value as? Number)?.toLong() ?: 0L
+                if (basi) {
+                    continue
+                }
+                if (amount <= 0L) {
+                    continue
+                }
+                baru.add(
+                    Item(
+                        id = id,
+                        name = c.child("name").getValue(String::class.java) ?: "Player",
+                        av = c.child("av").getValue(String::class.java) ?: "",
+                        amount = amount,
+                        game = (c.child("game").getValue(String::class.java) ?: "").lowercase(),
+                        pos = (c.child("pos").value as? Number)?.toInt() ?: 0,
+                        ts = ts,
+                    ),
+                )
+            }
+            baru.sortBy { it.ts }
+            for (x in baru) {
+                antre.add(x)
+            }
+        }
+        try {
+            Rtdb.listen(Rtdb.ref(NODE).limitToLast(15), null, baca)
         } catch (e: Exception) {
         }
     }
@@ -149,7 +190,9 @@ private fun fmtPenuh(n: Long): String {
  */
 @Composable
 fun GameWinBannerHost(modifier: Modifier = Modifier) {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
     LaunchedEffect(Unit) {
+        GameBanner.muatSaklar(ctx)
         GameBanner.dengarkan()
         GameBanner.muatBanner()
     }
@@ -158,6 +201,13 @@ fun GameWinBannerHost(modifier: Modifier = Modifier) {
 
     LaunchedEffect(Unit) {
         while (true) {
+            if (!GameBanner.aktif) {
+                // Efek game dimatikan di blok efek: banner tidak ditampilkan.
+                GameBanner.kosongkan()
+                item = null
+                delay(400)
+                continue
+            }
             if (item != null) {
                 delay(200)
                 continue

@@ -3946,7 +3946,7 @@ async function admin(env, body) {
     if (!/^[A-Za-z0-9_-]{3,64}$/.test(id)) return gagal("ID room tidak valid");
     const nilai = Number(p.nilai ?? 0) === 1;
     if (op === "room_pin") {
-      await tulisRtdbSa(env, `roomsPub/${id}/pinned`, nilai ? 1 : 0);
+      await tulisRtdbSa(env, `roomsPub/${id}/pinned`, nilai);
       await tulisRtdbSa(env, `roomsPub/${id}/pinnedAt`, nilai ? Date.now() : 0);
       return json({ ok: 1, id, pinned: nilai });
     }

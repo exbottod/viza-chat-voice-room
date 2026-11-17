@@ -1555,7 +1555,7 @@ async function gambarRoom() {
     const id = b.dataset.semats, nilai = Number(b.dataset.nilai) === 1;
     try {
       try {
-        await dSet(dRef(rtdb, `roomsPub/${id}/pinned`), nilai ? 1 : 0);
+        await dSet(dRef(rtdb, `roomsPub/${id}/pinned`), nilai);
         await dSet(dRef(rtdb, `roomsPub/${id}/pinnedAt`), nilai ? Date.now() : 0);
       } catch (e) {
         // Aturan RTDB menolak staf panel (hanya pemilik room/email admin yang

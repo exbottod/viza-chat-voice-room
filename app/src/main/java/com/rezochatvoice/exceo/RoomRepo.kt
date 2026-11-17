@@ -56,6 +56,14 @@ fun sha256(s: String): String =
 
 fun micColumns(count: Int): Int = if (count == 8 || count == 12 || count == 16) 4 else 5
 
+/** Nilai RTDB bisa boolean, angka 1/0, atau teks "true". */
+internal fun Any?.keBool(): Boolean = when (this) {
+    is Boolean -> this
+    is Number -> toDouble() != 0.0
+    is String -> trim().equals("true", true) || trim() == "1"
+    else -> false
+}
+
 object RoomRepo {
     private const val VPS = "https://viza.43-156-99-4.sslip.io"
 
@@ -336,7 +344,7 @@ object RoomRepo {
             lockHash = child("lockHash").getValue(String::class.java) ?: "",
             online = 0,
             lockedSeats = emptyList(),
-            pinned = child("pinned").getValue(Boolean::class.java) ?: false,
+            pinned = child("pinned").value.keBool(),
             pinnedAt = (child("pinnedAt").value as? Number)?.toLong() ?: 0L,
         )
     }
@@ -416,7 +424,9 @@ object RoomRepo {
             lockHash = str("lockHash"),
             online = 0,
             lockedSeats = emptyList(),
-            pinned = s.child("pinned").value as? Boolean ?: false,
+            // Panel kadang menulis 1/0 atau "true"/"false", bukan boolean.
+            // Dulu semat yang sudah tersimpan tetap dianggap tidak disematkan.
+            pinned = s.child("pinned").value.keBool(),
             pinnedAt = (s.child("pinnedAt").value as? Long) ?: 0L,
         )
     }

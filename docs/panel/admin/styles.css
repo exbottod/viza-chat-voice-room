@@ -150,6 +150,22 @@ button.polos {
 .panelIsi { padding: 14px; }
 .filter { margin-left: auto; display: flex; gap: 6px; }
 .pil { font-size: 10px; padding: 5px 10px; border-radius: 20px; background: #182030; color: #96a1b4; cursor: pointer; }
+
+/* Deretan tombol pilihan bisa digeser ke samping (HP): tombol tidak mengecil
+   dan tidak terpotong di sisi kanan, sisanya tinggal digeser. */
+.filter {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding-bottom: 6px;
+}
+.filter .pil { flex: 0 0 auto; white-space: nowrap; }
+.panelAtas .filter { margin-left: 0; }
+.panelAtas { flex-wrap: wrap; }
+.panel, .panelIsi { min-width: 0; }
+.panelIsi .filter { display: flex; flex-wrap: nowrap; }
 .pil.on { background: #2a2550; color: var(--ungu3); }
 table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
 th {

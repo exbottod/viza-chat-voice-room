@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.dp
  * tengahnya. Dipakai saat halaman atau room sedang dimuat.
  */
 @Composable
-fun VizaLoading(modifier: Modifier = Modifier, ukuran: Dp = 58.dp, latar: Color? = null) {
+fun VizaLoading(modifier: Modifier = Modifier, ukuran: Dp = 34.dp, latar: Color? = null) {
     val hijau = Color(0xFF2EE59D)
     val putar = rememberInfiniteTransition(label = "vizaLoading")
     val sudut by putar.animateFloat(
@@ -104,6 +104,6 @@ fun VizaLoading(modifier: Modifier = Modifier, ukuran: Dp = 58.dp, latar: Color?
 
 /** Loading layar penuh dengan latar gelap transparan. */
 @Composable
-fun VizaLoadingLayar(modifier: Modifier = Modifier, ukuran: Dp = 58.dp) {
+fun VizaLoadingLayar(modifier: Modifier = Modifier, ukuran: Dp = 34.dp) {
     VizaLoading(modifier = modifier.fillMaxSize(), ukuran = ukuran, latar = Color(0xCC050505))
 }

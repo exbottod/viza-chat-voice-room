@@ -2206,7 +2206,7 @@ const WALLET_CAD = WALLET_VPS;
 /** Alamat asas dompet, dipakai untuk unggah aset ke VPS. */
 const DOMPET_BASE = DOMPET_SEHOST ? location.origin : "https://viza.43-156-99-4.sslip.io";
 const WALLET_KEY = "sb_publishable_4PxD2LedOsBgIJyHLkM47A_bImSQI2W";
-const OPS_TANPA_UID = ["reset_all", "reset_gem_all", "reset_all_assets", "delete_users", "manual_pending", "manual_all", "pay_get", "pay_set"];
+const OPS_TANPA_UID = ["coin_all", "reset_all", "reset_gem_all", "reset_all_assets", "delete_users", "manual_pending", "manual_all", "pay_get", "pay_set"];
 
 async function walletAdmin(p) {
   const u = auth.currentUser;
@@ -2245,6 +2245,7 @@ async function gambarWallet() {
         <div class="filter" style="margin-top:14px">
           <div class="pil on" data-op="add">Kirim coin</div>
           <div class="pil" data-op="vip">Kirim VIP</div>
+          <div class="pil" data-op="coin_all">Kirim coin semua user</div>
           <div class="pil" data-op="reset">Reset coin (1 user)</div>
           <div class="pil" data-op="reset_all">Reset coin semua user</div>
           <div class="pil" data-op="reset_gem">Reset diamond (1 user)</div>
@@ -2265,7 +2266,8 @@ async function gambarWallet() {
           <input id="wExtra" placeholder='{"coins":100}'></div></div>
         <div class="catatan" style="margin-top:12px">
           Reset nama menulis "Unknown" ke Realtime Database dan Firestore. Reset foto mengosongkan foto profil supaya aplikasi memakai foto bawaan sesuai jenis kelamin akun.
-          Tombol dengan tulisan "semua user" langsung mengosongkan data massal, jadi pastikan dulu sebelum menekan.
+          Tombol dengan tulisan "semua user" langsung mengubah data massal, jadi pastikan dulu sebelum menekan.
+          Kirim coin semua user memberi jumlah di kolom "Jumlah coin" ke setiap dompet yang ada.
         </div>
       </div>
     </div>
@@ -2381,10 +2383,25 @@ async function gambarWallet() {
         }
         p.konfirmasi = "HAPUS";
       }
+      if (opTerpilih === "coin_all") {
+        if (!(jumlah > 0)) throw new Error("Isi jumlah coin dulu");
+        const tulis = prompt(
+          "Kirim " + jumlah.toLocaleString("id-ID") + " coin ke SEMUA user. Ketik KIRIM untuk lanjut."
+        );
+        if (String(tulis || "").trim().toUpperCase() !== "KIRIM") {
+          $("wHasil").textContent = "Dibatalkan.";
+          t.disabled = false; t.textContent = "Jalankan";
+          return;
+        }
+        p.coins = jumlah;
+        p.konfirmasi = "KIRIM";
+      }
       if (opTerpilih === "add") { p.coins = jumlah; }
       if (opTerpilih === "vip") { p.tier = Number($("wTier").value) || 1; p.days = Number($("wHari").value) || 30; }
       const out = await walletAdmin(p);
-      $("wHasil").textContent = "Selesai: " + (out.coins !== undefined ? "saldo " + out.coins : JSON.stringify(out).slice(0, 240));
+      $("wHasil").textContent = opTerpilih === "coin_all"
+        ? "Selesai: " + Number(out.coins || 0).toLocaleString("id-ID") + " coin dikirim ke " + Number(out.jumlah || 0) + " user."
+        : "Selesai: " + (out.coins !== undefined ? "saldo " + out.coins : JSON.stringify(out).slice(0, 240));
       catatLog("Wallet " + opTerpilih, uid || "semua user");
       toast("Perintah dijalankan");
     } catch (e) {

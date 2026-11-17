@@ -3918,6 +3918,26 @@ async function admin(env, body) {
     ]);
     return ok(await pastikan(env, target));
   }
+  // Panel: kirim coin ke SEMUA user sekaligus (mis. bagi-bagi hadiah event).
+  if (op === "coin_all") {
+    const coins = Math.floor(Number(p.coins ?? 0));
+    if (!(coins > 0)) return gagal("Jumlah coin harus lebih dari 0");
+    if (coins > 1000000000000) return gagal("Jumlah coin terlalu besar");
+    if (String(p.konfirmasi ?? "") !== "KIRIM") {
+      return gagal('Kirim coin ke semua user butuh konfirmasi. Kirim konfirmasi "KIRIM"');
+    }
+    const hitung = await pipe(env, [{ sql: "select count(*) jml from wallets" }]);
+    const jumlah = Number(hitung[0].rows[0]?.jml ?? 0);
+    await pipe(env, [
+      {
+        sql: "update wallets set coins = max(0, coins + ?), updated_at = ?",
+        args: [I(coins), I(Date.now())],
+      },
+    ]);
+    try { await catatReset(env, "coin_all", uid, "(semua)", coins); } catch { /* log opsional */ }
+    return json({ ok: 1, coins, jumlah });
+  }
+
   // Panel: reset coin (dan diamond kalau gem) untuk satu user / semua user.
   if (op === "reset" || op === "reset_all" || op === "reset_gem" || op === "reset_gem_all") {
     const gem = op.includes("gem");

@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.200",
-  "catatan": "• Medal dan lencana akun sendiri kini selalu diambil dari dompet di HP, jadi tetap tampil di chat room\n• Panel: baris tombol pilihan (Kirim coin, Kirim VIP, Reset, dst) kini bisa digeser ke samping di HP, \n• Panel: tombol Kirim coin semua user (kirim sekali ke seluruh dompet, wajib konfirmasi KIRIM dan terc\n• Reset coin/diamond/aset untuk SEMUA user kini wajib konfirmasi HAPUS (server menolak tanpa itu) dan ",
-  "ukuran_apk": 54776155,
-  "sha256_apk": "55e9bffe1616d4a192f03f70eb311ecac32cf967ce61068305b91901fe235224",
+  "versi": "1.0.201",
+  "catatan": "• Loading halaman hanya dipicu saat pindah halaman (tidak lagi ikut status lain), SVGA dilepas dari me",
+  "ukuran_apk": 54775717,
+  "sha256_apk": "d3ac7a256d3db0854b41f4123f2f79e644373138807b8cecad4017fe5cce1d1a",
   "abis": {
     "arm64": {
-      "ukuran": 54776155,
-      "sha256": "55e9bffe1616d4a192f03f70eb311ecac32cf967ce61068305b91901fe235224"
+      "ukuran": 54775717,
+      "sha256": "d3ac7a256d3db0854b41f4123f2f79e644373138807b8cecad4017fe5cce1d1a"
     },
     "armv7": {
-      "ukuran": 52927306,
-      "sha256": "42689ed833a83b879de7a990a846c26fa9e000745c9a3b889d5baff5b1d810db"
+      "ukuran": 52926867,
+      "sha256": "c3d3f97896c75c677b77e31df56a53fb80b588fc6da6e847c672b92ea2055c19"
     },
     "universal": {
-      "ukuran": 73192125,
-      "sha256": "9f592737151d9a2eb909534f6d76fdd24d0521e4d70670e17f4bb258cec004b9"
+      "ukuran": 73191679,
+      "sha256": "956722e33ae2988a82452a4d9a71e77640881445afacda1f65c0db1f2810a994"
     }
   }
 }

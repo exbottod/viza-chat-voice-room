@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.210",
-  "catatan": "• Perbaiki impor FontWeight di tombol tambah emot\n• Tambah emot dari dalam room: unggah berkas atau tautan",
-  "ukuran_apk": 54998371,
-  "sha256_apk": "e616bac4e917c1f3d12a282491efac4a9abb7a9bb88926071ff85bde12c07d00",
+  "versi": "1.0.211",
+  "catatan": "• Banner game lewat server VPS + kirim item dari panel staf",
+  "ukuran_apk": 54999714,
+  "sha256_apk": "79931f6dae1e042591c10f35e92ad4d69367743c97b508007f8bd7f87dcafbb8",
   "abis": {
     "arm64": {
-      "ukuran": 54998371,
-      "sha256": "e616bac4e917c1f3d12a282491efac4a9abb7a9bb88926071ff85bde12c07d00"
+      "ukuran": 54999714,
+      "sha256": "79931f6dae1e042591c10f35e92ad4d69367743c97b508007f8bd7f87dcafbb8"
     },
     "armv7": {
-      "ukuran": 53149534,
-      "sha256": "d7af294ddc31182fffea77aee3b1e2c532b9d2c59618ff11395a4082be5fc648"
+      "ukuran": 53150877,
+      "sha256": "e8ea2e7862b64ad9f35ec0948a5e68ea3accc5f4d7ee9eb39acaa3aff8cb2a50"
     },
     "universal": {
-      "ukuran": 73414336,
-      "sha256": "bd532f47c8b169d9d9fc790e9f4db48a0282dfa816b5bbd79c76ff4e646be34b"
+      "ukuran": 73415674,
+      "sha256": "7f54b6b536aa33199b4d1e2376ce4d0b8f8999f67427f5b8b8de3046d4807e3d"
     }
   }
 }

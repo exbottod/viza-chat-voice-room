@@ -165,7 +165,12 @@ fun RoomScreen(
     var siapRoom by remember { mutableStateOf(false) }
     androidx.compose.runtime.LaunchedEffect(roomId) {
         siapRoom = false
-        kotlinx.coroutines.delay(1100)
+        // Begitu kursi room terbaca, loading langsung dilepas supaya room cepat
+        // normal; kalau jaringan lambat, paling lambat 1,2 detik tetap dibuka.
+        kotlinx.coroutines.withTimeoutOrNull(1200L) {
+            while (rawSeats.isEmpty()) kotlinx.coroutines.delay(80)
+        }
+        kotlinx.coroutines.delay(120)
         siapRoom = true
     }
     LaunchedEffect(roomId, myUid) {

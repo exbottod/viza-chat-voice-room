@@ -645,6 +645,14 @@ fun VipEntryEffect(roomId: String) {
     var first by remember { mutableStateOf(true) }
     var lastId by remember { mutableStateOf<String?>(null) }
     var pending by remember { mutableStateOf<RoomMsg?>(null) }
+    // Jeda sebentar setelah masuk room: efek berat (SVGA) baru diputar setelah
+    // room dan suara siap, jadi tidak berebut tenaga dengan sambungan suara.
+    var bolehMain by remember { mutableStateOf(false) }
+    LaunchedEffect(roomId) {
+        bolehMain = false
+        delay(1400)
+        bolehMain = true
+    }
     val myUid = remember { FirebaseAuth.getInstance().currentUser?.uid ?: "" }
 
     LaunchedEffect(Unit) {
@@ -669,6 +677,7 @@ fun VipEntryEffect(roomId: String) {
      * tingkat user, kalau kosong pakai aset efek masuk lain yang tersedia.
      */
     fun pasangEfek(m: RoomMsg) {
+        if (!bolehMain) return
         val a = entryAssetOf(m)
         val b = bannerAssetOf(m)
         playing = a ?: entryAssetCadangan()

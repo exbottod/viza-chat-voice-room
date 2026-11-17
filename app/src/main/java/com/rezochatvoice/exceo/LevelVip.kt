@@ -1423,18 +1423,20 @@ fun StoreScreen(uid: String, wallet: Wallet, onOpenVip: () -> Unit, onBack: () -
                         .clip(RoundedCornerShape(14.dp)).background(Color(0x55000000)),
                     contentAlignment = Alignment.Center,
                 ) {
+                    // Aset dicari ulang dari katalog/panel kalau data item belum
+                    // membawa gambar, supaya pratinjau Item VIP tidak pernah kosong.
                     val a = item.asset
-                    if (a != null && (item.slot == "entry" || item.slot == "banner")) {
-                        // Efek masuk / banner: putar penuh sekali tampil.
-                        key(a.updatedAt) { VipMedia(a, Modifier.fillMaxSize(), loop = true) }
-                    } else if (a != null) {
+                        ?: findItem(item.id)?.asset
+                        ?: if (item.vip in 1..9) VipAssets.get(item.vip, vipAssetSlot(item.id, item.slot)) else null
+                    if (a != null) {
                         // Pratinjau: hanya di sini animasi diputar (SVGA, MP4, juga
                         // WebP/GIF bergerak), karena daftar item sengaja ditampilkan
                         // diam supaya HP tidak berat.
-                        key(a.updatedAt) {
-                            VipMedia(
+                        key(a.updatedAt, item.id) {
+                            VipMediaSafe(
                                 a, Modifier.fillMaxSize(), loop = true,
                                 contentScale = if (item.slot == "frame" || item.slot == "cardbg") ContentScale.Crop else ContentScale.Fit,
+                                fallback = { ItemPreview(item, 220.dp) },
                             )
                         }
                     } else {

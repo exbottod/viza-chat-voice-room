@@ -653,6 +653,9 @@ fun VipEntryEffect(roomId: String) {
         delay(1400)
         bolehMain = true
     }
+    // Pesan masuk yang datang sebelum jeda selesai disimpan dulu. Dulu efeknya
+    // langsung dibuang, akibatnya efek masuk tidak pernah terlihat saat masuk room.
+    var tungguMain by remember { mutableStateOf<RoomMsg?>(null) }
     val myUid = remember { FirebaseAuth.getInstance().currentUser?.uid ?: "" }
 
     LaunchedEffect(Unit) {
@@ -677,13 +680,23 @@ fun VipEntryEffect(roomId: String) {
      * tingkat user, kalau kosong pakai aset efek masuk lain yang tersedia.
      */
     fun pasangEfek(m: RoomMsg) {
-        if (!bolehMain) return
+        if (!bolehMain) {
+            tungguMain = m
+            return
+        }
         val a = entryAssetOf(m)
         val b = bannerAssetOf(m)
         playing = a ?: entryAssetCadangan()
         banner = b
         bannerName = msgName(m).takeIf { it.isNotBlank() }
         bannerUid = m.vipUid.takeIf { it.isNotBlank() }
+    }
+
+    LaunchedEffect(bolehMain) {
+        if (!bolehMain) return@LaunchedEffect
+        val m = tungguMain ?: return@LaunchedEffect
+        tungguMain = null
+        pasangEfek(m)
     }
 
     LaunchedEffect(pending) {

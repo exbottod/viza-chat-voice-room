@@ -178,7 +178,9 @@ object GameBanner {
         if (pernah.contains(id)) return
         tandai(id)
         if (jumlah <= 0L) return
-        if (ts > 0L && System.currentTimeMillis() - ts > 60_000L) return
+        // Ronde game hanya sebentar: kejadian lebih tua dari 25 detik dibuang
+        // supaya banner tidak memutar pemenang ronde yang sudah lewat.
+        if (ts > 0L && System.currentTimeMillis() - ts > 25_000L) return
         antre.add(
             Item(
                 id = id,
@@ -324,7 +326,14 @@ fun GameWinBannerHost(modifier: Modifier = Modifier) {
                 delay(200)
                 continue
             }
-            val berikut = GameBanner.ambil()
+            var berikut = GameBanner.ambil()
+            // Buang kejadian ronde yang sudah lewat (lebih dari 25 detik): banner
+            // hanya untuk permainan yang sedang berjalan, bukan riwayat.
+            while (berikut != null && berikut.ts > 0L &&
+                System.currentTimeMillis() - berikut.ts > 25_000L
+            ) {
+                berikut = GameBanner.ambil()
+            }
             if (berikut == null) {
                 delay(350)
                 continue

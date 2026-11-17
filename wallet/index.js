@@ -6188,7 +6188,8 @@ export default {
           const tW = Number(oW.ts || 0);
           if (!tW) continue;
           if (sejakW > 0 && tW <= sejakW) continue;
-          if (kiniW - tW > 10 * 60 * 1000) continue;
+          // Banner hanya untuk ronde yang sedang/baru berjalan, bukan riwayat lama.
+          if (kiniW - tW > 60 * 1000) continue;
           itemsW.push({
             id: kW,
             name: String(oW.name || "Player").slice(0, 24),

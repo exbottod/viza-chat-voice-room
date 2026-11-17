@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.195",
-  "catatan": "• Loading Viza diperluas: tampil di atas halaman mana pun saat dibuka (tab Family, profil orang, store\n• Tambahkan loading khas Viza (busur hijau berputar dengan batang suara): tampil saat berpindah halama",
-  "ukuran_apk": 54776676,
-  "sha256_apk": "4741b5e4a89c0d2072858260d37065587a7b5a111cc7de69b382152cf49172ac",
+  "versi": "1.0.196",
+  "catatan": "• Logo loading dibuat bergerak: busur berputar lebih cepat dan lima batang suara naik-turun bergantian",
+  "ukuran_apk": 54776164,
+  "sha256_apk": "7287725b5bfa66f3f8fab30e224e5c8d0c0da427c3d4be608f2b2f9479cad01d",
   "abis": {
     "arm64": {
-      "ukuran": 54776676,
-      "sha256": "4741b5e4a89c0d2072858260d37065587a7b5a111cc7de69b382152cf49172ac"
+      "ukuran": 54776164,
+      "sha256": "7287725b5bfa66f3f8fab30e224e5c8d0c0da427c3d4be608f2b2f9479cad01d"
     },
     "armv7": {
-      "ukuran": 52927823,
-      "sha256": "7eee43f7a731be1e830e3fe516dfc7147c0396e39f09227fa65a29e260047e4f"
+      "ukuran": 52927312,
+      "sha256": "1bfecbd55e264531039c90fb100b4559e6a26c2e39548661bfa15eeb79a33f4b"
     },
     "universal": {
-      "ukuran": 73192638,
-      "sha256": "5cff0a59955050020e33cfc1fe12ddb89aa6bd4995dc438c36ebe0fd083c581c"
+      "ukuran": 73192128,
+      "sha256": "617214cce37693c91a2e535b33e484a69ec24f894ee41291e0313f39cd49510f"
     }
   }
 }

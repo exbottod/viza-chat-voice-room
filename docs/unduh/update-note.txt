@@ -1,2 +1,1 @@
-• Loading Viza diperluas: tampil di atas halaman mana pun saat dibuka (tab Family, profil orang, store
-• Tambahkan loading khas Viza (busur hijau berputar dengan batang suara): tampil saat berpindah halama
+• Logo loading dibuat bergerak: busur berputar lebih cepat dan lima batang suara naik-turun bergantian

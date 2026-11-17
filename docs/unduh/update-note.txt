@@ -1,1 +1,1 @@
-• Efek masuk room tampil lagi, banner hanya untuk ronde berjalan, pratinjau Item VIP muncul
+• Ikon kartu Ransel/Store memakai sampul PNG, animasi asli hanya di pratinjau

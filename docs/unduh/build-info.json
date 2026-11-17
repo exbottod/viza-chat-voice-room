@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.214",
-  "catatan": "• Efek masuk room tampil lagi, banner hanya untuk ronde berjalan, pratinjau Item VIP muncul",
-  "ukuran_apk": 55001084,
-  "sha256_apk": "a33060db176e9c8324c005e46a0e9841de79b9d36a460ff983d0fb59b2ccb78f",
+  "versi": "1.0.215",
+  "catatan": "• Ikon kartu Ransel/Store memakai sampul PNG, animasi asli hanya di pratinjau",
+  "ukuran_apk": 55001893,
+  "sha256_apk": "fae796f32e47964d9e89f9fa42212bb06037b6a572fd16e79da575519d9b7c26",
   "abis": {
     "arm64": {
-      "ukuran": 55001084,
-      "sha256": "a33060db176e9c8324c005e46a0e9841de79b9d36a460ff983d0fb59b2ccb78f"
+      "ukuran": 55001893,
+      "sha256": "fae796f32e47964d9e89f9fa42212bb06037b6a572fd16e79da575519d9b7c26"
     },
     "armv7": {
-      "ukuran": 53152240,
-      "sha256": "bc47c1f8d81b84ca267a391c85a64e46a76c144c0e80cf895b5d0ddb8e161c3b"
+      "ukuran": 53153032,
+      "sha256": "b480f16a70c457607d2b08600714c132d5ac2d1c889eaebb03b6c80b72c4ff4e"
     },
     "universal": {
-      "ukuran": 73417050,
-      "sha256": "296c4f62c5eae9a81d4280942f7b2fda06682460eba032be56ebac91c69c2efe"
+      "ukuran": 73417853,
+      "sha256": "f180fd0fb4f85f85a086ab49dbb3fe7aaccd2e9aae7740a3161bbd1d266de3bc"
     }
   }
 }

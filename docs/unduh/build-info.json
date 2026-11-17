@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.198",
   "catatan": "• Logo loading diperkecil lagi (34dp) supaya seperti loading bawaan aplikasi, tidak menutupi layar",
-  "ukuran_apk": 54776156,
-  "sha256_apk": "cf099454882bc97ff5df4e0169a3a9f7a23121036a0acf19ccd0798974401ac2",
+  "ukuran_apk": 54776153,
+  "sha256_apk": "e8b059e42306b212a321ab2c119532a3506ba542a203683325c0b58ea42e5f5b",
   "abis": {
     "arm64": {
-      "ukuran": 54776156,
-      "sha256": "cf099454882bc97ff5df4e0169a3a9f7a23121036a0acf19ccd0798974401ac2"
+      "ukuran": 54776153,
+      "sha256": "e8b059e42306b212a321ab2c119532a3506ba542a203683325c0b58ea42e5f5b"
     },
     "armv7": {
-      "ukuran": 52927306,
-      "sha256": "93d6e43da6d3b7d6c333b6054fce1c508b8149a04cf1300a043733643ca42778"
+      "ukuran": 52927294,
+      "sha256": "20751ed873382b0c14edb8ba19852701058fa0673527a32f39cd46d8e9f192ad"
     },
     "universal": {
-      "ukuran": 73192125,
-      "sha256": "2cad8204c8427da42503a1565223e6402c8964fe8ed74f397f19bc25aca6d4bc"
+      "ukuran": 73192119,
+      "sha256": "69b220c44265b988c085d6851bafecf8b18304345b470441e27951886fc64b6d"
     }
   }
 }

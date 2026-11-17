@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.204",
-  "catatan": "• Reward room Koin banyak: hadiah mingguan otomatis",
-  "ukuran_apk": 54979109,
-  "sha256_apk": "e60205bd2a4fa3e125ac9e5754902b7cce150c5b66887bca3672d1df21a2a62c",
+  "versi": "1.0.205",
+  "catatan": "• Banner reward room pakai rasio 3:1",
+  "ukuran_apk": 54979041,
+  "sha256_apk": "710fb43b5bd915b68e2e8da8f5cffb5cf4fd30168fbdc8e92cd9c6aa642cd81c",
   "abis": {
     "arm64": {
-      "ukuran": 54979109,
-      "sha256": "e60205bd2a4fa3e125ac9e5754902b7cce150c5b66887bca3672d1df21a2a62c"
+      "ukuran": 54979041,
+      "sha256": "710fb43b5bd915b68e2e8da8f5cffb5cf4fd30168fbdc8e92cd9c6aa642cd81c"
     },
     "armv7": {
-      "ukuran": 53130256,
-      "sha256": "58d1599d2bc0b6f476f8ad946ec045b8042719e492053126bfc8fcc2c737fa55"
+      "ukuran": 53130194,
+      "sha256": "8c896963b5bb979660609316565ecf118ed33cbd729a4989c6c56f84359a6ab8"
     },
     "universal": {
-      "ukuran": 73395074,
-      "sha256": "5cf825c9f95443d30e911cd37aa22b8fa8abf05f68b8935ed952296d3ce2d6b4"
+      "ukuran": 73395012,
+      "sha256": "b1169d0a0d963f6d2370386ed3c869e657b639f1ff77ae18e4db04dfba5950ad"
     }
   }
 }

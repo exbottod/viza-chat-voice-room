@@ -310,9 +310,11 @@ async function greedyPlay(req, env, h) {
           args: [I(round), T(hasil), I(sekarang)] },
       ];
       let pertama = true;
+      const pemenangGk = [];
       for (const [u, v] of per) {
         const win = payout(v.bets, hasil);
         if (!(win > 0)) continue;
+        pemenangGk.push({ uid: String(u), nama: v.nama, win: Math.trunc(win) });
         stmt.push({
           sql: `update wallets set coins = coins + ?, updated_at = ? where uid = ?
                 ${pertama ? "and changes() > 0" : "and changes() > 0"}`,
@@ -326,14 +328,31 @@ async function greedyPlay(req, env, h) {
         pertama = false;
       }
       stmt.push({ sql: "commit" });
+      let baruSelesai = false;
       try {
         await pipeTrx(env, stmt);
+        baruSelesai = true;
       } catch (e) {
         // Putaran bisa saja sudah diselesaikan permintaan lain; pakai hasil tersimpan.
         const ulang = await pipe(env, [
           { sql: "select result from greedy_settle where round = ?", args: [I(round)] },
         ]);
         hasil = ulang[0].rows[0]?.result || hasil;
+      }
+      // Banner pemenang Greedy King: Top 1/2/3 ronde ini.
+      if (baruSelesai && pemenangGk.length) {
+        try {
+          pemenangGk.sort((a, b) => b.win - a.win);
+          const tiga = pemenangGk.slice(0, 3);
+          for (const w of tiga) {
+            try {
+              const pw = await hivePemain(env, w.uid);
+              w.nama = pw.name || w.nama;
+              w.foto = String(pw.profilePicture || waveFoto(w.uid, pw.avatar) || "");
+            } catch { /* foto opsional */ }
+          }
+          await kirimBannerRonde(env, "greedy", String(round), tiga);
+        } catch { /* banner opsional */ }
       }
     }
 
@@ -2099,6 +2118,32 @@ async function siapWinFeed(env) {
             )`,
     },
   ]);
+}
+
+/** Kirim Top 1/2/3 sebuah ronde langsung ke banner terbang (gameWinFeed).
+ *  Dipakai Greedy King dan Crazy Fruit, yang menyelesaikan ronde di server dan
+ *  tidak lewat submitFlow, sehingga dulu bannernya tidak pernah terkirim. */
+async function kirimBannerRonde(env, namaGame, ronde, baris) {
+  try {
+    const kini = Date.now();
+    const daftar = (baris || []).filter((x) => Number(x.win) > 0).slice(0, 3);
+    const sudah = globalThis.__vizaWinKirim || (globalThis.__vizaWinKirim = new Set());
+    for (let i = 0; i < daftar.length; i++) {
+      const x = daftar[i];
+      const pos = i + 1;
+      const kunci = namaGame + "|" + ronde + "|" + x.uid + "|" + pos;
+      if (sudah.has(kunci)) continue;
+      sudah.add(kunci);
+      await patchRtdbSa(env, `gameWinFeed/${kini}_${String(x.uid).slice(0, 12)}_${pos}`, {
+        name: String(x.nama || "Player").slice(0, 24),
+        av: String(x.foto || "").slice(0, 300),
+        amount: Math.trunc(Number(x.win) || 0),
+        game: namaGame,
+        pos,
+        ts: kini,
+      });
+    }
+  } catch (e) { /* banner opsional, jangan gagalkan pembayaran */ }
 }
 
 /** Catat kemenangan ronde, lalu kirim Top 1/2/3 ke banner terbang semua user. */
@@ -5105,7 +5150,10 @@ async function wavePlay(req, env) {
         foto: String(plAkhir.profilePicture || waveFoto(uid, plAkhir.avatar) || ""),
         win: amount,
         game: namaGame,
-        ronde: body.roundId ?? body.round ?? body.ronde ?? "",
+        ronde: String(
+          body.roundId ?? body.round ?? body.ronde
+          ?? (namaGame.includes("fruit") ? cfRondeSekarang() : ""),
+        ),
       }).catch(() => {});
     }
     return balas({

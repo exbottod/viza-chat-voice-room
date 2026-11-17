@@ -385,7 +385,38 @@ private fun VipSvga(
                     override fun onError() {}
                 }
                 if (a.url.isNotBlank()) {
-                    parser.decodeFromURL(java.net.URL(a.url), done)
+                    // Unduh sendiri lewat HTTP lalu decode dari byte: decodeFromURL
+                    // bawaan sering gagal diam-diam di jaringan lambat, akibatnya
+                    // kotak preview tinggal kosong.
+                    val alamat = a.url
+                    val kunciSvga = "vip_${a.n}_${a.slot}_${a.updatedAt}"
+                    Thread {
+                        var isi: ByteArray? = null
+                        for (percobaan in 1..2) {
+                            try {
+                                val kon = (java.net.URL(alamat).openConnection() as java.net.HttpURLConnection).apply {
+                                    connectTimeout = 10000
+                                    readTimeout = 20000
+                                    instanceFollowRedirects = true
+                                }
+                                if (kon.responseCode in 200..299) {
+                                    isi = kon.inputStream.use { it.readBytes() }
+                                }
+                                kon.disconnect()
+                                if (isi != null && isi!!.isNotEmpty()) break
+                            } catch (e: Exception) {
+                                isi = null
+                            }
+                        }
+                        val hasil = isi
+                        post {
+                            if (hasil != null && hasil.isNotEmpty()) {
+                                parser.decodeFromInputStream(ByteArrayInputStream(hasil), kunciSvga, done, true)
+                            } else {
+                                try { parser.decodeFromURL(java.net.URL(alamat), done) } catch (e: Exception) { }
+                            }
+                        }
+                    }.start()
                 } else if (data != null) {
                     parser.decodeFromInputStream(
                         ByteArrayInputStream(data), "vip_${a.n}_${a.slot}_${a.updatedAt}", done, true,

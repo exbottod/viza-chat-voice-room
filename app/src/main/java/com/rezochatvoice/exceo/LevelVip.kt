@@ -1437,16 +1437,28 @@ fun StoreScreen(uid: String, wallet: Wallet, onOpenVip: () -> Unit, onBack: () -
                     // membawa gambar, supaya pratinjau Item VIP tidak pernah kosong.
                     val a = item.asset
                         ?: findItem(item.id)?.asset
-                        ?: if (item.vip in 1..9) VipAssets.get(item.vip, vipAssetSlot(item.id, item.slot)) else null
+                        ?: (if (item.vip in 1..9) VipAssets.get(item.vip, vipAssetSlot(item.id, item.slot)) else null)
+                        // Aset tier ini belum diisi di panel: pakai efek masuk lain
+                        // yang tersedia supaya preview tetap menunjukkan sesuatu.
+                        ?: (if (item.slot == "entry") entryAssetCadangan(item.vip) else null)
                     if (a != null) {
+                        // Sampul PNG tampil dulu di belakang animasi: kalau SVGA/MP4
+                        // lambat atau gagal dimuat, kotak preview tidak kosong.
+                        if (a.poster.isNotBlank()) {
+                            coil.compose.AsyncImage(
+                                model = a.poster,
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Fit,
+                            )
+                        }
                         // Pratinjau: hanya di sini animasi diputar (SVGA, MP4, juga
                         // WebP/GIF bergerak), karena daftar item sengaja ditampilkan
                         // diam supaya HP tidak berat.
                         key(a.updatedAt, item.id) {
-                            VipMediaSafe(
+                            VipMedia(
                                 a, Modifier.fillMaxSize(), loop = true,
                                 contentScale = if (item.slot == "frame" || item.slot == "cardbg") ContentScale.Crop else ContentScale.Fit,
-                                fallback = { ItemPreview(item, 220.dp) },
                             )
                         }
                     } else {

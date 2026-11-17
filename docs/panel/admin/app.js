@@ -2808,6 +2808,7 @@ async function gambarKirim() {
             <option value="frame">Frame</option>
             <option value="entry">Efek masuk</option>
             <option value="banner">Banner</option>
+            <option value="emote">Emote room</option>
             <option value="uid">ID unik</option>
             <option value="bubble">Gelembung</option>
           </select></div>
@@ -2818,6 +2819,7 @@ async function gambarKirim() {
           <div class="pil" data-jenis="medal">Medali</div>
           <div class="pil" data-jenis="entry">Efek masuk</div>
           <div class="pil" data-jenis="banner">Banner</div>
+          <div class="pil" data-jenis="emote">Emote room</div>
           <div class="pil" data-jenis="uid">ID unik</div>
         </div>
         <div class="grid2" style="margin-top:10px">
@@ -2916,6 +2918,7 @@ const SLOT_ASET = [
   { k: "medal", n: "Medali" },
   { k: "badge", n: "Lencana (badge)" },
   { k: "banner", n: "Banner masuk" },
+  { k: "emote", n: "Emote room (GIF/PNG)" },
   { k: "uid", n: "Unique ID (gambar ID)" },
   { k: "avatar", n: "Avatar" }
 ];

@@ -145,11 +145,9 @@ fun PartyTab(
             item(span = { GridItemSpan(maxLineSpan) }) { EmptyBlock(tr("Belum ada aktivitas")) }
         } else {
             if (subTab == 1) {
+                // Banner Koin banyak ikut jadi geseran di banner atas (bisa
+                // digeser manual dan bergeser sendiri), bukan banner kedua.
                 item(span = { GridItemSpan(maxLineSpan) }) { BannerPager() }
-                // Banner Koin banyak: diketuk membuka halaman reward room.
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    RewardRoomPartyBanner(onClick = { RewardRoomOpen.buka() })
-                }
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     RankRow(onClick = { when (it) { "Top Sawer" -> showRank = true; "Family" -> showFamilyRank = true; else -> soon("$it segera hadir") } })
                 }
@@ -323,7 +321,15 @@ private fun BannerPager() {
         val semua = dariVip + dariFs.filter { f -> dariVip.none { v -> v.imageUrl.isNotBlank() && v.imageUrl == f.imageUrl } }
         if (semua.isNotEmpty()) remote = semua
     }
-    val count = if (remote.isNotEmpty()) remote.size else defaults.size
+    // Gambar banner Koin banyak diunggah owner lewat panel dan disajikan
+    // server; ikut jadi geseran terakhir di banner atas tab Party.
+    var rewardBanner by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) {
+        RewardRoomApi.muatTampilan()
+        rewardBanner = RewardRoomApi.bannerUrl
+    }
+    val count = (if (remote.isNotEmpty()) remote.size else defaults.size) + 1
+    val rewardPage = count - 1
     val state = rememberPagerState(pageCount = { count })
     // Banner bergeser sendiri ke kanan supaya tab Party terlihat lebih hidup.
     // Berhenti sebentar kalau user sedang menggeser manual.
@@ -347,7 +353,28 @@ private fun BannerPager() {
     val goldBorder = Brush.linearGradient(listOf(GoldDark, GoldLight, GoldDark))
     Column(Modifier.fillMaxWidth()) {
         HorizontalPager(state = state, modifier = Modifier.fillMaxWidth(), pageSpacing = 12.dp) { page ->
-            if (remote.isNotEmpty()) {
+            if (page == rewardPage) {
+                Box(
+                    modifier = Modifier.fillMaxWidth().aspectRatio(3f).clip(frame)
+                        .background(Color(0xFF1A1A1A)).border(1.dp, goldBorder, frame)
+                        .clickable { RewardRoomOpen.buka() },
+                ) {
+                    if (rewardBanner.isNotBlank()) {
+                        coil.compose.AsyncImage(
+                            model = rewardBanner, contentDescription = tr("Koin banyak"),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    } else {
+                        androidx.compose.foundation.Image(
+                            painter = androidx.compose.ui.res.painterResource(R.drawable.reward_room_banner),
+                            contentDescription = tr("Koin banyak"),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
+            } else if (remote.isNotEmpty()) {
                 val b = remote[page.coerceAtMost(remote.lastIndex)]
                 val bmp = remember(b.imageB64) { ProfileRepo.decodeB64(b.imageB64) }
                 Box(

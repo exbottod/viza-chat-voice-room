@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.203",
-  "catatan": "• Room tidak terlihat: daftar room sekarang menampilkan semua room (tidak lagi menyembunyikan yang onl\n• Semat room dan tag official bisa dipakai staf panel: kalau aturan RTDB menolak, penyimpanan dialihka",
-  "ukuran_apk": 54777819,
-  "sha256_apk": "a37ec2ab71dc1bf25f4b0f6ef2748e4e78ce64d06beb1b2c774062d9cbf11c61",
+  "versi": "1.0.204",
+  "catatan": "• Reward room Koin banyak: hadiah mingguan otomatis",
+  "ukuran_apk": 54979109,
+  "sha256_apk": "e60205bd2a4fa3e125ac9e5754902b7cce150c5b66887bca3672d1df21a2a62c",
   "abis": {
     "arm64": {
-      "ukuran": 54777819,
-      "sha256": "a37ec2ab71dc1bf25f4b0f6ef2748e4e78ce64d06beb1b2c774062d9cbf11c61"
+      "ukuran": 54979109,
+      "sha256": "e60205bd2a4fa3e125ac9e5754902b7cce150c5b66887bca3672d1df21a2a62c"
     },
     "armv7": {
-      "ukuran": 52928964,
-      "sha256": "02681bb62f05763dd886e66d5de9bf1c836925ac73de1f37a0f2c40c5b965047"
+      "ukuran": 53130256,
+      "sha256": "58d1599d2bc0b6f476f8ad946ec045b8042719e492053126bfc8fcc2c737fa55"
     },
     "universal": {
-      "ukuran": 73193784,
-      "sha256": "c9a37edcafa3d21552175a475c0c0eff7a02f218bfe852b41ab8f9cd9a3e8e0c"
+      "ukuran": 73395074,
+      "sha256": "5cf825c9f95443d30e911cd37aa22b8fa8abf05f68b8935ed952296d3ce2d6b4"
     }
   }
 }

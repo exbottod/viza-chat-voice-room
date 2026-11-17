@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.199",
-  "catatan": "• Semua loading bawaan (bulat) diganti loading Viza yang kecil, termasuk saat menunggu data di room, p",
+  "versi": "1.0.200",
+  "catatan": "• Medal dan lencana akun sendiri kini selalu diambil dari dompet di HP, jadi tetap tampil di chat room\n• Panel: baris tombol pilihan (Kirim coin, Kirim VIP, Reset, dst) kini bisa digeser ke samping di HP, \n• Panel: tombol Kirim coin semua user (kirim sekali ke seluruh dompet, wajib konfirmasi KIRIM dan terc\n• Reset coin/diamond/aset untuk SEMUA user kini wajib konfirmasi HAPUS (server menolak tanpa itu) dan ",
   "ukuran_apk": 54776155,
-  "sha256_apk": "76e95e3035867da37dc23694555ba2e3aa679eafeac813b3393e1385cb136922",
+  "sha256_apk": "55e9bffe1616d4a192f03f70eb311ecac32cf967ce61068305b91901fe235224",
   "abis": {
     "arm64": {
       "ukuran": 54776155,
-      "sha256": "76e95e3035867da37dc23694555ba2e3aa679eafeac813b3393e1385cb136922"
+      "sha256": "55e9bffe1616d4a192f03f70eb311ecac32cf967ce61068305b91901fe235224"
     },
     "armv7": {
-      "ukuran": 52927304,
-      "sha256": "a7be5759cb3002a028b8a103ab8bb90c89051513138865f9916952e8b3a00e9b"
+      "ukuran": 52927306,
+      "sha256": "42689ed833a83b879de7a990a846c26fa9e000745c9a3b889d5baff5b1d810db"
     },
     "universal": {
-      "ukuran": 73192112,
-      "sha256": "fcb783b4921c801c64fd229b04e9f2c3faabcf2f9bfc064ac29f27ccb4a4ca1e"
+      "ukuran": 73192125,
+      "sha256": "9f592737151d9a2eb909534f6d76fdd24d0521e4d70670e17f4bb258cec004b9"
     }
   }
 }

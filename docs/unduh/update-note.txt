@@ -1,1 +1,4 @@
-• Semua loading bawaan (bulat) diganti loading Viza yang kecil, termasuk saat menunggu data di room, p
+• Medal dan lencana akun sendiri kini selalu diambil dari dompet di HP, jadi tetap tampil di chat room
+• Panel: baris tombol pilihan (Kirim coin, Kirim VIP, Reset, dst) kini bisa digeser ke samping di HP, 
+• Panel: tombol Kirim coin semua user (kirim sekali ke seluruh dompet, wajib konfirmasi KIRIM dan terc
+• Reset coin/diamond/aset untuk SEMUA user kini wajib konfirmasi HAPUS (server menolak tanpa itu) dan 

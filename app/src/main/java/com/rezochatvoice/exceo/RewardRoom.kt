@@ -2,8 +2,10 @@ package com.rezochatvoice.exceo
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -23,6 +25,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -178,15 +181,22 @@ object RewardRoomApi {
         )
     }
 
-    suspend fun info(uid: String, paksa: Boolean = false): Info? = withContext(Dispatchers.IO) {
-        val c = cacheInfo
-        if (!paksa && c != null && System.currentTimeMillis() - cacheAt < 30_000L) return@withContext c
+    @Volatile private var cacheLalu: Info? = null
+    @Volatile private var cacheLaluAt: Long = 0L
+
+    /** [mode] "lalu" mengambil data periode minggu sebelumnya. */
+    suspend fun info(uid: String, paksa: Boolean = false, mode: String = "kini"): Info? = withContext(Dispatchers.IO) {
+        val lalu = mode == "lalu"
+        val c = if (lalu) cacheLalu else cacheInfo
+        val at = if (lalu) cacheLaluAt else cacheAt
+        if (!paksa && c != null && System.currentTimeMillis() - at < 30_000L) return@withContext c
         val body = JSONObject().put("do", "info").put("uid", uid)
+        if (lalu) body.put("mode", "lalu")
         val d = post(body) ?: return@withContext c
         if (d.optInt("ok", 0) != 1) return@withContext c
         val hasil = urai(d)
-        cacheInfo = hasil
-        cacheAt = System.currentTimeMillis()
+        if (lalu) { cacheLalu = hasil; cacheLaluAt = System.currentTimeMillis() }
+        else { cacheInfo = hasil; cacheAt = System.currentTimeMillis() }
         hasil
     }
 
@@ -296,47 +306,45 @@ private fun jamTersisa(sampai: Long): String {
     else tr("%d jam %d menit lagi").format(jam, menit)
 }
 
-/** Halaman reward room: periode ini, Kamar saya, tabel hadiah, periode lalu. */
+/** Halaman reward room bergaya Koin banyak: emas di atas ungu tua. */
 @Composable
 fun RewardRoomScreen(myUid: String, onClose: () -> Unit) {
-    var info by remember { mutableStateOf<RewardRoomApi.Info?>(null) }
-    var memuat by remember { mutableStateOf(true) }
     var tab by remember { mutableStateOf(0) }
-    var detak by remember { mutableStateOf(0L) }
+    var infoKini by remember { mutableStateOf<RewardRoomApi.Info?>(null) }
+    var infoLalu by remember { mutableStateOf<RewardRoomApi.Info?>(null) }
+    var memuat by remember { mutableStateOf(true) }
     val listState = rememberLazyListState()
+    val i = if (tab == 0) infoKini else infoLalu
 
-    LaunchedEffect(myUid) {
-        info = RewardRoomApi.info(myUid, paksa = true)
+    LaunchedEffect(tab, myUid) {
+        if ((tab == 0 && infoKini != null) || (tab == 1 && infoLalu != null)) {
+            memuat = false
+            return@LaunchedEffect
+        }
+        memuat = true
+        val hasil = RewardRoomApi.info(myUid, true, if (tab == 0) "kini" else "lalu")
+        if (tab == 0) infoKini = hasil else infoLalu = hasil
         memuat = false
     }
+
+    // Detak tiap detik supaya hitung mundur berjalan.
+    var sekarang by remember { mutableStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) {
         while (true) {
-            delay(30_000L)
-            info = RewardRoomApi.info(myUid)
-            detak = System.currentTimeMillis()
+            sekarang = System.currentTimeMillis()
+            delay(1000L)
         }
     }
 
-    val i = info
-    Box(Modifier.fillMaxSize().background(WarnaBg)) {
-        // Latar banner diunggah owner lewat panel, disajikan dari server.
-        val latar = i?.banner.orEmpty()
-        if (latar.isNotBlank()) {
-            AsyncImage(
-                model = latar,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxWidth().aspectRatio(3f).align(Alignment.TopCenter),
-            )
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(3f)
-                    .align(Alignment.TopCenter)
-                    .background(Brush.verticalGradient(listOf(Color(0x66000000), WarnaBg))),
-            )
-        }
-
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0xFF3B0B5F), Color(0xFF26063F), Color(0xFF160128)),
+                ),
+            ),
+    ) {
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
             Row(
                 Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 4.dp),
@@ -346,126 +354,71 @@ fun RewardRoomScreen(myUid: String, onClose: () -> Unit) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = tr("Kembali"), tint = Color.White)
                 }
                 Column(Modifier.weight(1f)) {
-                    Text(tr("Koin banyak"), color = WarnaEmas, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                    Text(tr("Koin banyak"), color = EmasMuda, fontWeight = FontWeight.Bold, fontSize = 17.sp)
                     Text(
-                        if (i == null || i.selesai <= 0L) tr("Reward room mingguan")
-                        else jamTersisa(i.selesai),
-                        color = WarnaAbu, fontSize = 11.sp,
+                        when {
+                            i == null -> tr("Reward room mingguan")
+                            tab == 1 -> tr("Hasil minggu lalu")
+                            else -> tr("Manfaat waktu terbatas untuk pemilik room")
+                        },
+                        color = Color(0xFFD8C4F2), fontSize = 11.sp,
                     )
                 }
             }
 
-            Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TabKecil(tr("Periode ini"), tab == 0) { tab = 0 }
-                TabKecil(tr("Periode lalu"), tab == 1) { tab = 1 }
-            }
-
-            if (memuat) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { VizaLoading() }
-                return@Column
-            }
-            if (i == null) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(tr("Gagal memuat data reward. Coba lagi."), color = WarnaAbu, fontSize = 13.sp)
-                }
-                return@Column
-            }
-            if (!i.aktif) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(tr("Acara reward room sedang tidak aktif."), color = WarnaAbu, fontSize = 13.sp)
-                }
-                return@Column
-            }
-
             LazyColumn(
                 state = listState,
-                modifier = Modifier.fillMaxSize().padding(horizontal = 14.dp),
-                contentPadding = PaddingValues(top = 10.dp, bottom = 28.dp),
+                modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+                contentPadding = PaddingValues(top = 6.dp, bottom = 28.dp),
             ) {
-                if (tab == 0) {
+                item {
+                    BannerKoin(i?.banner ?: RewardRoomApi.bannerUrl)
+                    Spacer(Modifier.height(10.dp))
+                }
+                item {
+                    TabPeriode(tab) { tab = it }
+                    Spacer(Modifier.height(8.dp))
+                }
+                if (tab == 0 && i != null && i.selesai > 0L) {
                     item {
-                        KartuKamarSaya(i)
-                        Spacer(Modifier.height(10.dp))
+                        HitungMundur(i.selesai - sekarang)
+                        Spacer(Modifier.height(6.dp))
                     }
-                    if (i.kamarSaya.isNotEmpty()) {
-                        items(i.kamarSaya) { k -> KontributorKartu(k); Spacer(Modifier.height(8.dp)) }
-                    }
+                }
+                if (memuat) {
                     item {
-                        Spacer(Modifier.height(4.dp))
-                        Text(tr("Peringkat room"), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Spacer(Modifier.height(6.dp))
+                        Box(Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) { VizaLoading() }
                     }
-                    if (i.peringkat.isEmpty()) {
-                        item {
-                            Text(tr("Belum ada aliran koin minggu ini."), color = WarnaAbu, fontSize = 12.sp)
-                            Spacer(Modifier.height(10.dp))
-                        }
-                    }
-                    items(i.peringkat.withIndex().toList()) { (idx, rk) ->
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(WarnaKartu)
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text("${idx + 1}", color = WarnaEmas, fontSize = 12.sp, modifier = Modifier.width(26.dp))
-                            Text(rk.first, color = Color.White, fontSize = 12.sp, modifier = Modifier.weight(1f))
-                            Text(fmtKoin(rk.second), color = WarnaHijau, fontSize = 12.sp)
-                        }
-                        Spacer(Modifier.height(6.dp))
-                    }
+                } else if (i == null) {
                     item {
-                        Spacer(Modifier.height(6.dp))
-                        Text(tr("Tabel hadiah"), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Spacer(Modifier.height(6.dp))
-                        BarisTabel(true, tr("Aliran koin"), tr("Pemilik"), tr("Kontributor"), tr("Hadiah/orang"))
-                    }
-                    items(i.tiers) { t ->
-                        BarisTabel(
-                            false,
-                            fmtKoin(t.aliran),
-                            fmtKoin(t.pemilik),
-                            "Top 1-${t.top}",
-                            fmtKoin(t.perOrang),
-                        )
-                    }
-                    item {
-                        Spacer(Modifier.height(12.dp))
-                        Text(tr("Aturan"), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Spacer(Modifier.height(6.dp))
-                        Text(i.aturan, color = WarnaAbu, fontSize = 12.sp, lineHeight = 18.sp)
-                        Spacer(Modifier.height(10.dp))
                         Text(
-                            tr("Hadiah dibagikan otomatis setiap Senin 00:05 WIB dan pemberitahuan dikirim ke chat Customer Service."),
-                            color = WarnaAbu, fontSize = 11.sp, lineHeight = 16.sp,
+                            tr("Gagal memuat data reward. Periksa koneksi lalu coba lagi."),
+                            color = Color(0xFFD8C4F2), fontSize = 12.sp,
+                            modifier = Modifier.padding(vertical = 24.dp),
                         )
                     }
                 } else {
                     item {
-                        Text(tr("Periode lalu"), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        PanelEmas(tr("Kamar saya")) { IsiKamarSaya(i) }
                         Spacer(Modifier.height(8.dp))
                     }
-                    if (i.menangLalu.isEmpty()) {
-                        item { Text(tr("Belum ada hadiah yang dibagikan."), color = WarnaAbu, fontSize = 12.sp) }
+                    item {
+                        CatatanHadiah(i)
+                        Spacer(Modifier.height(4.dp))
                     }
-                    items(i.menangLalu) { m ->
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(WarnaKartu)
-                                .padding(horizontal = 12.dp, vertical = 9.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(Modifier.weight(1f)) {
-                                Text(m.name, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                                Text("${m.pos} · ${m.room} · ${tr("tingkat")} ${m.level}", color = WarnaAbu, fontSize = 10.sp)
-                            }
-                            Text("+${fmtKoin(m.coin)}", color = WarnaHijau, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    item {
+                        PanelEmas(tr("Hadiah aliran room")) { IsiTabelHadiah(i.tiers) }
+                        Spacer(Modifier.height(8.dp))
+                    }
+                    if (tab == 1) {
+                        item {
+                            PanelEmas(tr("Hadiah dibagikan")) { IsiPemenang(i.menangLalu) }
+                            Spacer(Modifier.height(8.dp))
                         }
-                        Spacer(Modifier.height(6.dp))
+                    }
+                    item {
+                        TeksAturan(i.aturan)
+                        Spacer(Modifier.height(10.dp))
                     }
                 }
             }
@@ -473,84 +426,70 @@ fun RewardRoomScreen(myUid: String, onClose: () -> Unit) {
     }
 }
 
+private val EmasMuda = Color(0xFFFFD98A)
+private val Emas = Color(0xFFE0A63C)
+private val EmasGelap = Color(0xFF8A5A17)
+private val UnguPanel = Color(0x88300C52)
+private val TeksPutih = Color(0xFFF4ECFF)
+
+/** Angka hadiah dua desimal: 7.20M, 836.00K. */
+private fun fmt2(n: Long): String {
+    fun f(x: Double, s: String): String = String.format(Locale.US, "%.2f", x) + s
+    return when {
+        n >= 1_000_000_000L -> f(n / 1e9, "B")
+        n >= 1_000_000L -> f(n / 1e6, "M")
+        n >= 1_000L -> f(n / 1e3, "K")
+        else -> n.toString()
+    }
+}
+
 @Composable
-private fun TabKecil(label: String, aktif: Boolean, onClick: () -> Unit) {
+private fun BannerKoin(url: String) {
+    val bentuk = RoundedCornerShape(14.dp)
     Box(
         Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(if (aktif) WarnaEmas else WarnaKartu)
-            .clickable { onClick() }
-            .padding(horizontal = 14.dp, vertical = 6.dp),
-    ) {
-        Text(label, color = if (aktif) Color(0xFF141414) else WarnaAbu, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-    }
-}
-
-@Composable
-private fun KartuKamarSaya(i: RewardRoomApi.Info) {
-    val k = i.kamarSaya.firstOrNull()
-    Column(
-        Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(WarnaKartu)
-            .padding(14.dp),
+            .aspectRatio(3f)
+            .clip(bentuk)
+            .border(2.dp, Brush.linearGradient(listOf(EmasGelap, EmasMuda, EmasGelap)), bentuk),
     ) {
-        Text(tr("Kamar saya"), color = WarnaEmas, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-        Spacer(Modifier.height(8.dp))
-        if (k == null) {
-            Text(
-                tr("Belum ada aliran koin dari room Anda minggu ini. Kirim gift di room untuk menaikkan tingkat."),
-                color = WarnaAbu, fontSize = 12.sp, lineHeight = 17.sp,
+        if (url.isNotBlank()) {
+            AsyncImage(
+                model = url, contentDescription = tr("Koin banyak"),
+                contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(),
             )
-            return@Column
-        }
-        Text(k.nama, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-        Spacer(Modifier.height(6.dp))
-        BarisInfo(tr("Aliran koin"), fmtKoin(k.aliran))
-        BarisInfo(tr("Mencapai tingkat"), "${k.level} / ${i.tiers.size}")
-        if (k.pemilik) BarisInfo(tr("Hadiah pemilik"), fmtKoin(k.hadiahPemilik))
-        BarisInfo(tr("Hadiah kontributor"), "${fmtKoin(k.hadiahKontributor)} / ${tr("orang")}")
-        if (!k.pemilik) {
-            BarisInfo(
-                tr("Posisi saya"),
-                if (k.posisiSaya > 0) "#${k.posisiSaya}${if (k.dalamHadiah) " (${tr("dapat hadiah")})" else ""}" else "-",
+        } else {
+            Image(
+                painter = painterResource(R.drawable.reward_room_banner),
+                contentDescription = tr("Koin banyak"),
+                contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(),
             )
         }
     }
 }
 
 @Composable
-private fun BarisInfo(kiri: String, kanan: String) {
-    Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(kiri, color = WarnaAbu, fontSize = 12.sp, modifier = Modifier.weight(1f))
-        Text(kanan, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-    }
-}
-
-@Composable
-private fun KontributorKartu(k: RewardRoomApi.Kamar) {
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(WarnaKartu)
-            .padding(12.dp),
-    ) {
-        Text("${tr("Top kontributor")} · ${k.nama}", color = WarnaEmas, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(6.dp))
-        if (k.kontributor.isEmpty()) {
-            Text(tr("Belum ada kontributor minggu ini."), color = WarnaAbu, fontSize = 11.sp)
-            return@Column
-        }
-        k.kontributor.forEach { c ->
-            Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("#${c.pos}", color = WarnaEmas, fontSize = 11.sp, modifier = Modifier.width(28.dp))
-                Text(c.uid.take(10), color = WarnaAbu, fontSize = 11.sp, modifier = Modifier.weight(1f))
-                Text(fmtKoin(c.coin), color = Color.White, fontSize = 11.sp, modifier = Modifier.width(86.dp))
+private fun TabPeriode(tab: Int, onPilih: (Int) -> Unit) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        listOf(tr("Periode ini"), tr("Periode lalu")).forEachIndexed { idx, label ->
+            val aktif = tab == idx
+            Box(
+                Modifier
+                    .weight(1f)
+                    .height(44.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(
+                        if (aktif) Brush.horizontalGradient(listOf(Color(0xFFF9DC8A), Color(0xFFC8892B)))
+                        else Brush.horizontalGradient(listOf(Color(0xFF3F1468), Color(0xFF2A0C4A))),
+                    )
+                    .border(1.5.dp, if (aktif) EmasMuda else EmasGelap, RoundedCornerShape(8.dp))
+                    .clickable { onPilih(idx) },
+                contentAlignment = Alignment.Center,
+            ) {
                 Text(
-                    if (c.hadiah > 0) "+${fmtKoin(c.hadiah)}" else "-",
-                    color = if (c.hadiah > 0) WarnaHijau else WarnaAbu, fontSize = 11.sp,
+                    label,
+                    color = if (aktif) Color(0xFF3A1B00) else Color(0xFFEADCFA),
+                    fontWeight = FontWeight.Bold, fontSize = 14.sp,
                 )
             }
         }
@@ -558,21 +497,174 @@ private fun KontributorKartu(k: RewardRoomApi.Kamar) {
 }
 
 @Composable
-private fun BarisTabel(judul: Boolean, a: String, b: String, c: String, d: String) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(if (judul) WarnaGaris else WarnaKartu)
-            .padding(horizontal = 8.dp, vertical = 7.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        val warna = if (judul) WarnaEmas else Color.White
-        val ukuran = if (judul) 10.sp else 11.sp
-        Text(a, color = warna, fontSize = ukuran, modifier = Modifier.weight(1.2f))
-        Text(b, color = warna, fontSize = ukuran, modifier = Modifier.weight(1f))
-        Text(c, color = warna, fontSize = ukuran, modifier = Modifier.weight(0.9f))
-        Text(d, color = warna, fontSize = ukuran, modifier = Modifier.weight(1f))
+private fun HitungMundur(sisaMs: Long) {
+    val s = (sisaMs / 1000L).coerceAtLeast(0L)
+    val bagian = listOf(
+        String.format(Locale.US, "%02d", s / 86400L) to tr("Hari"),
+        String.format(Locale.US, "%02d", (s % 86400L) / 3600L) to tr("Jam"),
+        String.format(Locale.US, "%02d", (s % 3600L) / 60L) to tr("Menit"),
+        String.format(Locale.US, "%02d", s % 60L) to tr("Detik"),
+    )
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(tr("Hitung undur"), color = Color(0xFFD8C4F2), fontSize = 11.sp)
+        Spacer(Modifier.width(8.dp))
+        bagian.forEach { (angka, label) ->
+            Box(
+                Modifier
+                    .size(30.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(Color(0x33000000))
+                    .border(1.dp, EmasGelap, RoundedCornerShape(6.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(angka, color = EmasMuda, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.width(3.dp))
+            Text(label, color = Color(0xFFD8C4F2), fontSize = 10.sp)
+            Spacer(Modifier.width(6.dp))
+        }
     }
-    Spacer(Modifier.height(4.dp))
+}
+
+@Composable
+private fun PanelEmas(judul: String, isi: @Composable ColumnScope.() -> Unit) {
+    Column(Modifier.fillMaxWidth()) {
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(32.dp)
+                    .padding(horizontal = 24.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Brush.horizontalGradient(listOf(Color(0xFF2B0B4E), Color(0xFF54197F), Color(0xFF2B0B4E))))
+                    .border(1.dp, Emas, RoundedCornerShape(8.dp)),
+            )
+            Text(judul, color = EmasMuda, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+        }
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(UnguPanel)
+                .border(1.5.dp, EmasGelap, RoundedCornerShape(10.dp))
+                .padding(horizontal = 10.dp, vertical = 10.dp),
+            content = isi,
+        )
+    }
+}
+
+@Composable
+private fun IsiKamarSaya(i: RewardRoomApi.Info) {
+    val k = i.kamarSaya.firstOrNull()
+    val header = listOf(
+        tr("Aliran Kamar"),
+        tr("Mencapai Level"),
+        tr("Hadiah Pemilik Kamar (koin)"),
+    )
+    val nilai = listOf(
+        fmt2(k?.aliran ?: 0L),
+        (k?.level ?: 0).toString(),
+        fmt2(k?.hadiahPemilik ?: 0L),
+    )
+    Row(Modifier.fillMaxWidth()) {
+        header.forEachIndexed { idx, label ->
+            Column(
+                Modifier.weight(1f).padding(horizontal = 3.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    label, color = TeksPutih, fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center, lineHeight = 13.sp,
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(nilai[idx], color = EmasMuda, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
+private fun CatatanHadiah(i: RewardRoomApi.Info) {
+    val dapat = i.kamarSaya.any { k -> (k.pemilik && k.hadiahPemilik > 0L) || k.dalamHadiah }
+    val teks = tr("Setiap pengguna hanya dapat menerima satu hadiah per minggu, berdasarkan hadiah tunggal level tertinggi.") +
+        " " + if (dapat) {
+            tr("Hadiah Anda akan masuk otomatis ke dompet saat periode berakhir.")
+        } else {
+            tr("Sayangnya, Anda tidak memiliki hadiah koin yang bisa diterima saat ini.")
+        }
+    Text(teks, color = TeksPutih, fontSize = 11.sp, lineHeight = 16.sp)
+}
+
+@Composable
+private fun IsiTabelHadiah(tiers: List<RewardRoomApi.Tier>) {
+    val judul = listOf(
+        tr("Aliran mg room"),
+        tr("Hadiah Pemilik kamar (koin)"),
+        tr("Peringkat kontributor"),
+        tr("Hadiah kontributor (koin emas/orang)"),
+    )
+    Row(Modifier.fillMaxWidth()) {
+        judul.forEach { t ->
+            Text(
+                t, color = TeksPutih, fontSize = 9.sp, fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center, lineHeight = 12.sp,
+                modifier = Modifier.weight(1f).padding(horizontal = 2.dp),
+            )
+        }
+    }
+    Spacer(Modifier.height(6.dp))
+    Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0x55E0A63C)))
+    tiers.forEach { t ->
+        Row(Modifier.fillMaxWidth().padding(vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
+            listOf(
+                fmt2(t.aliran),
+                fmt2(t.pemilik),
+                "Top1-${t.top}",
+                fmt2(t.perOrang),
+            ).forEach { v ->
+                Text(
+                    v, color = if (v.startsWith("Top")) Color(0xFFFFB4E6) else EmasMuda,
+                    fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f).padding(horizontal = 2.dp),
+                )
+            }
+        }
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0x33FFFFFF)))
+    }
+}
+
+@Composable
+private fun IsiPemenang(menang: List<RewardRoomApi.Menang>) {
+    if (menang.isEmpty()) {
+        Text(
+            tr("Belum ada hadiah yang dibagikan untuk periode ini."),
+            color = TeksPutih, fontSize = 11.sp, lineHeight = 16.sp,
+        )
+        return
+    }
+    menang.forEach { m ->
+        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(m.name, color = TeksPutih, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Text("${m.pos} · ${m.room} · ${tr("tingkat")} ${m.level}", color = Color(0xFFD8C4F2), fontSize = 10.sp)
+            }
+            Text("+${fmt2(m.coin)}", color = Color(0xFF6BE3A5), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+private fun TeksAturan(aturan: String) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+        aturan.split("\n").filter { it.isNotBlank() }.forEachIndexed { idx, baris ->
+            val bersih = baris.trim().removePrefix("*").trim()
+            Text(
+                if (bersih.firstOrNull()?.isDigit() == true || bersih.startsWith("*")) bersih else "${idx + 1}. $bersih",
+                color = TeksPutih, fontSize = 11.sp, lineHeight = 17.sp,
+                modifier = Modifier.padding(bottom = 5.dp),
+            )
+        }
+    }
 }

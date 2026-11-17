@@ -2148,8 +2148,11 @@ async function rewardRoomApi(env, req) {
     return json({ ok: 1, hasil });
   }
   const uid = String(b.uid || "").trim();
-  const periode = periodeReward();
-  const laluKey = periodeReward(periode.mulai - 1000).key;
+  // mode "lalu" menampilkan data minggu sebelumnya (dihitung ulang dari
+  // riwayat gift, jadi tetap ada walau hadiahnya belum pernah dibagikan).
+  const kiniKey = periodeReward();
+  const pakaiLalu = String(b.mode || "").toLowerCase() === "lalu";
+  const periode = pakaiLalu ? periodeReward(kiniKey.mulai - 1000) : kiniKey;
   const rooms = await hitungReward(env, periode, cfg);
   const kamarSaya = [];
   for (const rm of rooms) {
@@ -2174,9 +2177,10 @@ async function rewardRoomApi(env, req) {
       })),
     });
   }
-  const hasilLalu = (await bacaRtdbNilai(env, `rewardRoom/hasil/${laluKey}`)) || null;
+  const hasilLalu = (await bacaRtdbNilai(env, `rewardRoom/hasil/${periode.key}`)) || null;
   return json({
     ok: 1,
+    mode: pakaiLalu ? "lalu" : "kini",
     aktif: cfg.aktif,
     banner: cfg.banner,
     ikon: cfg.ikon,

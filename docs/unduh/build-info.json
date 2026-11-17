@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.213",
-  "catatan": "• Banner pemenang game memakai pelat unggahan apa adanya\n• Banner pemenang Greedy King dan Crazy Fruit per ronde\n• Panel: halaman Emote room sendiri (unggah, daftar, hapus)\n• Panel: slot Emote room di Aset & VIP dan Buat & kirim item",
-  "ukuran_apk": 54999830,
-  "sha256_apk": "b4289cec79bf59dbea80ae4f4cb2963674962fb58929ed183f36ed5e89f7b034",
+  "versi": "1.0.214",
+  "catatan": "• Efek masuk room tampil lagi, banner hanya untuk ronde berjalan, pratinjau Item VIP muncul",
+  "ukuran_apk": 55001084,
+  "sha256_apk": "a33060db176e9c8324c005e46a0e9841de79b9d36a460ff983d0fb59b2ccb78f",
   "abis": {
     "arm64": {
-      "ukuran": 54999830,
-      "sha256": "b4289cec79bf59dbea80ae4f4cb2963674962fb58929ed183f36ed5e89f7b034"
+      "ukuran": 55001084,
+      "sha256": "a33060db176e9c8324c005e46a0e9841de79b9d36a460ff983d0fb59b2ccb78f"
     },
     "armv7": {
-      "ukuran": 53150996,
-      "sha256": "7af15c6058ea74363af785675fcf58e5f8f8e213a77e6dee4d30f404123dc923"
+      "ukuran": 53152240,
+      "sha256": "bc47c1f8d81b84ca267a391c85a64e46a76c144c0e80cf895b5d0ddb8e161c3b"
     },
     "universal": {
-      "ukuran": 73415801,
-      "sha256": "09ca4a22386d19c1ac81320c51db378f644976eb0fb43509637ac4862b9f208d"
+      "ukuran": 73417050,
+      "sha256": "296c4f62c5eae9a81d4280942f7b2fda06682460eba032be56ebac91c69c2efe"
     }
   }
 }

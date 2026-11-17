@@ -1,4 +1,1 @@
-• Banner pemenang game memakai pelat unggahan apa adanya
-• Banner pemenang Greedy King dan Crazy Fruit per ronde
-• Panel: halaman Emote room sendiri (unggah, daftar, hapus)
-• Panel: slot Emote room di Aset & VIP dan Buat & kirim item
+• Efek masuk room tampil lagi, banner hanya untuk ronde berjalan, pratinjau Item VIP muncul

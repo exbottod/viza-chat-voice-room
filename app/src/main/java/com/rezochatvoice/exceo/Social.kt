@@ -252,7 +252,21 @@ object UserCache {
             val local = meLocal(uid)
             if (local != null) {
                 val fresh = rtdb(uid, local)
-                val good = if (fresh != null) keepGood(fresh, local) else local
+                var good = if (fresh != null) keepGood(fresh, local) else local
+                // Medal dan lencana SENDIRI selalu ikut dompet di HP ini. Profil
+                // publik kadang belum memuatnya, dan dulu itu membuat medal serta
+                // lencana tidak muncul di chat maupun di baris mengetik.
+                try {
+                    val w = WalletCache.load(uid)
+                    if (w != null) {
+                        good = good.copy(
+                            medals = activeMedalIds(w).joinToString(","),
+                            badge = activeEquip(w, "badge"),
+                            frame = activeEquip(w, "frame"),
+                            bubble = activeEquip(w, "bubble"),
+                        )
+                    }
+                } catch (e: Exception) { }
                 map[uid] = System.currentTimeMillis() to good
                 save(good)
                 return good

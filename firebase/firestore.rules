@@ -11,11 +11,26 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
-    // Ganti dengan email developer/admin Anda
+    // Staf panel (manager/admin) yang didaftarkan lewat panel. Dicatat server
+    // sebagai dokumen stafApk/<uid> dan panelAdmins/<email>, jadi staf bisa
+    // memakai semua halaman panel tanpa perlu email developer.
+    function isStaf() {
+      return signedIn()
+        && (
+          exists(/databases/$(database)/documents/stafApk/$(request.auth.uid))
+          || (request.auth.token.email != null
+              && exists(/databases/$(database)/documents/panelAdmins/$(request.auth.token.email.lower())))
+        );
+    }
+
+    // Developer/owner panel, atau staf panel yang sudah didaftarkan.
     function isAdmin() {
       return signedIn()
-        && request.auth.token.email.lower() == "GANTI-EMAIL-ADMIN@gmail.com"
-        && request.auth.token.firebase.sign_in_provider == "google.com";
+        && (
+          (request.auth.token.email != null
+            && request.auth.token.email.lower() == "bangexx01@gmail.com")
+          || isStaf()
+        );
     }
 
     // Dokumen users berisi email & tanggal lahir, jadi hanya pemilik/admin yang boleh baca.

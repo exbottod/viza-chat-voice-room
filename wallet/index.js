@@ -3746,6 +3746,54 @@ async function panelBerkas(jalur) {
   }
 }
 
+/* ===== Firestore lewat akun layanan (dipakai panel staf) =====
+ * Aturan Firestore hanya mengizinkan email developer, jadi manager/admin selalu
+ * kena "permission-denied" saat panel membaca koleksi. Fungsi di bawah membaca
+ * dan menulis Firestore memakai akun layanan, sama seperti panel-rtdb. */
+function fsNilai(v) {
+  if (v === null || v === undefined) return { nullValue: null };
+  if (typeof v === "boolean") return { booleanValue: v };
+  if (typeof v === "number") {
+    return Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v };
+  }
+  if (typeof v === "string") return { stringValue: v };
+  if (Array.isArray(v)) return { arrayValue: { values: v.map(fsNilai) } };
+  if (typeof v === "object") {
+    const f = {};
+    for (const k of Object.keys(v)) f[k] = fsNilai(v[k]);
+    return { mapValue: { fields: f } };
+  }
+  return { stringValue: String(v) };
+}
+
+function fsBaca(f) {
+  if (!f) return null;
+  if ("nullValue" in f) return null;
+  if ("booleanValue" in f) return !!f.booleanValue;
+  if ("integerValue" in f) return Number(f.integerValue);
+  if ("doubleValue" in f) return Number(f.doubleValue);
+  if ("stringValue" in f) return f.stringValue;
+  if ("timestampValue" in f) return f.timestampValue;
+  if ("arrayValue" in f) return (f.arrayValue.values || []).map(fsBaca);
+  if ("mapValue" in f) {
+    const o = {};
+    const ff = f.mapValue.fields || {};
+    for (const k of Object.keys(ff)) o[k] = fsBaca(ff[k]);
+    return o;
+  }
+  if ("referenceValue" in f) return f.referenceValue;
+  if ("geoPointValue" in f) return f.geoPointValue;
+  return null;
+}
+
+function fsDok(d) {
+  const o = {};
+  const f = (d && d.fields) || {};
+  for (const k of Object.keys(f)) o[k] = fsBaca(f[k]);
+  o.id = String((d && d.name) || "").split("/").pop();
+  return o;
+}
+
 async function admin(env, body) {
   const sesi = await sesiDariToken(body.t ?? "");
   if (!sesi) return json({ ok: 0, e: "Token tidak valid" }, 401);
@@ -4412,6 +4460,86 @@ async function admin(env, body) {
     }
     await tulisRtdbSa(env, `officialRooms/${id}`, nilai ? true : null);
     return json({ ok: 1, id, official: nilai });
+  }
+
+  // Panel: baca dan tulis Firestore lewat akun layanan, supaya staf panel
+  // (manager/admin) bisa memakai semua halaman walau aturan Firestore hanya
+  // mengizinkan email developer.
+  if (op === "fs_list" || op === "fs_where" || op === "fs_get" || op === "fs_set" || op === "fs_del") {
+    try {
+      const tokenFs = await tokenLayanan(env);
+      if (!tokenFs) return gagal("Token layanan tidak tersedia");
+      const proyekFs = String(env.FIREBASE_PROJECT || "my-app-e7f8c").trim();
+      const dasarFs = `https://firestore.googleapis.com/v1/projects/${proyekFs}/databases/(default)/documents/`;
+      const jalurFs = (j) => String(j || "").split("/").filter(Boolean).map((x) => encodeURIComponent(x)).join("/");
+      const kepalaFs = { authorization: "Bearer " + tokenFs };
+      const batasFs = Math.max(1, Math.min(500, Math.trunc(Number(p.batas ?? 200)) || 200));
+      if (op === "fs_list") {
+        if (!p.koleksi) return gagal("Koleksi kosong");
+        const r = await fetch(dasarFs + jalurFs(p.koleksi) + "?pageSize=" + batasFs, { headers: kepalaFs });
+        if (!r.ok) return gagal("Firestore " + r.status + " " + (await r.text()).slice(0, 140));
+        const d = await r.json();
+        return json({ ok: 1, items: (d.documents || []).map(fsDok) });
+      }
+      if (op === "fs_where") {
+        if (!p.koleksi || !p.medan) return gagal("Koleksi atau medan kosong");
+        const bodyQ = {
+          structuredQuery: {
+            from: [{ collectionId: String(p.koleksi) }],
+            where: {
+              fieldFilter: {
+                field: { fieldPath: String(p.medan) },
+                op: "EQUAL",
+                value: fsNilai(p.nilai),
+              },
+            },
+            limit: batasFs,
+          },
+        };
+        const r = await fetch(dasarFs + ":runQuery", {
+          method: "POST",
+          headers: { ...kepalaFs, "content-type": "application/json" },
+          body: JSON.stringify(bodyQ),
+        });
+        if (!r.ok) return gagal("Firestore " + r.status + " " + (await r.text()).slice(0, 140));
+        const arr = await r.json();
+        const items = (Array.isArray(arr) ? arr : [])
+          .map((x) => x && x.document)
+          .filter(Boolean)
+          .map(fsDok);
+        return json({ ok: 1, items });
+      }
+      if (op === "fs_get") {
+        if (!p.jalur) return gagal("Jalur kosong");
+        const r = await fetch(dasarFs + jalurFs(p.jalur), { headers: kepalaFs });
+        if (r.status === 404) return json({ ok: 1, ada: 0, data: null });
+        if (!r.ok) return gagal("Firestore " + r.status + " " + (await r.text()).slice(0, 140));
+        return json({ ok: 1, ada: 1, data: fsDok(await r.json()) });
+      }
+      if (op === "fs_set") {
+        if (!p.jalur) return gagal("Jalur kosong");
+        const dataFs = (p.data && typeof p.data === "object") ? p.data : {};
+        const field = {};
+        const kunci = Object.keys(dataFs);
+        for (const k of kunci) field[k] = fsNilai(dataFs[k]);
+        const samaran = kunci.length
+          ? "?updateMask.fieldPaths=" + kunci.map((k) => encodeURIComponent(k)).join("&updateMask.fieldPaths=")
+          : "";
+        const r = await fetch(dasarFs + jalurFs(p.jalur) + samaran, {
+          method: "PATCH",
+          headers: { ...kepalaFs, "content-type": "application/json" },
+          body: JSON.stringify({ fields: field }),
+        });
+        if (!r.ok) return gagal("Firestore " + r.status + " " + (await r.text()).slice(0, 140));
+        return json({ ok: 1 });
+      }
+      if (!p.jalur) return gagal("Jalur kosong");
+      const r = await fetch(dasarFs + jalurFs(p.jalur), { method: "DELETE", headers: kepalaFs });
+      if (!r.ok && r.status !== 404) return gagal("Firestore " + r.status + " " + (await r.text()).slice(0, 140));
+      return json({ ok: 1 });
+    } catch (e) {
+      return gagal(String(e?.message ?? e).slice(0, 160));
+    }
   }
 
   // Panel: kirim item (lencana, medali, frame, banner, efek masuk) ke tas user.

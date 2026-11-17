@@ -5,7 +5,8 @@ import {
   sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-  getFirestore, collection, doc, getDoc, getDocs, setDoc, deleteDoc,
+  getFirestore, collection, doc, getDoc as fsGetDoc, getDocs as fsGetDocs,
+  setDoc as fsSetDoc, deleteDoc as fsDeleteDoc,
   query, orderBy, limit, where, serverTimestamp, enableIndexedDbPersistence
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
@@ -78,6 +79,95 @@ async function tulisRtdbServer(path, data, hapus = false) {
   const j = await r.json().catch(() => null);
   if (!j || !j.ok) throw new Error((j && j.e) || ("HTTP " + r.status));
   return true;
+}
+
+/** Apakah galat ini penolakan izin Firebase (bukan jaringan)? */
+const fsDitolak = (e) =>
+  /permission-denied|insufficient|PERMISSION_DENIED|Missing or insufficient/i
+    .test(String((e && (e.code || e.message)) || ""));
+
+/** Jalur cadangan Firestore lewat server dompet (akun layanan). Dipakai staf
+ *  panel, karena aturan Firestore hanya mengizinkan email developer. */
+async function fsServer(op, p) { return walletAdmin({ op, ...p }); }
+async function fsBacaJalur(jalur) {
+  const out = await fsServer("fs_get", { jalur });
+  return out.ada ? (out.data || null) : null;
+}
+async function fsTulisJalur(jalur, data) { return fsServer("fs_set", { jalur, data }); }
+async function fsHapusJalur(jalur) { return fsServer("fs_del", { jalur }); }
+async function fsCari(koleksi, medan, nilai, batas = 20) {
+  const out = await fsServer("fs_where", { koleksi, medan, nilai, batas });
+  return out.items || [];
+}
+
+/** Jalur dokumen dari DocumentReference atau Query (untuk cadangan server). */
+const refJalur = (r) => {
+  try { if (r && typeof r.path === "string" && r.path) return r.path; } catch (e) { }
+  try {
+    const seg = r && r._query && r._query.path && r._query.path.segments;
+    if (Array.isArray(seg) && seg.length) return seg.join("/");
+  } catch (e) { }
+  return "";
+};
+
+/** Buang nilai sentinel Firebase (serverTimestamp) supaya bisa dikirim ke server. */
+const dataRapi = (data) => {
+  const asal = typeof data === "function" ? data() : (data || {});
+  const out = {};
+  for (const k of Object.keys(asal)) {
+    const v = asal[k];
+    if (v === undefined) continue;
+    if (v && typeof v === "object" && ("_methodName" in v || "_delegate" in v)) { out[k] = Date.now(); continue; }
+    out[k] = v;
+  }
+  return out;
+};
+
+/* Bungkus Firestore SDK: kalau aturan Firestore menolak (staf panel), ulangi
+ * lewat server dompet memakai akun layanan. Dengan begitu semua halaman panel
+ * tetap bisa dibaca dan disimpan oleh manager/admin. */
+async function getDoc(ref) {
+  try { return await fsGetDoc(ref); } catch (e) {
+    if (!fsDitolak(e)) throw e;
+    const jalur = refJalur(ref);
+    if (!jalur) throw e;
+    const d = await fsBacaJalur(jalur);
+    return {
+      id: (ref && ref.id) || jalur.split("/").pop(),
+      exists: () => !!d,
+      data: () => d || {},
+      get: (k) => (d ? d[k] : undefined),
+    };
+  }
+}
+
+async function getDocs(q) {
+  try { return await fsGetDocs(q); } catch (e) {
+    if (!fsDitolak(e)) throw e;
+    const jalur = refJalur(q);
+    if (!jalur) throw e;
+    const out = await fsServer("fs_list", { koleksi: jalur, batas: 500 });
+    const docs = (out.items || []).map((x) => ({ id: x.id, data: () => x, exists: () => true }));
+    return { docs, empty: docs.length === 0, size: docs.length, forEach: (f) => docs.forEach(f) };
+  }
+}
+
+async function setDoc(ref, data, opsi) {
+  try { return await fsSetDoc(ref, data, opsi); } catch (e) {
+    if (!fsDitolak(e)) throw e;
+    const jalur = refJalur(ref);
+    if (!jalur) throw e;
+    await fsTulisJalur(jalur, dataRapi(data));
+  }
+}
+
+async function deleteDoc(ref) {
+  try { return await fsDeleteDoc(ref); } catch (e) {
+    if (!fsDitolak(e)) throw e;
+    const jalur = refJalur(ref);
+    if (!jalur) throw e;
+    await fsHapusJalur(jalur);
+  }
 }
 
 async function simpanVip(id, data) {
@@ -193,8 +283,15 @@ async function ambilSemuaVip(batas = 400) {
 }
 
 async function ambilSemua(nama, batas = 500) {
-  const snap = await getDocs(query(kumpulan(nama), limit(batas)));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  try {
+    const snap = await getDocs(query(kumpulan(nama), limit(batas)));
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  } catch (e) {
+    // Staf panel ditolak aturan Firestore: baca lewat server.
+    if (!fsDitolak(e)) throw e;
+    const out = await fsServer("fs_list", { koleksi: nama, batas });
+    return out.items || [];
+  }
 }
 
 async function catatLog(aksi, rincian = "") {
@@ -2646,15 +2743,28 @@ async function uidDariMasukan(masukan) {
     const d = await getDoc(doc(db, "userIds", bersih));
     if (d.exists() && d.data().uid) return d.data().uid;
   } catch (e) { }
+  try {
+    const d = await fsBacaJalur("userIds/" + bersih);
+    if (d && d.uid) return d.uid;
+    if (d) return bersih;
+  } catch (e) { }
   for (const medan of ["userId", "uid"]) {
     try {
       const s = await getDocs(query(collection(db, "userIds"), where(medan, "==", bersih), limit(1)));
       if (!s.empty) { const u = s.docs[0].data().uid; if (u) return u; }
     } catch (e) { }
+    try {
+      const baris = await fsCari("userIds", medan, bersih, 1);
+      if (baris.length && baris[0].uid) return baris[0].uid;
+    } catch (e) { }
   }
   try {
     const s = await getDocs(query(collection(db, "users"), where("userId", "==", bersih), limit(1)));
     if (!s.empty) return s.docs[0].id;
+  } catch (e) { }
+  try {
+    const baris = await fsCari("users", "userId", bersih, 1);
+    if (baris.length && baris[0].id) return baris[0].id;
   } catch (e) { }
   return null;
 }

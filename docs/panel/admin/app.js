@@ -1554,8 +1554,14 @@ async function gambarRoom() {
   $("isiHal").querySelectorAll("[data-semats]").forEach((b) => (b.onclick = async () => {
     const id = b.dataset.semats, nilai = Number(b.dataset.nilai) === 1;
     try {
-      await dSet(dRef(rtdb, `roomsPub/${id}/pinned`), nilai ? 1 : 0);
-      await dSet(dRef(rtdb, `roomsPub/${id}/pinnedAt`), nilai ? Date.now() : 0);
+      try {
+        await dSet(dRef(rtdb, `roomsPub/${id}/pinned`), nilai ? 1 : 0);
+        await dSet(dRef(rtdb, `roomsPub/${id}/pinnedAt`), nilai ? Date.now() : 0);
+      } catch (e) {
+        // Aturan RTDB menolak staf panel (hanya pemilik room/email admin yang
+        // boleh). Jalur VPS memakai akun layanan, jadi semat tetap tersimpan.
+        await walletAdmin({ op: "room_pin", uid: id, nilai: nilai ? 1 : 0 });
+      }
       catatLog(nilai ? "Sematkan room" : "Lepas semat room", id);
       toast(nilai ? "Room disematkan paling atas" : "Semat dilepas");
       gambarRoom();
@@ -1566,7 +1572,12 @@ async function gambarRoom() {
   $("isiHal").querySelectorAll("[data-official]").forEach((b) => (b.onclick = async () => {
     const id = b.dataset.official, nilai = Number(b.dataset.nilai) === 1;
     try {
-      await dSet(dRef(rtdb, `officialRooms/${id}`), nilai ? true : null);
+      try {
+        await dSet(dRef(rtdb, `officialRooms/${id}`), nilai ? true : null);
+      } catch (e) {
+        // Staf panel tidak boleh menulis officialRooms langsung; pakai akun layanan.
+        await walletAdmin({ op: "room_official", uid: id, nilai: nilai ? 1 : 0 });
+      }
       catatLog(nilai ? "Tag official" : "Lepas official", id);
       toast(nilai ? "Tag official dipasang" : "Tag official dilepas");
       gambarRoom();

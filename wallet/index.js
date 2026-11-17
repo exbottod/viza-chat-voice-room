@@ -3938,6 +3938,22 @@ async function admin(env, body) {
     return json({ ok: 1, coins, jumlah });
   }
 
+  // Panel: sematkan room dan tag official memakai akun layanan. Aturan RTDB
+  // roomsPub hanya mengizinkan pemilik room atau email admin contoh, jadi staf
+  // panel (manager/admin) selalu ditolak kalau menulis langsung dari browser.
+  if (op === "room_pin" || op === "room_official") {
+    const id = String(p.uid ?? p.room ?? "").trim();
+    if (!/^[A-Za-z0-9_-]{3,64}$/.test(id)) return gagal("ID room tidak valid");
+    const nilai = Number(p.nilai ?? 0) === 1;
+    if (op === "room_pin") {
+      await tulisRtdbSa(env, `roomsPub/${id}/pinned`, nilai ? 1 : 0);
+      await tulisRtdbSa(env, `roomsPub/${id}/pinnedAt`, nilai ? Date.now() : 0);
+      return json({ ok: 1, id, pinned: nilai });
+    }
+    await tulisRtdbSa(env, `officialRooms/${id}`, nilai ? true : null);
+    return json({ ok: 1, id, official: nilai });
+  }
+
   // Panel: reset coin (dan diamond kalau gem) untuk satu user / semua user.
   if (op === "reset" || op === "reset_all" || op === "reset_gem" || op === "reset_gem_all") {
     const gem = op.includes("gem");

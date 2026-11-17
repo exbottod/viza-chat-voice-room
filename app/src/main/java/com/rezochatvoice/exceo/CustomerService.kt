@@ -366,15 +366,19 @@ fun AnnouncementScreen(list: List<AnnRepo.Ann>, onBack: () -> Unit) {
                         }
                         if (a.img.isNotBlank()) {
                             Spacer(Modifier.height(8.dp))
+                            // Ketuk foto: layar penuh dan bisa di-zoom.
+                            var fotoBesar by remember { mutableStateOf(false) }
                             AsyncImage(
                                 model = a.img,
                                 contentDescription = a.title,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .heightIn(max = 420.dp)
-                                    .clip(RoundedCornerShape(12.dp)),
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable { fotoBesar = true },
                                 contentScale = androidx.compose.ui.layout.ContentScale.FillWidth,
                             )
+                            if (fotoBesar) FotoLayarPenuh(a.img) { fotoBesar = false }
                         }
                     }
                 }

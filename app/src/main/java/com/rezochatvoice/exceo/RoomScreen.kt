@@ -775,20 +775,9 @@ fun RoomScreen(
         }
 
         // Lihat gambar ukuran penuh
+        // Foto di chat room: layar penuh, cubit dua jari untuk zoom.
         lihatGambar?.let { url ->
-            Dialog(onDismissRequest = { lihatGambar = null }) {
-                Box(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Color(0xFF101010)).clickable { lihatGambar = null },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    AsyncImage(
-                        model = url,
-                        contentDescription = tr("Gambar"),
-                        modifier = Modifier.fillMaxWidth().heightIn(max = 520.dp),
-                        contentScale = ContentScale.Fit,
-                    )
-                }
-            }
+            FotoLayarPenuh(url) { lihatGambar = null }
         }
 
         // Game milik sendiri (digambar di dalam app, aman untuk Android 8+)

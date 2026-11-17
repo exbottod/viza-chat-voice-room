@@ -1,6 +1,7 @@
 package com.rezochatvoice.exceo
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -55,6 +56,19 @@ fun FotoLayarPenuh(uri: String, onTutup: () -> Unit) {
                         skala = baru
                         geser = if (baru > 1.01f) geser + pan else Offset.Zero
                     }
+                }
+                // Dua ketuk: perbesar 2,5x. Dua ketuk lagi: kembali ke awal.
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onDoubleTap = {
+                            if (skala > 1.05f) {
+                                skala = 1f
+                                geser = Offset.Zero
+                            } else {
+                                skala = 2.5f
+                            }
+                        },
+                    )
                 },
             contentAlignment = Alignment.Center,
         ) {

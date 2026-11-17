@@ -41,7 +41,7 @@ fun VizaLoading(modifier: Modifier = Modifier, ukuran: Dp = 96.dp, latar: Color?
     val sudut by putar.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(1100, easing = LinearEasing), RepeatMode.Restart),
+        animationSpec = infiniteRepeatable(tween(850, easing = LinearEasing), RepeatMode.Restart),
         label = "sudut",
     )
     val denyut by putar.animateFloat(
@@ -72,17 +72,26 @@ fun VizaLoading(modifier: Modifier = Modifier, ukuran: Dp = 96.dp, latar: Color?
                     style = Stroke(width = tebal, cap = StrokeCap.Round),
                 )
             }
-            // Lima batang suara di tengah, tingginya bergantian mengikuti denyut.
+            // Lima batang suara di tengah. Tiap batang bergerak naik-turun
+            // bergantian (gelombang), jadi logonya benar-benar terlihat hidup.
             Row(
                 horizontalArrangement = Arrangement.spacedBy(ukuran * 0.045f),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                val pola = listOf(0.45f, 0.85f, 1f, 0.7f, 0.4f)
-                pola.forEachIndexed { i, dasar ->
-                    val tinggi = ukuran * (0.22f * (dasar + 0.25f * denyut))
+                for (i in 0 until 5) {
+                    val gerak by putar.animateFloat(
+                        initialValue = 0f,
+                        targetValue = 1f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(520, delayMillis = i * 95, easing = LinearEasing),
+                            repeatMode = RepeatMode.Reverse,
+                        ),
+                        label = "bar$i",
+                    )
+                    val tinggi = ukuran * (0.10f + 0.22f * gerak)
                     Box(
                         Modifier
-                            .width(ukuran * 0.035f)
+                            .width(ukuran * 0.038f)
                             .height(tinggi)
                             .clip(RoundedCornerShape(50))
                             .background(hijau),

@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.202",
-  "catatan": "• Perbaiki build (rawSeats), lencana dan medal tidak lagi hilang-muncul saat profil di-refresh, gift S\n• Masuk room langsung normal: loading dilepas begitu kursi terbaca, dan efek SVGA baru diputar 1,4 det",
-  "ukuran_apk": 54778070,
-  "sha256_apk": "4e892273a7afb532a99f927ac76b1b535487238e0c772df222717493d668d0ca",
+  "versi": "1.0.203",
+  "catatan": "• Room tidak terlihat: daftar room sekarang menampilkan semua room (tidak lagi menyembunyikan yang onl\n• Semat room dan tag official bisa dipakai staf panel: kalau aturan RTDB menolak, penyimpanan dialihka",
+  "ukuran_apk": 54778044,
+  "sha256_apk": "d0e233fcfd3491a0fa907e12bacaba7732644209cd1501a6f7972d956eaa6769",
   "abis": {
     "arm64": {
-      "ukuran": 54778070,
-      "sha256": "4e892273a7afb532a99f927ac76b1b535487238e0c772df222717493d668d0ca"
+      "ukuran": 54778044,
+      "sha256": "d0e233fcfd3491a0fa907e12bacaba7732644209cd1501a6f7972d956eaa6769"
     },
     "armv7": {
-      "ukuran": 52929221,
-      "sha256": "12427ce12ff5211575307c8afa6e021501ee719f918ba29a0c4e8429529b5a12"
+      "ukuran": 52929204,
+      "sha256": "1b369f8d4a1337974d21fd3d3658a4865a94473677a7847dfc555d1857254119"
     },
     "universal": {
-      "ukuran": 73194047,
-      "sha256": "d51ac4426fc3f463343de6203223bd6d7009ddfee9c76b7d7e1aa07f0c1e7a48"
+      "ukuran": 73194010,
+      "sha256": "bf5cc98443b5dc6b49a8f656802ca3f925e1313299e059687a8d32ffcbd1e803"
     }
   }
 }

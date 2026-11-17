@@ -1,2 +1,2 @@
-• Perbaiki build (rawSeats), lencana dan medal tidak lagi hilang-muncul saat profil di-refresh, gift S
-• Masuk room langsung normal: loading dilepas begitu kursi terbaca, dan efek SVGA baru diputar 1,4 det
+• Room tidak terlihat: daftar room sekarang menampilkan semua room (tidak lagi menyembunyikan yang onl
+• Semat room dan tag official bisa dipakai staf panel: kalau aturan RTDB menolak, penyimpanan dialihka

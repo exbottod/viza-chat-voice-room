@@ -1259,6 +1259,7 @@ const daftarHal = {
   family: { judul: "Family", crumb: "Dashboard / Family", gambar: gambarFamily },
   aset: { judul: "Aset & VIP", crumb: "Dashboard / Aset & VIP", gambar: gambarAset },
   asetvps: { judul: "Aset di VPS", crumb: "Dashboard / Aset di VPS", gambar: gambarAsetVps },
+  emote: { judul: "Emote room", crumb: "Dashboard / Emote room", gambar: gambarEmote },
   katalog: { judul: "Katalog game", crumb: "Dashboard / Game", gambar: gambarKatalog },
   pasang: { judul: "Pasang game", crumb: "Dashboard / Game", gambar: gambarPasang },
   bet: { judul: "Bet game", crumb: "Dashboard / Game", gambar: gambarBet },
@@ -1287,6 +1288,7 @@ const keteranganHal = {
   wallet: "Kirim coin, VIP, reset coin/diamond/exp, topup manual, reset nama dan foto",
   cekin: "Atur hadiah cek in harian hari 1 sampai 7 yang tampil di aplikasi",
   aset: "Kartu VIP, frame, efek masuk, gelembung chat, medali, ID unik",
+  emote: "Emote yang tampil di bar emote dalam room",
   katalog: "Game yang sudah terpasang",
   pasang: "Tambah game baru dengan alamat dan key production",
   greedy: "Chip bet dan RTP Greedy King (75 standar, 100 sering JP)",
@@ -3790,6 +3792,84 @@ async function gambarCs() {
 }
 
 /* ================= pengumuman resmi ================= */
+/** Halaman khusus emote room: daftar, unggah, dan hapus emote.
+ *  Emote disimpan di vipCfg slot "emote", sumber yang sama dibaca bar emote
+ *  dalam room, jadi tidak perlu build APK saat menambah atau menghapus. */
+async function gambarEmote() {
+  let daftar = [];
+  try {
+    daftar = (await ambilSemuaVip(400)).filter((d) => String(d.slot || "") === "emote");
+    daftar.sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0)
+      || String(a.name || "").localeCompare(String(b.name || "")));
+  } catch (e) { toast("Gagal membaca emote: " + (e.code || e.message), true); }
+
+  $("aksiTopbar").innerHTML = "";
+  $("isiHal").innerHTML = `
+    <div class="panel">
+      <div class="panelAtas"><h3>Tambah emote</h3><div class="sub">GIF atau PNG, tampil di bar emote semua room</div></div>
+      <div class="grid2">
+        <div class="isian"><label>Nama emote</label><input id="emotNama" placeholder="mis. Tawa"></div>
+        <div class="isian"><label>Urutan tampil</label><input id="emotUrut" type="number" value="${daftar.length}"></div>
+      </div>
+      <div style="margin-top:10px">${htmlSumber("emot", "", ".png,.jpg,.jpeg,.webp,.gif")}</div>
+      <div style="display:flex;gap:8px;margin-top:14px;align-items:center">
+        <button class="tombolUtama" id="emotSimpan">Simpan emote</button>
+        <span class="catatan" id="emotHasil" style="padding:0"></span>
+      </div>
+      <div class="catatan" style="margin-top:12px">Boleh dari perangkat atau tautan, maksimal 4 MB dan sebaiknya kotak. Setelah disimpan emote langsung tampil di tab emot dalam room, tanpa build ulang.</div>
+    </div>
+    <div class="panel" style="margin-top:12px">
+      <div class="panelAtas"><h3>Emote terpasang</h3><div class="sub">${rupiah(daftar.length)} emote</div></div>
+      ${daftar.length ? `<table><tr><th>GAMBAR</th><th>NAMA</th><th>URUTAN</th><th>BERKAS</th><th>AKSI</th></tr>
+        ${daftar.map((x) => `<tr>
+          <td><img src="${aman(x.url || "")}" style="width:48px;height:48px;object-fit:contain;border-radius:8px" loading="lazy"></td>
+          <td>${aman(x.name || x.id)}</td>
+          <td>${rupiah(Number(x.order) || 0)}</td>
+          <td>${aman(cabangBerkas(x.url || ""))}</td>
+          <td><button class="aksi" data-emothapus="${aman(x.id)}">Hapus</button></td></tr>`).join("")}
+        </table>` : '<div class="kosong">Belum ada emote. Tambahkan lewat form di atas.</div>'}
+    </div>`;
+
+  aktifkanPratinjau("emot");
+
+  $("emotSimpan").onclick = async () => {
+    const tombol = $("emotSimpan");
+    const hasil = $("emotHasil");
+    const nama = $("emotNama").value.trim();
+    if (!nama) return toast("Nama emote wajib diisi", true);
+    tombol.disabled = true; tombol.textContent = "Menyimpan…";
+    try {
+      const url = await urlDariSumber("emot", "emote");
+      if (!url) throw new Error("Pilih berkas atau isi tautan dulu");
+      const id = "emot_" + Date.now().toString(36);
+      await simpanVip(id, {
+        id, slot: "emote", name: nama, price: 0, days: 0,
+        order: Number($("emotUrut").value) || 0,
+        kind: cabangBerkas(url), url,
+        hasData: false, updatedAt: Date.now(), chunks: 0, store: false,
+      });
+      catatLog("Tambah emote", nama);
+      toast("Emote disimpan");
+      await gambarEmote();
+    } catch (e) {
+      if (hasil) hasil.textContent = "Gagal: " + (e.message || "tidak diketahui");
+      toast("Gagal: " + (e.message || "tidak diketahui"), true);
+    } finally {
+      tombol.disabled = false; tombol.textContent = "Simpan emote";
+    }
+  };
+
+  $("isiHal").querySelectorAll("[data-emothapus]").forEach((b) => (b.onclick = async () => {
+    const id = b.dataset.emothapus;
+    if (!confirm("Hapus emote ini?")) return;
+    try {
+      await hapusVip(id, kunciVip(id));
+      toast("Emote dihapus");
+      await gambarEmote();
+    } catch (e) { toast("Gagal menghapus: " + (e.message || ""), true); }
+  }));
+}
+
 async function gambarPengumuman() {
   let daftar = [];
   try {

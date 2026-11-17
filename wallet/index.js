@@ -2089,6 +2089,72 @@ async function jalanReward(env) {
 }
 
 /** API reward room: dipakai aplikasi (info) dan panel (simpan/pemenang). */
+// ---------- Banner pemenang game (Greedy King & Crazy Fruit) ----------
+async function siapWinFeed(env) {
+  await pipe(env, [
+    {
+      sql: `create table if not exists win_round (
+              id integer primary key autoincrement, game text, ronde text, uid text,
+              nama text, foto text, win integer, at integer
+            )`,
+    },
+  ]);
+}
+
+/** Catat kemenangan ronde, lalu kirim Top 1/2/3 ke banner terbang semua user. */
+async function catatMenangGame(env, { uid, nama, foto, win, game, ronde }) {
+  const g = String(game || "").toLowerCase();
+  const namaGame = g.includes("fruit") ? "crazyfruit" : g.includes("greedy") ? "greedy" : "";
+  const v = Math.trunc(Number(win) || 0);
+  if (!namaGame || v <= 0) return;
+  const r = String(ronde || "").trim().slice(0, 40) || "harian";
+  try {
+    await siapWinFeed(env);
+    await pipe(env, [
+      {
+        sql: "insert into win_round (game, ronde, uid, nama, foto, win, at) values (?, ?, ?, ?, ?, ?, ?)",
+        args: [T(namaGame), T(r), T(uid), T(String(nama || "Player")), T(String(foto || "")), I(v), I(Date.now())],
+      },
+    ]);
+    const hasil = await pipe(env, [
+      {
+        sql: `select uid, nama, foto, sum(win) as v from win_round
+              where game = ? and ronde = ? group by uid order by v desc limit 3`,
+        args: [T(namaGame), T(r)],
+      },
+    ]);
+    const daftar = hasil[0].rows;
+    const pos = daftar.findIndex((x) => String(x.uid) === String(uid)) + 1;
+    if (pos < 1 || pos > 3) return;
+    // Satu banner per pemain per posisi per ronde.
+    const kunci = namaGame + "|" + r + "|" + uid + "|" + pos;
+    const sudah = (globalThis.__vizaWinKirim || (globalThis.__vizaWinKirim = new Set()));
+    if (sudah.has(kunci)) return;
+    sudah.add(kunci);
+    const ts = Date.now();
+    await patchRtdbSa(env, `gameWinFeed/${ts}_${String(uid).slice(0, 12)}_${pos}`, {
+      name: String(nama || "Player").slice(0, 24),
+      av: String(foto || "").slice(0, 300),
+      amount: v,
+      game: namaGame,
+      pos,
+      ts,
+    });
+    // Bersihkan banner lama, paling sering tiap 5 menit.
+    const kapan = Number(globalThis.__vizaWinBersih || 0);
+    if (ts - kapan > 5 * 60 * 1000) {
+      globalThis.__vizaWinBersih = ts;
+      try {
+        const semua = (await cfgRtdbSa(env, "gameWinFeed")) || {};
+        for (const k of Object.keys(semua)) {
+          const t = Number((semua[k] || {}).ts || 0);
+          if (t && ts - t > 15 * 60 * 1000) await tulisRtdbSa(env, `gameWinFeed/${k}`, null);
+        }
+      } catch (e) { /* pembersihan opsional */ }
+    }
+  } catch (e) { /* banner opsional, jangan gagalkan pembayaran */ }
+}
+
 async function rewardRoomApi(env, req) {
   const b = await req.json().catch(() => ({}));
   const do_ = String(b.do || "info").toLowerCase();
@@ -3800,6 +3866,21 @@ async function admin(env, body) {
     return json({ ok: 1, ...cfgBaru });
   }
 
+  // ---- Banner pemenang game (dipakai Greedy King & Crazy Fruit) ----
+  if (op === "win_banner_get") {
+    const url = (await bacaRtdbNilai(env, "betCfg/gameWinBanner")) || "";
+    return json({ ok: 1, url: typeof url === "string" ? url : "" });
+  }
+  if (op === "win_banner_set") {
+    const url = String(p.url ?? "").trim().slice(0, 400);
+    try {
+      await tulisRtdbSa(env, "betCfg/gameWinBanner", url || null);
+      return json({ ok: 1, url });
+    } catch (e) {
+      return gagal("Gagal menyimpan banner: " + String(e?.message ?? e));
+    }
+  }
+
   if (op === "cf_cfg_get") {
     return json({ ok: 1, ...(await cfCfg(env)) });
   }
@@ -4872,6 +4953,15 @@ async function wavePlay(req, env) {
           ]);
         } catch { /* peringkat opsional, jangan gagalkan pembayaran */ }
       }
+      // Banner pemenang game: Top 1/2/3 ronde ini tampil terbang untuk semua user.
+      catatMenangGame(env, {
+        uid,
+        nama: plAkhir.name || "Player",
+        foto: String(plAkhir.profilePicture || waveFoto(uid, plAkhir.avatar) || ""),
+        win: amount,
+        game: namaGame,
+        ronde: body.roundId ?? body.round ?? body.ronde ?? "",
+      }).catch(() => {});
     }
     return balas({
       success: true,

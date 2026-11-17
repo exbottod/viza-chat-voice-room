@@ -857,6 +857,11 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
             NetworkBanner()
             BanGate(uid = uid, onSignOut = onSignOutClick, onBanned = { if (activeRoom != null) exitRoom() })
             UpdateGate()
+            // Banner pemenang game: terbang paling atas, jadi kelihatan di dalam
+            // room maupun di semua tab lain.
+            Box(Modifier.fillMaxSize().zIndex(55f)) {
+                GameWinBannerHost(Modifier.align(Alignment.TopCenter))
+            }
             // Loading khas Viza, digambar paling atas supaya menutupi halaman mana pun.
             if (memuatHalaman) VizaLoadingLayar()
         }

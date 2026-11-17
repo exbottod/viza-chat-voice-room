@@ -1,23 +1,28 @@
 package com.rezochatvoice.exceo
 
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -26,124 +31,260 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import kotlinx.coroutines.delay
 
-/** Satu kejadian menang game yang ditampilkan sebagai banner berjalan. */
-data class GameWinEvent(
-    val name: String,
-    val game: String,
-    val amount: Long,
-    val ts: Long,
-)
-
 /**
- * Banner kemenangan game.
+ * Banner pemenang game (Greedy King & Crazy Fruit).
  *
- * Ditulis ke Realtime Database (gameWin) oleh jembatan game, lalu semua orang
- * di room melihat banner terbang: masuk dari kanan, tampil 3 detik, geser ke kiri
- * lalu menutup.
+ * Server VPS menulis setiap kemenangan Top 1/2/3 ke Realtime Database
+ * (gameWinFeed). Semua orang yang online mendengarkan simpul itu, jadi banner
+ * terbang muncul sama di dalam room maupun di luar room (tab Party, Moment,
+ * Family, Pesan, Saya, dan halaman lain).
+ *
+ * Animasi: masuk dari kanan, berhenti di tengah 3 detik, lalu keluar ke kiri.
+ * Kalau ada beberapa pemenang, banner tampil bergantian lewat antrean.
  */
 object GameBanner {
-    private const val NODE = "gameWin"
+    private const val NODE = "gameWinFeed"
 
-    /** Kirim kejadian menang ke room. Dipanggil dari GameBridge setelah coin masuk. */
-    fun publish(name: String, game: String, amount: Long) {
-        if (amount <= 0) return
-        try {
-            Rtdb.ref(NODE).setValue(
-                hashMapOf(
-                    "name" to name.ifBlank { "Player" },
-                    "game" to game.ifBlank { "Game" },
-                    "amount" to amount,
-                    "ts" to System.currentTimeMillis(),
-                ),
-            )
-        } catch (e: Exception) { }
-    }
-}
+    /** Gambar pelat banner dari panel (betCfg/gameWinBanner). Kosong = pakai bawaan. */
+    @Volatile var bannerUrl: String = ""
 
-@Composable
-fun GameWinBanner(modifier: Modifier = Modifier) {
-    var event by remember { mutableStateOf<GameWinEvent?>(null) }
-    var lastTs by remember { mutableStateOf<Long?>(null) }
-    var visible by remember { mutableStateOf(false) }
-
-    DisposableEffect(Unit) {
-        val reg = Rtdb.listen(Rtdb.ref("gameWin")) { snap ->
-            if (!snap.exists()) return@listen
-            val ts = snap.child("ts").getValue(Long::class.java) ?: 0L
-            val prev = lastTs
-            lastTs = ts
-            if (prev == null || ts == prev) return@listen
-            // Abaikan kejadian lama saat app baru dibuka.
-            if (System.currentTimeMillis() - ts > 20_000) return@listen
-            event = GameWinEvent(
-                name = snap.child("name").getValue(String::class.java) ?: "Player",
-                game = snap.child("game").getValue(String::class.java) ?: "Game",
-                amount = (snap.child("amount").value as? Number)?.toLong() ?: 0L,
-                ts = ts,
-            )
-        }
-        onDispose { reg.remove() }
-    }
-
-    // masuk -> tampil 3 detik -> keluar
-    LaunchedEffect(event?.ts) {
-        if (event == null) return@LaunchedEffect
-        visible = true
-        delay(3000)
-        visible = false
-        delay(420)
-        event = null
-    }
-
-    val e = event ?: return
-    val widthPx = with(LocalConfiguration.current) { screenWidthDp }.dp
-    // geser: masuk dari kanan, keluar ke kiri
-    val shift by animateFloatAsState(
-        targetValue = if (visible) 0f else -1.2f,
-        animationSpec = tween(durationMillis = if (visible) 320 else 400),
-        label = "gameBanner",
+    class Item(
+        val id: String,
+        val name: String,
+        val av: String,
+        val amount: Long,
+        val game: String,
+        val pos: Int,
+        val ts: Long,
     )
 
-    Box(
-        modifier.fillMaxWidth().height(46.dp).padding(horizontal = 8.dp),
-        contentAlignment = Alignment.CenterStart,
-    ) {
-        Row(
-            Modifier
-                .offset(x = (widthPx * shift))
-                .clip(RoundedCornerShape(50))
-                .background(Brush.horizontalGradient(listOf(Color(0xFF7A4A00), Color(0xFFD4AF37), Color(0xFFFF6A00))))
-                .border(1.dp, Color(0xFFFFE9A0), RoundedCornerShape(50))
-                .padding(horizontal = 12.dp, vertical = 7.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Box(
-                Modifier.size(26.dp).clip(RoundedCornerShape(50)).background(Color(0x55000000)),
-                contentAlignment = Alignment.Center,
-            ) { Text("🏆", fontSize = 14.sp) }
-            Text(
-                tr("${e.name} menang ${e.game} 🪙 ${fmtBanner(e.amount)}"),
-                color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp,
-                maxLines = 1, overflow = TextOverflow.Ellipsis,
-            )
+    private val antre = mutableStateListOf<Item>()
+    private val pernah = mutableSetOf<String>()
+    private var mulai = false
+    private var regBanner: Reg? = null
+
+    private fun tandai(id: String) {
+        pernah.add(id)
+        if (pernah.size > 300) {
+            val buang = pernah.toList().take(150)
+            pernah.removeAll(buang.toSet())
         }
     }
+
+    /** Mulai mendengar kemenangan game dari server. */
+    fun dengarkan() {
+        if (mulai) return
+        mulai = true
+        try {
+            Rtdb.listen(Rtdb.ref(NODE).limitToLast(15)) { snap ->
+                val baru = mutableListOf<Item>()
+                for (c in snap.children) {
+                    val id = c.key ?: continue
+                    if (pernah.contains(id)) continue
+                    val ts = (c.child("ts").value as? Number)?.toLong() ?: 0L
+                    tandai(id)
+                    // Kejadian lama tidak ditampilkan saat aplikasi baru dibuka.
+                    if (ts > 0 && System.currentTimeMillis() - ts > 30_000L) continue
+                    val amount = (c.child("amount").value as? Number)?.toLong() ?: 0L
+                    if (amount <= 0L) continue
+                    baru.add(
+                        Item(
+                            id = id,
+                            name = c.child("name").getValue(String::class.java) ?: "Player",
+                            av = c.child("av").getValue(String::class.java) ?: "",
+                            amount = amount,
+                            game = (c.child("game").getValue(String::class.java) ?: "").lowercase(),
+                            pos = (c.child("pos").value as? Number)?.toInt() ?: 0,
+                            ts = ts,
+                        ),
+                    )
+                }
+                baru.sortedBy { it.ts }.forEach { antre.add(it) }
+            })
+        } catch (e: Exception) {
+        }
+    }
+
+    /** Ambil satu banner dari antrean. */
+    fun ambil(): Item? = if (antre.isEmpty()) null else antre.removeAt(0)
+
+    /** Baca gambar pelat banner yang diunggah lewat panel. */
+    fun muatBanner() {
+        if (regBanner != null) return
+        try {
+            regBanner = Rtdb.listen(Rtdb.ref("betCfg/gameWinBanner")) { snap ->
+                bannerUrl = snap.getValue(String::class.java)?.trim().orEmpty()
+            }
+        } catch (e: Exception) {
+        }
+    }
+
 }
 
-private fun fmtBanner(n: Long): String {
-    val s = n.toString()
+/** Angka penuh bergaya 1.200.000.000. */
+private fun fmtPenuh(n: Long): String {
+    val s = Math.abs(n).toString()
     val out = StringBuilder()
     for ((i, c) in s.withIndex()) {
         if (i > 0 && (s.length - i) % 3 == 0) out.append('.')
         out.append(c)
     }
-    return out.toString()
+    return (if (n < 0) "-" else "") + out.toString()
+}
+
+/**
+ * Tuan rumah banner: taruh sekali di lapisan paling atas layar utama supaya
+ * banner terlihat dari halaman mana pun, termasuk di dalam room.
+ */
+@Composable
+fun GameWinBannerHost(modifier: Modifier = Modifier) {
+    LaunchedEffect(Unit) {
+        GameBanner.dengarkan()
+        GameBanner.muatBanner()
+    }
+    var item by remember { mutableStateOf<GameBanner.Item?>(null) }
+    val geser = remember { Animatable(1f) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            if (item != null) {
+                delay(200)
+                continue
+            }
+            val berikut = GameBanner.ambil()
+            if (berikut == null) {
+                delay(350)
+                continue
+            }
+            item = berikut
+            geser.snapTo(1f)
+            geser.animateTo(0f, tween(durationMillis = 360))
+            delay(3000)
+            geser.animateTo(-1f, tween(durationMillis = 400))
+            item = null
+        }
+    }
+
+    val e = item ?: return
+    val layar = with(LocalConfiguration.current) { screenWidthDp }.dp
+
+    Box(
+        modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        contentAlignment = Alignment.TopCenter,
+    ) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .offset(x = layar * geser.value)
+                .height(66.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(Color(0xFF4A1370), Color(0xFF7B1E8B), Color(0xFF3A0B5C)),
+                    ),
+                )
+                .border(1.5.dp, Color(0xFFFFC94D), RoundedCornerShape(16.dp)),
+        ) {
+            // Pelat emas dari panel (kalau sudah diunggah).
+            if (GameBanner.bannerUrl.isNotBlank()) {
+                AsyncImage(
+                    model = GameBanner.bannerUrl,
+                    contentDescription = null,
+                    contentScale = ContentScale.FillBounds,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+            Row(
+                Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // Kiri: foto pemenang + label peringkat.
+                Box(Modifier.size(48.dp)) {
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape)
+                            .background(Color(0x55000000))
+                            .border(2.dp, Color(0xFFFFC94D), CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (e.av.isNotBlank() && e.av.startsWith("http")) {
+                            AsyncImage(
+                                model = e.av,
+                                contentDescription = e.name,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize().clip(CircleShape),
+                            )
+                        } else {
+                            Text(
+                                e.name.take(1).uppercase(),
+                                color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp,
+                            )
+                        }
+                    }
+                }
+                // Tengah: nama dan peringkat.
+                Column(
+                    Modifier.weight(1f).padding(horizontal = 10.dp),
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(
+                        e.name,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        "TOP ${if (e.pos in 1..3) e.pos else 1}",
+                        color = Color(0xFFFFE9A0),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp,
+                    )
+                }
+                // Kanan: coin yang menang + ikon game kecil di bawahnya.
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        fmtPenuh(e.amount),
+                        color = Color(0xFFFFD75E),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        textAlign = TextAlign.End,
+                        maxLines = 1,
+                    )
+                    Box(
+                        Modifier.size(18.dp).clip(CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        val ikon = if (e.game.contains("fruit")) {
+                            R.drawable.ic_game_fruit
+                        } else {
+                            R.drawable.ic_game_greedy
+                        }
+                        Image(
+                            painter = painterResource(ikon),
+                            contentDescription = e.game,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize().clip(CircleShape),
+                        )
+                    }
+                }
+            }
+        }
+    }
 }

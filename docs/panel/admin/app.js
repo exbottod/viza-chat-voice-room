@@ -3189,6 +3189,43 @@ async function gambarPasang() {
  * lebih sering keluar, jadi JP sering kena. Disimpan lewat server dompet karena
  * aturan RTDB menolak tulisan langsung dari browser panel.
  */
+/**
+ * Kartu unggah gambar pelat banner pemenang game (Greedy King & Crazy Fruit).
+ * Gambarnya disimpan di server (betCfg/gameWinBanner) dan dipakai aplikasi
+ * sebagai latar banner terbang, jadi bisa diganti tanpa build ulang.
+ */
+function kartuBannerMenang() {
+  return `
+    <div style="margin-top:18px;padding-top:14px;border-top:1px solid #2a2f3a">
+      <h3 style="margin:0 0 4px;font-size:15px">Banner pemenang game</h3>
+      <div class="catatan">Gambar pelat emas untuk banner terbang Top 1/2/3 di Greedy King dan Crazy Fruit.
+        Rasio lebar:tinggi sekitar 5:1 (mis. 1000x200). Foto, nama, coin, dan ikon game digambar aplikasi di atasnya.</div>
+      ${htmlSumber("bannerMenang")}
+      <button class="tombol" id="bannerMenangSimpan" style="margin-top:10px">Simpan banner</button>
+    </div>`;
+}
+
+function pasangBannerMenang() {
+  if (!$("bannerMenangUrl")) return;
+  aktifkanPratinjau("bannerMenang", "gambar");
+  walletAdmin({ op: "win_banner_get" }).then((j) => {
+    if (j && j.url && $("bannerMenangUrl") && !$("bannerMenangUrl").value) {
+      $("bannerMenangUrl").value = j.url;
+      tampilkanPratinjau("bannerMenang", j.url);
+    }
+  }).catch(() => {});
+  const simpan = $("bannerMenangSimpan");
+  if (simpan) simpan.onclick = async () => {
+    try {
+      // urlDariSumber: pakai tautan yang diketik atau berkas yang diunggah.
+      const url = await urlDariSumber("bannerMenang", "gamewin");
+      await walletAdmin({ op: "win_banner_set", url });
+      catatLog("Banner pemenang game", url ? "banner diganti" : "banner dihapus");
+      toast("Banner pemenang game disimpan");
+    } catch (e) { toast("Gagal menyimpan banner: " + (e.message || e), true); }
+  };
+}
+
 async function gambarGreedy() {
   let cfg = { bet: [100, 500, 1000, 5000, 50000], rtp: 75 };
   try { cfg = Object.assign(cfg, await walletAdmin({ op: "gk_cfg_get" })); }
@@ -3205,8 +3242,10 @@ async function gambarGreedy() {
         <div class="catatan">75 = standar. 100 = hasil besar lebih sering (JP sering kena).
           Batas 40 sampai 200. Chip bet ikut berubah di aplikasi tanpa build ulang.</div>
         <button class="tombol" id="gkSimpan" style="margin-top:14px">Simpan pengaturan</button>
+        ${kartuBannerMenang()}
       </div>
     </div>`;
+  pasangBannerMenang();
   $("gkSimpan").onclick = async () => {
     const bet = $("gkBet").value.split(",").map((x) => Number(String(x).trim())).filter((x) => x > 0);
     if (!bet.length) return toast("Isi minimal satu chip bet", true);
@@ -3244,8 +3283,10 @@ async function gambarFruit() {
         <div class="catatan">92 = standar. 100 = pemain balik modal, 80 = keuntungan rumah lebih besar.
           Batas 50 sampai 120. Pengali buah ikut menyesuaikan otomatis, chip bet berubah tanpa build ulang.</div>
         <button class="tombol" id="cfSimpan" style="margin-top:14px">Simpan pengaturan</button>
+        ${kartuBannerMenang()}
       </div>
     </div>`;
+  pasangBannerMenang();
   $("cfSimpan").onclick = async () => {
     const bet = $("cfBet").value.split(",").map((x) => Number(String(x).trim())).filter((x) => x > 0);
     if (!bet.length) return toast("Isi minimal satu chip bet", true);

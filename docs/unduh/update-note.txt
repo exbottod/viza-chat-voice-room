@@ -1,1 +1,1 @@
-• Logo loading dibuat bergerak: busur berputar lebih cepat dan lima batang suara naik-turun bergantian
+• Ukuran logo loading diperkecil (96dp menjadi 58dp) supaya tidak terlalu besar di layar

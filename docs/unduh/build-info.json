@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.196",
-  "catatan": "• Logo loading dibuat bergerak: busur berputar lebih cepat dan lima batang suara naik-turun bergantian",
-  "ukuran_apk": 54776164,
-  "sha256_apk": "7287725b5bfa66f3f8fab30e224e5c8d0c0da427c3d4be608f2b2f9479cad01d",
+  "versi": "1.0.197",
+  "catatan": "• Ukuran logo loading diperkecil (96dp menjadi 58dp) supaya tidak terlalu besar di layar",
+  "ukuran_apk": 54776157,
+  "sha256_apk": "90b5eab87c24e935f45d87907ceeff80759e10e3c3dd72ae03101e73a2863183",
   "abis": {
     "arm64": {
-      "ukuran": 54776164,
-      "sha256": "7287725b5bfa66f3f8fab30e224e5c8d0c0da427c3d4be608f2b2f9479cad01d"
+      "ukuran": 54776157,
+      "sha256": "90b5eab87c24e935f45d87907ceeff80759e10e3c3dd72ae03101e73a2863183"
     },
     "armv7": {
-      "ukuran": 52927312,
-      "sha256": "1bfecbd55e264531039c90fb100b4559e6a26c2e39548661bfa15eeb79a33f4b"
+      "ukuran": 52927316,
+      "sha256": "2a90035abc5fe8ff3928d37f70cceb9955e7fd802080fcb99b63b3c686a556be"
     },
     "universal": {
       "ukuran": 73192128,
-      "sha256": "617214cce37693c91a2e535b33e484a69ec24f894ee41291e0313f39cd49510f"
+      "sha256": "3795a63bcdc284ff405a9c461f47bedc559c0219e5126b19c114b4d33adb163f"
     }
   }
 }

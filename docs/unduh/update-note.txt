@@ -1,1 +1,1 @@
-• Ikon kartu Ransel/Store memakai sampul PNG, animasi asli hanya di pratinjau
+• Efek masuk dan banner SVGA tetap terlihat walau berkas gagal diputar

@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.215",
-  "catatan": "• Ikon kartu Ransel/Store memakai sampul PNG, animasi asli hanya di pratinjau",
-  "ukuran_apk": 55001893,
-  "sha256_apk": "fae796f32e47964d9e89f9fa42212bb06037b6a572fd16e79da575519d9b7c26",
+  "versi": "1.0.216",
+  "catatan": "• Efek masuk dan banner SVGA tetap terlihat walau berkas gagal diputar",
+  "ukuran_apk": 55002088,
+  "sha256_apk": "9581d846bc2b60c907a0702044b435d6c9c57d21fb17f8b74254e8242db69aa6",
   "abis": {
     "arm64": {
-      "ukuran": 55001893,
-      "sha256": "fae796f32e47964d9e89f9fa42212bb06037b6a572fd16e79da575519d9b7c26"
+      "ukuran": 55002088,
+      "sha256": "9581d846bc2b60c907a0702044b435d6c9c57d21fb17f8b74254e8242db69aa6"
     },
     "armv7": {
-      "ukuran": 53153032,
-      "sha256": "b480f16a70c457607d2b08600714c132d5ac2d1c889eaebb03b6c80b72c4ff4e"
+      "ukuran": 53153246,
+      "sha256": "038ae9e8ecaf51de188ea49122cd7f30d93dfa66cc209f57df24d973ece2f68c"
     },
     "universal": {
-      "ukuran": 73417853,
-      "sha256": "f180fd0fb4f85f85a086ab49dbb3fe7aaccd2e9aae7740a3161bbd1d266de3bc"
+      "ukuran": 73418054,
+      "sha256": "e9b700026214854b7063621c2ccae8ea148eeb362db808b38d66d9c3f01dfd7c"
     }
   }
 }

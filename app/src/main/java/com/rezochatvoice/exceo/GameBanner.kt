@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -347,34 +348,41 @@ fun GameWinBannerHost(modifier: Modifier = Modifier) {
             .padding(horizontal = 10.dp, vertical = 6.dp),
         contentAlignment = Alignment.TopCenter,
     ) {
+        val pelat = GameBanner.bannerUrl.isNotBlank()
         Box(
             Modifier
                 .fillMaxWidth()
                 .offset(x = layar * geser.value)
-                .height(66.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(Color(0xFF4A1370), Color(0xFF7B1E8B), Color(0xFF3A0B5C)),
-                    ),
-                )
-                .border(1.5.dp, Color(0xFFFFC94D), RoundedCornerShape(16.dp)),
+                .height(72.dp)
+                .then(
+                    if (pelat) Modifier
+                    else Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(Color(0xFF4A1370), Color(0xFF7B1E8B), Color(0xFF3A0B5C)),
+                            ),
+                        )
+                        .border(1.5.dp, Color(0xFFFFC94D), RoundedCornerShape(16.dp)),
+                ),
         ) {
-            // Pelat emas dari panel (kalau sudah diunggah).
-            if (GameBanner.bannerUrl.isNotBlank()) {
+            // Pelat emas dari panel dipakai apa adanya sebagai latar banner.
+            if (pelat) {
                 AsyncImage(
                     model = GameBanner.bannerUrl,
                     contentDescription = null,
                     contentScale = ContentScale.FillBounds,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.matchParentSize(),
                 )
             }
             Row(
-                Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 8.dp),
+                Modifier
+                    .matchParentSize()
+                    .padding(start = 10.dp, end = 16.dp, top = 12.dp, bottom = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Kiri: foto pemenang + label peringkat.
-                Box(Modifier.size(48.dp)) {
+                // Kiri: foto pemenang, pas di lingkaran kiri pelat.
+                Box(Modifier.size(if (pelat) 44.dp else 48.dp)) {
                     Box(
                         Modifier
                             .fillMaxSize()
@@ -398,38 +406,45 @@ fun GameWinBannerHost(modifier: Modifier = Modifier) {
                         }
                     }
                 }
-                // Tengah: nama dan peringkat.
+                // Tengah: nama dan peringkat, di badan pelat.
                 Column(
-                    Modifier.weight(1f).padding(horizontal = 10.dp),
+                    Modifier.weight(1f).padding(start = 10.dp, end = 56.dp),
                     verticalArrangement = Arrangement.Center,
                 ) {
                     Text(
                         e.name,
-                        color = Color.White,
+                        color = Color(0xFF5A2D00),
                         fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
+                        fontSize = 13.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
                         "TOP ${if (e.pos in 1..3) e.pos else 1}",
-                        color = Color(0xFFFFE9A0),
+                        color = Color(0xFF8A4B00),
                         fontWeight = FontWeight.Bold,
-                        fontSize = 11.sp,
+                        fontSize = 10.sp,
                     )
                 }
-                // Kanan: coin yang menang + ikon game kecil di bawahnya.
-                Column(horizontalAlignment = Alignment.End) {
+                // Kanan: coin menang, ikon game kecil di bawahnya.
+                Column(
+                    Modifier.widthIn(max = 118.dp),
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    val angkanya = fmtPenuh(e.amount)
                     Text(
-                        fmtPenuh(e.amount),
-                        color = Color(0xFFFFD75E),
+                        angkanya,
+                        color = Color(0xFF6A3300),
                         fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
+                        fontSize = if (angkanya.length > 13) 10.sp else if (angkanya.length > 10) 11.sp else 13.sp,
                         textAlign = TextAlign.End,
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.fillMaxWidth(),
                     )
                     Box(
-                        Modifier.size(18.dp).clip(CircleShape),
+                        Modifier.size(14.dp).clip(CircleShape),
                         contentAlignment = Alignment.Center,
                     ) {
                         val ikon = if (e.game.contains("fruit")) {

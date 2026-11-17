@@ -1,1 +1,1 @@
-• Ukuran logo loading diperkecil (96dp menjadi 58dp) supaya tidak terlalu besar di layar
+• Logo loading diperkecil lagi (34dp) supaya seperti loading bawaan aplikasi, tidak menutupi layar

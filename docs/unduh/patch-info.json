@@ -4735,15 +4735,6 @@
       }
     },
     {
-      "dari": "1.0.193",
-      "ke": "1.0.197",
-      "arm64": {
-        "file": "patch-1.0.193-1.0.197-arm64.bsdiff",
-        "ukuran": 4044361,
-        "sha256": "05bd2d47ea8d582f085545e1e0bccb695ade9dec478210f0d988cb2c06086d04"
-      }
-    },
-    {
       "dari": "1.0.194",
       "ke": "1.0.195",
       "arm64": {
@@ -4763,11 +4754,11 @@
     },
     {
       "dari": "1.0.194",
-      "ke": "1.0.197",
+      "ke": "1.0.198",
       "arm64": {
-        "file": "patch-1.0.194-1.0.197-arm64.bsdiff",
-        "ukuran": 4059077,
-        "sha256": "4668ab8d96e718ce71723dd3bf93ebf287b54ab750ffca3c65ea39ca1a14a83f"
+        "file": "patch-1.0.194-1.0.198-arm64.bsdiff",
+        "ukuran": 4052453,
+        "sha256": "0bbd1f4610c48e308e21fd3bee0249764d6c738ff18531b0d1e2a88bf6d59601"
       }
     },
     {
@@ -4781,20 +4772,29 @@
     },
     {
       "dari": "1.0.195",
-      "ke": "1.0.197",
+      "ke": "1.0.198",
       "arm64": {
-        "file": "patch-1.0.195-1.0.197-arm64.bsdiff",
-        "ukuran": 3980611,
-        "sha256": "b56af1fa90a257084e72ff82390d5ca828d8a2a1cb3bf3fb16a1ee323bbc54f1"
+        "file": "patch-1.0.195-1.0.198-arm64.bsdiff",
+        "ukuran": 3984453,
+        "sha256": "1778c60f1a5d37ba91ea444eaa1915a9d0ad53e0953f53bbddc69590f75c82b4"
       }
     },
     {
       "dari": "1.0.196",
-      "ke": "1.0.197",
+      "ke": "1.0.198",
       "arm64": {
-        "file": "patch-1.0.196-1.0.197-arm64.bsdiff",
-        "ukuran": 3343940,
-        "sha256": "f3519c1aa6fba35b5ad470bd4d98b2886755d74dd4c5d99b5e1c1ed3e078bab3"
+        "file": "patch-1.0.196-1.0.198-arm64.bsdiff",
+        "ukuran": 3664095,
+        "sha256": "d0bb60c02bbefd60a964dd3d9b18c835056b537a97d40fcd930f0e3a27c4f9e9"
+      }
+    },
+    {
+      "dari": "1.0.197",
+      "ke": "1.0.198",
+      "arm64": {
+        "file": "patch-1.0.197-1.0.198-arm64.bsdiff",
+        "ukuran": 3071020,
+        "sha256": "d53ec4f0a608f706b8328cd629b3dc0cc1e6000d0bcd54c96dafea27ffbf2b7c"
       }
     }
   ]

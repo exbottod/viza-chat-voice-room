@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.197",
-  "catatan": "• Ukuran logo loading diperkecil (96dp menjadi 58dp) supaya tidak terlalu besar di layar",
-  "ukuran_apk": 54776157,
-  "sha256_apk": "90b5eab87c24e935f45d87907ceeff80759e10e3c3dd72ae03101e73a2863183",
+  "versi": "1.0.198",
+  "catatan": "• Logo loading diperkecil lagi (34dp) supaya seperti loading bawaan aplikasi, tidak menutupi layar",
+  "ukuran_apk": 54776156,
+  "sha256_apk": "cf099454882bc97ff5df4e0169a3a9f7a23121036a0acf19ccd0798974401ac2",
   "abis": {
     "arm64": {
-      "ukuran": 54776157,
-      "sha256": "90b5eab87c24e935f45d87907ceeff80759e10e3c3dd72ae03101e73a2863183"
+      "ukuran": 54776156,
+      "sha256": "cf099454882bc97ff5df4e0169a3a9f7a23121036a0acf19ccd0798974401ac2"
     },
     "armv7": {
-      "ukuran": 52927316,
-      "sha256": "2a90035abc5fe8ff3928d37f70cceb9955e7fd802080fcb99b63b3c686a556be"
+      "ukuran": 52927306,
+      "sha256": "93d6e43da6d3b7d6c333b6054fce1c508b8149a04cf1300a043733643ca42778"
     },
     "universal": {
-      "ukuran": 73192128,
-      "sha256": "3795a63bcdc284ff405a9c461f47bedc559c0219e5126b19c114b4d33adb163f"
+      "ukuran": 73192125,
+      "sha256": "2cad8204c8427da42503a1565223e6402c8964fe8ed74f397f19bc25aca6d4bc"
     }
   }
 }

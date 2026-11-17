@@ -783,6 +783,16 @@ fun VipEntryEffect(roomId: String) {
         }
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             if (p != null) {
+                // Sampul PNG digambar lebih dulu. Kalau berkas SVGA/MP4 gagal
+                // diputar (mis. unduhan lambat), efeknya tetap terlihat.
+                if (p.poster.isNotBlank()) {
+                    coil.compose.AsyncImage(
+                        model = p.poster,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                    )
+                }
                 VipMedia(
                     p,
                     Modifier.fillMaxSize(),
@@ -835,6 +845,16 @@ fun VipEntryEffect(roomId: String) {
                     Box(
                         Modifier.size(bSize).clipToBounds().graphicsLayer { alpha = fade.value },
                     ) {
+                        // Sampul PNG banner di belakang animasi: kalau SVGA gagal
+                        // diputar, bannernya tetap kelihatan.
+                        if (asetBanner.poster.isNotBlank()) {
+                            coil.compose.AsyncImage(
+                                model = asetBanner.poster,
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop,
+                            )
+                        }
                         if (svgaBanner) {
                             // Kanvas SVGA 750x1624 tapi gambarnya hanya pita di tengah. View
                             // dibuat sebesar kanvas penuh lalu digambar lewat graphicsLayer

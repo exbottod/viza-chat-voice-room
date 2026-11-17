@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.207",
-  "catatan": "• Halaman Koin banyak: tampilan emas ungu dan periode lalu berisi\n• Panel reward room: perbaiki unggah banner dan tabel",
-  "ukuran_apk": 54983159,
-  "sha256_apk": "d6161ab121d1cd36b38a6469a16ea99c523c5085b83dc5f624d269fff37d1f03",
+  "versi": "1.0.208",
+  "catatan": "• Foto chat bisa di-zoom layar penuh",
+  "ukuran_apk": 54983270,
+  "sha256_apk": "abb62b5e7021b6637c513f32c817c4927b2cd7dd16b0a6950b5b7f9825c73055",
   "abis": {
     "arm64": {
-      "ukuran": 54983159,
-      "sha256": "d6161ab121d1cd36b38a6469a16ea99c523c5085b83dc5f624d269fff37d1f03"
+      "ukuran": 54983270,
+      "sha256": "abb62b5e7021b6637c513f32c817c4927b2cd7dd16b0a6950b5b7f9825c73055"
     },
     "armv7": {
-      "ukuran": 53134317,
-      "sha256": "801a9ddfcab67258d76cd7e10d013c6ea4b1b6973aecf5349ae8c156cee9f0f9"
+      "ukuran": 53134424,
+      "sha256": "44ed67082d52262af55b0762cb2e55ad21c7ecaf96ffcdd27243180211ab1b74"
     },
     "universal": {
-      "ukuran": 73399138,
-      "sha256": "acb5ff41ccfcd7ef8149aaa5924a88a44de16495cf1baf53ba090fc90426a957"
+      "ukuran": 73399239,
+      "sha256": "3b59f58b3285a97bd4741fe0146d90cae0172779c8b48f8053b5129bd84dd127"
     }
   }
 }

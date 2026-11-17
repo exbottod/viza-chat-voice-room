@@ -393,6 +393,12 @@ private fun VipSvga(
                 }
             }
         },
+        onRelease = { v ->
+            // Dulu animasi tetap jalan walau view sudah dilepas: memori naik terus
+            // sampai aplikasi tertutup sendiri saat berada di room.
+            try { v.stopAnimation() } catch (e: Exception) { }
+            try { v.clear() } catch (e: Exception) { }
+        },
     )
 }
 
@@ -733,7 +739,7 @@ fun VipEntryEffect(roomId: String) {
     if (p != null || b != null) {
         if (p != null) {
             LaunchedEffect(p) {
-                delay(if (p.kind == "mp4" || p.kind == "svga") 15000L else 5000L)
+                delay(if (p.kind == "mp4" || p.kind == "svga") 8000L else 5000L)
                 playing = null
             }
         }

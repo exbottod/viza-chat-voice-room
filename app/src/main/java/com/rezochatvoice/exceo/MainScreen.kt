@@ -171,13 +171,11 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
     var memuatHalaman by remember { mutableStateOf(false) }
     // Loading singkat setiap halaman dibuka: ganti tab, dompet, store, VIP
     // center, profil orang lain, family, dan halaman lain.
-    androidx.compose.runtime.LaunchedEffect(
-        selected, overlay, showWallet, showStore, showVip, showLevel, showProps,
-        showGlory, familyFull, showSellers, showSellerPanel, showAgency,
-        fullProfileUid, chatWith, kickNote,
-    ) {
+    // Hanya berpindah halaman yang memicu loading. Dulu banyak status ikut jadi
+    // kunci, jadi loading muncul berulang dan terasa menghambat medal serta suara.
+    androidx.compose.runtime.LaunchedEffect(selected, overlay, fullProfileUid, sheetUid) {
         memuatHalaman = true
-        kotlinx.coroutines.delay(600)
+        kotlinx.coroutines.delay(420)
         memuatHalaman = false
     }
 
@@ -459,6 +457,13 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
     LaunchedEffect(Unit) {
         TabBgs.loadLocal(context)
         TabBgs.refresh()
+    }
+
+    // Panaskan katalog lencana dan aset VIP sejak aplikasi dibuka, supaya medal
+    // dan lencana di baris mengetik serta di sheet tidak menunggu lama.
+    LaunchedEffect(Unit) {
+        try { StoreCatalog.start() } catch (e: Exception) { }
+        try { VipAssets.load() } catch (e: Exception) { }
     }
 
     // Loading singkat setiap berpindah halaman, supaya transisi terasa jelas.

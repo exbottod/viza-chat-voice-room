@@ -352,6 +352,10 @@
       ".read": "auth != null",
       ".write": "auth != null"
     },
+    "gameWinFeed": {
+      ".read": "auth != null",
+      ".write": false
+    },
     "hiveWin": {
       ".read": "auth != null",
       "$uid": {

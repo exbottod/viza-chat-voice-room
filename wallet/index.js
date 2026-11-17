@@ -4414,6 +4414,23 @@ async function admin(env, body) {
     return json({ ok: 1, id, official: nilai });
   }
 
+  // Panel: kirim item (lencana, medali, frame, banner, efek masuk) ke tas user.
+  // Aturan RTDB /pub hanya mengizinkan pemilik akun atau email admin contoh,
+  // jadi staf panel selalu kena PERMISSION_DENIED kalau menulis dari browser.
+  // Di sini ditulis lewat akun layanan, jadi manager/admin ikut bisa.
+  if (op === "kirim_item") {
+    const uidI = String(p.uid ?? "").trim();
+    if (!/^[A-Za-z0-9_-]{4,80}$/.test(uidI)) return gagal("UID penerima tidak valid");
+    const itemI = String(p.item ?? "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 80);
+    if (!itemI) return gagal("Item kosong");
+    const hariI = Math.max(1, Math.min(3650, Math.trunc(Number(p.hari ?? 30)) || 30));
+    const sampaiI = Date.now() + hariI * 86400000;
+    await tulisRtdbSa(env, `pub/${uidI}/svipInv/sx_${itemI}`, sampaiI);
+    await tulisRtdbSa(env, `pub/${uidI}/svipInvAt/sx_${itemI}`, Date.now());
+    try { await catatReset(env, "kirim_item", uid, uidI + " " + itemI + " " + hariI + "h"); } catch { /* log opsional */ }
+    return json({ ok: 1, uid: uidI, item: itemI, hari: hariI, sampai: sampaiI });
+  }
+
   // Panel: reset coin (dan diamond kalau gem) untuk satu user / semua user.
   if (op === "reset" || op === "reset_all" || op === "reset_gem" || op === "reset_gem_all") {
     const gem = op.includes("gem");
@@ -5975,6 +5992,39 @@ export default {
           return json({ ok: 1 });
         }
         return json({ ok: 0, e: "Aksi tidak dikenal" }, 400);
+      } catch (e) {
+        return json({ ok: 0, e: String(e?.message ?? e).slice(0, 160) }, 500);
+      }
+    }
+    if (url.pathname.toLowerCase() === "/gamewin") {
+      // Pemenang game Top 1/2/3 untuk banner terbang di HP.
+      // Dibaca lewat server (akun layanan) supaya banner tetap muncul walau
+      // aturan baca RTDB untuk simpul gameWinFeed belum diperbarui.
+      const sesiW = await sesiDariToken(url.searchParams.get("t") ?? "");
+      if (!sesiW) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
+      const sejakW = Number(url.searchParams.get("sejak") || 0) || 0;
+      try {
+        const semuaW = (await cfgRtdbSa(env, "gameWinFeed")) || {};
+        const itemsW = [];
+        const kiniW = Date.now();
+        for (const [kW, vW] of Object.entries(semuaW)) {
+          const oW = vW || {};
+          const tW = Number(oW.ts || 0);
+          if (!tW) continue;
+          if (sejakW > 0 && tW <= sejakW) continue;
+          if (kiniW - tW > 10 * 60 * 1000) continue;
+          itemsW.push({
+            id: kW,
+            name: String(oW.name || "Player").slice(0, 24),
+            av: String(oW.av || "").slice(0, 300),
+            amount: Number(oW.amount || 0),
+            game: String(oW.game || ""),
+            pos: Number(oW.pos || 0),
+            ts: tW,
+          });
+        }
+        itemsW.sort((a, b) => a.ts - b.ts);
+        return json({ ok: 1, items: itemsW.slice(-12) });
       } catch (e) {
         return json({ ok: 0, e: String(e?.message ?? e).slice(0, 160) }, 500);
       }

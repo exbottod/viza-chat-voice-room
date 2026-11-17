@@ -72,7 +72,11 @@ object GameBanner {
     private val antre = mutableStateListOf<Item>()
     private val pernah = mutableSetOf<String>()
     private var mulai = false
+    private var pollMulai = false
     private var regBanner: Reg? = null
+
+    /** Alamat server VPS sendiri (jalur cadangan banner). */
+    private const val VPS = "https://viza.43-156-99-4.sslip.io"
 
     private fun tandai(id: String) {
         pernah.add(id)
@@ -155,6 +159,113 @@ object GameBanner {
             Rtdb.listen(Rtdb.ref(NODE).limitToLast(15), null, baca)
         } catch (e: Exception) {
         }
+        // Jalur kedua lewat server VPS: tetap jalan walau aturan RTDB menolak.
+        mulaiPoll()
+    }
+
+    /** Masukkan satu kejadian ke antrean (dipakai RTDB dan jalur cadangan VPS). */
+    private fun masukAntre(
+        id: String,
+        nama: String,
+        foto: String,
+        jumlah: Long,
+        game: String,
+        pos: Int,
+        ts: Long,
+    ) {
+        if (id.isBlank()) return
+        if (pernah.contains(id)) return
+        tandai(id)
+        if (jumlah <= 0L) return
+        if (ts > 0L && System.currentTimeMillis() - ts > 60_000L) return
+        antre.add(
+            Item(
+                id = id,
+                name = nama.ifBlank { "Player" },
+                av = foto,
+                amount = jumlah,
+                game = game.lowercase(),
+                pos = pos,
+                ts = ts,
+            ),
+        )
+    }
+
+    /**
+     * Jalur cadangan: tanya server VPS kalau aturan baca RTDB belum diperbarui,
+     * supaya banner pemenang game tetap terbawa ke HP.
+     */
+    fun mulaiPoll() {
+        if (pollMulai) return
+        pollMulai = true
+        val t = Thread {
+            var sejak = 0L
+            while (pollMulai) {
+                try {
+                    val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+                    if (uid.isNullOrBlank()) {
+                        Thread.sleep(3000L)
+                        continue
+                    }
+                    var token = ""
+                    try {
+                        token = com.google.firebase.auth.FirebaseAuth.getInstance()
+                            .currentUser?.getIdToken(false)?.getResult()?.token.orEmpty()
+                    } catch (e: Exception) {
+                        token = ""
+                    }
+                    if (token.isBlank()) {
+                        Thread.sleep(3000L)
+                        continue
+                    }
+                    if (sejak <= 0L) sejak = System.currentTimeMillis() - 20_000L
+                    val alamat = VPS + "/gamewin?t=" + java.net.URLEncoder.encode(token, "UTF-8") +
+                        "&sejak=" + sejak
+                    val conn = (java.net.URL(alamat).openConnection() as java.net.HttpURLConnection).apply {
+                        connectTimeout = 8000
+                        readTimeout = 8000
+                        setRequestProperty("Cache-Control", "no-cache")
+                    }
+                    val kode = conn.responseCode
+                    val teks = if (kode in 200..299) {
+                        conn.inputStream.bufferedReader().use { it.readText() }
+                    } else {
+                        conn.errorStream?.bufferedReader()?.use { it.readText() }.orEmpty()
+                    }
+                    if (kode in 200..299) {
+                        val o = org.json.JSONObject(teks)
+                        val arr = o.optJSONArray("items")
+                        if (arr != null) {
+                            for (i in 0 until arr.length()) {
+                                val it = arr.optJSONObject(i) ?: continue
+                                val ts = it.optLong("ts", 0L)
+                                if (ts > sejak) sejak = ts
+                                masukAntre(
+                                    id = it.optString("id"),
+                                    nama = it.optString("name"),
+                                    foto = it.optString("av"),
+                                    jumlah = it.optLong("amount", 0L),
+                                    game = it.optString("game"),
+                                    pos = it.optInt("pos", 0),
+                                    ts = ts,
+                                )
+                            }
+                        }
+                    }
+                } catch (e: InterruptedException) {
+                    pollMulai = false
+                } catch (e: Exception) {
+                    // Server belum menjawab: coba lagi nanti, diam saja.
+                }
+                try {
+                    Thread.sleep(3000L)
+                } catch (e: InterruptedException) {
+                    pollMulai = false
+                }
+            }
+        }
+        t.isDaemon = true
+        t.start()
     }
 
     /** Ambil satu banner dari antrean. */

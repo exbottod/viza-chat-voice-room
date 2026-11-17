@@ -1,2 +1,5 @@
-• Perbaiki impor FontWeight di tombol tambah emot
-• Tambah emot dari dalam room: unggah berkas atau tautan
+• Banner pemenang game kini tetap muncul walau izin baca database Firebase belum diperbarui: data diambil lewat server VPS sendiri sebagai jalur kedua
+• Izin baca gameWinFeed ditambahkan di aturan database
+• Panel: kirim lencana, medali, frame, banner, dan efek masuk ke user sekarang lewat server, jadi staf manager/admin tidak lagi kena PERMISSION_DENIED
+• Emot dari berkas atau tautan di tab emot room tetap seperti versi sebelumnya
+• Saklar "Efek game" di Blok Efek tetap bisa mematikan banner pemenang game

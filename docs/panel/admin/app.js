@@ -2755,7 +2755,8 @@ async function gambarKirim() {
         store: $("lncToko").classList.contains("on"),
         dibuatOleh: (auth.currentUser && auth.currentUser.email) || "", dibuat: Date.now()
       });
-      await dSet(dRef(rtdb, `pub/${uid}/svipInv/sx_${idItem}`), Date.now() + hari * 86400000);
+      // Lewat server: aturan /pub menolak tulisan staf panel dari browser.
+      await walletAdmin({ op: "kirim_item", uid, item: idItem, hari });
       hasil.textContent = "Lencana " + nama + " terkirim, berlaku " + hari + " hari.";
       catatLog("Kirim lencana", nama + " ke " + $("lncUser").value.trim());
       toast("Lencana dibuat dan dikirim");
@@ -2776,8 +2777,8 @@ async function gambarKirim() {
     try {
       const uid = await uidDariMasukan($("kUser").value);
       if (!uid) throw new Error("ID user tidak ditemukan");
-      const sampai = Date.now() + hari * 86400000;
-      await dSet(dRef(rtdb, `pub/${uid}/svipInv/sx_${idItem}`), sampai);
+      // Lewat server supaya staf panel tidak kena PERMISSION_DENIED.
+      await walletAdmin({ op: "kirim_item", uid, item: idItem, hari });
       const nama = item.find((x) => x.id === idItem)?.name || idItem;
       catatLog("Kirim item", `${nama} · ${hari} hari · ke ${uid}`);
       $("kHasil").textContent = `Terkirim: ${nama}, ${hari} hari.`;

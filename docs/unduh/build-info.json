@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.206",
-  "catatan": "• Banner Koin banyak ikut geseran banner atas",
-  "ukuran_apk": 54979300,
-  "sha256_apk": "9bd5ac3c77cc819814c8549753dff52718797782546761cf95f1016a8af8448f",
+  "versi": "1.0.207",
+  "catatan": "• Halaman Koin banyak: tampilan emas ungu dan periode lalu berisi\n• Panel reward room: perbaiki unggah banner dan tabel",
+  "ukuran_apk": 54983159,
+  "sha256_apk": "d6161ab121d1cd36b38a6469a16ea99c523c5085b83dc5f624d269fff37d1f03",
   "abis": {
     "arm64": {
-      "ukuran": 54979300,
-      "sha256": "9bd5ac3c77cc819814c8549753dff52718797782546761cf95f1016a8af8448f"
+      "ukuran": 54983159,
+      "sha256": "d6161ab121d1cd36b38a6469a16ea99c523c5085b83dc5f624d269fff37d1f03"
     },
     "armv7": {
-      "ukuran": 53130447,
-      "sha256": "7bd48f9f253a11a523c20c8615e2520da417c78d0ca3ef44d21bf1944dbc8330"
+      "ukuran": 53134317,
+      "sha256": "801a9ddfcab67258d76cd7e10d013c6ea4b1b6973aecf5349ae8c156cee9f0f9"
     },
     "universal": {
-      "ukuran": 73395261,
-      "sha256": "bede19d8957cd6920185a00ee127fc430f94e6747f1414fde5db707d60488959"
+      "ukuran": 73399138,
+      "sha256": "acb5ff41ccfcd7ef8149aaa5924a88a44de16495cf1baf53ba090fc90426a957"
     }
   }
 }

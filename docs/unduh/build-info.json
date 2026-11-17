@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.198",
-  "catatan": "• Logo loading diperkecil lagi (34dp) supaya seperti loading bawaan aplikasi, tidak menutupi layar",
-  "ukuran_apk": 54776153,
-  "sha256_apk": "e8b059e42306b212a321ab2c119532a3506ba542a203683325c0b58ea42e5f5b",
+  "versi": "1.0.199",
+  "catatan": "• Semua loading bawaan (bulat) diganti loading Viza yang kecil, termasuk saat menunggu data di room, p",
+  "ukuran_apk": 54776155,
+  "sha256_apk": "76e95e3035867da37dc23694555ba2e3aa679eafeac813b3393e1385cb136922",
   "abis": {
     "arm64": {
-      "ukuran": 54776153,
-      "sha256": "e8b059e42306b212a321ab2c119532a3506ba542a203683325c0b58ea42e5f5b"
+      "ukuran": 54776155,
+      "sha256": "76e95e3035867da37dc23694555ba2e3aa679eafeac813b3393e1385cb136922"
     },
     "armv7": {
-      "ukuran": 52927294,
-      "sha256": "20751ed873382b0c14edb8ba19852701058fa0673527a32f39cd46d8e9f192ad"
+      "ukuran": 52927304,
+      "sha256": "a7be5759cb3002a028b8a103ab8bb90c89051513138865f9916952e8b3a00e9b"
     },
     "universal": {
-      "ukuran": 73192119,
-      "sha256": "69b220c44265b988c085d6851bafecf8b18304345b470441e27951886fc64b6d"
+      "ukuran": 73192112,
+      "sha256": "fcb783b4921c801c64fd229b04e9f2c3faabcf2f9bfc064ac29f27ccb4a4ca1e"
     }
   }
 }

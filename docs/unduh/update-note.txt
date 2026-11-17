@@ -1,1 +1,1 @@
-• Logo loading diperkecil lagi (34dp) supaya seperti loading bawaan aplikasi, tidak menutupi layar
+• Semua loading bawaan (bulat) diganti loading Viza yang kecil, termasuk saat menunggu data di room, p

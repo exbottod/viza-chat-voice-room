@@ -229,9 +229,12 @@ object UserCache {
             gender = new.gender.ifBlank { old.gender },
             // FIX on/off: nilai kosong (mematikan) tidak ditimpa nilai lama lagi.
             frame = new.frame,
-            badge = new.badge,
+            // Lencana dan medal: kalau data baru kosong karena jaringan/refresh
+            // belum membawa isinya, pakai yang lama dulu supaya tidak sempat
+            // hilang sendiri lalu muncul lagi (kedip).
+            badge = new.badge.ifBlank { old.badge },
             bubble = new.bubble,
-            medals = new.medals,
+            medals = new.medals.ifBlank { old.medals },
             vip = if (new.vip == 0 && vipActive(old.vip, old.vipUntil)) old.vip else new.vip,
             vipUntil = if (new.vip == 0 && vipActive(old.vip, old.vipUntil)) old.vipUntil else new.vipUntil,
             svip = new.svip,

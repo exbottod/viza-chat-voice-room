@@ -941,7 +941,9 @@ fun GiftSvga(
 ) {
     val endRef = rememberUpdatedState(onEnd)
     // 0 = coba dari URL, 1 = pakai byte hasil unduhan, 2 = gagal total.
-    var mode by remember(url) { mutableStateOf(0) }
+    // Kalau byte-nya sudah pernah diunduh, langsung pakai byte supaya gift yang
+    // sama langsung tampil (dulu selalu mulai dari URL lagi, jadi kadang hilang).
+    var mode by remember(url) { mutableStateOf(if (svgaCache[url] != null) 1 else 0) }
     var bytes by remember(url) { mutableStateOf(svgaCache[url]) }
 
     LaunchedEffect(url, mode) {
@@ -1031,6 +1033,10 @@ fun GiftSvga(
                         }
                     }
                 }
+            },
+            onRelease = { v ->
+                try { v.stopAnimation() } catch (e: Exception) { }
+                try { v.clear() } catch (e: Exception) { }
             },
         )
     }

@@ -163,16 +163,6 @@ fun RoomScreen(
     var kickedOut by remember { mutableStateOf(false) }
     // Loading singkat saat masuk room, sampai kursi dan chat tampil.
     var siapRoom by remember { mutableStateOf(false) }
-    androidx.compose.runtime.LaunchedEffect(roomId) {
-        siapRoom = false
-        // Begitu kursi room terbaca, loading langsung dilepas supaya room cepat
-        // normal; kalau jaringan lambat, paling lambat 1,2 detik tetap dibuka.
-        kotlinx.coroutines.withTimeoutOrNull(1200L) {
-            while (rawSeats.isEmpty()) kotlinx.coroutines.delay(80)
-        }
-        kotlinx.coroutines.delay(120)
-        siapRoom = true
-    }
     LaunchedEffect(roomId, myUid) {
         val reg = Rtdb.listen(Rtdb.ref("members/" + roomId + "/" + myUid)) { snap ->
             if (snap.exists()) {
@@ -200,6 +190,16 @@ fun RoomScreen(
     var members by remember { mutableStateOf<Set<String>>(emptySet()) }
     var locks by remember { mutableStateOf<Set<Int>>(emptySet()) }
     var rawSeats by remember { mutableStateOf<Map<Int, Seat>>(emptyMap()) }
+    androidx.compose.runtime.LaunchedEffect(roomId) {
+        siapRoom = false
+        // Begitu kursi room terbaca, loading langsung dilepas supaya room cepat
+        // normal; kalau jaringan lambat, paling lambat 1,2 detik tetap dibuka.
+        kotlinx.coroutines.withTimeoutOrNull(1200L) {
+            while (rawSeats.isEmpty()) kotlinx.coroutines.delay(80)
+        }
+        kotlinx.coroutines.delay(120)
+        siapRoom = true
+    }
     var micPoints by remember { mutableStateOf<Map<Int, Long>>(emptyMap()) }
     var followed by remember { mutableStateOf(false) }
     var showRank by remember { mutableStateOf(false) }

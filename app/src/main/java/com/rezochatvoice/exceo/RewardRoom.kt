@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -250,9 +251,10 @@ fun RewardRoomPartyBanner(onClick: () -> Unit, modifier: Modifier = Modifier) {
     LaunchedEffect(Unit) { RewardRoomApi.muatTampilan() }
     val url = RewardRoomApi.bannerUrl
     Box(
+        // Banner memakai rasio 3:1 sesuai gambar yang diunggah owner.
         modifier
             .fillMaxWidth()
-            .height(70.dp)
+            .aspectRatio(3f)
             .clip(RoundedCornerShape(14.dp))
             .clickable { onClick() },
     ) {
@@ -324,12 +326,12 @@ fun RewardRoomScreen(myUid: String, onClose: () -> Unit) {
                 model = latar,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxWidth().height(230.dp).align(Alignment.TopCenter),
+                modifier = Modifier.fillMaxWidth().aspectRatio(3f).align(Alignment.TopCenter),
             )
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .height(230.dp)
+                    .aspectRatio(3f)
                     .align(Alignment.TopCenter)
                     .background(Brush.verticalGradient(listOf(Color(0x66000000), WarnaBg))),
             )

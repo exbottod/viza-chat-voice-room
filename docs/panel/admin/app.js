@@ -4132,7 +4132,7 @@ function renderReward(cfg, lalu) {
         <div class="grid3" style="margin-top:8px">
           <div class="catatan">Banner: <span id="rwBannerKet">${cfg.banner ? "sudah diunggah" : "belum diunggah"}</span></div>
           <div class="catatan">Ikon: <span id="rwIkonKet">${cfg.ikon ? "sudah diunggah" : "belum diunggah"}</span></div>
-          <div class="catatan">Rasio banner 720x214, ikon 211x130.</div>
+          <div class="catatan">Rasio banner 3:1 (misal 1080x360), ikon 211x130.</div>
         </div>
         <div id="rwProgres" class="catatan" style="margin-top:6px"></div>
 

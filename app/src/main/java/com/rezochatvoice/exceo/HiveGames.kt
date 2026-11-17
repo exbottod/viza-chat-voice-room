@@ -370,7 +370,7 @@ fun HiveHubScreen(uid: String, onClose: () -> Unit) {
                     }
                     if (loading) {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = Gold)
+                            VizaLoading(ukuran = 26.dp)
                         }
                     } else {
                         if (err.isNotBlank()) {
@@ -582,7 +582,7 @@ fun HivePlayScreen(uid: String, game: HiveGames.Game, onClose: () -> Unit) {
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         if (!started) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Gold)
+                VizaLoading(ukuran = 26.dp)
             }
         }
         if (err.isNotBlank()) {
@@ -872,7 +872,7 @@ private fun TopThreeCard(
         )
         Spacer(Modifier.height(10.dp))
         if (loading && list.isEmpty()) {
-            CircularProgressIndicator(color = Gold, modifier = Modifier.size(22.dp))
+            VizaLoading(ukuran = 22.dp)
         } else if (list.isEmpty()) {
             Text(tr("Belum ada pemenang"), color = Color.White, fontSize = 12.sp)
         } else {

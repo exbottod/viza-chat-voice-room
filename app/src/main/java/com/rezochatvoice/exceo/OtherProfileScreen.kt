@@ -280,7 +280,7 @@ fun OtherProfileScreen(
         val u = user
         if (u == null) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                if (loading) CircularProgressIndicator(color = Gold)
+                if (loading) VizaLoading(ukuran = 26.dp)
                 else Text(tr("Profil tidak ditemukan"), color = Color(0xFFBDBDBD))
             }
         } else {
@@ -451,7 +451,7 @@ fun OtherProfileScreen(
                 val list = moments
                     when {
                         list == null -> Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = Gold)
+                            VizaLoading(ukuran = 26.dp)
                         }
                         list.isEmpty() -> PlaceholderCard("Belum ada momen")
                         else -> list.forEach { m ->

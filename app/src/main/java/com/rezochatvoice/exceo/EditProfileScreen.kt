@@ -295,7 +295,7 @@ fun EditProfileScreen(
 
         if (busy) {
             Box(Modifier.fillMaxSize().background(Color(0x66000000)), Alignment.Center) {
-                CircularProgressIndicator(color = Color.White)
+                VizaLoading(ukuran = 26.dp)
             }
         }
     }

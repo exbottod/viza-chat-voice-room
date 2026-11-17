@@ -710,7 +710,7 @@ fun ChatScreen(myUid: String, myName: String, myId: String, other: PublicUser, o
                     colors = goldFieldColors(),
                 )
                 IconButton(onClick = { if (!kirimFoto) pilihFoto.launch("image/*") }, enabled = !kirimFoto) {
-                    if (kirimFoto) CircularProgressIndicator(Modifier.size(20.dp), color = Gold, strokeWidth = 2.dp)
+                    if (kirimFoto) VizaLoading(ukuran = 20.dp)
                     else Icon(Icons.Filled.Add, "Kirim foto", tint = Gold)
                 }
                 IconButton(onClick = { send() }) {

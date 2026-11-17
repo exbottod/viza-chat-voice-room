@@ -371,7 +371,7 @@ fun RoomScreen(
     Box(Modifier.fillMaxSize().blockTouches()) {
         RoyalBackground()
         if (r == null) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Gold) }
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { VizaLoading(ukuran = 26.dp) }
             Text(
                 tr("Keluar"),
                 color = GoldLight,

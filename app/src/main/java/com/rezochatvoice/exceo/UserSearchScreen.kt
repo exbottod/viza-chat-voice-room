@@ -172,7 +172,7 @@ fun UserSearchScreen(myUserId: String, onBack: () -> Unit, onEnterRoom: (RoomInf
 
             if (loading) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center) {
-                    CircularProgressIndicator(color = Gold)
+                    VizaLoading(ukuran = 26.dp)
                 }
             }
             message?.let {

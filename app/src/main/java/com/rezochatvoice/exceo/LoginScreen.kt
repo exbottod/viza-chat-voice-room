@@ -261,10 +261,7 @@ fun LoginScreen(
                     contentAlignment = Alignment.Center,
                 ) {
                     if (loading) {
-                        CircularProgressIndicator(
-                            color = Color(0xFF10231C), strokeWidth = 2.4.dp,
-                            modifier = Modifier.size(22.dp),
-                        )
+                        VizaLoading(ukuran = 22.dp)
                     } else {
                         Text(tr("Login"), color = Color(0xFF10231C), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
@@ -293,10 +290,7 @@ fun LoginScreen(
                     onClick = { if (!loading) onGoogleClick() },
                 ) {
                     if (loading) {
-                        CircularProgressIndicator(
-                            color = Color(0xFF1F1F1F), strokeWidth = 2.4.dp,
-                            modifier = Modifier.size(22.dp),
-                        )
+                        VizaLoading(ukuran = 22.dp)
                     } else {
                         GoogleLogo(Modifier.size(22.dp))
                     }
@@ -307,10 +301,7 @@ fun LoginScreen(
                     onClick = { if (!loading) onFacebookClick() },
                 ) {
                     if (loading) {
-                        CircularProgressIndicator(
-                            color = Color(0xFF1F1F1F), strokeWidth = 2.4.dp,
-                            modifier = Modifier.size(22.dp),
-                        )
+                        VizaLoading(ukuran = 22.dp)
                     } else {
                         IkonFacebook()
                     }
@@ -370,10 +361,7 @@ fun LoginScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         if (loading) {
-                            CircularProgressIndicator(
-                                color = Color(0xFF10231C), strokeWidth = 2.4.dp,
-                                modifier = Modifier.size(22.dp),
-                            )
+                            VizaLoading(ukuran = 22.dp)
                         } else {
                             Text(tr("Login"), color = Color(0xFF10231C), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         }
@@ -431,10 +419,7 @@ fun LoginScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         if (loading) {
-                            CircularProgressIndicator(
-                                color = Color.White, strokeWidth = 2.4.dp,
-                                modifier = Modifier.size(22.dp),
-                            )
+                            VizaLoading(ukuran = 22.dp)
                         } else {
                             Text(
                                 tr("LENGKAPI PENDAFTARAN"),
@@ -490,10 +475,7 @@ fun LoginScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         if (menunggu) {
-                            CircularProgressIndicator(
-                                color = Color(0xFF10231C), strokeWidth = 2.4.dp,
-                                modifier = Modifier.size(22.dp),
-                            )
+                            VizaLoading(ukuran = 22.dp)
                         } else {
                             Text(tr("Lanjut"), color = Color(0xFF10231C), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         }
@@ -527,10 +509,7 @@ fun LoginScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         if (loading) {
-                            CircularProgressIndicator(
-                                color = Color(0xFF10231C), strokeWidth = 2.4.dp,
-                                modifier = Modifier.size(22.dp),
-                            )
+                            VizaLoading(ukuran = 22.dp)
                         } else {
                             Text(tr("Selanjutnya"), color = Color(0xFF10231C), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         }

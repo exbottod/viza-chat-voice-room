@@ -208,7 +208,7 @@ fun RoomTypingBar(
             contentAlignment = Alignment.Center,
         ) {
             if (imgBusy) {
-                CircularProgressIndicator(Modifier.size(18.dp), color = Gold, strokeWidth = 2.dp)
+                VizaLoading(ukuran = 18.dp)
             } else {
                 Image(
                     painterResource(R.drawable.ic_chat_image),

@@ -758,7 +758,7 @@ fun UserProfileSheet(
                 val u = user
                 if (u == null) {
                     Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
-                        if (loading) CircularProgressIndicator(color = Gold)
+                        if (loading) VizaLoading(ukuran = 26.dp)
                         else Text(tr("Profil tidak ditemukan"), color = Color(0xFFBDBDBD))
                     }
                 } else {
@@ -976,7 +976,7 @@ fun FollowListScreen(
         HorizontalDivider(color = Color(0xFFF2F2F2))
         when {
             list == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Color(0xFFFDD835))
+                VizaLoading(ukuran = 26.dp)
             }
             list!!.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(tr(if (mode == FOLLOW_MODE_FANS) "Belum ada fans" else "Belum mengikuti siapa pun"), color = Color(0xFF9E9E9E))

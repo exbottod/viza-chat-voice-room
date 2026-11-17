@@ -307,7 +307,7 @@ fun WaveGamesScreen(
                     }
                     if (loading) {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = Gold)
+                            VizaLoading(ukuran = 26.dp)
                         }
                     } else {
                         if (err.isNotBlank()) {
@@ -409,7 +409,7 @@ fun WavePlayScreen(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    if (err.isBlank()) CircularProgressIndicator(color = Gold)
+                    if (err.isBlank()) VizaLoading(ukuran = 26.dp)
                     else Text(err, color = Color(0xFFFF6B6B), fontSize = 14.sp, textAlign = TextAlign.Center)
                     Spacer(Modifier.height(16.dp))
                     Text(

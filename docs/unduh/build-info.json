@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.205",
-  "catatan": "• Banner reward room pakai rasio 3:1",
-  "ukuran_apk": 54979041,
-  "sha256_apk": "710fb43b5bd915b68e2e8da8f5cffb5cf4fd30168fbdc8e92cd9c6aa642cd81c",
+  "versi": "1.0.206",
+  "catatan": "• Banner Koin banyak ikut geseran banner atas",
+  "ukuran_apk": 54979300,
+  "sha256_apk": "9bd5ac3c77cc819814c8549753dff52718797782546761cf95f1016a8af8448f",
   "abis": {
     "arm64": {
-      "ukuran": 54979041,
-      "sha256": "710fb43b5bd915b68e2e8da8f5cffb5cf4fd30168fbdc8e92cd9c6aa642cd81c"
+      "ukuran": 54979300,
+      "sha256": "9bd5ac3c77cc819814c8549753dff52718797782546761cf95f1016a8af8448f"
     },
     "armv7": {
-      "ukuran": 53130194,
-      "sha256": "8c896963b5bb979660609316565ecf118ed33cbd729a4989c6c56f84359a6ab8"
+      "ukuran": 53130447,
+      "sha256": "7bd48f9f253a11a523c20c8615e2520da417c78d0ca3ef44d21bf1944dbc8330"
     },
     "universal": {
-      "ukuran": 73395012,
-      "sha256": "b1169d0a0d963f6d2370386ed3c869e657b639f1ff77ae18e4db04dfba5950ad"
+      "ukuran": 73395261,
+      "sha256": "bede19d8957cd6920185a00ee127fc430f94e6747f1414fde5db707d60488959"
     }
   }
 }

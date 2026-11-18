@@ -1,1 +1,2 @@
-• Aturan Keanggotaan kamar: grup, tabel level, metode poin, gabung/keluar
+• Logo dan level room tampil di sebelah ID room pada header room
+• Aset logo level kamar (55 tingkat) sudah terpasang, dipakai di Level kamar dan Daftar Poin Kamar

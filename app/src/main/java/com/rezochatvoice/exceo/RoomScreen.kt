@@ -208,6 +208,14 @@ fun RoomScreen(
         siapRoom = true
     }
     var micPoints by remember { mutableStateOf<Map<Int, Long>>(emptyMap()) }
+    // Poin kamar (RTDB): dipakai untuk menampilkan level room di sebelah ID room.
+    var poinKamar by remember { mutableStateOf(0L) }
+    androidx.compose.runtime.DisposableEffect(roomId) {
+        val regPoin = Rtdb.listen(Rtdb.ref("roomPoin/" + roomId + "/total")) { snap ->
+            poinKamar = snap.getValue(Long::class.java) ?: 0L
+        }
+        onDispose { regPoin.remove() }
+    }
     // Pengaturan room (RTDB roomCfg): mic bebas, kalkulator poin, bicara publik.
     var cfgMicBebas by remember { mutableStateOf(true) }
     var cfgPoin by remember { mutableStateOf(true) }
@@ -564,11 +572,22 @@ fun RoomScreen(
                             r.name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp,
                             maxLines = 1, overflow = TextOverflow.Visible, softWrap = false,
                         )
-                        Text(
-                            tr("ID:") + (ownerUserId ?: "..."),
-                            color = Color(0xFFBDBDBD), fontSize = 11.sp,
-                            maxLines = 1, overflow = TextOverflow.Visible, softWrap = false,
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                tr("ID:") + (ownerUserId ?: "..."),
+                                color = Color(0xFFBDBDBD), fontSize = 11.sp,
+                                maxLines = 1, overflow = TextOverflow.Visible, softWrap = false,
+                            )
+                            Spacer(Modifier.width(5.dp))
+                            // Logo dan level room di sebelah ID room.
+                            RoomLevelIcon(RoomPoin.level(poinKamar), 14.dp)
+                            Spacer(Modifier.width(3.dp))
+                            Text(
+                                "Lv." + RoomPoin.level(poinKamar),
+                                color = GoldLight, fontSize = 11.sp,
+                                maxLines = 1, softWrap = false,
+                            )
+                        }
                     }
                     Spacer(Modifier.width(10.dp))
                 }

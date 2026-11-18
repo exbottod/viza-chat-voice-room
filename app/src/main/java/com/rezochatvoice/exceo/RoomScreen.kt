@@ -2511,6 +2511,107 @@ private fun RmSettings(r: RoomInfo, awalSub: Int = 0, onBlacklist: () -> Unit, o
         return
     }
 
+    if (sub == 5) {
+        var terbuka by remember { mutableStateOf(-1) }
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "\u2039",
+                color = Color.White, fontSize = 26.sp,
+                modifier = Modifier.clickable { sub = 3 }.padding(horizontal = 6.dp),
+            )
+            Text("Keanggotaan", color = Color.White, fontSize = 19.sp, modifier = Modifier.weight(1f))
+        }
+        Spacer(Modifier.height(10.dp))
+        // Tabel level kamar: (level, admin, anggota). Sesuai referensi owner.
+        val tabelLevel = listOf(
+            Triple(1, 10, 30), Triple(2, 10, 35), Triple(3, 10, 40), Triple(4, 11, 45), Triple(5, 11, 50),
+            Triple(6, 12, 60), Triple(7, 12, 65), Triple(8, 13, 70), Triple(9, 13, 75), Triple(10, 14, 80),
+            Triple(11, 14, 90), Triple(12, 15, 100), Triple(13, 16, 110), Triple(14, 17, 120), Triple(15, 18, 130),
+            Triple(16, 19, 150), Triple(17, 20, 170), Triple(18, 21, 190), Triple(19, 22, 210), Triple(20, 23, 230),
+            Triple(21, 25, 260), Triple(22, 27, 290), Triple(23, 29, 320), Triple(24, 31, 350), Triple(25, 33, 380),
+            Triple(26, 35, 420), Triple(27, 37, 460), Triple(28, 39, 500), Triple(29, 42, 550), Triple(30, 45, 600),
+        )
+        val aturan = listOf(
+            "1. Apa Itu Grup Keanggotaan Kamar?" to
+                "Grup keanggotaan kamar adalah grup khusus yang dimiliki oleh setiap kamar. Satu pengguna dapat menjadi anggota dari beberapa kamar, dan bekerja keras dengan anggota yang berpikiran sama untuk meningkatkan grup keanggotaan, mendapatkan kamar hadiah yang kaya dan hak istimewa serta hadiah pribadi",
+            "2. Apa Hak Istimewa & Hadiah Yang Didapatkan di Kamar?" to "#TABEL",
+            "3. Apa Keistimewaan & Hadiah Yang Dapat Diperoleh Anggota Kamar?" to
+                "Lebih banyak hadiah dan hak istimewa anggota sedang diperbarui terus menerus..",
+            "4.Metode Poin" to "#POIN",
+            "5. Bergabung/Keluar dari keanggotaan kamar" to
+                "Gabung\n1. Pengguna dapat mengklik gabung untuk bergabung dengan grup keanggotaan di bilah informasi di bagian bawah kamar\n2. Pemilik kamar dapat menetapkan ketentuan yang harus diikuti oleh grup keanggotaan: bergabung secara langsung, bergabung setelah disetujui oleh pemilik rumah atau admin, dan melarang bergabung\n\nLog out\n1. Pengguna dapat keluar dari grup keanggotaan saat ini di kamar yang sesuai\n2. Setelah keluar dari grup keanggotaan, semua poin dan manfaat pengguna saat ini akan dihapus, dan akan dihitung ulang saat bergabung kembali dengan grup keanggotaan.",
+        )
+        LazyColumn(Modifier.fillMaxWidth().heightIn(max = 460.dp)) {
+            items(aturan.size) { i ->
+                val (tanya, jawab) = aturan[i]
+                Column(
+                    Modifier.fillMaxWidth().clickable { terbuka = if (terbuka == i) -1 else i }.padding(vertical = 12.dp),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(tanya, color = Color(0xFFEDEDED), fontSize = 16.sp, modifier = Modifier.weight(1f))
+                        Text(if (terbuka == i) "\u2303" else "\u2304", color = Color(0xFF9A9A9A), fontSize = 18.sp)
+                    }
+                    if (terbuka == i) {
+                        Spacer(Modifier.height(8.dp))
+                        if (jawab == "#TABEL") {
+                            Text("Hadiah Peningkatan Kamar:", color = Color(0xFFBDBDBD), fontSize = 13.sp)
+                            Spacer(Modifier.height(6.dp))
+                            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Color(0xFFEFEAFB))) {
+                                Row(Modifier.fillMaxWidth().background(Color(0xFFF2B72B)).padding(vertical = 8.dp)) {
+                                    for (h in listOf("Level", "Admin", "Anggota")) {
+                                        Text(h, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+                                    }
+                                }
+                                for ((lv, ad, ang) in tabelLevel) {
+                                    Row(Modifier.fillMaxWidth().padding(vertical = 5.dp)) {
+                                        Text(lv.toString(), color = Color(0xFF6A3FD0), fontSize = 12.sp, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+                                        Text(ad.toString(), color = Color(0xFF6A3FD0), fontSize = 12.sp, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+                                        Text(ang.toString(), color = Color(0xFF6A3FD0), fontSize = 12.sp, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+                                    }
+                                }
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                "Note: Jumlah admin dan jumlah anggota akan bertambah setiap kali naik satu tingkat, dan logo tingkat kamar serta tema ruang akan ditingkatkan setiap lima tingkat.\n\nHadiah daftar poin kamar bulanan\nTOP1: Border Sampul Kamar (15 hari), Background Kamar (15 hari), Ubah Label (3 kali)\nTOP2: Border Sampul Kamar (15 hari), Background Kamar (15 hari), Ubah Label (2 kali)\nTOP3: Border Sampul Kamar (15 hari), Background Kamar (15 hari), Ubah Label (1 kali)\nTOP4-10: Ubah Label (1 kali)\n\nLebih banyak hadiah kamar dan hak istimewa sedang diperbarui terus menerus..",
+                                color = Color(0xFFBDBDBD), fontSize = 12.sp, lineHeight = 18.sp,
+                            )
+                        } else if (jawab == "#POIN") {
+                            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Color(0xFFEFEAFB))) {
+                                Row(Modifier.fillMaxWidth().background(Color(0xFFF2B72B)).padding(vertical = 8.dp)) {
+                                    for (h in listOf("Metode", "Batas harian", "Non-anggota", "Anggota")) {
+                                        Text(h, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+                                    }
+                                }
+                                val baris = listOf(
+                                    listOf("Kamar aktif", "10 menit", "81000 poin/menit", "162000 poin/menit"),
+                                    listOf("Naik Mic Kamar", "10 menit", "81000 poin/menit", "162000 poin/menit"),
+                                    listOf("Konsumsi Kamar", "Tak terbatas", "1 poin/koin emas", "2 poin/koin emas"),
+                                )
+                                for (b in baris) {
+                                    Row(Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
+                                        for (c in b) {
+                                            Text(c, color = Color(0xFF6A3FD0), fontSize = 11.sp, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+                                        }
+                                    }
+                                }
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                "Note\n1. Level keanggotaan pengguna perlu ditingkatkan dari level 1 setelah bergabung dengan anggota kamar.\n2. Koin emas yang dikonsumsi di kamar perlu diubah menjadi aliran Host untuk menghitung poin secara proporsional. (Contoh: hadiah cashback 10 koin emas = 1 aliran koin)",
+                                color = Color(0xFFBDBDBD), fontSize = 12.sp, lineHeight = 18.sp,
+                            )
+                        } else {
+                            Text(jawab, color = Color(0xFFBDBDBD), fontSize = 13.sp, lineHeight = 19.sp)
+                        }
+                    }
+                }
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        OutlineButton("Kembali") { sub = 3 }
+        return
+    }
+
     if (sub == 3 || sub == 4) {
         val judulHalaman = if (sub == 4) "Daftar Kontribusi Anggota" else "Daftar Poin Kamar"
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -2524,6 +2625,14 @@ private fun RmSettings(r: RoomInfo, awalSub: Int = 0, onBlacklist: () -> Unit, o
                 "Lv." + RoomPoin.level(poinTotal),
                 color = GoldLight, fontSize = 14.sp, fontWeight = FontWeight.Bold,
             )
+            if (sub == 3) {
+                Spacer(Modifier.width(10.dp))
+                Box(
+                    Modifier.size(26.dp).clip(CircleShape).border(1.5.dp, Color(0xFFBDBDBD), CircleShape)
+                        .clickable { sub = 5 },
+                    contentAlignment = Alignment.Center,
+                ) { Text("?", color = Color(0xFFEDEDED), fontSize = 14.sp, fontWeight = FontWeight.Bold) }
+            }
         }
         Spacer(Modifier.height(12.dp))
 

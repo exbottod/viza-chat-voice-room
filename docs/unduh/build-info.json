@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.231",
-  "catatan": "• ID unik kiriman panel bisa dicari di pencarian",
-  "ukuran_apk": 55010346,
-  "sha256_apk": "c8628d653b95f1c2465f1d224e27000fe259ec0d6f7973c36e3e8f3174b03985",
+  "versi": "1.0.232",
+  "catatan": "• Banner efek masuk tidak lagi terbang 2-3 kali\n• Ralat kompilasi: rujukan done sebelum dideklarasikan\n• Diagnosa efek masuk di Blok Efek dan percobaan ulang SVGA",
+  "ukuran_apk": 55011904,
+  "sha256_apk": "98e71e42ec583ccd3a33076f905e8e043b6b29f9cfdb028ad064ecfc848f6a82",
   "abis": {
     "arm64": {
-      "ukuran": 55010346,
-      "sha256": "c8628d653b95f1c2465f1d224e27000fe259ec0d6f7973c36e3e8f3174b03985"
+      "ukuran": 55011904,
+      "sha256": "98e71e42ec583ccd3a33076f905e8e043b6b29f9cfdb028ad064ecfc848f6a82"
     },
     "armv7": {
-      "ukuran": 53161501,
-      "sha256": "784a7657eab3bed1f67e328e2a46a93ebe0521e2d9d9dd80c92d234852f0fdeb"
+      "ukuran": 53163064,
+      "sha256": "16d92359207ad3880cee2b4f902f51d6a2eabaadff4656e9ef3b676d84f8c8f0"
     },
     "universal": {
-      "ukuran": 73426312,
-      "sha256": "6ad3cfddff043a133334318a653f27963ba4df7c517035cdc230d9d9624fe6cf"
+      "ukuran": 73427876,
+      "sha256": "135db1c65f4613e3175cc1e308e90c17a793e343dcfadfa16d130cbce8393362"
     }
   }
 }

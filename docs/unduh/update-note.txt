@@ -1,1 +1,3 @@
-• ID unik kiriman panel bisa dicari di pencarian
+• Banner efek masuk tidak lagi terbang 2-3 kali
+• Ralat kompilasi: rujukan done sebelum dideklarasikan
+• Diagnosa efek masuk di Blok Efek dan percobaan ulang SVGA

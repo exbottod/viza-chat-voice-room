@@ -652,25 +652,13 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
                 // diputar ulang, dan riwayat chat ikut hilang. Padahal kita masih di room.
                 // key(room.id): pindah/masuk ulang room selalu mulai dari state bersih (tanpa draft)
                 key(room.id) {
+                    // Saat diminimize, room tetap hidup tetapi diperkecil jadi 0 piksel:
+                    // tidak menutupi layar dan tidak menghalangi sentuhan ke tab di bawahnya.
+                    // (Dulu hanya dibuat transparan lalu memblokir semua sentuhan, jadi
+                    // halaman Party terlihat tetapi tidak bisa disentuh.)
                     Box(
-                        Modifier
-                            .fillMaxSize()
-                            .graphicsLayer { alpha = if (minimized) 0f else 1f }
-                            // Saat tersembunyi, sentuhan tidak boleh sampai ke room.
-                            .then(
-                                if (minimized) {
-                                    Modifier.pointerInput(Unit) {
-                                        awaitPointerEventScope {
-                                            while (true) {
-                                                val e = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
-                                                e.changes.forEach { it.consume() }
-                                            }
-                                        }
-                                    }
-                                } else Modifier,
-                            ),
+                        if (minimized) Modifier.size(0.dp) else Modifier.fillMaxSize(),
                     ) {
-                        // Layar yang disembunyikan tidak boleh ikut menggambar efek berat.
                         androidx.compose.runtime.CompositionLocalProvider(LocalRoomMinimized provides minimized) {
                             RoomScreen(
                                 roomId = room.id,

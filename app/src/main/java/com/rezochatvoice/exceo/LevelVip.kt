@@ -911,18 +911,14 @@ private fun LegacyItemPreview(item: StoreItem) {
  */
 @Composable
 private fun EntryPreview(item: StoreItem, size: Dp) {
-    // Aset dicari berantai seperti di dialog pratinjau: data item dulu, lalu
-    // katalog panel, lalu aset tier VIP dari halaman Aset & VIP.
-    // Rezo: item VIP selalu memakai aset tier dari panel (Aset & VIP) lebih dulu.
-    // Di sini aset tier didahulukan supaya SVGA yang diunggah untuk tier itu yang
-    // diputar, bukan sampul/aset lama yang menempel di id item.
+    // Di daftar Item VIP animasi TIDAK diputar: dulu semua kartu memutar SVGA
+    // sekaligus dan halaman jadi macet. Yang tampil hanya sampul/ikon.
     val dyn = (if (item.vip in 1..9) VipAssets.get(item.vip, vipAssetSlot(item.id, item.slot)) else null)
         ?: item.asset
         ?: findItem(item.id)?.asset
         ?: entryAssetCadangan(item.vip)
     Box(Modifier.size(size), contentAlignment = Alignment.Center) {
         if (dyn != null) {
-            // Sampul PNG hanya pengisi sampai berkas siap.
             if (dyn.poster.isNotBlank()) {
                 coil.compose.AsyncImage(
                     model = dyn.poster,
@@ -930,11 +926,11 @@ private fun EntryPreview(item: StoreItem, size: Dp) {
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Fit,
                 )
-            }
-            // Efek masuk yang diunggah dari panel (SVGA/MP4) langsung diputar di
-            // kartu Item VIP, tidak lagi menunggu tombol play.
-            key(dyn.n, dyn.updatedAt) {
-                VipMedia(dyn, Modifier.fillMaxSize(), loop = true, contentScale = ContentScale.Fit)
+            } else {
+                // Belum ada sampul: pakai frame pertama berkas (mode diam).
+                key(dyn.n, dyn.updatedAt) {
+                    VipMediaSafe(dyn, Modifier.fillMaxSize(), contentScale = ContentScale.Fit, diam = true)
+                }
             }
         } else {
             Box(
@@ -942,6 +938,11 @@ private fun EntryPreview(item: StoreItem, size: Dp) {
                 contentAlignment = Alignment.Center,
             ) { Text("\u2728", fontSize = (size.value * 0.46f).sp) }
         }
+        Box(
+            Modifier.align(Alignment.BottomEnd).padding(2.dp)
+                .clip(CircleShape).background(Color(0xCC000000))
+                .padding(horizontal = 7.dp, vertical = 3.dp),
+        ) { Text("\u25B6", color = Color.White, fontSize = 9.sp) }
     }
 }
 

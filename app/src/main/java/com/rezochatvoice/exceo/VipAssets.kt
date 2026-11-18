@@ -823,9 +823,28 @@ fun VipEntryEffect(roomId: String) {
         // dan efek paksa sama-sama menampilkan banner sehingga terlihat 3 kali.
         if (playing != null || banner != null) return
         if (!EfekMasukTercatat.perluTampil(roomId)) return
-        val a = entryAssetOf(m)
-        val b = bannerAssetOf(m)
-        playing = a ?: entryAssetCadangan()
+        // Yang dipasang harus berkas ANIMASI (SVGA/MP4), bukan ikon luar/sampul.
+        // Dulu entryAssetOf() bisa mengembalikan aset gambar diam milik item,
+        // sehingga di room yang tampil hanya ikon, bukan animasinya.
+        fun bisaJalan(x: VipAsset?): Boolean =
+            x != null && kindAset(x.kind, x.url) != "image"
+        // Tingkat yang dipakai: dari pesan, kalau kosong pakai tier VIP akun ini.
+        val tierSaya = runCatching { WalletCache.load(myUid) }.getOrNull()
+            ?.let { if (vipActive(it.vip, it.vipUntil)) it.vip else 0 } ?: 0
+        val tierA = if (m.vip in 1..9) m.vip else tierSaya
+        val aAwal = entryAssetOf(m) ?: entryAssetCadangan()
+        val a = if (bisaJalan(aAwal)) aAwal else (
+            VipAssets.get(tierA, "entry")?.takeIf { bisaJalan(it) }
+                ?: entryAssetCadangan()?.takeIf { bisaJalan(it) }
+                ?: aAwal
+            )
+        val bAwal = bannerAssetOf(m)
+        val b = if (bisaJalan(bAwal)) bAwal else (
+            vipBannerAsset(tierA)?.takeIf { bisaJalan(it) }
+                ?: bannerCadangan()?.takeIf { bisaJalan(it) }
+                ?: bAwal
+            )
+        playing = a
         banner = b
         bannerName = msgName(m).takeIf { it.isNotBlank() }
         bannerUid = m.vipUid.takeIf { it.isNotBlank() }

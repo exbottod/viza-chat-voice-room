@@ -867,7 +867,9 @@ fun VipEntryEffect(roomId: String) {
                 // Durasi mengikuti file: SVGA memanggil onEnd saat animasinya habis,
                 // dan di situ banner langsung ditutup. Angka di bawah hanya jaring
                 // pengaman kalau file gagal diputar.
-                delay(if (b.kind == "svga") 12000L else 2600L)
+                // Jaring pengaman saja. Penutupan normal memakai akhir animasi,
+                // tetapi tidak boleh kurang dari durasi minimum di bawah.
+                delay(if (b.kind == "svga") 6000L else 2600L)
                 fade.animateTo(0f, tween(300))
                 banner = null
                 bannerName = null
@@ -929,6 +931,25 @@ fun VipEntryEffect(roomId: String) {
                     // b adalah properti delegasi, jadi disalin dulu supaya bisa dipakai.
                     val asetBanner = b!!
                     val svgaBanner = asetBanner.kind == "svga"
+                    // Waktu banner mulai tampil dan tanda "animasi sudah selesai".
+                    // Dulu banner langsung ditutup begitu pemutar SVGA melapor
+                    // selesai, dan sebagian HP melapor selesai di frame awal,
+                    // akibatnya banner hilang dalam 1 detik.
+                    val mulaiBanner = remember(asetBanner.n, asetBanner.updatedAt, bannerUid) {
+                        System.currentTimeMillis()
+                    }
+                    var mintaTutup by remember(asetBanner.n, asetBanner.updatedAt, bannerUid) {
+                        mutableStateOf(false)
+                    }
+                    val DURASI_MIN_BANNER = 3000L
+                    LaunchedEffect(mintaTutup, asetBanner.updatedAt, bannerUid) {
+                        if (!mintaTutup) return@LaunchedEffect
+                        val sisa = DURASI_MIN_BANNER - (System.currentTimeMillis() - mulaiBanner)
+                        if (sisa > 0L) delay(sisa)
+                        bannerName = null
+                        bannerUid = null
+                        banner = null
+                    }
                     // Progres animasi 0..1 dari pemutar SVGA, dipakai menggerakkan foto dan nama.
                     var progres by remember(asetBanner.n, asetBanner.updatedAt, bannerUid) { mutableStateOf(0f) }
                     val tinggiBanner = if (svgaBanner) {
@@ -978,11 +999,10 @@ fun VipEntryEffect(roomId: String) {
                                         contentScale = ContentScale.FillBounds,
                                         onLangkah = { progres = it },
                                         onEnd = {
-                                            // Animasi banner habis: tutup, jangan dipaksa
-                                            // pakai durasi tetap seperti sebelumnya.
-                                            banner = null
-                                            bannerName = null
-                                            bannerUid = null
+                                            // Animasi banner habis. Penutupan ditunda
+                                            // sampai durasi minimum tercapai supaya
+                                            // banner tidak sekelip lalu hilang.
+                                            mintaTutup = true
                                         },
                                     )
                                 }

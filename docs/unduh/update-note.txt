@@ -1,1 +1,1 @@
-• Aset PK dari APK rujukan masuk ke drawable
+• Animasi mulai PK (pk_start.mp4) dari APK rujukan

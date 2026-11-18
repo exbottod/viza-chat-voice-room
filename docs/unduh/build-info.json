@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.241",
-  "catatan": "• Animasi mulai PK (pk_start.mp4) dari APK rujukan",
-  "ukuran_apk": 56246096,
-  "sha256_apk": "7efa8967ef9faca81f641aa37caf94071922f249ecae06e0748ea7062728fb67",
+  "versi": "1.0.242",
+  "catatan": "• Ikon bar bawah room dari aset rujukan",
+  "ukuran_apk": 56447467,
+  "sha256_apk": "4a3458424958949564c6a2116c949f52ba4235c86db4adff25ac637ca0a3aa14",
   "abis": {
     "arm64": {
-      "ukuran": 56246096,
-      "sha256": "7efa8967ef9faca81f641aa37caf94071922f249ecae06e0748ea7062728fb67"
+      "ukuran": 56447467,
+      "sha256": "4a3458424958949564c6a2116c949f52ba4235c86db4adff25ac637ca0a3aa14"
     },
     "armv7": {
-      "ukuran": 54397250,
-      "sha256": "ddb45eb9b9daf360d3b54868a86230c9cbb5578dc747850ca0f2ebe57273a3ec"
+      "ukuran": 54598622,
+      "sha256": "eb46d8d496630e7c71f4eeccf5565eebf8a0870dfdb9cc20dc9018989004e09b"
     },
     "universal": {
-      "ukuran": 74662076,
-      "sha256": "f9ed05115186425cf7a87d57c58ece1cca1b3aebe7c8484ce1bdb473c40a54c7"
+      "ukuran": 74863457,
+      "sha256": "17400acf9edcabd53b65040a1f8e7b3177fc077ea4b3b36deb71f60e82c42fff"
     }
   }
 }

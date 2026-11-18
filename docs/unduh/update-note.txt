@@ -1,1 +1,1 @@
-• Lencana terpasang tampil di typing, sheet, profil orang lain; banner game dipaskan; sampul PNG hilan
+• Perbaiki kompilasi: RoomTypingBar memakai FlowRow (OptIn ExperimentalLayoutApi)

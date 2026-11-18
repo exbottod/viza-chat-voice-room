@@ -78,6 +78,37 @@ object MusicEngine {
     /** Pesan galat saat lagu gagal dibagikan ke room. */
     var galatMusik by mutableStateOf("")
 
+    private var sudahMuat = false
+
+    /** Muat daftar putar tersimpan sekali saja (tetap ada setelah aplikasi ditutup). */
+    fun muatTersimpan(context: android.content.Context) {
+        if (sudahMuat) return
+        sudahMuat = true
+        val tersimpan = MusikLokal.muatDaftar(context)
+        if (tersimpan.isNotEmpty() && playlist.isEmpty()) playlist = tersimpan
+    }
+
+    /** Tambahkan lagu baru ke daftar putar lalu simpan permanen. */
+    fun tambahLagu(context: android.content.Context, baru: List<MusicTrack>) {
+        if (baru.isEmpty()) return
+        playlist = playlist + baru
+        MusikLokal.simpanDaftar(context, playlist)
+    }
+
+    /** Hapus lagu (berdasarkan path) dari daftar putar dan dari penyimpanan aplikasi. */
+    fun hapusLagu(context: android.content.Context, paths: List<String>) {
+        val lagiDiputar = playlist.getOrNull(current)?.path
+        if (lagiDiputar != null && paths.contains(lagiDiputar)) stop()
+        val sisa = playlist.filterNot { paths.contains(it.path) }
+        val lagu = sisa.indexOfFirst { it.path == lagiDiputar }
+        playlist = sisa
+        current = if (lagiDiputar != null && lagu >= 0) lagu else -1
+        for (pth in paths) {
+            try { File(pth).delete() } catch (e: Exception) { }
+        }
+        MusikLokal.simpanDaftar(context, playlist)
+    }
+
     /** Salin lagu dari URI (file picker) ke cache agar bisa diputar Agora. Return jumlah sukses. */
     suspend fun importFromUris(context: android.content.Context, uris: List<android.net.Uri>): Int =
         withContext(Dispatchers.IO) {
@@ -103,6 +134,7 @@ object MusicEngine {
                 } catch (e: Exception) {
                 }
             }
+            try { MusikLokal.simpanDaftar(context, playlist) } catch (e: Exception) { }
             ok
         }
 
@@ -233,8 +265,9 @@ fun MusicSheet(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     // Musik dibagikan ke room ini supaya terdengar semua orang.
-    LaunchedEffect(roomId) { MusicEngine.roomId = roomId }
+    LaunchedEffect(roomId) { MusicEngine.roomId = roomId; MusicEngine.muatTersimpan(context) }
     var showPlaylist by remember { mutableStateOf(false) }
+    var layarDaftar by remember { mutableStateOf(false) }
     var volumeOpen by remember { mutableStateOf(false) }
     var pos by remember { mutableStateOf(0) }
     var dur by remember { mutableStateOf(-1) }
@@ -279,6 +312,23 @@ fun MusicSheet(
             }
             delay(400)
         }
+    }
+
+    if (layarDaftar) {
+        Box(Modifier.fillMaxSize().blockTouches()) {
+            LayarDaftarPutar(
+                canPlay = canPlay,
+                onUnmute = onUnmute,
+                onMainkan = { i ->
+                    if (MusicEngine.play(i)) {
+                        val t = MusicEngine.playlist.getOrNull(i)?.title ?: ""
+                        scope.launch { RoomExtras.sendChat(roomId, myUid, myName, "🎧 Memutar: $t") }
+                    }
+                },
+                onTutup = { layarDaftar = false },
+            )
+        }
+        return
     }
 
     Box(Modifier.fillMaxSize().blockTouches()) {
@@ -399,7 +449,7 @@ fun MusicSheet(
                     },
                 )
                 Spacer(Modifier.width(24.dp))
-                Text("☰", color = Color.White, fontSize = 24.sp, modifier = Modifier.clickable { showPlaylist = !showPlaylist })
+                Text("☰", color = Color.White, fontSize = 24.sp, modifier = Modifier.clickable { layarDaftar = true })
             }
 
             // Playlist + tombol tambah musik dari perangkat

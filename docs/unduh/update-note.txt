@@ -1,1 +1,5 @@
-• Alat dasar baru: mic bebas/minta mic, kalkulator poin, atur bicara publik, tema kamar dari alat dasa
+• Musik: tombol garis tiga membuka layar Daftar putar (cari musik, Hapus, Tambah musik)
+• Tambah musik memindai otomatis semua musik di HP, pilih satu atau Pilih semua, lalu Tambah ke daftar putar
+• Daftar putar tersimpan permanen dan tetap ada setelah aplikasi ditutup, kualitas file asli tidak dikompres
+• Lucky number: tombol 777 di Alat dasar mengirim angka acak 100 sampai 999 ke chat dengan tampilan khusus
+• Alat dasar baru: Mic bebas / Minta mic, Kalkulator, Atur bicara di layar publik, Tema kamar, ikon Blok Efek baru

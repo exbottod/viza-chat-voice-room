@@ -1480,6 +1480,15 @@ fun RoomScreen(
                             }
                         }) { Text("\uD83D\uDC97", fontSize = 24.sp) }
                     }
+                    RmTool("Lucky number", onClick = {
+                        panel = P_NONE
+                        if (larangan[myUid]?.ketik == true || (cfgBicaraAdmin && !canManage)) {
+                            toast(tr("Kamu tidak bisa mengirim chat di room ini"))
+                        } else {
+                            val angka = (100..999).random()
+                            scope.launch { RoomExtras.sendChat(r.id, myUid, myName, "\uD83C\uDFB0LUCKY:" + angka)?.let { toast(it) } }
+                        }
+                    }) { Text("777", color = Color(0xFFFFC107), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold) }
                     if (canManage) {
                         RmTool(if (pk?.aktif == true && pk?.selesai != true) tr("Stop PK") else "Grup PK", onClick = {
                             if (pk?.aktif == true && pk?.selesai != true) {
@@ -2875,7 +2884,25 @@ private fun RmChatRow(m: RoomMsg, myUid: String, onProfile: (String) -> Unit) {
                     }
                 }
                 val salinTeks = IngatSalin(m.text)
-                Text(
+                if (m.text.startsWith("\uD83C\uDFB0LUCKY:")) {
+                    val angka = m.text.removePrefix("\uD83C\uDFB0LUCKY:").trim()
+                    Row(
+                        Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                androidx.compose.ui.graphics.Brush.verticalGradient(
+                                    listOf(Color(0xFF9B4A22), Color(0xFF5A2410)),
+                                ),
+                            )
+                            .border(1.5.dp, Color(0xFFE8A04A), RoundedCornerShape(12.dp))
+                            .padding(horizontal = 14.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text("Lucky number", color = Color(0xFFFFE9C7), fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.width(8.dp))
+                        Text(angka, color = Color(0xFFFFC857), fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
+                    }
+                } else Text(
                     m.text, color = Color.White, fontSize = 14.sp,
                     modifier = Modifier.pointerInput(m.text) {
                         detectTapGestures(onLongPress = { salinTeks() })

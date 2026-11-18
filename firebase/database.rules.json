@@ -207,6 +207,41 @@
         }
       }
     },
+    "roomCfg": {
+      "$roomId": {
+        ".read": "auth != null",
+        "$key": {
+          ".write": "auth != null",
+          ".validate": "newData.isBoolean() || !newData.exists()"
+        }
+      }
+    },
+    "micRequests": {
+      "$roomId": {
+        ".read": "auth != null",
+        "$index": {
+          "$uid": {
+            ".write": "auth != null",
+            ".validate": "!newData.exists() || newData.hasChildren(['name'])"
+          }
+        }
+      }
+    },
+    "roomFollowers": {
+      "$roomId": {
+        ".read": "auth != null",
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "!newData.exists() || newData.val() === true"
+        }
+      }
+    },
+    "roomPoin": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "chats": {
       ".read": "auth != null",
       "$chatId": {

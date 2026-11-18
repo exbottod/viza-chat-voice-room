@@ -1,5 +1,2 @@
-• Musik: tombol garis tiga membuka Daftar putar, Tambah musik memindai musik di HP, pilih satu atau semua, lalu Tambah ke daftar putar
-• Daftar putar tersimpan permanen dan tetap ada setelah aplikasi ditutup, kualitas file asli
-• Lucky number: tombol 777 di Alat dasar mengirim angka acak ke chat dengan tampilan khusus
-• Level kamar: halaman Daftar Poin Kamar dengan tab harian, bulanan, keseluruhan, dan Daftar Kontribusi Anggota
-• Poin kamar didapat dari nilai gift yang dikirim di dalam room
+• Level kamar: daftar poin kamar harian/bulanan/keseluruhan dan kontribusi anggota
+• Musik: daftar putar permanen, pindai musik lokal; Lucky number 777

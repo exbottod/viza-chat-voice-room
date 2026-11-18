@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.248",
-  "catatan": "• Alat dasar baru: mic bebas/minta mic, kalkulator poin, atur bicara publik, tema kamar dari alat dasa",
-  "ukuran_apk": 56481553,
-  "sha256_apk": "1e475a70877c3bdcc76e730f983744f0f11b5cd6ffe6c45660f8bd40864cf92a",
+  "versi": "1.0.249",
+  "catatan": "• Level kamar: daftar poin kamar harian/bulanan/keseluruhan dan kontribusi anggota\n• Musik: daftar putar permanen, pindai musik lokal; Lucky number 777",
+  "ukuran_apk": 56517007,
+  "sha256_apk": "ff03f1cf63ce7e5c2ff25aedacaf967602a3ae05b1b28769c095aa211607d805",
   "abis": {
     "arm64": {
-      "ukuran": 56481553,
-      "sha256": "1e475a70877c3bdcc76e730f983744f0f11b5cd6ffe6c45660f8bd40864cf92a"
+      "ukuran": 56517007,
+      "sha256": "ff03f1cf63ce7e5c2ff25aedacaf967602a3ae05b1b28769c095aa211607d805"
     },
     "armv7": {
-      "ukuran": 54632707,
-      "sha256": "bc6a0f7504e56cf27ca37b64ce3eee44d7106a54573781bfe79eebe6cd4defd2"
+      "ukuran": 54668148,
+      "sha256": "a7d5fc1ca89d11dc39106000e50767662b034c199df1378c87f6182e5dd933d6"
     },
     "universal": {
-      "ukuran": 74897527,
-      "sha256": "1cad3d7f3e8bf1bd5a6fd7684ba6a0f3fd4ffed2e8df5205c10753629eb6505d"
+      "ukuran": 74932979,
+      "sha256": "a41aa65c890605349d4d7ed459811eee4f23bc6dae144031a3c0924c9221ad2e"
     }
   }
 }

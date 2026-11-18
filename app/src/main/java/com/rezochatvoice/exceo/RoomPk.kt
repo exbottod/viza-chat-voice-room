@@ -222,6 +222,14 @@ fun PkBar(pk: PkState, modifier: Modifier = Modifier) {
                     Text(pk.aSkor.toString(), color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Ikon VS dari aset pemilik, tampil di tengah bar PK.
+                    Image(
+                        painter = painterResource(R.drawable.pk_vs),
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.size(24.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
                     Image(
                         painter = painterResource(R.drawable.pk_waktu),
                         contentDescription = null,

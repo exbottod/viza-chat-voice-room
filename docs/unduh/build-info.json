@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.239",
-  "catatan": "• Fitur Room PK: 1v1 dan tim",
-  "ukuran_apk": 55042693,
-  "sha256_apk": "d716434c1af9e2cbe1aaed59799478c1e7e7738731a8eb8de4967f08eabd2ab6",
+  "versi": "1.0.240",
+  "catatan": "• Aset PK dari APK rujukan masuk ke drawable",
+  "ukuran_apk": 56071250,
+  "sha256_apk": "1b5c29a6e744ba804a00add8e6c0c99fdc1fdfa05d3e4d606a9ab2f2222ca75d",
   "abis": {
     "arm64": {
-      "ukuran": 55042693,
-      "sha256": "d716434c1af9e2cbe1aaed59799478c1e7e7738731a8eb8de4967f08eabd2ab6"
+      "ukuran": 56071250,
+      "sha256": "1b5c29a6e744ba804a00add8e6c0c99fdc1fdfa05d3e4d606a9ab2f2222ca75d"
     },
     "armv7": {
-      "ukuran": 53193854,
-      "sha256": "f1ba9ec922b31f8b724cf6fd62f3da38ef918a5b1267be50e2aea5174388f7cd"
+      "ukuran": 54222403,
+      "sha256": "8de9e55126278ea5d2ef3b3eb86b571a481d89054d3a732930b8c27e1ec5b369"
     },
     "universal": {
-      "ukuran": 73458672,
-      "sha256": "0cb2d1e1f6986cb909274dcab8bf4d4ace0b64cb3a21582ad1067ce21c59f42a"
+      "ukuran": 74487237,
+      "sha256": "c673f300a382371aa001e93e7c7eae6106dd6d911fc1bd03eec36cb6071e9b5f"
     }
   }
 }

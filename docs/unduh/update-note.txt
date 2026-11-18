@@ -1,1 +1,1 @@
-• Fitur Room PK: 1v1 dan tim
+• Aset PK dari APK rujukan masuk ke drawable

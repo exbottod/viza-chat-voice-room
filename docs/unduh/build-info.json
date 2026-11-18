@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.234",
-  "catatan": "• Aset tier VIP didahulukan seperti di Rezo",
-  "ukuran_apk": 55011559,
-  "sha256_apk": "e2974e72541f3941d85438e3f64b5f24da722857704c1806fbfe96103de8a26b",
+  "versi": "1.0.235",
+  "catatan": "• Efek masuk room pakai berkas animasi, daftar Item VIP tidak autoplay",
+  "ukuran_apk": 55012200,
+  "sha256_apk": "4fd089b2c4adf6f7d0a79700c04acef1cff67edef962a00204eb182dd07d56c0",
   "abis": {
     "arm64": {
-      "ukuran": 55011559,
-      "sha256": "e2974e72541f3941d85438e3f64b5f24da722857704c1806fbfe96103de8a26b"
+      "ukuran": 55012200,
+      "sha256": "4fd089b2c4adf6f7d0a79700c04acef1cff67edef962a00204eb182dd07d56c0"
     },
     "armv7": {
-      "ukuran": 53162719,
-      "sha256": "c4634b9758560b2560933553214e9d882a0e753b89950e93b4ffa355061be541"
+      "ukuran": 53163339,
+      "sha256": "ca0dc7d2b839fc442fb5f651b4d401831288f517cbe87a059565f57a7b434696"
     },
     "universal": {
-      "ukuran": 73427520,
-      "sha256": "a2f0335c1c751f373bcc7f00dc886cf42c6e2a6418ac9a14b0a67bf3054a9cb8"
+      "ukuran": 73428167,
+      "sha256": "29515a1280d8edd744818305a9135b1570cb07c6a195ea06f6373b62a6fe2c16"
     }
   }
 }

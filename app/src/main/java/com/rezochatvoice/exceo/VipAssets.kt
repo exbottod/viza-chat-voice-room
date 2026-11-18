@@ -378,8 +378,14 @@ private fun VipSvga(
                 val done = object : SVGAParser.ParseCompletion {
                     override fun onComplete(videoItem: SVGAVideoEntity) {
                         setVideoItem(videoItem)
+                        loops = if (loop) 0 else 1
                         onSiap(videoItem)
                         startAnimation()
+                        // Sebagian HP mengabaikan startAnimation kalau view belum
+                        // benar-benar terpasang, akibatnya yang tampil hanya frame
+                        // pertama (terlihat seperti gambar diam). Coba ulang dua kali.
+                        postDelayed({ try { startAnimation() } catch (e: Exception) { } }, 250L)
+                        postDelayed({ try { startAnimation() } catch (e: Exception) { } }, 900L)
                     }
 
                     override fun onError() {}

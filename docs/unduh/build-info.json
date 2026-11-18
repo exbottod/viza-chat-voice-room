@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.230",
-  "catatan": "• Efek masuk memutar SVGA/MP4 walau panel menandainya sebagai gambar",
-  "ukuran_apk": 55010311,
-  "sha256_apk": "a53ea602fe31de1386eacf181faac100e959b48016bf4bb4c24a03b70afa6c86",
+  "versi": "1.0.231",
+  "catatan": "• ID unik kiriman panel bisa dicari di pencarian",
+  "ukuran_apk": 55010346,
+  "sha256_apk": "c8628d653b95f1c2465f1d224e27000fe259ec0d6f7973c36e3e8f3174b03985",
   "abis": {
     "arm64": {
-      "ukuran": 55010311,
-      "sha256": "a53ea602fe31de1386eacf181faac100e959b48016bf4bb4c24a03b70afa6c86"
+      "ukuran": 55010346,
+      "sha256": "c8628d653b95f1c2465f1d224e27000fe259ec0d6f7973c36e3e8f3174b03985"
     },
     "armv7": {
-      "ukuran": 53161462,
-      "sha256": "59fbd1ac4d5c30f5d3fb05a603d2918d836ff9f94255b75f146ab9e8b71d19bb"
+      "ukuran": 53161501,
+      "sha256": "784a7657eab3bed1f67e328e2a46a93ebe0521e2d9d9dd80c92d234852f0fdeb"
     },
     "universal": {
-      "ukuran": 73426286,
-      "sha256": "e90152cefa86df8ad8178a18d9c6ddc5792d1e933adb5039cf8365f9ddd59e07"
+      "ukuran": 73426312,
+      "sha256": "6ad3cfddff043a133334318a653f27963ba4df7c517035cdc230d9d9624fe6cf"
     }
   }
 }

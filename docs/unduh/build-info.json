@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.235",
-  "catatan": "• Efek masuk room pakai berkas animasi, daftar Item VIP tidak autoplay",
-  "ukuran_apk": 55012200,
-  "sha256_apk": "4fd089b2c4adf6f7d0a79700c04acef1cff67edef962a00204eb182dd07d56c0",
+  "versi": "1.0.236",
+  "catatan": "• Efek masuk room memakai item yang baru dipasang",
+  "ukuran_apk": 55012985,
+  "sha256_apk": "e06a4afed95db097020ba4b6044113c4a10b00fec2976627c7b2420132a2f5f6",
   "abis": {
     "arm64": {
-      "ukuran": 55012200,
-      "sha256": "4fd089b2c4adf6f7d0a79700c04acef1cff67edef962a00204eb182dd07d56c0"
+      "ukuran": 55012985,
+      "sha256": "e06a4afed95db097020ba4b6044113c4a10b00fec2976627c7b2420132a2f5f6"
     },
     "armv7": {
-      "ukuran": 53163339,
-      "sha256": "ca0dc7d2b839fc442fb5f651b4d401831288f517cbe87a059565f57a7b434696"
+      "ukuran": 53164138,
+      "sha256": "12a8fc65a77dc3dab2848de220c8aad096e45c2da25cbbf3d69d751ae1a81794"
     },
     "universal": {
-      "ukuran": 73428167,
-      "sha256": "29515a1280d8edd744818305a9135b1570cb07c6a195ea06f6373b62a6fe2c16"
+      "ukuran": 73428954,
+      "sha256": "75469a8c87ee543f0e2a32de9dece37e96becbd464a3ed61b24deb5a5e6764de"
     }
   }
 }

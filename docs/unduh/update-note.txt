@@ -1,1 +1,1 @@
-• Efek masuk room memakai item yang baru dipasang
+• Sampul PNG tidak lagi tampil saat efek masuk di room

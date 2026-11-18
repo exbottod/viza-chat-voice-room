@@ -749,6 +749,49 @@ fun VipEntryEffect(roomId: String) {
         pasangEfek(m)
     }
 
+    /**
+     * Efek masuk DIPAKSA tampil setiap kali masuk room, seperti versi awal.
+     * Tidak lagi bergantung pada pesan "masuk kamar" atau katalog yang sudah
+     * termuat: aset diambil dari item yang dipakai (kalau kosong: item tertinggi
+     * yang dimiliki, lalu aset efek masuk lain yang tersedia).
+     */
+    LaunchedEffect(roomId) {
+        if (myUid.isBlank()) return@LaunchedEffect
+        // Tunggu sebentar supaya room dan suara siap dulu.
+        delay(1500)
+        if (playing != null || banner != null) return@LaunchedEffect
+        val w = runCatching { WalletCache.load(myUid) }.getOrNull() ?: return@LaunchedEffect
+        val vipNow = if (vipActive(w.vip, w.vipUntil)) w.vip else 0
+        val eId = fallbackEquip(w, "entry")
+        val bId = fallbackEquip(w, "banner")
+        val a = runCatching {
+            when {
+                eId.startsWith("sx_") -> StoreCatalog.find(eId)?.asset
+                eId.startsWith("sve_") -> VipAssets.get(eId.removePrefix("sve_").toIntOrNull() ?: 0, "entry")
+                eId.isNotBlank() -> StoreCatalog.find(eId)?.asset
+                else -> null
+            }
+        }.getOrNull()
+            ?: VipAssets.get(vipNow, "entry")
+            ?: entryAssetCadangan()
+        val b = runCatching {
+            when {
+                bId.startsWith("sx_") -> StoreCatalog.find(bId)?.asset
+                bId.startsWith("svbn_") -> vipBannerAsset(bId.removePrefix("svbn_").toIntOrNull() ?: 0)
+                bId.startsWith("vipbn_") -> vipBannerAsset(bId.removePrefix("vipbn_").toIntOrNull() ?: 0)
+                bId.isNotBlank() -> StoreCatalog.find(bId)?.asset
+                else -> null
+            }
+        }.getOrNull()
+            ?: vipBannerAsset(vipNow)
+        if (a == null && b == null) return@LaunchedEffect
+        playing = a
+        banner = b
+        val namaSaya = UserCache.peek(myUid)?.name.orEmpty()
+        bannerName = namaSaya.takeIf { it.isNotBlank() }
+        bannerUid = myUid
+    }
+
     LaunchedEffect(pending) {
         val m = pending ?: return@LaunchedEffect
         repeat(10) {

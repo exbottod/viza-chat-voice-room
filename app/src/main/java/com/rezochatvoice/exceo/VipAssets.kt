@@ -855,7 +855,7 @@ fun VipEntryEffect(roomId: String) {
         val vipNow = if (w != null && vipActive(w.vip, w.vipUntil)) w.vip else 0
         val eId = w?.let { fallbackEquip(it, "entry") }.orEmpty()
         val bId = w?.let { fallbackEquip(it, "banner") }.orEmpty()
-        val a = runCatching {
+        val aAwal = runCatching {
             when {
                 eId.startsWith("sx_") -> StoreCatalog.find(eId)?.asset
                 eId.startsWith("sve_") -> VipAssets.get(eId.removePrefix("sve_").toIntOrNull() ?: 0, "entry")
@@ -865,7 +865,7 @@ fun VipEntryEffect(roomId: String) {
         }.getOrNull()
             ?: VipAssets.get(vipNow, "entry")
             ?: entryAssetCadangan()
-        val b = runCatching {
+        val bAwal = runCatching {
             when {
                 bId.startsWith("sx_") -> StoreCatalog.find(bId)?.asset
                 bId.startsWith("svbn_") -> vipBannerAsset(bId.removePrefix("svbn_").toIntOrNull() ?: 0)
@@ -876,6 +876,21 @@ fun VipEntryEffect(roomId: String) {
         }.getOrNull()
             ?: vipBannerAsset(vipNow)
             ?: bannerCadangan()
+        // Kalau aset yang menempel di id item hanya gambar diam (sampul lama),
+        // sedangkan tier VIP punya berkas animasi dari halaman Aset & VIP, pakai
+        // berkas tier itu supaya SVGA benar-benar diputar.
+        val aTier = VipAssets.get(vipNow, "entry")
+        val a = if (
+            aTier != null && kindAset(aTier.kind, aTier.url) != "image" &&
+            (aAwal == null || kindAset(aAwal.kind, aAwal.url) == "image")
+        ) aTier else aAwal
+        // Sama untuk banner masuk: berkas animasi tier dipakai kalau yang menempel
+        // di id item hanya gambar diam.
+        val bTier = vipBannerAsset(vipNow)
+        val b = if (
+            bTier != null && kindAset(bTier.kind, bTier.url) != "image" &&
+            (bAwal == null || kindAset(bAwal.kind, bAwal.url) == "image")
+        ) bTier else bAwal
         if (a == null && b == null) return@LaunchedEffect
         // Sekali per masuk room: setelah minimize lalu kembali, efek tidak diulang.
         if (playing != null || banner != null) return@LaunchedEffect

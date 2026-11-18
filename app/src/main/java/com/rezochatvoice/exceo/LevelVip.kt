@@ -913,9 +913,12 @@ private fun LegacyItemPreview(item: StoreItem) {
 private fun EntryPreview(item: StoreItem, size: Dp) {
     // Aset dicari berantai seperti di dialog pratinjau: data item dulu, lalu
     // katalog panel, lalu aset tier VIP dari halaman Aset & VIP.
-    val dyn = item.asset
+    // Rezo: item VIP selalu memakai aset tier dari panel (Aset & VIP) lebih dulu.
+    // Di sini aset tier didahulukan supaya SVGA yang diunggah untuk tier itu yang
+    // diputar, bukan sampul/aset lama yang menempel di id item.
+    val dyn = (if (item.vip in 1..9) VipAssets.get(item.vip, vipAssetSlot(item.id, item.slot)) else null)
+        ?: item.asset
         ?: findItem(item.id)?.asset
-        ?: (if (item.vip in 1..9) VipAssets.get(item.vip, vipAssetSlot(item.id, item.slot)) else null)
         ?: entryAssetCadangan(item.vip)
     Box(Modifier.size(size), contentAlignment = Alignment.Center) {
         if (dyn != null) {
@@ -1455,9 +1458,11 @@ fun StoreScreen(uid: String, wallet: Wallet, onOpenVip: () -> Unit, onBack: () -
                 ) {
                     // Aset dicari ulang dari katalog/panel kalau data item belum
                     // membawa gambar, supaya pratinjau Item VIP tidak pernah kosong.
-                    val a = item.asset
+                    // Rezo: aset tier dari panel (Aset & VIP) didahulukan untuk item
+                    // VIP, supaya berkas SVGA tier itu yang diputar di pratinjau.
+                    val a = (if (item.vip in 1..9) VipAssets.get(item.vip, vipAssetSlot(item.id, item.slot)) else null)
+                        ?: item.asset
                         ?: findItem(item.id)?.asset
-                        ?: (if (item.vip in 1..9) VipAssets.get(item.vip, vipAssetSlot(item.id, item.slot)) else null)
                         // Aset tier ini belum diisi di panel: pakai efek masuk lain
                         // yang tersedia supaya preview tetap menunjukkan sesuatu.
                         ?: (if (item.slot == "entry") entryAssetCadangan(item.vip) else null)

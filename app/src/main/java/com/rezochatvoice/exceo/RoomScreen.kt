@@ -982,9 +982,9 @@ fun RoomScreen(
                 try { if (fxUid.isNotBlank()) Rtdb.ref("fxPrefs/$fxUid/rocket").setValue(true) } catch (e: Exception) { }
             },
         )
-        if (fxBannerOn && !waveOpen) GiftBanner(r.id)
+        if (fxBannerOn && !waveOpen && !LocalRoomMinimized.current) GiftBanner(r.id)
         // Banner cashback terpisah: hanya saat JP 10.000 ke atas.
-        if (fxBannerOn && !waveOpen) CashbackBanner(r.id)
+        if (fxBannerOn && !waveOpen && !LocalRoomMinimized.current) CashbackBanner(r.id)
         // Penanda status suara: kalau suara gagal, alasannya tampil di sini
         // (bukan hanya toast yang cepat hilang), jadi mudah dilaporkan.
         run {
@@ -1002,7 +1002,8 @@ fun RoomScreen(
         // Loading khas Viza saat room sedang dimuat.
         if (!siapRoom) VizaLoadingLayar()
         // Saat halaman game terbuka, efek room tidak boleh menutupi game.
-        if (fxEntryOn && !waveOpen) VipEntryEffect(r.id)
+        val roomTersembunyi = LocalRoomMinimized.current
+        if (fxEntryOn && !waveOpen && !roomTersembunyi) VipEntryEffect(r.id)
         if (fxGiftOn && !waveOpen) GiftFxOverlay(r.id)
         // Gift terbang ke avatar penerima lalu pecahan cashback muncul di titik itu.
         if (fxGiftOn && !waveOpen) GiftFlyOverlay(r.id, seatPoints)
@@ -1101,6 +1102,7 @@ fun RoomScreen(
                         // Keluar room berarti riwayat chat dan draf memang harus
                         // dibuang. Hanya minimize yang menyimpannya.
                         RoomChatCache.hapus(roomId)
+                        EfekMasukTercatat.reset(roomId)
                         resetDrafts()
                         onExit()
                     }

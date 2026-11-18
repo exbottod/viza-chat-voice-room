@@ -686,6 +686,14 @@ fun bannerAssetOf(m: RoomMsg): VipAsset? =
 
 /** Efek masuk VIP di room: mp4 atau gif/webp/svga, diputar sebentar di bagian atas layar.
  *  Banner efek masuk (kalau dipakai) tampil DI DEPAN efek masuk. */
+/** Mencatat room yang efek masuknya sudah diputar, supaya tidak berulang. */
+object EfekMasukTercatat {
+    private val sudah = HashSet<String>()
+    fun perluTampil(roomId: String): Boolean = sudah.add(roomId)
+    /** Dipanggil saat benar-benar keluar room, supaya masuk berikutnya tampil lagi. */
+    fun reset(roomId: String) { sudah.remove(roomId) }
+}
+
 @Composable
 fun VipEntryEffect(roomId: String) {
     var playing by remember { mutableStateOf<VipAsset?>(null) }
@@ -757,6 +765,9 @@ fun VipEntryEffect(roomId: String) {
      */
     LaunchedEffect(roomId) {
         if (myUid.isBlank()) return@LaunchedEffect
+        // Sekali per masuk room. Setelah minimize lalu kembali, efek TIDAK diulang
+        // karena kita masih berada di room yang sama.
+        if (!EfekMasukTercatat.perluTampil(roomId)) return@LaunchedEffect
         // Tunggu sebentar supaya room dan suara siap dulu.
         delay(1500)
         if (playing != null || banner != null) return@LaunchedEffect

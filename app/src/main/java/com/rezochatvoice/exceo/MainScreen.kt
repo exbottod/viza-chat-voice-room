@@ -7,6 +7,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -232,6 +234,7 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
         val r = activeRoom ?: return
         activeRoom = null
         minimized = false
+        EfekMasukTercatat.reset(r.id)
         scope.launch { RoomRepo.leave(r.id, uid) }
     }
 
@@ -643,20 +646,45 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
             val room = activeRoom
             if (room != null) {
                 key(room.id) { AgoraRoomBridge(roomId = room.id, myUid = uid) }
-                if (!minimized) {
-                    // key(room.id): pindah/masuk ulang room selalu mulai dari state bersih (tanpa draft)
-                    key(room.id) {
-                        RoomScreen(
-                            roomId = room.id,
-                            myUid = uid,
-                            myName = myName,
-                            myAvatarB64 = profile.avatarB64,
-                            onExit = ::exitRoom,
-                            onMinimize = { minimized = true },
-                            initialRoom = room,
-                        )
+                // Room TIDAK dibuang saat diminimize, hanya disembunyikan. Dulu room
+                // dibuang lalu dibuat ulang saat bulatan diketuk, akibatnya layar
+                // dimuat dari awal, "masuk kamar" terkirim lagi, efek masuk dan banner
+                // diputar ulang, dan riwayat chat ikut hilang. Padahal kita masih di room.
+                // key(room.id): pindah/masuk ulang room selalu mulai dari state bersih (tanpa draft)
+                key(room.id) {
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .graphicsLayer { alpha = if (minimized) 0f else 1f }
+                            // Saat tersembunyi, sentuhan tidak boleh sampai ke room.
+                            .then(
+                                if (minimized) {
+                                    Modifier.pointerInput(Unit) {
+                                        awaitPointerEventScope {
+                                            while (true) {
+                                                val e = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
+                                                e.changes.forEach { it.consume() }
+                                            }
+                                        }
+                                    }
+                                } else Modifier,
+                            ),
+                    ) {
+                        // Layar yang disembunyikan tidak boleh ikut menggambar efek berat.
+                        androidx.compose.runtime.CompositionLocalProvider(LocalRoomMinimized provides minimized) {
+                            RoomScreen(
+                                roomId = room.id,
+                                myUid = uid,
+                                myName = myName,
+                                myAvatarB64 = profile.avatarB64,
+                                onExit = ::exitRoom,
+                                onMinimize = { minimized = true },
+                                initialRoom = room,
+                            )
+                        }
                     }
-                } else {
+                }
+                if (minimized) {
                     FloatingRoomBubble(room = room, onClick = { minimized = false })
                 }
             }

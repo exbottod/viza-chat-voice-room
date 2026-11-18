@@ -177,6 +177,9 @@ object RoomExtras {
     }
 }
 
+/** true saat room sedang diminimize (disembunyikan, tetap hidup di belakang). */
+val LocalRoomMinimized = androidx.compose.runtime.compositionLocalOf { false }
+
 @Composable
 fun RoomTypingBar(
     text: String,

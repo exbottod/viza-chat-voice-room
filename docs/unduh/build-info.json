@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.242",
-  "catatan": "• Ikon bar bawah room dari aset rujukan",
-  "ukuran_apk": 56447467,
-  "sha256_apk": "4a3458424958949564c6a2116c949f52ba4235c86db4adff25ac637ca0a3aa14",
+  "versi": "1.0.243",
+  "catatan": "• Aksi admin di sheet profil, larangan mic/chat, laporan user, ikon emoji",
+  "ukuran_apk": 56457974,
+  "sha256_apk": "e5b8efb5da824791e0b253bad10a0618c49e84d0216ef033dd2e893ae227d23c",
   "abis": {
     "arm64": {
-      "ukuran": 56447467,
-      "sha256": "4a3458424958949564c6a2116c949f52ba4235c86db4adff25ac637ca0a3aa14"
+      "ukuran": 56457974,
+      "sha256": "e5b8efb5da824791e0b253bad10a0618c49e84d0216ef033dd2e893ae227d23c"
     },
     "armv7": {
-      "ukuran": 54598622,
-      "sha256": "eb46d8d496630e7c71f4eeccf5565eebf8a0870dfdb9cc20dc9018989004e09b"
+      "ukuran": 54609128,
+      "sha256": "f2b9b64fa799204617b3f6aa7095af69b76b8d89a6834fa247a7c7eba4ab7e8f"
     },
     "universal": {
-      "ukuran": 74863457,
-      "sha256": "17400acf9edcabd53b65040a1f8e7b3177fc077ea4b3b36deb71f60e82c42fff"
+      "ukuran": 74873965,
+      "sha256": "03d4fbaff568b10fe941579229095cc29b8b88c8cf5ac39e8346d2026565e651"
     }
   }
 }

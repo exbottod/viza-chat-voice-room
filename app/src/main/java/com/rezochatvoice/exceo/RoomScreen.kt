@@ -794,9 +794,9 @@ fun RoomScreen(
                     Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    RmRoundBtn({ typing = true; emoteOpen = false }) { Text("💬", fontSize = 20.sp) }
+                    RmIkonBtn(R.drawable.rm_chat_umum) { typing = true; emoteOpen = false }
                     Spacer(Modifier.width(10.dp))
-                    RmRoundBtn({ emoteOpen = !emoteOpen }) { Text("😊", fontSize = 20.sp) }
+                    RmIkonBtn(R.drawable.rm_emoji) { emoteOpen = !emoteOpen }
 
                     Spacer(Modifier.weight(1f))
                     RmRoundBtn({ giftTarget = null; giftOpen = true; emoteOpen = false }) {
@@ -804,15 +804,12 @@ fun RoomScreen(
                     }
                     Spacer(Modifier.weight(1f))
                     if (mySeat != null) {
-                        RmRoundBtn({ scope.launch { RoomRepo.setSeatMuted(r.id, mySeat.index, !mySeat.muted) } }) {
-                            Image(
-                                painterResource(if (mySeat.muted) R.drawable.ic_mute_mic else R.drawable.ic_open_mic),
-                                null, Modifier.size(24.dp), contentScale = ContentScale.Fit,
-                            )
+                        RmIkonBtn(if (mySeat.muted) R.drawable.rm_mic_mati else R.drawable.rm_mic_hidup) {
+                            scope.launch { RoomRepo.setSeatMuted(r.id, mySeat.index, !mySeat.muted) }
                         }
                         Spacer(Modifier.width(10.dp))
                     }
-                    RmRoundBtn({ panel = P_TOOLS }) { GridIcon(Modifier.size(24.dp)) }
+                    RmIkonBtn(R.drawable.rm_lainnya) { panel = P_TOOLS }
                 }
             }
         }
@@ -1201,7 +1198,12 @@ fun RoomScreen(
                             toast(if (roomMuted) "Suara room dimatikan" else "Suara room aktif")
                             panel = P_NONE
                         },
-                    ) { Text(if (roomMuted) "🔇" else "🔊", fontSize = 24.sp) }
+                    ) {
+                        Image(
+                            painterResource(if (roomMuted) R.drawable.rm_suara_mati else R.drawable.rm_suara_hidup),
+                            null, Modifier.size(30.dp), contentScale = ContentScale.Fit,
+                        )
+                    }
                     if (canManage) {
                         RmTool(if (pk?.aktif == true && pk?.selesai != true) tr("Stop PK") else "PK", onClick = {
                             if (pk?.aktif == true && pk?.selesai != true) {
@@ -1788,6 +1790,17 @@ private fun RmMsgBox(text: String, color: Color) {
     ) {
         Text(tr(text), color = color, fontSize = 14.sp)
     }
+}
+
+/** Tombol bar bawah memakai ikon bulat dari aset rujukan (sudah berbingkai emas). */
+@Composable
+private fun RmIkonBtn(res: Int, onClick: () -> Unit) {
+    Image(
+        painter = painterResource(res),
+        contentDescription = null,
+        contentScale = ContentScale.Fit,
+        modifier = Modifier.size(46.dp).clip(CircleShape).clickable(onClick = onClick),
+    )
 }
 
 @Composable

@@ -1,2 +1,2 @@
-• Bersihkan layar publik sekarang langsung kosong di layar, termasuk riwayat gift, dan panelnya langsung menutup
-• Kalau aturan database menolak hapus satu simpul, isi chat dihapus satu per satu supaya tetap bersih
+• Mengatur ulang kalkulator sekarang benar-benar mengosongkan poin mic; kalau database menolak dari HP, penghapusan dikerjakan server
+• Poin mic tidak lagi muncul kembali setelah direset

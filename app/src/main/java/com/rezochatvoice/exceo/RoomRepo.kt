@@ -694,6 +694,41 @@ object RoomRepo {
     }
 
     /** Membuka kick: user boleh masuk room lagi. */
+    /**
+     * Kosongkan poin mic di layar publik (kalkulator).
+     *
+     * Aturan RTDB kadang menolak tulisan dari HP, dan dulu penolakan itu
+     * diabaikan sehingga poin lama muncul lagi. Sekarang kalau HP ditolak,
+     * penghapusan dikerjakan server.
+     */
+    suspend fun bersihkanPoinMic(roomId: String): String? {
+        var gagal = ""
+        try {
+            Rtdb.ref("micPoints/$roomId").removeValue().await()
+            return null
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            gagal = e.message ?: "ditolak"
+        }
+        // Cara kedua: tulis 0 untuk tiap kursi.
+        try {
+            val nol = hashMapOf<String, Any?>()
+            val snap = Rtdb.ref("micPoints/$roomId").get().await()
+            for (c in snap.children) nol[c.key ?: continue] = 0L
+            if (nol.isNotEmpty()) Rtdb.ref("micPoints/$roomId").updateChildren(nol).await()
+            return null
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            gagal = e.message ?: gagal
+        }
+        // Cara ketiga: lewat server dompet (punya akses admin).
+        val err = aksiKelolaRoom(roomId, "poin")
+        if (err == null) return null
+        return err.ifBlank { gagal.ifBlank { "Gagal mengosongkan poin mic" } }
+    }
+
     suspend fun unbanFromRoom(roomId: String, uid: String): String? = try {
         Rtdb.ref("blacklist/$roomId/$uid").removeValue().await()
         null

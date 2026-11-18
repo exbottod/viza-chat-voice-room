@@ -6307,6 +6307,11 @@ export default {
           await tulisRtdbSa(env, "messages/" + roomRa, null);
           return json({ ok: 1 });
         }
+        if (aksiRa === "poin") {
+          // Mengatur ulang kalkulator: poin mic di layar publik dikosongkan.
+          await tulisRtdbSa(env, "micPoints/" + roomRa, null);
+          return json({ ok: 1 });
+        }
         return json({ ok: 0, e: "Aksi tidak dikenal" }, 400);
       } catch (e) {
         return json({ ok: 0, e: String(e?.message ?? e).slice(0, 160) }, 500);

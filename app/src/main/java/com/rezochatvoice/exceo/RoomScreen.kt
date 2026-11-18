@@ -1487,15 +1487,9 @@ fun RoomScreen(
                             panel = P_NONE
                             scope.launch {
                                 micPoints = emptyMap()
-                                val simpul = Rtdb.ref("micPoints/" + r.id)
-                                try { simpul.removeValue() } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { }
-                                try {
-                                    val nol = mutableMapOf<String, Any>()
-                                    for (i in 0 until seats.size) nol[i.toString()] = 0L
-                                    if (nol.isNotEmpty()) simpul.updateChildren(nol)
-                                } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { }
+                                val err = RoomRepo.bersihkanPoinMic(r.id)
                                 micPoints = emptyMap()
-                                toast(tr("Poin mic dihapus"))
+                                toast(err ?: tr("Poin mic dihapus"))
                             }
                         }) { Text("\uD83D\uDC97", fontSize = 24.sp) }
                     }
@@ -1551,16 +1545,11 @@ fun RoomScreen(
                 Spacer(Modifier.height(16.dp))
                 GoldButton(tr("Mengatur ulang kalkulator")) {
                     scope.launch {
+                        // Kosongkan dulu di layar, lalu hapus di database.
                         micPoints = emptyMap()
-                        val simpul = Rtdb.ref("micPoints/" + r.id)
-                        try { simpul.removeValue() } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { }
-                        try {
-                            val nol = mutableMapOf<String, Any>()
-                            for (i in 0 until seats.size) nol[i.toString()] = 0L
-                            if (nol.isNotEmpty()) simpul.updateChildren(nol)
-                        } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { }
+                        val err = RoomRepo.bersihkanPoinMic(r.id)
                         micPoints = emptyMap()
-                        toast(tr("Poin mic di layar publik sudah bersih"))
+                        toast(err ?: tr("Poin mic di layar publik sudah bersih"))
                     }
                 }
                 Spacer(Modifier.height(12.dp))

@@ -174,6 +174,31 @@ object ProfileRepo {
 
     // ---------- Gambar ----------
 
+    /**
+     * Sama seperti decodeB64, tetapi diperkecil dulu (inSampleSize).
+     * Latar room dan foto room diunggah dari galeri dan bisa berukuran besar;
+     * kalau didekode apa adanya, bitmap raksasa itu memakan memori terus-menerus
+     * sehingga layar tersendat, suara LiveKit putus-nyambung, dan ikon lencana
+     * lambat muncul. Dipakai untuk gambar room saja.
+     */
+    fun decodeB64Scaled(b64: String?, maxSide: Int): ImageBitmap? {
+        if (b64.isNullOrBlank()) return null
+        return try {
+            val bytes = Base64.decode(b64, Base64.NO_WRAP)
+            val ukur = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, ukur)
+            var s = 1
+            val sisi = maxOf(ukur.outWidth, ukur.outHeight)
+            if (sisi > 0) while (sisi / (s * 2) >= maxSide) s *= 2
+            val opsi = BitmapFactory.Options().apply { inSampleSize = s }
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opsi)?.asImageBitmap()
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     fun decodeB64(b64: String?): ImageBitmap? {
         if (b64.isNullOrBlank()) return null
         return try {

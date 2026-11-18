@@ -207,6 +207,15 @@
         }
       }
     },
+    "roomFollowers": {
+      "$roomId": {
+        ".read": "auth != null",
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "!newData.exists() || newData.val() === true"
+        }
+      }
+    },
     "chats": {
       ".read": "auth != null",
       "$chatId": {

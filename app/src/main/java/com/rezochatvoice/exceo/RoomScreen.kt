@@ -100,6 +100,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.core.content.FileProvider
+import java.io.File
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -551,8 +553,14 @@ fun RoomScreen(
                             followed = nf
                             scope.launch {
                                 try {
-                                    if (nf) Rtdb.ref("followRooms/" + myUid + "/" + roomId).setValue(true)
-                                    else Rtdb.ref("followRooms/" + myUid + "/" + roomId).removeValue()
+                                    if (nf) {
+                                        Rtdb.ref("followRooms/" + myUid + "/" + roomId).setValue(true)
+                                        // Indeks terbalik supaya daftar anggota room bisa dibaca pemilik room.
+                                        Rtdb.ref("roomFollowers/" + roomId + "/" + myUid).setValue(true)
+                                    } else {
+                                        Rtdb.ref("followRooms/" + myUid + "/" + roomId).removeValue()
+                                        Rtdb.ref("roomFollowers/" + roomId + "/" + myUid).removeValue()
+                                    }
                                 } catch (e: kotlinx.coroutines.CancellationException) {
                                     throw e
                                 } catch (e: Exception) { }
@@ -1546,7 +1554,7 @@ fun RoomScreen(
         }
 
         if (panel == P_MODE) RmPanel(onDismiss = { panel = P_NONE }) { RmMode(r) { panel = P_NONE } }
-        if (panel == P_SETTINGS) RmPanel(onDismiss = { panel = P_NONE }) { RmSettings(r) { panel = P_NONE } }
+        if (panel == P_SETTINGS) RmPanel(onDismiss = { panel = P_NONE }) { RmSettings(r, onBlacklist = { panel = P_BLACKLIST }) { panel = P_NONE } }
         if (panel == P_LOCK) RmPanel(onDismiss = { panel = P_NONE }) { RmLock(r) { panel = P_NONE } }
         if (panel == P_EFEK) RmPanel(onDismiss = { panel = P_NONE }) {
             RmBlokEfek(
@@ -2116,109 +2124,474 @@ private fun RmMode(r: RoomInfo, onClose: () -> Unit) {
 }
 
 @Composable
-private fun RmSettings(r: RoomInfo, onClose: () -> Unit) {
+private fun RmSettings(r: RoomInfo, onBlacklist: () -> Unit, onClose: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var name by remember { mutableStateOf(r.name) }
     var ann by remember { mutableStateOf(r.announcement) }
-    var photo by remember { mutableStateOf<String?>(null) }
-    var bg by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
-    LaunchedEffect(r.id) { RoomImg.muat(r.id) }
-    val photoBmp = remember(photo, RoomImg.foto[r.id]) { ProfileRepo.decodeB64(photo ?: RoomImg.foto[r.id]) }
-    val bgBmp = remember(bg, RoomImg.latar[r.id]) { ProfileRepo.decodeB64(bg ?: RoomImg.latar[r.id]) }
-    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri != null) {
-            scope.launch {
-                busy = true
-                val b = ProfileRepo.encodeImage(context, uri, 320, square = true, quality = 85)
-                busy = false
-                if (b != null) photo = b
-            }
+    // 0 = Info Kamar, 1 = daftar anggota (pengikut room)
+    var sub by remember { mutableStateOf(0) }
+    var editNama by remember { mutableStateOf(false) }
+    var editAnn by remember { mutableStateOf(false) }
+    var bans by remember { mutableStateOf<List<RoomRepo.RoomBan>>(emptyList()) }
+    var pengikut by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var fUsers by remember { mutableStateOf<Map<String, PublicUser?>>(emptyMap()) }
+    DisposableEffect(r.id) {
+        val b = RoomRepo.observeBans(r.id) { bans = it }
+        val f = Rtdb.listen(Rtdb.ref("roomFollowers/" + r.id)) { snap ->
+            pengikut = snap.children.mapNotNull { it.key }.toSet()
         }
+        onDispose { b.remove(); f.remove() }
     }
-    val bgPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri != null) {
-            scope.launch {
-                busy = true
-                val b = ProfileRepo.encodeImage(context, uri, 720, square = false, quality = 55)
-                busy = false
-                if (b != null) bg = b
-            }
-        }
-    }
-    val imageOnly = PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-    Text(tr("Pengaturan room"), color = Color.White, fontSize = 22.sp)
-    Spacer(Modifier.height(14.dp))
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                Modifier.size(72.dp).clip(CircleShape).background(Color(0xFF1E1E1E)).border(2.dp, Gold, CircleShape)
-                .clickable(enabled = !busy) { photoPicker.launch(imageOnly) },
-                contentAlignment = Alignment.Center,
-            ) {
-                if (photoBmp != null) {
-                    Image(bitmap = photoBmp, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-                } else {
-                    Text("📷", fontSize = 26.sp)
-                }
-            }
-            Text(tr("Foto room"), color = Color(0xFF9A9A9A), fontSize = 12.sp)
-        }
-        Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                Modifier.fillMaxWidth().height(72.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xFF1E1E1E))
-                .border(1.dp, Gold, RoundedCornerShape(12.dp)).clickable(enabled = !busy) { bgPicker.launch(imageOnly) },
-                contentAlignment = Alignment.Center,
-            ) {
-                if (bgBmp != null) {
-                    Image(bitmap = bgBmp, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-                } else {
-                    Text("🖼", fontSize = 26.sp)
-                }
-            }
-            Text(tr("Background room"), color = Color(0xFF9A9A9A), fontSize = 12.sp)
-        }
-    }
-    Spacer(Modifier.height(14.dp))
-    OutlinedTextField(
-        value = name,
-        onValueChange = { if (it.length <= 30) name = it },
-        modifier = Modifier.fillMaxWidth(),
-        singleLine = true,
-        placeholder = { Text(tr("Nama room")) },
-        shape = RoundedCornerShape(12.dp),
-        colors = goldFieldColors(),
-    )
-    Spacer(Modifier.height(10.dp))
-    OutlinedTextField(
-        value = ann,
-        onValueChange = { if (it.length <= 200) ann = it },
-        modifier = Modifier.fillMaxWidth(),
-        minLines = 3,
-        placeholder = { Text(tr("Pengumuman room")) },
-        shape = RoundedCornerShape(12.dp),
-        colors = goldFieldColors(),
-    )
-    Spacer(Modifier.height(16.dp))
-    GoldButton(tr("Konfirmasi"), enabled = name.isNotBlank() && !busy) {
-        scope.launch {
-            busy = true
-            val err = try {
-                // Batas total supaya tombol tidak pernah menggantung.
-                val r2 = kotlinx.coroutines.withTimeoutOrNull(40_000L) {
-                    RoomRepo.updateSettings(r.id, name.trim(), photo, bg, ann.trim()) to true
-                }
-                if (r2 == null) "Koneksi lambat, coba tekan Konfirmasi lagi" else r2.first
+    LaunchedEffect(pengikut) {
+        val m = HashMap<String, PublicUser?>()
+        for (u in pengikut) {
+            m[u] = try {
+                UserCache.byUid(u)
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                e.message ?: "Gagal menyimpan"
-            } finally {
-                busy = false
+                null
             }
-            Toast.makeText(context, err ?: "Tersimpan", Toast.LENGTH_SHORT).show()
-            if (err == null) onClose()
+        }
+        fUsers = m
+    }
+    LaunchedEffect(r.id) { RoomImg.muat(r.id) }
+    val photoBmp = remember(RoomImg.foto[r.id], r.photoB64) { ProfileRepo.decodeB64Scaled(RoomImg.foto[r.id] ?: r.photoB64, 256) }
+    val bgBmp = remember(RoomImg.latar[r.id], r.backgroundB64) { ProfileRepo.decodeB64Scaled(RoomImg.latar[r.id] ?: r.backgroundB64, 360) }
+
+    // Simpan langsung ke server: tidak perlu menekan Konfirmasi lagi.
+    fun simpan(fotoBaru: String?, latarBaru: String?, namaBaru: String?, annBaru: String?) {
+        if (busy) return
+        scope.launch {
+            busy = true
+            var selesai = false
+            val hasil = try {
+                kotlinx.coroutines.withTimeoutOrNull(40_000L) {
+                    val e = RoomRepo.updateSettings(
+                        r.id,
+                        (namaBaru ?: name).trim().ifBlank { r.name },
+                        fotoBaru,
+                        latarBaru,
+                        (annBaru ?: ann).trim(),
+                    )
+                    selesai = true
+                    e
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                selesai = true
+                e.message ?: "Gagal menyimpan"
+            }
+            busy = false
+            Toast.makeText(
+                context,
+                if (!selesai) "Koneksi lambat, coba lagi" else (hasil ?: "Tersimpan"),
+                Toast.LENGTH_SHORT,
+            ).show()
+        }
+    }
+
+    // Foto yang sedang dipotong: bitmap + tujuan (1 = sampul, 2 = tema).
+    var potongBmp by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+    var potongUntuk by remember { mutableStateOf(0) }
+    // Hasil potong yang sedang dipratinjau sebelum benar-benar disimpan.
+    var pratinjau by remember { mutableStateOf<String?>(null) }
+    var pratinjauUntuk by remember { mutableStateOf(0) }
+    fun mulaiPotong(uri: Uri, untuk: Int) {
+        scope.launch {
+            busy = true
+            val bmp = muatFotoPotong(context, uri)
+            busy = false
+            if (bmp == null) {
+                Toast.makeText(context, "Foto tidak bisa dibaca", Toast.LENGTH_SHORT).show()
+            } else {
+                potongUntuk = untuk
+                potongBmp = bmp
+            }
+        }
+    }
+    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) mulaiPotong(uri, 1)
+    }
+    val bgPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) mulaiPotong(uri, 2)
+    }
+    val imageOnly = PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+
+    // Pilihan sumber foto: 0 = tidak ada, 1 = sampul kamar, 2 = tema kamar.
+    var sumberUntuk by remember { mutableStateOf(0) }
+    var izinUntuk by remember { mutableStateOf(0) }
+    var fotoUri by remember { mutableStateOf<Uri?>(null) }
+    // Peluncur kamera disimpan di variabel supaya bisa dipakai dari fungsi di atasnya.
+    var luncurKamera by remember { mutableStateOf<(Uri) -> Unit>({ }) }
+    fun bukaKamera(untuk: Int) {
+        try {
+            sumberUntuk = untuk
+            val dir = File(context.cacheDir, "roomfoto").apply { mkdirs() }
+            val f = File(dir, "room_" + System.currentTimeMillis() + ".jpg")
+            val u = FileProvider.getUriForFile(context, context.packageName + ".fotoprovider", f)
+            fotoUri = u
+            luncurKamera(u)
+        } catch (e: Exception) {
+            Toast.makeText(context, "Kamera tidak bisa dibuka", Toast.LENGTH_SHORT).show()
+        }
+    }
+    val kameraPicker = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { jadi ->
+        val u = fotoUri
+        val untuk = sumberUntuk
+        if (jadi && u != null && untuk != 0) mulaiPotong(u, untuk)
+    }
+    luncurKamera = { u -> kameraPicker.launch(u) }
+    val izinKamera = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { boleh ->
+        if (boleh) bukaKamera(izinUntuk)
+        else Toast.makeText(context, "Izin kamera ditolak, pakai album saja", Toast.LENGTH_SHORT).show()
+    }
+    val bmpPotong = potongBmp
+    if (bmpPotong != null) {
+        val dm = context.resources.displayMetrics
+        val rasioLayar = dm.widthPixels.toFloat() / dm.heightPixels.toFloat()
+        val sampul = potongUntuk == 1
+        LayarPotongFoto(
+            bitmap = bmpPotong,
+            rasio = if (sampul) 1f else rasioLayar,
+            bulat = sampul,
+            sisiMaks = if (sampul) 512 else 1600,
+            kualitas = if (sampul) 88 else 75,
+            onBatal = { potongBmp = null },
+            onSelesai = { b ->
+                potongBmp = null
+                if (b == null) {
+                    Toast.makeText(context, "Gagal memotong foto", Toast.LENGTH_SHORT).show()
+                } else {
+                    pratinjauUntuk = potongUntuk
+                    pratinjau = b
+                }
+            },
+        )
+    }
+    val hasilPratinjau = pratinjau
+    if (hasilPratinjau != null) {
+        val sampulPratinjau = pratinjauUntuk == 1
+        PratinjauFotoRoom(
+            b64 = hasilPratinjau,
+            judul = if (sampulPratinjau) "sampul kamar" else "background kustom",
+            untukTema = !sampulPratinjau,
+            onUnggahLagi = {
+                // Unggah lagi: tutup pratinjau lalu buka pilihan sumber foto lagi.
+                val untuk = pratinjauUntuk
+                pratinjau = null
+                sumberUntuk = untuk
+            },
+            onKonfirmasi = {
+                pratinjau = null
+                if (sampulPratinjau) simpan(hasilPratinjau, null, null, null)
+                else simpan(null, hasilPratinjau, null, null)
+            },
+            onTutup = { pratinjau = null },
+        )
+    }
+    if (sumberUntuk != 0) {
+        SumberFotoDialog(
+            onTutup = { sumberUntuk = 0 },
+            onKamera = {
+                val untuk = sumberUntuk
+                sumberUntuk = 0
+                val sudah = androidx.core.content.ContextCompat.checkSelfPermission(
+                    context, android.Manifest.permission.CAMERA,
+                ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                if (sudah) bukaKamera(untuk) else {
+                    izinUntuk = untuk
+                    izinKamera.launch(android.Manifest.permission.CAMERA)
+                }
+            },
+            onAlbum = {
+                val untuk = sumberUntuk
+                sumberUntuk = 0
+                if (untuk == 1) photoPicker.launch(imageOnly) else bgPicker.launch(imageOnly)
+            },
+        )
+    }
+
+    if (sub == 1) {
+        Text("Daftar anggota", color = GoldLight, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(6.dp))
+        Text("User yang sudah mengikuti room ini", color = Color(0xFF9A9A9A), fontSize = 12.sp)
+        Spacer(Modifier.height(12.dp))
+        if (pengikut.isEmpty()) {
+            Text("Belum ada user yang mengikuti room ini", color = Color(0xFFBDBDBD), fontSize = 14.sp)
+        } else {
+            LazyColumn(Modifier.heightIn(max = 360.dp)) {
+                items(pengikut.toList()) { u ->
+                    val pu = fUsers[u]
+                    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        InvAvatar(pu, u)
+                        Spacer(Modifier.width(10.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(pu?.name ?: ("UID " + u), color = Color.White, fontSize = 15.sp, maxLines = 1)
+                            val idu = pu?.userId
+                            if (!idu.isNullOrBlank()) Text("ID: " + idu, color = Color(0xFF9A9A9A), fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
+        }
+        Spacer(Modifier.height(14.dp))
+        OutlineButton("Kembali") { sub = 0 }
+        return
+    }
+
+    if (sub == 2) {
+        var tabTema by remember { mutableStateOf(0) }
+        Text("Tema kamar", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(12.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+            Text(
+                "Tema",
+                color = if (tabTema == 0) GoldLight else Color(0xFF9A9A9A),
+                fontSize = 15.sp,
+                fontWeight = if (tabTema == 0) FontWeight.Bold else FontWeight.Normal,
+                modifier = Modifier.clickable { tabTema = 0 },
+            )
+            Text(
+                "Border sampul",
+                color = if (tabTema == 1) GoldLight else Color(0xFF9A9A9A),
+                fontSize = 15.sp,
+                fontWeight = if (tabTema == 1) FontWeight.Bold else FontWeight.Normal,
+                modifier = Modifier.clickable { tabTema = 1 },
+            )
+        }
+        Spacer(Modifier.height(14.dp))
+        if (tabTema == 1) {
+            Text(
+                "Belum ada border sampul untuk room ini.",
+                color = Color(0xFFBDBDBD), fontSize = 13.sp,
+            )
+        } else {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                TemaTile(
+                    modifier = Modifier.weight(1f),
+                    label = "background kustom",
+                    ket = if (bgBmp != null) "dipakai" else "ketuk untuk unggah",
+                    aktif = bgBmp != null,
+                    bitmap = bgBmp,
+                    plus = bgBmp == null,
+                    onClick = { if (!busy) sumberUntuk = 2 },
+                )
+                TemaTile(
+                    modifier = Modifier.weight(1f),
+                    label = "Tema default",
+                    ket = "bawaan aplikasi",
+                    aktif = bgBmp == null,
+                    bitmap = null,
+                    onClick = {
+                        if (!busy) {
+                            if (bgBmp == null) {
+                                Toast.makeText(context, "Tema default sudah dipakai", Toast.LENGTH_SHORT).show()
+                            } else {
+                                // Menghapus latar kustom: room kembali memakai tema default.
+                                simpan(null, "", null, null)
+                            }
+                        }
+                    },
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            Text(
+                "Tema berlevel (LV.2 dan seterusnya) saya tambahkan setelah gambar tema default kamu kirim.",
+                color = Color(0xFF8A8A8A), fontSize = 12.sp,
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+        OutlineButton("Kembali") { sub = 0 }
+        return
+    }
+
+    Text("Info Kamar", color = Color.White, fontSize = 22.sp)
+    Spacer(Modifier.height(12.dp))
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        InfoRow(
+            label = "Sampul kamar",
+            value = if (busy) "Mengunggah..." else "",
+            onClick = { if (!busy) sumberUntuk = 1 },
+            trailing = {
+                if (photoBmp != null) {
+                    Image(bitmap = photoBmp, contentDescription = null, modifier = Modifier.size(34.dp).clip(CircleShape), contentScale = ContentScale.Crop)
+                } else {
+                    Box(
+                        Modifier.size(34.dp).clip(CircleShape).background(Color(0xFF2A2A2A)),
+                        contentAlignment = Alignment.Center,
+                    ) { Text("📷", fontSize = 14.sp) }
+                }
+            },
+        )
+        InfoRow(label = "ID Kamar", value = r.roomNo)
+        InfoRow(
+            label = "Nama kamar",
+            value = name,
+            onClick = { editNama = !editNama },
+        )
+        InfoRow(
+            label = "Pengumuman kamar",
+            value = if (ann.isBlank()) "-" else ann.take(18) + if (ann.length > 18) "..." else "",
+            onClick = { editAnn = !editAnn },
+        )
+        InfoRow(
+            label = "Tema kamar",
+            value = if (busy) "Mengunggah..." else "",
+            onClick = { if (!busy) sub = 2 },
+            trailing = {
+                if (bgBmp != null) {
+                    Image(bitmap = bgBmp, contentDescription = null, modifier = Modifier.size(width = 58.dp, height = 34.dp).clip(RoundedCornerShape(6.dp)), contentScale = ContentScale.Crop)
+                } else {
+                    Box(
+                        Modifier.size(width = 58.dp, height = 34.dp).clip(RoundedCornerShape(6.dp)).background(Color(0xFF2A2A2A)),
+                        contentAlignment = Alignment.Center,
+                    ) { Text("🖼", fontSize = 14.sp) }
+                }
+            },
+        )
+        InfoRow(label = "Daftar anggota", value = pengikut.size.toString() + " orang", onClick = { sub = 1 })
+        InfoRow(label = "Daftar blokir", value = bans.size.toString() + " orang", onClick = { onBlacklist() })
+    }
+
+    if (editNama) {
+        Spacer(Modifier.height(12.dp))
+        OutlinedTextField(
+            value = name,
+            onValueChange = { if (it.length <= 30) name = it },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            placeholder = { Text(tr("Nama room")) },
+            shape = RoundedCornerShape(12.dp),
+            colors = goldFieldColors(),
+        )
+        Spacer(Modifier.height(8.dp))
+        GoldButton(tr("Simpan nama"), enabled = name.isNotBlank() && !busy) {
+            editNama = false
+            simpan(null, null, name, null)
+        }
+    }
+    if (editAnn) {
+        Spacer(Modifier.height(12.dp))
+        OutlinedTextField(
+            value = ann,
+            onValueChange = { if (it.length <= 200) ann = it },
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 3,
+            placeholder = { Text(tr("Pengumuman room")) },
+            shape = RoundedCornerShape(12.dp),
+            colors = goldFieldColors(),
+        )
+        Spacer(Modifier.height(8.dp))
+        GoldButton(tr("Simpan pengumuman"), enabled = !busy) {
+            editAnn = false
+            simpan(null, null, null, ann)
+        }
+    }
+    Spacer(Modifier.height(16.dp))
+    OutlineButton(tr("Tutup")) { onClose() }
+}
+
+/** Pilihan sumber foto room: kamera atau album HP. */
+@Composable
+private fun SumberFotoDialog(onTutup: () -> Unit, onKamera: () -> Unit, onAlbum: () -> Unit) {
+    Dialog(onDismissRequest = onTutup) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .background(Color.White)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Box(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(Color(0xFFFF8A00))
+                    .clickable { onKamera() }.padding(vertical = 14.dp),
+                contentAlignment = Alignment.Center,
+            ) { Text("Ambil foto", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold) }
+            Box(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(Color(0xFFFF8A00))
+                    .clickable { onAlbum() }.padding(vertical = 14.dp),
+                contentAlignment = Alignment.Center,
+            ) { Text("Pilih dari album hp", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold) }
+        }
+    }
+}
+
+/** Kartu tema pada halaman Tema kamar. */
+@Composable
+private fun TemaTile(
+    modifier: Modifier = Modifier,
+    label: String,
+    ket: String,
+    aktif: Boolean,
+    bitmap: ImageBitmap?,
+    plus: Boolean = false,
+    onClick: () -> Unit,
+) {
+    Column(modifier) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(104.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color(0xFF1B1B1B))
+                .border(
+                    if (aktif) 2.dp else 1.dp,
+                    if (aktif) Gold else Color(0xFF2E2E2E),
+                    RoundedCornerShape(12.dp),
+                )
+                .clickable { onClick() },
+            contentAlignment = Alignment.Center,
+        ) {
+            if (bitmap != null) {
+                Image(bitmap = bitmap, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            } else if (plus) {
+                Text("+", color = Color(0xFFBDBDBD), fontSize = 32.sp)
+            }
+            if (aktif) {
+                Box(
+                    Modifier.align(Alignment.BottomEnd).padding(6.dp).size(20.dp).clip(CircleShape).background(Gold),
+                    contentAlignment = Alignment.Center,
+                ) { Text("\u2713", color = Color.Black, fontSize = 12.sp) }
+            }
+        }
+        Spacer(Modifier.height(5.dp))
+        Text(label, color = Color(0xFFEDEDED), fontSize = 12.sp, maxLines = 1)
+        Text(ket, color = Color(0xFF9A9A9A), fontSize = 11.sp, maxLines = 1)
+    }
+}
+
+/** Satu baris gaya "Info Kamar": label di kiri, nilai dan panah di kanan. */
+@Composable
+private fun InfoRow(
+    label: String,
+    value: String = "",
+    onClick: (() -> Unit)? = null,
+    trailing: (@Composable () -> Unit)? = null,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFF151515))
+            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, color = Color(0xFFEDEDED), fontSize = 15.sp, modifier = Modifier.weight(1f))
+        if (value.isNotBlank()) {
+            Text(value, color = Color(0xFF9A9A9A), fontSize = 14.sp, maxLines = 1)
+        }
+        if (trailing != null) {
+            Spacer(Modifier.width(8.dp))
+            trailing()
+        }
+        if (onClick != null) {
+            Text("\u203A", color = Color(0xFF9A9A9A), fontSize = 20.sp, modifier = Modifier.padding(start = 8.dp))
         }
     }
 }

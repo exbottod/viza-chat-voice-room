@@ -83,12 +83,12 @@ object RoomImg {
 fun rememberRoomPhoto(r: RoomInfo): ImageBitmap? {
     LaunchedEffect(r.id) { RoomImg.muat(r.id) }
     val b64 = RoomImg.foto[r.id] ?: r.photoB64
-    return remember(b64) { ProfileRepo.decodeB64(b64) }
+    return remember(b64) { ProfileRepo.decodeB64Scaled(b64, 512) }
 }
 
 @Composable
 fun rememberRoomBg(r: RoomInfo): ImageBitmap? {
     LaunchedEffect(r.id) { RoomImg.muat(r.id) }
     val b64 = RoomImg.latar[r.id] ?: r.backgroundB64
-    return remember(b64) { ProfileRepo.decodeB64(b64) }
+    return remember(b64) { ProfileRepo.decodeB64Scaled(b64, 1280) }
 }

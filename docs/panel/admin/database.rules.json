@@ -207,6 +207,12 @@
         }
       }
     },
+    "roomPoin": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "roomCfg": {
       "$roomId": {
         ".read": "auth != null",

@@ -369,6 +369,8 @@ object WalletRepo {
         // Gift yang masuk ikut menambah skor PK room (kalau PK sedang jalan).
         if (r.error == null && !roomId.isNullOrBlank()) {
             try { RoomPk.tambahSkor(roomId, price, to) } catch (e: Exception) { }
+            // Gift menambah poin kamar (level kamar) untuk pemilik room.
+            try { RoomPoin.tambah(roomId, uid, price) } catch (e: Exception) { }
         }
         return r.error
     }

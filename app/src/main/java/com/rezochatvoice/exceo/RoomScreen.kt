@@ -2203,12 +2203,32 @@ private fun RmSettings(r: RoomInfo, awalSub: Int = 0, onBlacklist: () -> Unit, o
     var bans by remember { mutableStateOf<List<RoomRepo.RoomBan>>(emptyList()) }
     var pengikut by remember { mutableStateOf<Set<String>>(emptySet()) }
     var fUsers by remember { mutableStateOf<Map<String, PublicUser?>>(emptyMap()) }
+    // Poin kamar (level kamar) dan daftar peringkat.
+    var poinTotal by remember { mutableStateOf(0L) }
+    var periode by remember { mutableStateOf(2) } // 0 harian, 1 bulanan, 2 keseluruhan
+    var peringkat by remember { mutableStateOf<List<RoomPoin.Baris>>(emptyList()) }
+    var kontribusi by remember { mutableStateOf<List<Pair<String, Long>>>(emptyList()) }
+    var muatPoin by remember { mutableStateOf(false) }
     DisposableEffect(r.id) {
         val b = RoomRepo.observeBans(r.id) { bans = it }
         val f = Rtdb.listen(Rtdb.ref("roomFollowers/" + r.id)) { snap ->
             pengikut = snap.children.mapNotNull { it.key }.toSet()
         }
         onDispose { b.remove(); f.remove() }
+    }
+    LaunchedEffect(kontribusi) {
+        val m = HashMap<String, PublicUser?>()
+        for ((u, _) in kontribusi) {
+            if (fUsers.containsKey(u)) continue
+            m[u] = try {
+                UserCache.byUid(u)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
+            }
+        }
+        if (m.isNotEmpty()) fUsers = fUsers + m
     }
     LaunchedEffect(pengikut) {
         val m = HashMap<String, PublicUser?>()
@@ -2224,6 +2244,22 @@ private fun RmSettings(r: RoomInfo, awalSub: Int = 0, onBlacklist: () -> Unit, o
         fUsers = m
     }
     LaunchedEffect(r.id) { RoomImg.muat(r.id) }
+    LaunchedEffect(r.id) {
+        poinTotal = try {
+            Rtdb.ref("roomPoin/" + r.id + "/total").get().await().getValue(Long::class.java) ?: 0L
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            0L
+        }
+    }
+    LaunchedEffect(sub, periode) {
+        if (sub != 3 && sub != 4) return@LaunchedEffect
+        muatPoin = true
+        peringkat = RoomPoin.peringkat(if (periode == 0) "harian" else if (periode == 1) "bulanan" else "total")
+        if (sub == 4) kontribusi = RoomPoin.kontribusi(r.id)
+        muatPoin = false
+    }
     val photoBmp = remember(RoomImg.foto[r.id], r.photoB64) { ProfileRepo.decodeB64Scaled(RoomImg.foto[r.id] ?: r.photoB64, 256) }
     val bgBmp = remember(RoomImg.latar[r.id], r.backgroundB64) { ProfileRepo.decodeB64Scaled(RoomImg.latar[r.id] ?: r.backgroundB64, 360) }
 
@@ -2475,6 +2511,131 @@ private fun RmSettings(r: RoomInfo, awalSub: Int = 0, onBlacklist: () -> Unit, o
         return
     }
 
+    if (sub == 3 || sub == 4) {
+        val judulHalaman = if (sub == 4) "Daftar Kontribusi Anggota" else "Daftar Poin Kamar"
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "\u2039",
+                color = Color.White, fontSize = 26.sp,
+                modifier = Modifier.clickable { sub = if (sub == 4) 3 else 0 }.padding(horizontal = 6.dp),
+            )
+            Text(judulHalaman, color = Color.White, fontSize = 19.sp, modifier = Modifier.weight(1f))
+            Text(
+                "Lv." + RoomPoin.level(poinTotal),
+                color = GoldLight, fontSize = 14.sp, fontWeight = FontWeight.Bold,
+            )
+        }
+        Spacer(Modifier.height(12.dp))
+
+        if (sub == 3) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                val namaPeriode = listOf("Daftar harian", "Daftar bulanan", "Daftar Keseluruhan")
+                namaPeriode.forEachIndexed { i, teks ->
+                    val on = periode == i
+                    Box(
+                        Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(if (on) Gold else Color(0xFF1B1B1B))
+                            .clickable { periode = i }
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                    ) {
+                        Text(
+                            teks,
+                            color = if (on) Color.Black else Color(0xFFBDBDBD),
+                            fontSize = 12.sp, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal,
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(14.dp))
+            // Kartu room sendiri
+            Box(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Color(0xFF1B1B1B)).padding(14.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("\uD83D\uDC51", fontSize = 26.sp)
+                    Spacer(Modifier.width(10.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(r.name, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                        Text(
+                            "ID " + r.roomNo + "  \u00B7  Lv." + RoomPoin.level(poinTotal),
+                            color = Color(0xFF9A9A9A), fontSize = 11.sp,
+                        )
+                    }
+                    Text(poinTotal.toString(), color = GoldLight, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            Box(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Color(0xFF151515))
+                    .clickable { sub = 4 }.padding(horizontal = 14.dp, vertical = 13.dp),
+            ) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text("Daftar Kontribusi Anggota", color = Color(0xFFEDEDED), fontSize = 15.sp, modifier = Modifier.weight(1f))
+                    Text("\u203A", color = Color(0xFF9A9A9A), fontSize = 20.sp)
+                }
+            }
+            Spacer(Modifier.height(14.dp))
+            if (muatPoin) {
+                Text("Memuat peringkat...", color = Color(0xFF9A9A9A), fontSize = 13.sp)
+            } else if (peringkat.isEmpty()) {
+                Text("Belum ada poin kamar. Poin didapat dari gift yang dikirim di dalam room.", color = Color(0xFFBDBDBD), fontSize = 13.sp)
+            } else {
+                LazyColumn(Modifier.fillMaxWidth().heightIn(max = 340.dp)) {
+                    items(peringkat.size) { i ->
+                        val b = peringkat[i]
+                        Row(Modifier.fillMaxWidth().padding(vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                (i + 1).toString(),
+                                color = if (b.roomId == r.id) GoldLight else Color(0xFF9A9A9A),
+                                fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                                modifier = Modifier.width(30.dp),
+                            )
+                            Text(
+                                b.nama,
+                                color = if (b.roomId == r.id) GoldLight else Color.White,
+                                fontSize = 14.sp, maxLines = 1,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Text("\uD83D\uDC8E", fontSize = 12.sp)
+                            Spacer(Modifier.width(4.dp))
+                            Text(b.poin.toString(), color = Color(0xFFEDEDED), fontSize = 13.sp)
+                        }
+                    }
+                }
+            }
+            Spacer(Modifier.height(14.dp))
+            OutlineButton("Kembali") { sub = 0 }
+            return
+        }
+
+        // Kontribusi anggota room ini
+        if (muatPoin) {
+            Text("Memuat kontribusi...", color = Color(0xFF9A9A9A), fontSize = 13.sp)
+        } else if (kontribusi.isEmpty()) {
+            Text("Belum ada kontribusi anggota di room ini.", color = Color(0xFFBDBDBD), fontSize = 13.sp)
+        } else {
+            LazyColumn(Modifier.fillMaxWidth().heightIn(max = 380.dp)) {
+                items(kontribusi.size) { i ->
+                    val (uid, poin) = kontribusi[i]
+                    val pu = fUsers[uid]
+                    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text((i + 1).toString(), color = Color(0xFF9A9A9A), fontSize = 13.sp, modifier = Modifier.width(26.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(pu?.name ?: ("UID " + uid), color = Color.White, fontSize = 14.sp, maxLines = 1)
+                            val idu = pu?.userId
+                            if (!idu.isNullOrBlank()) Text("ID: " + idu, color = Color(0xFF9A9A9A), fontSize = 11.sp)
+                        }
+                        Text(poin.toString(), color = GoldLight, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+        Spacer(Modifier.height(14.dp))
+        OutlineButton("Kembali") { sub = 3 }
+        return
+    }
+
     Text("Info Kamar", color = Color.White, fontSize = 22.sp)
     Spacer(Modifier.height(12.dp))
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -2518,6 +2679,11 @@ private fun RmSettings(r: RoomInfo, awalSub: Int = 0, onBlacklist: () -> Unit, o
                     ) { Text("🖼", fontSize = 14.sp) }
                 }
             },
+        )
+        InfoRow(
+            label = "Level kamar",
+            value = "Lv." + RoomPoin.level(poinTotal),
+            onClick = { sub = 3 },
         )
         InfoRow(label = "Daftar anggota", value = pengikut.size.toString() + " orang", onClick = { sub = 1 })
         InfoRow(label = "Daftar blokir", value = bans.size.toString() + " orang", onClick = { onBlacklist() })

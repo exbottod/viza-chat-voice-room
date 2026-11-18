@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.252",
-  "catatan": "• Poin kamar per menit di server dompet; gift anggota 2x\n• Ambang level kamar: Lv.1 10 juta poin sampai Lv.55 10 kuadriliun poin\n• Header room: logo dan level room di sebelah ID room\n• Aset logo level kamar (55 tingkat) dari owner di drawable-xxhdpi, dipakai di Level kamar",
-  "ukuran_apk": 56978071,
-  "sha256_apk": "9f8c58f9e3120025dc9d11402c3a4154afc07f2abadb30a23a0dda3dc384dae5",
+  "versi": "1.0.253",
+  "catatan": "• Rules: node roomCfg, micRequests, roomFollowers, roomPoin disamakan di kedua berkas",
+  "ukuran_apk": 56978080,
+  "sha256_apk": "746555f907c8f26ef46b60f2a06dfced10542844261d595c5dcdca488f1ea464",
   "abis": {
     "arm64": {
-      "ukuran": 56978071,
-      "sha256": "9f8c58f9e3120025dc9d11402c3a4154afc07f2abadb30a23a0dda3dc384dae5"
+      "ukuran": 56978080,
+      "sha256": "746555f907c8f26ef46b60f2a06dfced10542844261d595c5dcdca488f1ea464"
     },
     "armv7": {
-      "ukuran": 55129224,
-      "sha256": "dfe37bb3e809605bc79d31c2c21a9a34e5541ac10f592976891ca0d1b5530976"
+      "ukuran": 55129226,
+      "sha256": "24c1b569cf1c79b2e674b8482ae6c6b9991c6b25e6a722adbb3f5a8107c107a9"
     },
     "universal": {
-      "ukuran": 75394064,
-      "sha256": "4a79ff6c68a9125d0d7178d9ba646cb616b1b94e1252989f42f598a375eb1020"
+      "ukuran": 75394067,
+      "sha256": "888a40027fd5393be92c0776c92b54666c15387b27003ea1c010ea8c07cf8323"
     }
   }
 }

@@ -1,4 +1,1 @@
-• Poin kamar per menit di server dompet; gift anggota 2x
-• Ambang level kamar: Lv.1 10 juta poin sampai Lv.55 10 kuadriliun poin
-• Header room: logo dan level room di sebelah ID room
-• Aset logo level kamar (55 tingkat) dari owner di drawable-xxhdpi, dipakai di Level kamar
+• Rules: node roomCfg, micRequests, roomFollowers, roomPoin disamakan di kedua berkas

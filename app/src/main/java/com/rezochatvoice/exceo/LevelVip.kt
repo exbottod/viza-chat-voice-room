@@ -200,7 +200,17 @@ fun activeEquip(w: Wallet, slot: String): String {
     // menampung satu id, jadi memasang lencana kedua otomatis melepas yang lama.
     if (slot == "badge") {
         val now = System.currentTimeMillis()
-        return medalIdList(raw).filter { (w.inv[it] ?: 0L) > now }.joinToString(",")
+        // Aturan sama dengan medali: lencana kiriman panel (sx_) dan item bawaan VIP
+        // tetap sah walau catatan inv-nya belum sinkron, supaya lencana yang sudah
+        // dipasang tidak hilang dari typing bar, sheet, dan profil orang lain.
+        return medalIdList(raw).filter { id ->
+            val exp = w.inv[id]
+            when {
+                exp != null -> exp > now
+                id.startsWith("sx_") || id.startsWith("svbd_") -> true
+                else -> findItem(id) != null
+            }
+        }.joinToString(",")
     }
     val id = raw
     return if ((w.inv[id] ?: 0L) > System.currentTimeMillis()) id else ""
@@ -1551,8 +1561,19 @@ object PublicSync {
                 }
             }
             if (m.isEmpty()) return
-            kotlinx.coroutines.withTimeoutOrNull(5000L) {
-                Rtdb.ref("pub/$uid").updateChildren(m).await()
+            // Batas dilonggarkan dan diulang sekali: jaringan lambat dulu membuat
+            // lencana yang baru dipasang tidak pernah sampai ke profil orang lain.
+            var terkirim = false
+            for (percobaan in 1..2) {
+                val hasil = kotlinx.coroutines.withTimeoutOrNull(9000L) {
+                    Rtdb.ref("pub/$uid").updateChildren(m).await()
+                    true
+                }
+                if (hasil == true) { terkirim = true; break }
+            }
+            if (!terkirim) {
+                // Antrean tulis RTDB akan mengirim sendiri begitu jaringan pulih.
+                try { Rtdb.ref("pub/$uid").updateChildren(m) } catch (e: Exception) { }
             }
             // Buang cache profil lama di HP ini supaya pembukaan berikutnya segar.
             UserCache.forget(uid)

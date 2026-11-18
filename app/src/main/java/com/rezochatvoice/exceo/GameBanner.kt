@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -364,7 +365,7 @@ fun GameWinBannerHost(modifier: Modifier = Modifier) {
             Modifier
                 .fillMaxWidth()
                 .offset(x = layar * geser.value)
-                .height(72.dp)
+                .height(78.dp)
                 .then(
                     if (pelat) Modifier
                     else Modifier
@@ -392,21 +393,27 @@ fun GameWinBannerHost(modifier: Modifier = Modifier) {
             BoxWithConstraints(Modifier.matchParentSize()) {
                 val lebar = maxWidth
                 val tinggi = maxHeight
-                val foto = (tinggi.value * 0.62f).dp
-                val geserKiri = (lebar.value * 0.055f).dp
-                val mulaiNama = geserKiri + foto + (lebar.value * 0.02f).dp
-                val kananIsi = (lebar.value * 0.075f).dp
-                val lebarKanan = (lebar.value * 0.30f).dp
-                // Kiri: foto pemenang, pas di lingkaran kiri pelat.
+                // Pelat emas punya ujung berhias di kiri/kanan dan mahkota di tengah atas.
+                // Isi dipasang di "badan" pelat (sekitar 14% sampai 90% lebar, 24% sampai 82% tinggi).
+                val foto = (tinggi.value * 0.60f).dp
+                val kiriFoto = (lebar.value * 0.075f).dp
+                val tengahY = (tinggi.value * 0.05f).dp
+                val mulaiNama = kiriFoto + foto + (lebar.value * 0.025f).dp
+                val kananIsi = (lebar.value * 0.095f).dp
+                val lebarKanan = (lebar.value * 0.42f).dp
+                // Kiri: foto pemenang, masuk ke tengah pelat.
                 Box(
-                    Modifier.align(Alignment.CenterStart).padding(start = geserKiri).size(foto),
+                    Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(start = kiriFoto, top = tengahY)
+                        .size(foto),
                 ) {
                     Box(
                         Modifier
                             .fillMaxSize()
                             .clip(CircleShape)
                             .background(Color(0x55000000))
-                            .border(2.dp, Color(0xFFFFC94D), CircleShape),
+                            .border(2.dp, Color(0xFFFFF1B8), CircleShape),
                         contentAlignment = Alignment.Center,
                     ) {
                         if (e.av.isNotBlank() && e.av.startsWith("http")) {
@@ -424,51 +431,73 @@ fun GameWinBannerHost(modifier: Modifier = Modifier) {
                         }
                     }
                 }
-                // Tengah: nama dan peringkat, di badan pelat.
+                // Tengah: nama dan peringkat di badan pelat, turun dari mahkota atas.
                 Column(
                     Modifier
                         .align(Alignment.CenterStart)
-                        .padding(start = mulaiNama)
-                        .width(lebar - mulaiNama - lebarKanan - kananIsi),
+                        .padding(start = mulaiNama, top = tengahY)
+                        .width(lebar * 0.30f),
                     verticalArrangement = Arrangement.Center,
                 ) {
                     Text(
                         e.name,
-                        color = Color(0xFF5A2D00),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp,
+                        color = Color(0xFF4A2400),
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 14.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
                         "TOP ${if (e.pos in 1..3) e.pos else 1}",
-                        color = Color(0xFF8A4B00),
+                        color = Color(0xFF7A3F00),
                         fontWeight = FontWeight.Bold,
-                        fontSize = 10.sp,
+                        fontSize = 12.sp,
                     )
                 }
-                // Kanan: coin menang, ikon game kecil di bawahnya.
+                // Kanan: ikon koin + coin menang besar, ikon game kecil di bawahnya.
                 Column(
                     Modifier
                         .align(Alignment.CenterEnd)
-                        .padding(end = kananIsi)
+                        .padding(end = kananIsi, top = tengahY)
                         .width(lebarKanan),
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.Center,
                 ) {
                     val angkanya = fmtPenuh(e.amount)
-                    Text(
-                        angkanya,
-                        color = Color(0xFF6A3300),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = if (angkanya.length > 13) 9.sp else if (angkanya.length > 10) 11.sp else 13.sp,
-                        textAlign = TextAlign.End,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            angkanya,
+                            color = Color(0xFF4A2400),
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = if (angkanya.length > 14) 13.sp else if (angkanya.length > 11) 15.sp else 17.sp,
+                            textAlign = TextAlign.End,
+                            maxLines = 1,
+                            overflow = TextOverflow.Clip,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        // Ikon koin di sebelah angka.
+                        Box(
+                            Modifier
+                                .size(18.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    Brush.verticalGradient(
+                                        listOf(Color(0xFFFFE680), Color(0xFFE09A00)),
+                                    ),
+                                )
+                                .border(1.5.dp, Color(0xFFB86E00), CircleShape),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text("$", color = Color(0xFF7A3F00), fontWeight = FontWeight.ExtraBold, fontSize = 11.sp)
+                        }
+                    }
                     Box(
-                        Modifier.size((tinggi.value * 0.20f).dp).clip(CircleShape),
+                        Modifier.size((tinggi.value * 0.22f).dp).clip(CircleShape),
                         contentAlignment = Alignment.Center,
                     ) {
                         val ikon = if (e.game.contains("fruit")) {

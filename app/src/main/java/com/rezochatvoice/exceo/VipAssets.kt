@@ -306,7 +306,10 @@ private fun rememberVipLoader(): ImageLoader {
 }
 
 @Composable
-private fun VipVideo(a: VipAsset, data: ByteArray?, modifier: Modifier, loop: Boolean, onEnd: () -> Unit, sound: Boolean) {
+private fun VipVideo(
+    a: VipAsset, data: ByteArray?, modifier: Modifier, loop: Boolean, onEnd: () -> Unit, sound: Boolean,
+    onMulai: () -> Unit = {},
+) {
     val ctx = LocalContext.current
     val uri: Uri? = remember(a.n, a.slot, a.updatedAt, data) {
         if (a.url.isNotBlank()) {
@@ -331,6 +334,12 @@ private fun VipVideo(a: VipAsset, data: ByteArray?, modifier: Modifier, loop: Bo
                     val vol = if (sound) 1f else 0f
                     mp.setVolume(vol, vol)
                     start()
+                    // Sampul PNG disembunyikan begitu video benar-benar tampil.
+                    mp.setOnInfoListener { _, what, _ ->
+                        if (what == android.media.MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START) onMulai()
+                        false
+                    }
+                    postDelayed({ onMulai() }, 600L)
                 }
                 setOnCompletionListener { onEnd() }
                 setOnErrorListener { _, _, _ -> onEnd(); true }
@@ -349,6 +358,7 @@ private fun VipSvga(
     onEnd: () -> Unit,
     onSiap: (SVGAVideoEntity) -> Unit = {},
     onLangkah: (Float) -> Unit = {},
+    onMulai: () -> Unit = {},
 ) {
     AndroidView(
         modifier = modifier,
@@ -371,6 +381,8 @@ private fun VipSvga(
 
                     override fun onRepeat() {}
                     override fun onStep(frame: Int, percentage: Double) {
+                        // Animasi sudah berjalan: sampul PNG boleh disembunyikan.
+                        if (frame >= 1) onMulai()
                         onLangkah(percentage.toFloat())
                     }
                 }
@@ -450,6 +462,7 @@ fun VipMedia(
     sound: Boolean = false,
     onSiap: (SVGAVideoEntity) -> Unit = {},
     onLangkah: (Float) -> Unit = {},
+    onMulai: () -> Unit = {},
 ) {
     val data by produceState<ByteArray?>(null, a.n, a.slot, a.updatedAt) {
         value = if (a.hasData) VipAssets.bytes(a) else null
@@ -457,8 +470,8 @@ fun VipMedia(
     val remote = a.url.isNotBlank()
     if (!remote && data == null) return
     when (a.kind) {
-        "mp4" -> VipVideo(a, data, modifier, loop, onEnd, sound)
-        "svga" -> VipSvga(a, data, modifier, loop, contentScale, onEnd, onSiap, onLangkah)
+        "mp4" -> VipVideo(a, data, modifier, loop, onEnd, sound, onMulai)
+        "svga" -> VipSvga(a, data, modifier, loop, contentScale, onEnd, onSiap, onLangkah, onMulai)
         else -> AsyncImage(
             model = if (remote) a.url else ByteBuffer.wrap(data!!),
             contentDescription = null,
@@ -822,7 +835,8 @@ fun VipEntryEffect(roomId: String) {
             if (p != null) {
                 // Sampul PNG digambar lebih dulu. Kalau berkas SVGA/MP4 gagal
                 // diputar (mis. unduhan lambat), efeknya tetap terlihat.
-                if (p.poster.isNotBlank()) {
+                var animJalan by remember(p.n, p.slot, p.updatedAt) { mutableStateOf(false) }
+                if (p.poster.isNotBlank() && !animJalan) {
                     coil.compose.AsyncImage(
                         model = p.poster,
                         contentDescription = null,
@@ -837,6 +851,7 @@ fun VipEntryEffect(roomId: String) {
                     contentScale = ContentScale.Crop,
                     onEnd = { playing = null },
                     sound = true,
+                    onMulai = { animJalan = true },
                 )
             }
             // Banner efek masuk: di ATAS layar, digambar SETELAH efek jadi tampil di depannya.
@@ -884,7 +899,8 @@ fun VipEntryEffect(roomId: String) {
                     ) {
                         // Sampul PNG banner di belakang animasi: kalau SVGA gagal
                         // diputar, bannernya tetap kelihatan.
-                        if (asetBanner.poster.isNotBlank()) {
+                        var bannerJalan by remember(asetBanner.n, asetBanner.updatedAt) { mutableStateOf(false) }
+                        if (asetBanner.poster.isNotBlank() && !bannerJalan) {
                             coil.compose.AsyncImage(
                                 model = asetBanner.poster,
                                 contentDescription = null,

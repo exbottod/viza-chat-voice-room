@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.254",
   "catatan": "• Bersihkan layar publik langsung kosong di layar dan tutup panel",
-  "ukuran_apk": 56978643,
-  "sha256_apk": "ff19e8d7119f003657a95c0365d895b1d3e1a42e88cf1cf77dc4faaadc2e84db",
+  "ukuran_apk": 56978959,
+  "sha256_apk": "d3484ad6c8f089d59c6b621c64e4eb828718badf384330886559acf0d45874b2",
   "abis": {
     "arm64": {
-      "ukuran": 56978643,
-      "sha256": "ff19e8d7119f003657a95c0365d895b1d3e1a42e88cf1cf77dc4faaadc2e84db"
+      "ukuran": 56978959,
+      "sha256": "d3484ad6c8f089d59c6b621c64e4eb828718badf384330886559acf0d45874b2"
     },
     "armv7": {
-      "ukuran": 55129805,
-      "sha256": "0d380c10884ac3e435f0e8285977890862a281c2efacd48054c339af1e713d92"
+      "ukuran": 55130120,
+      "sha256": "4e50ee6240227c1e4560870aca3db8e657441cf7dea305cd5f9a467d71e5a3bc"
     },
     "universal": {
-      "ukuran": 75394636,
-      "sha256": "8b234b833ac7dffb2050e4b2305befd607638eec35724a819274839be7bc16ee"
+      "ukuran": 75394954,
+      "sha256": "9d95244a0d67f23f54348b8a691fde8eb57d059e50a73049611a5c8ec6b43aaf"
     }
   }
 }

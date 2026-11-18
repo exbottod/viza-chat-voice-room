@@ -155,6 +155,23 @@ fun RoomScreen(
     LaunchedEffect(myUid) {
         myFam = try { UserDirectory.findByUid(myUid)?.fam ?: "" } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { "" }
     }
+    // Lencana dan medali saya untuk bar mengetik: dibaca langsung dari profil
+    // publik (pub/{uid}), sumber yang sama dengan yang dilihat orang lain, dan
+    // diperbarui otomatis begitu lencana dipasang atau dilepas.
+    var myBadge by remember(myUid) { mutableStateOf("") }
+    var myMedals by remember(myUid) { mutableStateOf("") }
+    DisposableEffect(myUid) {
+        if (myUid.isBlank()) {
+            onDispose { }
+        } else {
+            StoreCatalog.start()
+            val reg = Rtdb.listen(Rtdb.ref("pub/$myUid")) { snap ->
+                myBadge = snap.child("badge").getValue(String::class.java).orEmpty()
+                myMedals = snap.child("medals").getValue(String::class.java).orEmpty()
+            }
+            onDispose { reg.remove() }
+        }
+    }
     val scope = rememberCoroutineScope()
 
     var room by remember { mutableStateOf<RoomInfo?>(initialRoom) }
@@ -755,6 +772,8 @@ fun RoomScreen(
                 RoomTypingBar(
                     text = draft,
                     myFam = myFam,
+                    myBadge = myBadge,
+                    myMedals = myMedals,
                     onTextChange = { draft = it },
                     onSend = { t ->
                         sendTick++

@@ -181,6 +181,8 @@ object RoomExtras {
 fun RoomTypingBar(
     text: String,
     myFam: String = "",
+    myBadge: String = "",
+    myMedals: String = "",
     onTextChange: (String) -> Unit,
     onSend: (String) -> Unit,
     onClose: () -> Unit,
@@ -193,6 +195,28 @@ fun RoomTypingBar(
         if (text.isNotBlank()) {
             onSend(text.trim())
             onTextChange("")
+        }
+    }
+    Column(Modifier.fillMaxWidth()) {
+    // Lencana dan medali saya tampil di atas kolom ketik, rata kiri dan turun
+    // baris seperlunya supaya semuanya terlihat.
+    val lencanaSaya = medalIdList(myBadge).mapNotNull { findItem(it) }
+    if (lencanaSaya.isNotEmpty() || myMedals.isNotBlank()) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)) {
+            if (lencanaSaya.isNotEmpty()) {
+                androidx.compose.foundation.layout.FlowRow(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.Start),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    lencanaSaya.forEach { b ->
+                        Box(Modifier.height(24.dp), contentAlignment = Alignment.Center) { StoreBadgeIcon(b, 24.dp) }
+                    }
+                }
+            }
+            if (myMedals.isNotBlank()) {
+                UserMedals(myMedals, 32.dp, Modifier.fillMaxWidth(), rataKiri = true)
+            }
         }
     }
     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -234,6 +258,7 @@ fun RoomTypingBar(
         )
         IconButton(onClick = { submit() }) { Icon(Icons.AutoMirrored.Filled.Send, "Kirim", tint = Gold) }
         IconButton(onClick = onClose) { Text("✕", color = Color.White, fontSize = 18.sp) }
+    }
     }
 }
 

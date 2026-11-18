@@ -177,6 +177,7 @@ object RoomExtras {
     }
 }
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun RoomTypingBar(
     text: String,

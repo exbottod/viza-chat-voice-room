@@ -956,7 +956,8 @@ fun VipEntryEffect(roomId: String) {
     if (p != null || b != null) {
         if (p != null) {
             LaunchedEffect(p) {
-                val berat = p.kind == "mp4" || p.kind == "svga"
+                val jenisP = kindAset(p.kind, p.url)
+                val berat = jenisP == "mp4" || jenisP == "svga"
                 if (!berat) {
                     delay(5000L)
                     playing = null
@@ -967,7 +968,7 @@ fun VipEntryEffect(roomId: String) {
                 // animasi SVGA efek masuk VIP tidak pernah terlihat. Sekarang efek
                 // ditutup saat animasinya selesai; kalau berkasnya memang gagal
                 // diputar, ditutup setelah 30 detik supaya layar tidak tertahan.
-                var tunggu = 0
+                var tunggu = 0L
                 while (tunggu < 30000L && playing != null && !mulaiAnim) {
                     delay(300L)
                     tunggu += 300L
@@ -979,7 +980,7 @@ fun VipEntryEffect(roomId: String) {
                 }
                 // Sudah berjalan: tunggu sampai animasi selesai (onEnd menutupnya),
                 // dengan jaring pengaman 30 detik.
-                var jalan = 0
+                var jalan = 0L
                 while (jalan < 30000L && playing != null) {
                     delay(300L)
                     jalan += 300L
@@ -992,13 +993,14 @@ fun VipEntryEffect(roomId: String) {
             // ditambah jeda sebentar, lalu memudar.
             LaunchedEffect(b) {
                 fade.snapTo(0f)
-                fade.animateTo(1f, tween(if (b.kind == "svga") 220 else 400))
+                val jenisB = kindAset(b.kind, b.url)
+                fade.animateTo(1f, tween(if (jenisB == "svga") 220 else 400))
                 // Durasi mengikuti file: SVGA memanggil onEnd saat animasinya habis,
                 // dan di situ banner langsung ditutup. Angka di bawah hanya jaring
                 // pengaman kalau file gagal diputar.
                 // Jaring pengaman saja. Penutupan normal memakai akhir animasi,
                 // tetapi tidak boleh kurang dari durasi minimum di bawah.
-                delay(if (b.kind == "svga") 6000L else 2600L)
+                delay(if (jenisB == "svga") 6000L else 2600L)
                 fade.animateTo(0f, tween(300))
                 banner = null
                 bannerName = null

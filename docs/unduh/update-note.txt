@@ -1,1 +1,1 @@
-• Efek masuk dan banner SVGA tetap terlihat walau berkas gagal diputar
+• Preview Efek masuk SVIP tidak lagi kosong: SVGA diunduh sendiri, sampul PNG di belakang, cadangan as

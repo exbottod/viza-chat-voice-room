@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.216",
-  "catatan": "• Efek masuk dan banner SVGA tetap terlihat walau berkas gagal diputar",
-  "ukuran_apk": 55002088,
-  "sha256_apk": "9581d846bc2b60c907a0702044b435d6c9c57d21fb17f8b74254e8242db69aa6",
+  "versi": "1.0.217",
+  "catatan": "• Preview Efek masuk SVIP tidak lagi kosong: SVGA diunduh sendiri, sampul PNG di belakang, cadangan as",
+  "ukuran_apk": 55002225,
+  "sha256_apk": "9b12d030d685b67c9ebfd97f8a84d48de557e38ec86e9e8f7ed7ceb5d4565e0c",
   "abis": {
     "arm64": {
-      "ukuran": 55002088,
-      "sha256": "9581d846bc2b60c907a0702044b435d6c9c57d21fb17f8b74254e8242db69aa6"
+      "ukuran": 55002225,
+      "sha256": "9b12d030d685b67c9ebfd97f8a84d48de557e38ec86e9e8f7ed7ceb5d4565e0c"
     },
     "armv7": {
-      "ukuran": 53153246,
-      "sha256": "038ae9e8ecaf51de188ea49122cd7f30d93dfa66cc209f57df24d973ece2f68c"
+      "ukuran": 53153373,
+      "sha256": "749fda8d1430409fa73672bdb67de1c551501c62d9c628eac930baf7646a2f56"
     },
     "universal": {
-      "ukuran": 73418054,
-      "sha256": "e9b700026214854b7063621c2ccae8ea148eeb362db808b38d66d9c3f01dfd7c"
+      "ukuran": 73418194,
+      "sha256": "8c5714678560cd8b41312af03ab9bfc545ea2bf874751e085ebc9635542f8809"
     }
   }
 }

@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.226",
   "catatan": "• ID unik kiriman panel tampil juga di baris nama chat room",
-  "ukuran_apk": 55006893,
-  "sha256_apk": "81fc12fa96f24f882fed28ab06b708f61e2c13f1c1bd6b974ad3ec00ff76a84a",
+  "ukuran_apk": 55007494,
+  "sha256_apk": "75dc3a1d834db43609f297d663bf99c45c0952ee5fa6775ad55397c344979f51",
   "abis": {
     "arm64": {
-      "ukuran": 55006893,
-      "sha256": "81fc12fa96f24f882fed28ab06b708f61e2c13f1c1bd6b974ad3ec00ff76a84a"
+      "ukuran": 55007494,
+      "sha256": "75dc3a1d834db43609f297d663bf99c45c0952ee5fa6775ad55397c344979f51"
     },
     "armv7": {
-      "ukuran": 53158043,
-      "sha256": "25ef117b0dab2b591e033b2879c85830f448399d382042ff76871ba3e7409888"
+      "ukuran": 53158645,
+      "sha256": "c3ebe9d0af96c351ef2e371dd9987a57beefa724aa5219c4e98ef34f1f54314c"
     },
     "universal": {
-      "ukuran": 73422861,
-      "sha256": "18ab25799ef12c697695dc5c871d4af89d8a0fc0d28bdb0845e72e27409d3b91"
+      "ukuran": 73423459,
+      "sha256": "58f2c0445da875c15bddfa5dc9bd58ad6d8cb44726b6e01b5dd61b224df0267c"
     }
   }
 }

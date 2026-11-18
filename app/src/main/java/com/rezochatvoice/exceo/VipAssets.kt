@@ -394,6 +394,10 @@ private fun VipSvga(
             SVGAImageView(c).apply {
                 loops = if (loop) 0 else 1
                 clearsAfterStop = true
+                // Sudah ada frame berjalan? Dipakai supaya startAnimation tidak
+                // dipanggil ulang saat animasi masih/main lagi. Dulu panggilan ulang
+                // ini membuat banner terbang 2-3 kali padahal durasinya sudah selesai.
+                var sudahJalan = false
                 scaleType = when (contentScale) {
                     ContentScale.Crop -> android.widget.ImageView.ScaleType.CENTER_CROP
                     ContentScale.FillBounds -> android.widget.ImageView.ScaleType.FIT_XY
@@ -409,6 +413,7 @@ private fun VipSvga(
 
                     override fun onRepeat() {}
                     override fun onStep(frame: Int, percentage: Double) {
+                        sudahJalan = true
                         // Animasi sudah berjalan: sampul PNG boleh disembunyikan.
                         if (frame >= 1) onMulai()
                         onLangkah(percentage.toFloat())
@@ -450,9 +455,10 @@ private fun VipSvga(
                         startAnimation()
                         // Sebagian HP mengabaikan startAnimation kalau view belum
                         // benar-benar terpasang, akibatnya yang tampil hanya frame
-                        // pertama (terlihat seperti gambar diam). Coba ulang dua kali.
-                        postDelayed({ try { startAnimation() } catch (e: Exception) { } }, 250L)
-                        postDelayed({ try { startAnimation() } catch (e: Exception) { } }, 900L)
+                        // pertama (terlihat seperti gambar diam). Coba ulang HANYA
+                        // kalau animasi belum berjalan, supaya tidak terbang berulang.
+                        postDelayed({ if (!sudahJalan) try { startAnimation() } catch (e: Exception) { } }, 250L)
+                        postDelayed({ if (!sudahJalan) try { startAnimation() } catch (e: Exception) { } }, 900L)
                     }
 
                     override fun onError() {

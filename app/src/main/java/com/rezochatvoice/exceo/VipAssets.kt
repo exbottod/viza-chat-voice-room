@@ -44,9 +44,11 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.opensource.svgaplayer.SVGAImageView
 import com.opensource.svgaplayer.SVGAParser
 import com.opensource.svgaplayer.SVGAVideoEntity
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.tasks.await
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -180,6 +182,22 @@ object VipAssets {
             } catch (e: Exception) {
                 QuotaGuard.handle(e)
             }
+        }
+    }
+
+    /** Unduh isi berkas dari tautan (dipakai untuk memeriksa jenis aset). */
+    suspend fun ambildariUrl(url: String): ByteArray? = withContext(Dispatchers.IO) {
+        try {
+            val kon = (java.net.URL(url).openConnection() as java.net.HttpURLConnection).apply {
+                connectTimeout = 10000
+                readTimeout = 20000
+                instanceFollowRedirects = true
+            }
+            val isi = if (kon.responseCode in 200..299) kon.inputStream.use { it.readBytes() } else null
+            kon.disconnect()
+            isi
+        } catch (e: Exception) {
+            null
         }
     }
 
@@ -516,6 +534,9 @@ private fun VipSvga(
     )
 }
 
+/** Slot yang isinya seharusnya animasi, bukan gambar diam. */
+private val kotakAnimasi = setOf("entry", "banner", "cardbg")
+
 /** Tampilkan satu aset VIP (gambar/gif/webp, svga, atau mp4). */
 @Composable
 fun VipMedia(
@@ -530,7 +551,16 @@ fun VipMedia(
     onMulai: () -> Unit = {},
 ) {
     val data by produceState<ByteArray?>(null, a.n, a.slot, a.updatedAt) {
-        value = if (a.hasData) VipAssets.bytes(a) else null
+        value = if (a.hasData) {
+            VipAssets.bytes(a)
+        } else if (a.url.isNotBlank() && kotakAnimasi.contains(a.slot) &&
+            kindAset(a.kind, a.url) == "image"
+        ) {
+            // Panel kadang menyimpan berkas SVGA/MP4 dengan jenis "gambar"
+            // (mis. tautan tanpa akhiran). Isi berkasnya diperiksa dulu supaya
+            // efek masuk tetap diputar sebagai animasi, bukan sebagai foto.
+            VipAssets.ambildariUrl(a.url)
+        } else null
     }
     val remote = a.url.isNotBlank()
     if (!remote && data == null) return
@@ -823,27 +853,21 @@ fun VipEntryEffect(roomId: String) {
         // dan efek paksa sama-sama menampilkan banner sehingga terlihat 3 kali.
         if (playing != null || banner != null) return
         if (!EfekMasukTercatat.perluTampil(roomId)) return
-        // Yang dipasang harus berkas ANIMASI (SVGA/MP4), bukan ikon luar/sampul.
-        // Dulu entryAssetOf() bisa mengembalikan aset gambar diam milik item,
-        // sehingga di room yang tampil hanya ikon, bukan animasinya.
-        fun bisaJalan(x: VipAsset?): Boolean =
-            x != null && kindAset(x.kind, x.url) != "image"
-        // Tingkat yang dipakai: dari pesan, kalau kosong pakai tier VIP akun ini.
-        val tierSaya = runCatching { WalletCache.load(myUid) }.getOrNull()
-            ?.let { if (vipActive(it.vip, it.vipUntil)) it.vip else 0 } ?: 0
-        val tierA = if (m.vip in 1..9) m.vip else tierSaya
-        val aAwal = entryAssetOf(m) ?: entryAssetCadangan()
-        val a = if (bisaJalan(aAwal)) aAwal else (
-            VipAssets.get(tierA, "entry")?.takeIf { bisaJalan(it) }
-                ?: entryAssetCadangan()?.takeIf { bisaJalan(it) }
-                ?: aAwal
+        // Yang dipakai adalah efek masuk yang DIPASANG user. Dulu id dari pesan
+        // "masuk kamar" bisa ketinggalan (masih id lama), jadi yang tampil efek
+        // lama. Dompet (yang baru disimpan saat menekan Pakai) didahulukan.
+        val wPasang = runCatching { WalletCache.load(myUid) }.getOrNull()
+        val idEntry = if (wPasang != null) fallbackEquip(wPasang, "entry") else ""
+        val idBanner = if (wPasang != null) fallbackEquip(wPasang, "banner") else ""
+        val mPakai = if (wPasang != null) {
+            m.copy(
+                entry = idEntry.ifBlank { m.entry },
+                banner = idBanner.ifBlank { m.banner },
+                vip = if (m.vip in 1..9) m.vip else if (vipActive(wPasang.vip, wPasang.vipUntil)) wPasang.vip else 0,
             )
-        val bAwal = bannerAssetOf(m)
-        val b = if (bisaJalan(bAwal)) bAwal else (
-            vipBannerAsset(tierA)?.takeIf { bisaJalan(it) }
-                ?: bannerCadangan()?.takeIf { bisaJalan(it) }
-                ?: bAwal
-            )
+        } else m
+        val a = entryAssetOf(mPakai) ?: entryAssetCadangan()
+        val b = bannerAssetOf(mPakai)
         playing = a
         banner = b
         bannerName = msgName(m).takeIf { it.isNotBlank() }

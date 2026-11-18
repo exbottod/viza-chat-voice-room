@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.237",
-  "catatan": "• Sampul PNG tidak lagi tampil saat efek masuk di room",
-  "ukuran_apk": 55012956,
-  "sha256_apk": "4961b48d866fb6d415f3b244c2ebab6ff7e19107fadf8cfc653a48361698739a",
+  "versi": "1.0.238",
+  "catatan": "• Tab Aktivitas berisi daftar banner tab Party",
+  "ukuran_apk": 55018150,
+  "sha256_apk": "4e63a5301d044b087addef3403c8892e618b529b5fe7cc48b14950b83ec734e5",
   "abis": {
     "arm64": {
-      "ukuran": 55012956,
-      "sha256": "4961b48d866fb6d415f3b244c2ebab6ff7e19107fadf8cfc653a48361698739a"
+      "ukuran": 55018150,
+      "sha256": "4e63a5301d044b087addef3403c8892e618b529b5fe7cc48b14950b83ec734e5"
     },
     "armv7": {
-      "ukuran": 53164106,
-      "sha256": "fefe3bb8839d33efc31904404fc907cb70f8953dcde71c8d0f807f1efc0fc3ab"
+      "ukuran": 53169304,
+      "sha256": "f010277bcec19c4b24b2559bb01123e79e8bf84c490d9ce8c46b3bd351119089"
     },
     "universal": {
-      "ukuran": 73428920,
-      "sha256": "24ac51572c8dca5b33adef7965b0bc501e74b751d7b84f08a55c499b68e69f20"
+      "ukuran": 73434117,
+      "sha256": "a5e01860ad80409d13c194d37fe753e09d19523c6b16717d563543394bbd3ca0"
     }
   }
 }

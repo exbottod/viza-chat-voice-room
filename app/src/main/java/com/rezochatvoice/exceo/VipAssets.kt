@@ -696,6 +696,8 @@ fun bannerAssetOf(m: RoomMsg): VipAsset? =
 object EfekMasukTercatat {
     private val sudah = HashSet<String>()
     fun perluTampil(roomId: String): Boolean = sudah.add(roomId)
+    /** Room ini sudah menampilkan efek masuk? Pencegah banner tampil berkali-kali. */
+    fun sudahTampil(roomId: String): Boolean = roomId in sudah
     /** Dipanggil saat benar-benar keluar room, supaya masuk berikutnya tampil lagi. */
     fun reset(roomId: String) { sudah.remove(roomId) }
 }
@@ -748,6 +750,10 @@ fun VipEntryEffect(roomId: String) {
             tungguMain = m
             return
         }
+        // Sekali saja per masuk room. Dulu pesan "masuk kamar", percobaan ulang,
+        // dan efek paksa sama-sama menampilkan banner sehingga terlihat 3 kali.
+        if (playing != null || banner != null) return
+        if (!EfekMasukTercatat.perluTampil(roomId)) return
         val a = entryAssetOf(m)
         val b = bannerAssetOf(m)
         playing = a ?: entryAssetCadangan()
@@ -771,9 +777,6 @@ fun VipEntryEffect(roomId: String) {
      */
     LaunchedEffect(roomId) {
         if (myUid.isBlank()) return@LaunchedEffect
-        // Sekali per masuk room. Setelah minimize lalu kembali, efek TIDAK diulang
-        // karena kita masih berada di room yang sama.
-        if (!EfekMasukTercatat.perluTampil(roomId)) return@LaunchedEffect
         // Tunggu sebentar supaya room dan suara siap dulu.
         delay(1500)
         if (playing != null || banner != null) return@LaunchedEffect
@@ -805,6 +808,9 @@ fun VipEntryEffect(roomId: String) {
             ?: vipBannerAsset(vipNow)
             ?: bannerCadangan()
         if (a == null && b == null) return@LaunchedEffect
+        // Sekali per masuk room: setelah minimize lalu kembali, efek tidak diulang.
+        if (playing != null || banner != null) return@LaunchedEffect
+        if (!EfekMasukTercatat.perluTampil(roomId)) return@LaunchedEffect
         playing = a
         banner = b
         val namaSaya = UserCache.peek(myUid)?.name.orEmpty()

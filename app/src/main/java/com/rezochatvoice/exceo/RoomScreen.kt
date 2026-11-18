@@ -2621,6 +2621,8 @@ private fun RmSettings(r: RoomInfo, awalSub: Int = 0, onBlacklist: () -> Unit, o
                 modifier = Modifier.clickable { sub = if (sub == 4) 3 else 0 }.padding(horizontal = 6.dp),
             )
             Text(judulHalaman, color = Color.White, fontSize = 19.sp, modifier = Modifier.weight(1f))
+            RoomLevelIcon(RoomPoin.level(poinTotal), 22.dp)
+            Spacer(Modifier.width(4.dp))
             Text(
                 "Lv." + RoomPoin.level(poinTotal),
                 color = GoldLight, fontSize = 14.sp, fontWeight = FontWeight.Bold,
@@ -2662,7 +2664,7 @@ private fun RmSettings(r: RoomInfo, awalSub: Int = 0, onBlacklist: () -> Unit, o
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Color(0xFF1B1B1B)).padding(14.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("\uD83D\uDC51", fontSize = 26.sp)
+                    RoomLevelIcon(RoomPoin.level(poinTotal), 34.dp)
                     Spacer(Modifier.width(10.dp))
                     Column(Modifier.weight(1f)) {
                         Text(r.name, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1)
@@ -2700,6 +2702,8 @@ private fun RmSettings(r: RoomInfo, awalSub: Int = 0, onBlacklist: () -> Unit, o
                                 fontSize = 14.sp, fontWeight = FontWeight.Bold,
                                 modifier = Modifier.width(30.dp),
                             )
+                            RoomLevelIcon(RoomPoin.level(b.poin), 18.dp)
+                            Spacer(Modifier.width(6.dp))
                             Text(
                                 b.nama,
                                 color = if (b.roomId == r.id) GoldLight else Color.White,
@@ -2793,6 +2797,7 @@ private fun RmSettings(r: RoomInfo, awalSub: Int = 0, onBlacklist: () -> Unit, o
             label = "Level kamar",
             value = "Lv." + RoomPoin.level(poinTotal),
             onClick = { sub = 3 },
+            trailing = { RoomLevelIcon(RoomPoin.level(poinTotal), 22.dp) },
         )
         InfoRow(label = "Daftar anggota", value = pengikut.size.toString() + " orang", onClick = { sub = 1 })
         InfoRow(label = "Daftar blokir", value = bans.size.toString() + " orang", onClick = { onBlacklist() })

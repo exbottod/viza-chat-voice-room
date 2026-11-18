@@ -2785,6 +2785,8 @@ async function gambarKirim() {
           <div class="isian"><label>ID user (ID angka, ID unik, atau UID)</label><input id="kUser" placeholder="mis. 923146051900"></div>
           <div class="isian"><label>Durasi (hari)</label><input id="kHari" type="number" value="30"></div>
         </div>
+        <div class="isian" style="margin-top:10px"><label>Cari item (nama, nomor ID unik, atau jenis)</label>
+          <input id="kCari" placeholder="mis. 1000 atau Sultan atau frame"></div>
         <div class="isian" style="margin-top:10px"><label>Item</label><select id="kItem">
           ${item.length ? item.map((d) => `<option value="${aman(d.id)}">${aman(d.name || d.id)} · ${aman(namaSlot(d.slot))}${Number(d.price) ? " · " + rupiah(d.price) + " koin" : ""}${d.customId ? " · ID " + aman(d.customId) : ""}</option>`).join("") : '<option value="">Belum ada item, buat di Aset & VIP</option>'}
         </select></div>
@@ -2824,6 +2826,11 @@ async function gambarKirim() {
           <div class="pil" data-jenis="emote">Emote room</div>
           <div class="pil" data-jenis="uid">ID unik</div>
         </div>
+        <div class="isian" id="lncBlokNomor" style="margin-top:10px;display:none">
+          <label>Nomor ID unik (agar bisa dicari di pencarian)</label>
+          <input id="lncNomor" inputmode="numeric" placeholder="mis. 1000">
+          <div class="catatan" style="padding:4px 0 0">Nomor ini didaftarkan ke pencarian: user lain bisa mencarinya di kolom cari ID dan profil penerima menampilkan gambar ID ini.</div>
+        </div>
         <div class="grid2" style="margin-top:10px">
           <div class="isian"><label>Harga di Store (koin, opsional)</label><input id="lncHarga" type="number" placeholder="0"></div>
           <div class="isian"><label>Tampilkan juga di Store</label><div class="saklar" id="lncToko"></div></div>
@@ -2842,10 +2849,14 @@ async function gambarKirim() {
     </div>`;
 
   aktifkanPratinjau("lnc");
+  const tampilNomor = () => { $("lncBlokNomor").style.display = $("lncSlot").value === "uid" ? "" : "none"; };
+  $("lncSlot").onchange = tampilNomor;
   $("isiHal").querySelectorAll("[data-jenis]").forEach((pil) => (pil.onclick = () => {
     $("lncSlot").value = pil.dataset.jenis;
     $("isiHal").querySelectorAll("[data-jenis]").forEach((x) => x.classList.toggle("on", x === pil));
+    tampilNomor();
   }));
+  tampilNomor();
   $("lncToko").onclick = () => $("lncToko").classList.toggle("on");
   $("lncKirim").onclick = async () => {
     const tombol = $("lncKirim");
@@ -2861,8 +2872,11 @@ async function gambarKirim() {
       const slot = $("lncSlot").value;
       const hari = Number($("lncHari").value) || 30;
       const idItem = "lnc_" + Date.now().toString(36);
+      const nomorUnik = slot === "uid" ? $("lncNomor").value.replace(/[^0-9]/g, "") : "";
+      if (slot === "uid" && !nomorUnik) throw new Error("Isi nomor ID unik dulu supaya bisa dicari");
       await simpanVip("item_" + idItem, {
         id: idItem, slot, name: nama,
+        customId: nomorUnik,
         price: Number($("lncHarga").value) || 0,
         days: hari, order: 0, kind: cabangBerkas(url), url,
         hasData: false, updatedAt: Date.now(), chunks: 0,
@@ -2872,7 +2886,8 @@ async function gambarKirim() {
       // Lewat server: aturan /pub menolak tulisan staf panel dari browser.
       await walletAdmin({ op: "kirim_item", uid, item: idItem, hari });
       const namaJenis = { frame: "Bingkai", badge: "Lencana", medal: "Medali", bubble: "Gelembung", entry: "Efek masuk", banner: "Banner", emote: "Emote", uid: "ID unik" }[slot] || "Item";
-      hasil.textContent = namaJenis + " " + nama + " terkirim, berlaku " + hari + " hari.";
+      hasil.textContent = namaJenis + " " + nama + " terkirim, berlaku " + hari + " hari." +
+        (nomorUnik ? " ID " + nomorUnik + " sekarang bisa dicari di pencarian." : "");
       catatLog("Kirim lencana", nama + " ke " + $("lncUser").value.trim());
       toast("Lencana dibuat dan dikirim");
     } catch (e) {
@@ -2881,6 +2896,17 @@ async function gambarKirim() {
     } finally {
       tombol.disabled = false; tombol.textContent = "Buat & kirim ke user";
     }
+  };
+
+  // Pencarian item: ketik nama, nomor ID unik, atau jenis, daftar langsung menyempit.
+  const semuaOpsi = Array.from($("kItem").options).map((o) => ({ v: o.value, t: o.textContent }));
+  $("kCari").oninput = () => {
+    const q = $("kCari").value.trim().toLowerCase();
+    const cocok = q ? semuaOpsi.filter((o) => o.t.toLowerCase().includes(q) ||
+      (item.find((x) => x.id === o.v)?.customId || "").toString().includes(q)) : semuaOpsi;
+    $("kItem").innerHTML = cocok.length
+      ? cocok.map((o) => `<option value="${aman(o.v)}">${aman(o.t)}</option>`).join("")
+      : '<option value="">Tidak ada item yang cocok</option>';
   };
 
   $("kirimSekarang").onclick = async () => {
@@ -2896,7 +2922,9 @@ async function gambarKirim() {
       await walletAdmin({ op: "kirim_item", uid, item: idItem, hari });
       const nama = item.find((x) => x.id === idItem)?.name || idItem;
       catatLog("Kirim item", `${nama} · ${hari} hari · ke ${uid}`);
-      $("kHasil").textContent = `Terkirim: ${nama}, ${hari} hari.`;
+      const nomorTerkirim = item.find((x) => x.id === idItem)?.customId;
+      $("kHasil").textContent = `Terkirim: ${nama}, ${hari} hari.` +
+        (nomorTerkirim ? ` ID ${nomorTerkirim} sekarang bisa dicari di pencarian.` : "");
       toast("Item terkirim");
     } catch (e) {
       $("kHasil").textContent = "";

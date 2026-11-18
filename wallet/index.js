@@ -4603,10 +4603,31 @@ async function admin(env, body) {
     if (!itemI) return gagal("Item kosong");
     const hariI = Math.max(1, Math.min(3650, Math.trunc(Number(p.hari ?? 30)) || 30));
     const sampaiI = Date.now() + hariI * 86400000;
+    // Item ID unik: nomornya harus ikut didaftarkan ke pencarian SEKARANG, tidak
+    // menunggu pemain memasangnya. Nomor yang sudah dipakai akun lain ditolak
+    // supaya satu ID tidak pernah menunjuk dua akun.
+    let nomorUnik = "";
+    try {
+      const cfgItem = await cfgRtdbSa(env, `vipCfg/item_${itemI}`);
+      nomorUnik = String(cfgItem.customId ?? "").replace(/[^0-9]/g, "").slice(0, 20);
+      if (nomorUnik) {
+        const pemilik = await cfgRtdbSa(env, `uidCustom/${nomorUnik}`);
+        const uidPemilik = String(pemilik.uid ?? "");
+        if (uidPemilik && uidPemilik !== uidI) {
+          return gagal(`ID ${nomorUnik} sudah dipakai akun lain`);
+        }
+      }
+    } catch { /* tanpa nomor unik, kirim item biasa */ }
     await tulisRtdbSa(env, `pub/${uidI}/svipInv/sx_${itemI}`, sampaiI);
     await tulisRtdbSa(env, `pub/${uidI}/svipInvAt/sx_${itemI}`, Date.now());
+    if (nomorUnik) {
+      // Alias pencarian: uidCustom/{nomor} = { uid, itemId }, sama dengan yang
+      // ditulis aplikasi saat pemain memasang ID, jadi pencarian ID langsung jalan.
+      await tulisRtdbSa(env, `uidCustom/${nomorUnik}`, { uid: uidI, itemId: "sx_" + itemI, at: Date.now() });
+      await tulisRtdbSa(env, `uidAliasOf/${uidI}`, nomorUnik);
+    }
     try { await catatReset(env, "kirim_item", uid, uidI + " " + itemI + " " + hariI + "h"); } catch { /* log opsional */ }
-    return json({ ok: 1, uid: uidI, item: itemI, hari: hariI, sampai: sampaiI });
+    return json({ ok: 1, uid: uidI, item: itemI, hari: hariI, sampai: sampaiI, idUnik: nomorUnik || undefined });
   }
 
   // Panel: reset coin (dan diamond kalau gem) untuk satu user / semua user.

@@ -601,7 +601,10 @@ object UserDirectory {
             val uidAlias = alias?.child("uid")?.getValue(String::class.java).orEmpty()
             val itemAlias = alias?.child("itemId")?.getValue(String::class.java).orEmpty()
             // Item yang sudah dihapus dari panel tidak boleh lagi muncul di pencarian.
-            val itemHidup = itemAlias.isBlank() || StoreCatalog.find(itemAlias) != null
+            // Katalog bisa belum selesai dimuat (atau item kiriman panel baru dibuat),
+            // jadi item dianggap hidup kalau katalog belum terisi sama sekali.
+            val itemHidup = itemAlias.isBlank() || StoreCatalog.find(itemAlias) != null ||
+                StoreCatalog.firstAsset("uid") == null
             if (uidAlias.isNotBlank() && itemHidup) findByUid(uidAlias)?.let { return it.copy(userId = key) }
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e

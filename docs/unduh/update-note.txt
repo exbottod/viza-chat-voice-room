@@ -1,2 +1,2 @@
-• Logo dan level room tampil di sebelah ID room pada header room
-• Aset logo level kamar (55 tingkat) sudah terpasang, dipakai di Level kamar dan Daftar Poin Kamar
+• Level kamar memakai ambang poin baru: Lv.1 butuh 10.000.000 poin, naik bertahap sampai Lv.55 butuh 10.000.000.000.000.000 poin
+• Di Daftar Poin Kamar tampil sisa poin menuju level berikutnya

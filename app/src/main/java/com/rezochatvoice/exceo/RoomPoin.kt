@@ -19,8 +19,50 @@ object RoomPoin {
     private fun hari(): String = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
     private fun bulan(): String = SimpleDateFormat("yyyyMM", Locale.US).format(Date())
 
-    /** Level kamar dari total poin: tiap 100.000 poin naik satu level. */
-    fun level(total: Long): Int = (1 + total / 100_000L).toInt()
+    /** Level tertinggi yang tersedia (sesuai aset logo level kamar). */
+    const val LEVEL_MAKS = 55
+
+    /** Poin untuk Lv.1 dan untuk Lv.55, sesuai ketentuan owner. */
+    private const val POIN_LEVEL_1 = 10_000_000.0
+    private const val POIN_LEVEL_55 = 10_000_000_000_000_000.0
+
+    /**
+     * Ambang poin tiap level. Lv.1 = 10.000.000 poin, Lv.55 = 10.000.000.000.000.000 poin,
+     * dan level di antaranya naik bertahap (perbandingan tetap tiap tingkat).
+     */
+    fun ambang(level: Int): Long {
+        if (level <= 0) return 0L
+        val n = level.coerceAtMost(LEVEL_MAKS)
+        val rasio = Math.pow(POIN_LEVEL_55 / POIN_LEVEL_1, 1.0 / (LEVEL_MAKS - 1))
+        return (POIN_LEVEL_1 * Math.pow(rasio, (n - 1).toDouble())).toLong()
+    }
+
+    /** Level kamar dari total poin (0 kalau belum mencapai 10.000.000 poin). */
+    fun level(total: Long): Int {
+        var hasil = 0
+        for (n in 1..LEVEL_MAKS) {
+            if (total >= ambang(n)) hasil = n else break
+        }
+        return hasil
+    }
+
+    /** Poin yang masih dibutuhkan menuju level berikutnya. */
+    fun sisaKeLevelBerikut(total: Long): Long {
+        val sekarang = level(total)
+        if (sekarang >= LEVEL_MAKS) return 0L
+        return (ambang(sekarang + 1) - total).coerceAtLeast(0L)
+    }
+
+    /** Format angka poin dengan titik ribuan. */
+    fun format(nilai: Long): String {
+        val teks = nilai.toString()
+        val b = StringBuilder()
+        for ((i, c) in teks.withIndex()) {
+            if (i > 0 && (teks.length - i) % 3 == 0) b.append('.')
+            b.append(c)
+        }
+        return b.toString()
+    }
 
     suspend fun tambah(roomId: String, uid: String, nilai: Long) {
         if (roomId.isBlank() || nilai <= 0L) return

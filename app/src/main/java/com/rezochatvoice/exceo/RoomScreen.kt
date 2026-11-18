@@ -2616,7 +2616,7 @@ private fun RmSettings(r: RoomInfo, awalSub: Int = 0, onBlacklist: () -> Unit, o
                             }
                             Spacer(Modifier.height(8.dp))
                             Text(
-                                "Note\n1. Level keanggotaan pengguna perlu ditingkatkan dari level 1 setelah bergabung dengan anggota kamar.\n2. Koin emas yang dikonsumsi di kamar perlu diubah menjadi aliran Host untuk menghitung poin secara proporsional. (Contoh: hadiah cashback 10 koin emas = 1 aliran koin)",
+                                "Note\n0. Level kamar naik dari poin gift dan poin menit naik mic. Lv.1 butuh 10.000.000 poin, lalu naik bertahap sampai Lv.55 butuh 10.000.000.000.000.000 poin.\n1. Level keanggotaan pengguna perlu ditingkatkan dari level 1 setelah bergabung dengan anggota kamar.\n2. Koin emas yang dikonsumsi di kamar perlu diubah menjadi aliran Host untuk menghitung poin secara proporsional. (Contoh: hadiah cashback 10 koin emas = 1 aliran koin)",
                                 color = Color(0xFFBDBDBD), fontSize = 12.sp, lineHeight = 18.sp,
                             )
                         } else {
@@ -2690,6 +2690,15 @@ private fun RmSettings(r: RoomInfo, awalSub: Int = 0, onBlacklist: () -> Unit, o
                         Text(
                             "ID " + r.roomNo + "  \u00B7  Lv." + RoomPoin.level(poinTotal),
                             color = Color(0xFF9A9A9A), fontSize = 11.sp,
+                        )
+                        Text(
+                            if (RoomPoin.level(poinTotal) >= RoomPoin.LEVEL_MAKS) {
+                                "Level kamar sudah maksimal"
+                            } else {
+                                RoomPoin.format(RoomPoin.sisaKeLevelBerikut(poinTotal)) + " poin lagi ke Lv." +
+                                    (RoomPoin.level(poinTotal) + 1)
+                            },
+                            color = Color(0xFF8A8A8A), fontSize = 10.sp,
                         )
                     }
                     Text(poinTotal.toString(), color = GoldLight, fontSize = 17.sp, fontWeight = FontWeight.Bold)

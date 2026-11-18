@@ -417,6 +417,8 @@ private fun VipSvga(
                 val parser = SVGAParser(c)
                 var sudahSiap = false
                 var sudahCobaLagi = false
+                // Diisi setelah objek "done" dibuat; dipakai oleh cobaLagi.
+                var doneObj: SVGAParser.ParseCompletion? = null
                 // Kalau percobaan pertama gagal, berkasnya dicoba ulang (jaringan
                 // lambat / berkas belum siap di CDN) supaya efeknya tidak berhenti
                 // sebagai sampul PNG.
@@ -426,7 +428,13 @@ private fun VipSvga(
                         postDelayed({
                             if (!sudahSiap) {
                                 try {
-                                    parser.decodeFromURL(java.net.URL(a.url + (if (a.url.contains('?')) "&" else "?") + "ulang=" + System.currentTimeMillis()), done)
+                                    val d = doneObj
+                                    if (d != null) {
+                                        parser.decodeFromURL(
+                                            java.net.URL(a.url + (if (a.url.contains('?')) "&" else "?") + "ulang=" + System.currentTimeMillis()),
+                                            d,
+                                        )
+                                    }
                                 } catch (e: Exception) { }
                             }
                         }, 1200L)
@@ -452,6 +460,7 @@ private fun VipSvga(
                         cobaLagi()
                     }
                 }
+                doneObj = done
                 if (a.url.isNotBlank()) {
                     // Unduh sendiri lewat HTTP lalu decode dari byte: decodeFromURL
                     // bawaan sering gagal diam-diam di jaringan lambat, akibatnya

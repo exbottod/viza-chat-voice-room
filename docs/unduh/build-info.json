@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.220",
-  "catatan": "• Perbaiki kompilasi: RoomTypingBar memakai FlowRow (OptIn ExperimentalLayoutApi)",
-  "ukuran_apk": 55008506,
-  "sha256_apk": "302b76d14a4b8b27e5b6bad8f76937e2dc16f0a4c73dab0813470dcd8dcadc83",
+  "versi": "1.0.221",
+  "catatan": "• Bingkai kiriman panel tampil seperti aslinya, bukan bingkai VIP",
+  "ukuran_apk": 55008675,
+  "sha256_apk": "e2305fc309db83bcbbdb7555b50e746d1d91c60b1ff7e0b178321afa897ac041",
   "abis": {
     "arm64": {
-      "ukuran": 55008506,
-      "sha256": "302b76d14a4b8b27e5b6bad8f76937e2dc16f0a4c73dab0813470dcd8dcadc83"
+      "ukuran": 55008675,
+      "sha256": "e2305fc309db83bcbbdb7555b50e746d1d91c60b1ff7e0b178321afa897ac041"
     },
     "armv7": {
-      "ukuran": 53159652,
-      "sha256": "d07ee2b8adf4ba87434359b1d29f4ada12a65a08593ef7b25ec7a36d026d0021"
+      "ukuran": 53159830,
+      "sha256": "884019e4959c01fb141914d815ea92b1bc99cfcb2ec4b0dcf00deb1c692abf77"
     },
     "universal": {
-      "ukuran": 73424474,
-      "sha256": "609aef18e840c7cca92f8631919a6f184f6bc7ee24c2133e988db45493e56474"
+      "ukuran": 73424647,
+      "sha256": "792ec244da24c207ac84efe9b11c06dc985f051c7c67d0cf622fab4d02795fad"
     }
   }
 }

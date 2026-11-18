@@ -1,1 +1,1 @@
-• Perbaiki kompilasi: RoomTypingBar memakai FlowRow (OptIn ExperimentalLayoutApi)
+• Bingkai kiriman panel tampil seperti aslinya, bukan bingkai VIP

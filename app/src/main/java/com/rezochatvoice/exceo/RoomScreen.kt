@@ -2169,6 +2169,13 @@ private fun RmChatRow(m: RoomMsg, myUid: String, onProfile: (String) -> Unit) {
                         Spacer(Modifier.width(4.dp))
                         VipTag(it.vip)
                     }
+                    // ID unik (termasuk kiriman panel): gambarnya ikut tampil di
+                    // baris nama chat, sama seperti di sheet dan profil.
+                    val asetId = runCatching { StoreCatalog.find(it.uidItem.ifBlank { null })?.asset }.getOrNull()
+                    if (asetId != null) {
+                        Spacer(Modifier.width(4.dp))
+                        UidUnikId(asetId, 13.dp)
+                    }
                 }
             }
             // Lencana ditaruh di baris sendiri dan membungkus ke bawah, jadi

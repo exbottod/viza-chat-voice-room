@@ -1,1 +1,1 @@
-• Efek masuk dan banner dipaksa tampil setiap masuk room seperti versi awal
+• Bingkai kiriman panel tampil saat dipasang, bukan bingkai VIP

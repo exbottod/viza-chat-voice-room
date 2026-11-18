@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.223",
-  "catatan": "• Efek masuk dan banner dipaksa tampil setiap masuk room seperti versi awal",
-  "ukuran_apk": 55009373,
-  "sha256_apk": "2f2d0246e958f2d2677ff900d25ed105243ad97086f091a239faa1ec0d26de44",
+  "versi": "1.0.224",
+  "catatan": "• Bingkai kiriman panel tampil saat dipasang, bukan bingkai VIP",
+  "ukuran_apk": 55009495,
+  "sha256_apk": "56d86be5e730b2285b3cf07d0ce1d3f9a497ba93eac19023893e6fa4ff09ad71",
   "abis": {
     "arm64": {
-      "ukuran": 55009373,
-      "sha256": "2f2d0246e958f2d2677ff900d25ed105243ad97086f091a239faa1ec0d26de44"
+      "ukuran": 55009495,
+      "sha256": "56d86be5e730b2285b3cf07d0ce1d3f9a497ba93eac19023893e6fa4ff09ad71"
     },
     "armv7": {
-      "ukuran": 53160525,
-      "sha256": "75ddbe123c7a66e9cd230d85ca07027afcfa23482b6f15fb8a0388f63f5b12bf"
+      "ukuran": 53160657,
+      "sha256": "133b4c837f9ee24fd1a1476da08a13c8a820eee25f3b94d3f4fdac27ed7c660a"
     },
     "universal": {
-      "ukuran": 73425346,
-      "sha256": "70212f8d877e0a9e7b2e87348cc7d231ce94d27ab28c4def7a3707a4c60b766a"
+      "ukuran": 73425454,
+      "sha256": "f22ef9e743726d724119c3ac88e6f8ee4711d87b402a4dba38a33131584da8d2"
     }
   }
 }

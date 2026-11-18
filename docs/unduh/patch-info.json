@@ -5599,15 +5599,6 @@
       }
     },
     {
-      "dari": "1.0.219",
-      "ke": "1.0.223",
-      "arm64": {
-        "file": "patch-1.0.219-1.0.223-arm64.bsdiff",
-        "ukuran": 4116486,
-        "sha256": "08cf6197154633200dd4c87b95530393b34748c633082dd2cca987b5d17fa44b"
-      }
-    },
-    {
       "dari": "1.0.220",
       "ke": "1.0.221",
       "arm64": {
@@ -5627,11 +5618,11 @@
     },
     {
       "dari": "1.0.220",
-      "ke": "1.0.223",
+      "ke": "1.0.224",
       "arm64": {
-        "file": "patch-1.0.220-1.0.223-arm64.bsdiff",
-        "ukuran": 4073294,
-        "sha256": "e2048523942410968abcc65c1b50c9d67dee3b0df45730d40b8217a5ac191332"
+        "file": "patch-1.0.220-1.0.224-arm64.bsdiff",
+        "ukuran": 4103503,
+        "sha256": "21310c8896d24907b472d5652ac2dc964b085908f06aa37a7908c6fc7b9199fd"
       }
     },
     {
@@ -5645,20 +5636,29 @@
     },
     {
       "dari": "1.0.221",
-      "ke": "1.0.223",
+      "ke": "1.0.224",
       "arm64": {
-        "file": "patch-1.0.221-1.0.223-arm64.bsdiff",
-        "ukuran": 4100409,
-        "sha256": "eeff68a138c65be5de7e62ed0b22a366b2d258cfb7c304109d70d16a9ff0e246"
+        "file": "patch-1.0.221-1.0.224-arm64.bsdiff",
+        "ukuran": 4085381,
+        "sha256": "df1439288e314eb3eee170f828b515a5f2887edce2ac379a1409463d37b3ee64"
       }
     },
     {
       "dari": "1.0.222",
-      "ke": "1.0.223",
+      "ke": "1.0.224",
       "arm64": {
-        "file": "patch-1.0.222-1.0.223-arm64.bsdiff",
-        "ukuran": 4095431,
-        "sha256": "05b8a3e68587150c9c97c90c1cfdf4d49df7bc995be9ec3c6e5ab3ead729dcdc"
+        "file": "patch-1.0.222-1.0.224-arm64.bsdiff",
+        "ukuran": 4101279,
+        "sha256": "ec762aa7d9f006065596ede6c3e99f84e3bb8fbb41cdb4347293da44a203d905"
+      }
+    },
+    {
+      "dari": "1.0.223",
+      "ke": "1.0.224",
+      "arm64": {
+        "file": "patch-1.0.223-1.0.224-arm64.bsdiff",
+        "ukuran": 4046553,
+        "sha256": "f1f4aca9489ac79f7d5da8df5fefb0e4bdec2af694fd02defc0d0e10ecaeee8f"
       }
     }
   ]

@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.221",
-  "catatan": "• Bingkai kiriman panel tampil seperti aslinya, bukan bingkai VIP",
-  "ukuran_apk": 55008675,
-  "sha256_apk": "e2305fc309db83bcbbdb7555b50e746d1d91c60b1ff7e0b178321afa897ac041",
+  "versi": "1.0.222",
+  "catatan": "• Banner game menyebut nama game pemenang: Greedy King atau Crazy Fruit",
+  "ukuran_apk": 55008732,
+  "sha256_apk": "5defdcd155cef446524f75e9e6e56aac866eecf5490cd5f07aefca4953d9403e",
   "abis": {
     "arm64": {
-      "ukuran": 55008675,
-      "sha256": "e2305fc309db83bcbbdb7555b50e746d1d91c60b1ff7e0b178321afa897ac041"
+      "ukuran": 55008732,
+      "sha256": "5defdcd155cef446524f75e9e6e56aac866eecf5490cd5f07aefca4953d9403e"
     },
     "armv7": {
-      "ukuran": 53159830,
-      "sha256": "884019e4959c01fb141914d815ea92b1bc99cfcb2ec4b0dcf00deb1c692abf77"
+      "ukuran": 53159874,
+      "sha256": "79dea31c2c5f11180ba4389c477309708cb0e1831e7d707d1a32c484e20da182"
     },
     "universal": {
-      "ukuran": 73424647,
-      "sha256": "792ec244da24c207ac84efe9b11c06dc985f051c7c67d0cf622fab4d02795fad"
+      "ukuran": 73424693,
+      "sha256": "8ed324a51909dcdf7af07340789afe40ca610e998aaa1eec6f3577a2c4e46bf8"
     }
   }
 }

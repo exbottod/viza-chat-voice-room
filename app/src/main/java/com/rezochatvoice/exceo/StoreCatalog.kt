@@ -264,6 +264,17 @@ object StoreCatalog {
 
     /** [uidPemakai] mengisi ID angka akun yang sedang melihat store, sehingga
      *  item Unique ID yang dikunci ke akun lain tidak ikut tampil. */
+    /** Aset pertama yang layak dipakai untuk satu slot (cadangan tampilan). */
+    fun firstAsset(slot: String): VipAsset? {
+        val dariRtdb = rtdbMap.values.firstOrNull {
+            it.slot == slot && (it.asset.url.isNotBlank() || it.asset.poster.isNotBlank())
+        }
+        if (dariRtdb != null) return dariRtdb.asset
+        return items.values.firstOrNull {
+            it.slot == slot && (it.asset.url.isNotBlank() || it.asset.poster.isNotBlank())
+        }?.asset
+    }
+
     fun bySlot(slot: String, uidPemakai: String? = null): List<CatalogItem> =
         items.values
             .filter { it.store }

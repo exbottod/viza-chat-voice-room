@@ -667,7 +667,10 @@ fun entryAssetCadangan(kecuali: Int = 0): VipAsset? {
         val a = VipAssets.get(t, "entry")
         if (a != null && (a.url.isNotBlank() || a.hasData)) return a
     }
-    return null
+    // Efek masuk buatan panel (item katalog) juga dipakai sebagai cadangan.
+    // Tanpa ini, user yang efek masuknya item kiriman panel tidak melihat apa pun
+    // ketika catatan item di dompet belum sinkron.
+    return StoreCatalog.firstAsset("entry")
 }
 
 /** Banner efek masuk VIP1-9 diambil dari panel developer (bukan lagi dari APK). */
@@ -676,6 +679,9 @@ fun vipBannerAsset(n: Int): VipAsset? = if (n in 1..9) VipAssets.get(n, "banner"
 /** Banner efek masuk dari pesan "masuk kamar":
  *  item store custom (sx_) MENANG, lalu item banner VIP (vipbn_, drawable di APK),
  *  terakhir otomatis sesuai level VIP user. */
+/** Aset pertama yang tersedia untuk satu slot dari katalog panel (dipakai sebagai cadangan). */
+fun bannerCadangan(): VipAsset? = StoreCatalog.firstAsset("banner")
+
 fun bannerAssetOf(m: RoomMsg): VipAsset? =
     if (m.banner.startsWith("sx_")) StoreCatalog.find(m.banner)?.asset
     else if (m.banner.startsWith("vipbn_")) vipBannerAsset(m.banner.removePrefix("vipbn_").toIntOrNull() ?: 0)
@@ -771,10 +777,12 @@ fun VipEntryEffect(roomId: String) {
         // Tunggu sebentar supaya room dan suara siap dulu.
         delay(1500)
         if (playing != null || banner != null) return@LaunchedEffect
-        val w = runCatching { WalletCache.load(myUid) }.getOrNull() ?: return@LaunchedEffect
-        val vipNow = if (vipActive(w.vip, w.vipUntil)) w.vip else 0
-        val eId = fallbackEquip(w, "entry")
-        val bId = fallbackEquip(w, "banner")
+        // Dompet boleh belum tersedia: cadangan katalog tetap dipakai supaya efek
+        // masuk tidak hilang hanya karena cache dompet kosong.
+        val w = runCatching { WalletCache.load(myUid) }.getOrNull()
+        val vipNow = if (w != null && vipActive(w.vip, w.vipUntil)) w.vip else 0
+        val eId = w?.let { fallbackEquip(it, "entry") }.orEmpty()
+        val bId = w?.let { fallbackEquip(it, "banner") }.orEmpty()
         val a = runCatching {
             when {
                 eId.startsWith("sx_") -> StoreCatalog.find(eId)?.asset
@@ -795,6 +803,7 @@ fun VipEntryEffect(roomId: String) {
             }
         }.getOrNull()
             ?: vipBannerAsset(vipNow)
+            ?: bannerCadangan()
         if (a == null && b == null) return@LaunchedEffect
         playing = a
         banner = b

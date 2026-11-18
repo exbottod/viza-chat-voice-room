@@ -415,8 +415,27 @@ private fun VipSvga(
                     }
                 }
                 val parser = SVGAParser(c)
+                var sudahSiap = false
+                var sudahCobaLagi = false
+                // Kalau percobaan pertama gagal, berkasnya dicoba ulang (jaringan
+                // lambat / berkas belum siap di CDN) supaya efeknya tidak berhenti
+                // sebagai sampul PNG.
+                val cobaLagi: () -> Unit = {
+                    if (!sudahSiap && !sudahCobaLagi && a.url.isNotBlank()) {
+                        sudahCobaLagi = true
+                        postDelayed({
+                            if (!sudahSiap) {
+                                try {
+                                    parser.decodeFromURL(java.net.URL(a.url + (if (a.url.contains('?')) "&" else "?") + "ulang=" + System.currentTimeMillis()), done)
+                                } catch (e: Exception) { }
+                            }
+                        }, 1200L)
+                    }
+                }
                 val done = object : SVGAParser.ParseCompletion {
                     override fun onComplete(videoItem: SVGAVideoEntity) {
+                        sudahSiap = true
+                        VipAssets.diag.remove("${a.n}_${a.slot}")
                         setVideoItem(videoItem)
                         loops = if (loop) 0 else 1
                         onSiap(videoItem)
@@ -429,7 +448,8 @@ private fun VipSvga(
                     }
 
                     override fun onError() {
-                        VipAssets.diag["${a.n}_${a.slot}"] = "SVGA gagal dibaca"
+                        VipAssets.diag["${a.n}_${a.slot}"] = "SVGA gagal dibaca, coba ulang"
+                        cobaLagi()
                     }
                 }
                 if (a.url.isNotBlank()) {
@@ -845,6 +865,12 @@ fun VipEntryEffect(roomId: String) {
         if (!EfekMasukTercatat.perluTampil(roomId)) return@LaunchedEffect
         playing = a
         banner = b
+        // Catatan diagnosa (dibaca di menu Blok Efek) supaya kelihatan apakah
+        // asetnya benar SVGA dan apakah animasinya benar-benar mulai.
+        VipAssets.diag["entry"] = a?.let {
+            "jenis=" + kindAset(it.kind, it.url, VipAssets.bytes(it)) + " berkas=" + it.url.substringAfterLast('/').take(28)
+        } ?: "efek masuk kosong"
+        VipAssets.diag["entry_main"] = "belum"
         val namaSaya = UserCache.peek(myUid)?.name.orEmpty()
         bannerName = namaSaya.takeIf { it.isNotBlank() }
         bannerUid = myUid
@@ -952,9 +978,16 @@ fun VipEntryEffect(roomId: String) {
                     Modifier.fillMaxSize(),
                     loop = false,
                     contentScale = ContentScale.Crop,
-                    onEnd = { playing = null },
+                    onEnd = {
+                        VipAssets.diag["entry_main"] =
+                            (VipAssets.diag["entry_main"] ?: "") + " · selesai"
+                        playing = null
+                    },
                     sound = true,
-                    onMulai = { animJalan = true },
+                    onMulai = {
+                        animJalan = true
+                        VipAssets.diag["entry_main"] = "animasi jalan"
+                    },
                 )
             }
             // Banner efek masuk: di ATAS layar, digambar SETELAH efek jadi tampil di depannya.

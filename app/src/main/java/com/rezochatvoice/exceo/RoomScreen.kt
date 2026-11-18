@@ -1446,6 +1446,15 @@ private fun RmBlokEfek(
         peringatan = tr("Ini tidak mengubah hasil game, hanya sembunyikan banner."),
         on = game,
     ) { onChange("game", it) }
+    // Diagnosa singkat: dipakai untuk memastikan efek mana yang jalan di HP ini.
+    Spacer(Modifier.height(14.dp))
+    val diagnosa = VipAssets.diag
+    Text(
+        "Versi " + com.rezochatvoice.exceo.BuildConfig.VERSION_NAME +
+            "\nEfek masuk: " + (diagnosa["entry"] ?: "belum ada") +
+            "\nPemutaran: " + (diagnosa["entry_main"] ?: "-"),
+        color = Color(0xFF7F7F7F), fontSize = 11.sp,
+    )
 }
 
 @Composable

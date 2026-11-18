@@ -236,6 +236,12 @@ fun RoomScreen(
     androidx.compose.runtime.LaunchedEffect(pk?.selesai) {
         if (pk?.selesai == true) pkHasil = true
     }
+    // Animasi mulai PK (video dari APK rujukan): sekali putar tiap PK dimulai.
+    var pkAnim by remember(roomId) { mutableStateOf(false) }
+    androidx.compose.runtime.LaunchedEffect(pk?.mulai) {
+        val p = pk ?: return@LaunchedEffect
+        if (p.aktif && !p.selesai && p.mulai > 0L) pkAnim = true
+    }
 
     // Saklar efek (Kotak 4): matikan efek masuk room dan efek gift kalau ramai.
     // Disimpan per akun di Realtime Database supaya tetap sama saat buka room lain.
@@ -1007,6 +1013,15 @@ fun RoomScreen(
                 PkBar(
                     p,
                     Modifier.align(Alignment.TopCenter).padding(top = 96.dp),
+                )
+            }
+        }
+        if (pkAnim) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                GiftVideo(
+                    url = "asset/mp4/pk_start.mp4",
+                    modifier = Modifier.fillMaxWidth(0.8f).height(160.dp),
+                    onEnd = { pkAnim = false },
                 )
             }
         }

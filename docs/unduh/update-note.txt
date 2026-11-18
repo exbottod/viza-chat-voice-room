@@ -1,1 +1,1 @@
-• ID unik kiriman panel tampil juga di baris nama chat room
+• Minimize room tidak lagi memuat ulang room dan mengulang efek masuk

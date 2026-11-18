@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.226",
-  "catatan": "• ID unik kiriman panel tampil juga di baris nama chat room",
-  "ukuran_apk": 55007494,
-  "sha256_apk": "75dc3a1d834db43609f297d663bf99c45c0952ee5fa6775ad55397c344979f51",
+  "versi": "1.0.227",
+  "catatan": "• Minimize room tidak lagi memuat ulang room dan mengulang efek masuk",
+  "ukuran_apk": 55010345,
+  "sha256_apk": "e124c507e972b87eef3d157a3aeaad736ac5fb4ee60250f1d36b57c5dea2d7a3",
   "abis": {
     "arm64": {
-      "ukuran": 55007494,
-      "sha256": "75dc3a1d834db43609f297d663bf99c45c0952ee5fa6775ad55397c344979f51"
+      "ukuran": 55010345,
+      "sha256": "e124c507e972b87eef3d157a3aeaad736ac5fb4ee60250f1d36b57c5dea2d7a3"
     },
     "armv7": {
-      "ukuran": 53158645,
-      "sha256": "c3ebe9d0af96c351ef2e371dd9987a57beefa724aa5219c4e98ef34f1f54314c"
+      "ukuran": 53161498,
+      "sha256": "2348f1da3b969168588c2328a0dca20dae4055330261997119c5dfa0456406c1"
     },
     "universal": {
-      "ukuran": 73423459,
-      "sha256": "58f2c0445da875c15bddfa5dc9bd58ad6d8cb44726b6e01b5dd61b224df0267c"
+      "ukuran": 73426313,
+      "sha256": "d6399b1e169c3e5347d36d8c08e2fa5c2e947c0de3999dd206bc2aa8bbbb3fd9"
     }
   }
 }

@@ -5455,15 +5455,6 @@
       }
     },
     {
-      "dari": "1.0.214",
-      "ke": "1.0.218",
-      "arm64": {
-        "file": "patch-1.0.214-1.0.218-arm64.bsdiff",
-        "ukuran": 4100585,
-        "sha256": "24c7bb9968aec97ae6baceb7d08d7ba481ba1e49de1d1df908cf3094107c2929"
-      }
-    },
-    {
       "dari": "1.0.215",
       "ke": "1.0.216",
       "arm64": {
@@ -5483,11 +5474,11 @@
     },
     {
       "dari": "1.0.215",
-      "ke": "1.0.218",
+      "ke": "1.0.219",
       "arm64": {
-        "file": "patch-1.0.215-1.0.218-arm64.bsdiff",
-        "ukuran": 4091990,
-        "sha256": "08b9b1bce019665a4b695feaf2574600fc55b8bd5064c53b5a6f441099692f36"
+        "file": "patch-1.0.215-1.0.219-arm64.bsdiff",
+        "ukuran": 4086173,
+        "sha256": "28217fc4f2f8a9f00f5918d39cc2f92eb07b0c458aa3901892bc58657376ad7a"
       }
     },
     {
@@ -5501,20 +5492,29 @@
     },
     {
       "dari": "1.0.216",
-      "ke": "1.0.218",
+      "ke": "1.0.219",
       "arm64": {
-        "file": "patch-1.0.216-1.0.218-arm64.bsdiff",
-        "ukuran": 4073551,
-        "sha256": "35cb0ee559f4cc1c1731b6dd7c102e220ae443c3436a707cd56fd47231a3bfa4"
+        "file": "patch-1.0.216-1.0.219-arm64.bsdiff",
+        "ukuran": 4079160,
+        "sha256": "480054ce1ffebf6be641d7345637ef0f7f59a145f9ec6eac34e4b75f27b60807"
       }
     },
     {
       "dari": "1.0.217",
-      "ke": "1.0.218",
+      "ke": "1.0.219",
       "arm64": {
-        "file": "patch-1.0.217-1.0.218-arm64.bsdiff",
-        "ukuran": 3997870,
-        "sha256": "563c1bffa2b3a15ff97a1379858ec3906b9dee4bdd3baef7a53f6dd52492e01f"
+        "file": "patch-1.0.217-1.0.219-arm64.bsdiff",
+        "ukuran": 4099630,
+        "sha256": "e8107b7401d0d424df65f75dfc37f61ae247f18ee15c9cd630f09e0e3f873fac"
+      }
+    },
+    {
+      "dari": "1.0.218",
+      "ke": "1.0.219",
+      "arm64": {
+        "file": "patch-1.0.218-1.0.219-arm64.bsdiff",
+        "ukuran": 4102936,
+        "sha256": "f73c35644e1915c393c22b92b09b688f625b5232a179bb7721e7e9acd0b6912f"
       }
     }
   ]

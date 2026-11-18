@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.218",
-  "catatan": "• SVGA pratinjau benar-benar berputar, bukan hanya frame pertama",
-  "ukuran_apk": 55002684,
-  "sha256_apk": "087452066d319ede2c558069a14484406d4c179417020f292ceede0e061360c0",
+  "versi": "1.0.219",
+  "catatan": "• Lencana terpasang tampil di typing, sheet, profil orang lain; banner game dipaskan; sampul PNG hilan",
+  "ukuran_apk": 55004916,
+  "sha256_apk": "0200139523f256c87203d30c6fb8669c2df6b3419b5f72f2ca8ea0c8385114da",
   "abis": {
     "arm64": {
-      "ukuran": 55002684,
-      "sha256": "087452066d319ede2c558069a14484406d4c179417020f292ceede0e061360c0"
+      "ukuran": 55004916,
+      "sha256": "0200139523f256c87203d30c6fb8669c2df6b3419b5f72f2ca8ea0c8385114da"
     },
     "armv7": {
-      "ukuran": 53153842,
-      "sha256": "0b6676b7560de045ba2f8411439808efe4445d65f53fab0e09d9c02a93936fba"
+      "ukuran": 53156070,
+      "sha256": "254b90705de9d20667d956b6aa8a5e9d51774a69ba0b93def65d0d1e8575146c"
     },
     "universal": {
-      "ukuran": 73418655,
-      "sha256": "adb8ab160e35f7117e5abef8daa191d42954c0ed0cdb837854b289f444991b8b"
+      "ukuran": 73420892,
+      "sha256": "5cedc4cb1971720e183248c9a229d1a1a95eb21becf77440f83812ae30221b54"
     }
   }
 }

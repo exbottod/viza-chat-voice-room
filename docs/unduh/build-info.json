@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.244",
-  "catatan": "• Ikon VS PK memakai berkas PNG kiriman pemilik (latar transparan)\n• Ikon VS PK dari aset pemilik",
-  "ukuran_apk": 56460838,
-  "sha256_apk": "13bf3743f20569bd0acbf1eb972572a9452af66c69f77e715ed6a41381b83b4c",
+  "versi": "1.0.245",
+  "catatan": "• Add files via upload",
+  "ukuran_apk": 56449589,
+  "sha256_apk": "89396bb5daa389c836b3d0ce32b949880eed40223ddc007a8f5b24a978a41695",
   "abis": {
     "arm64": {
-      "ukuran": 56460838,
-      "sha256": "13bf3743f20569bd0acbf1eb972572a9452af66c69f77e715ed6a41381b83b4c"
+      "ukuran": 56449589,
+      "sha256": "89396bb5daa389c836b3d0ce32b949880eed40223ddc007a8f5b24a978a41695"
     },
     "armv7": {
-      "ukuran": 54611991,
-      "sha256": "f99ce5d69c9bf0584734a8382d5a8030f799abab55c4693536394eb967a808d2"
+      "ukuran": 54600733,
+      "sha256": "f653b01bfc0d40693044261e1cb0d71ca097d663d3f2472e4af07bcddaaa5590"
     },
     "universal": {
-      "ukuran": 74876815,
-      "sha256": "0fbb834705d55b8284f50b1d8e1d1b4f9fe9d23b991c0d081e0480f89379b59d"
+      "ukuran": 74865556,
+      "sha256": "4f310a4a3eb0b259f0fa5a914d6055a89cd779437b250c285b07b345a9305869"
     }
   }
 }

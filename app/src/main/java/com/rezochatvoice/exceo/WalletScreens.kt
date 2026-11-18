@@ -366,6 +366,10 @@ object WalletRepo {
         val r = SupaRepo.sendGift(uid, price, itemId, roomId, to, each)
         lastGiftDiamond = r.dm
         r.wallet?.let { emitBackup(uid, it) }
+        // Gift yang masuk ikut menambah skor PK room (kalau PK sedang jalan).
+        if (r.error == null && !roomId.isNullOrBlank()) {
+            try { RoomPk.tambahSkor(roomId, price, to) } catch (e: Exception) { }
+        }
         return r.error
     }
 

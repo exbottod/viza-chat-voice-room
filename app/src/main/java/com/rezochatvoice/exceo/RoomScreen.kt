@@ -217,6 +217,25 @@ fun RoomScreen(
     // Pilihan durasi saat menekan "Kick dari room": uid ke nama user.
     var kickPick by remember { mutableStateOf<Pair<String, String>?>(null) }
     var roomMuted by remember { mutableStateOf(false) }
+    // ---- Room PK ----
+    var pk by remember(roomId) { mutableStateOf<PkState?>(null) }
+    var pkBuat by remember { mutableStateOf(false) }
+    var pkHasil by remember(roomId) { mutableStateOf(false) }
+    androidx.compose.runtime.DisposableEffect(roomId) {
+        val reg = RoomPk.observe(roomId) { pk = it }
+        onDispose { reg.remove() }
+    }
+    // Waktu habis: skor dibekukan dan hasil ditampilkan sekali untuk semua orang.
+    androidx.compose.runtime.LaunchedEffect(pk?.akhir, pk?.selesai) {
+        val p = pk ?: return@LaunchedEffect
+        if (!p.aktif || p.selesai || p.akhir <= 0L) return@LaunchedEffect
+        val sisa = p.akhir - Rtdb.serverNow()
+        if (sisa > 0L) kotlinx.coroutines.delay(sisa + 400L)
+        RoomPk.tandaiSelesai(roomId)
+    }
+    androidx.compose.runtime.LaunchedEffect(pk?.selesai) {
+        if (pk?.selesai == true) pkHasil = true
+    }
 
     // Saklar efek (Kotak 4): matikan efek masuk room dan efek gift kalau ramai.
     // Disimpan per akun di Realtime Database supaya tetap sama saat buka room lain.
@@ -982,6 +1001,47 @@ fun RoomScreen(
                 try { if (fxUid.isNotBlank()) Rtdb.ref("fxPrefs/$fxUid/rocket").setValue(true) } catch (e: Exception) { }
             },
         )
+        // Bar PK tampil di atas kursi selama pertandingan berjalan.
+        pk?.takeIf { it.aktif && !it.selesai }?.let { p ->
+            if (!waveOpen) {
+                PkBar(
+                    p,
+                    Modifier.align(Alignment.TopCenter).padding(top = 96.dp),
+                )
+            }
+        }
+        if (pkBuat) {
+            PkBuatDialog(
+                aNama = myName.ifBlank { "Host" },
+                calon = seats.values.sortedBy { it.index }
+                    .filter { it.uid.isNotBlank() && it.uid != myUid }
+                    .map { it.uid to it.name },
+                onMulai = { mode, durasi, bUid, bNama ->
+                    pkBuat = false
+                    RoomPk.mulai(
+                        roomId = r.id,
+                        mode = mode,
+                        durasiDetik = durasi,
+                        aUid = myUid,
+                        aNama = myName.ifBlank { "Host" },
+                        bUid = bUid,
+                        bNama = bNama,
+                    )
+                },
+                onDismiss = { pkBuat = false },
+            )
+        }
+        pk?.takeIf { it.selesai }?.let { p ->
+            if (pkHasil) {
+                PkHasilDialog(
+                    pk = p,
+                    namaUser = { uid ->
+                        seats.values.firstOrNull { it.uid == uid }?.name ?: uid.takeLast(6)
+                    },
+                    onDismiss = { pkHasil = false },
+                )
+            }
+        }
         if (fxBannerOn && !waveOpen && !LocalRoomMinimized.current) GiftBanner(r.id)
         // Banner cashback terpisah: hanya saat JP 10.000 ke atas.
         if (fxBannerOn && !waveOpen && !LocalRoomMinimized.current) CashbackBanner(r.id)
@@ -1127,6 +1187,18 @@ fun RoomScreen(
                             panel = P_NONE
                         },
                     ) { Text(if (roomMuted) "🔇" else "🔊", fontSize = 24.sp) }
+                    if (canManage) {
+                        RmTool(if (pk?.aktif == true && pk?.selesai != true) tr("Stop PK") else "PK", onClick = {
+                            if (pk?.aktif == true && pk?.selesai != true) {
+                                RoomPk.hentikan(r.id)
+                                toast(tr("PK dihentikan"))
+                                panel = P_NONE
+                            } else {
+                                panel = P_NONE
+                                pkBuat = true
+                            }
+                        }) { Text("\u2694", fontSize = 24.sp) }
+                    }
                     if (canManage) {
                         RmTool("Mode kamar", onClick = { panel = P_MODE }) { GridIcon(Modifier.size(26.dp)) }
                         RmTool("Pengaturan", onClick = { panel = P_SETTINGS }) {

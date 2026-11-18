@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.253",
-  "catatan": "• Rules: node roomCfg, micRequests, roomFollowers, roomPoin disamakan di kedua berkas",
-  "ukuran_apk": 56978080,
-  "sha256_apk": "746555f907c8f26ef46b60f2a06dfced10542844261d595c5dcdca488f1ea464",
+  "versi": "1.0.254",
+  "catatan": "• Bersihkan layar publik langsung kosong di layar dan tutup panel",
+  "ukuran_apk": 56978643,
+  "sha256_apk": "ff19e8d7119f003657a95c0365d895b1d3e1a42e88cf1cf77dc4faaadc2e84db",
   "abis": {
     "arm64": {
-      "ukuran": 56978080,
-      "sha256": "746555f907c8f26ef46b60f2a06dfced10542844261d595c5dcdca488f1ea464"
+      "ukuran": 56978643,
+      "sha256": "ff19e8d7119f003657a95c0365d895b1d3e1a42e88cf1cf77dc4faaadc2e84db"
     },
     "armv7": {
-      "ukuran": 55129226,
-      "sha256": "24c1b569cf1c79b2e674b8482ae6c6b9991c6b25e6a722adbb3f5a8107c107a9"
+      "ukuran": 55129805,
+      "sha256": "0d380c10884ac3e435f0e8285977890862a281c2efacd48054c339af1e713d92"
     },
     "universal": {
-      "ukuran": 75394067,
-      "sha256": "888a40027fd5393be92c0776c92b54666c15387b27003ea1c010ea8c07cf8323"
+      "ukuran": 75394636,
+      "sha256": "8b234b833ac7dffb2050e4b2305befd607638eec35724a819274839be7bc16ee"
     }
   }
 }

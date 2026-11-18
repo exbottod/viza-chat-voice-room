@@ -1,5 +1,6 @@
 package com.rezochatvoice.exceo
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,7 +11,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -29,6 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -201,54 +206,65 @@ fun PkBar(pk: PkState, modifier: Modifier = Modifier) {
     val menit = sisa / 60
     val detik = sisa % 60
     val total = (pk.aSkor + pk.bSkor).coerceAtLeast(1L)
-    val bagianA = (pk.aSkor.toFloat() / total.toFloat()).coerceIn(0f, 1f)
-    val shape = RoundedCornerShape(14.dp)
-    Column(
-        modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp)
-            .clip(shape)
-            .background(Color(0xE6140A0A))
-            .border(1.dp, GoldBrush, shape)
-            .padding(horizontal = 10.dp, vertical = 8.dp),
-    ) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(pk.aNama.ifBlank { "Host" }, color = GoldLight, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                Text(pk.aSkor.toString(), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+    val bagianA = (pk.aSkor.toFloat() / total.toFloat()).coerceIn(0.04f, 0.96f)
+    Box(modifier.fillMaxWidth().padding(horizontal = 12.dp)) {
+        // Plat skor dari aset panel (bg_mic_pk_team_score).
+        Image(
+            painter = painterResource(R.drawable.pk_latar_skor),
+            contentDescription = null,
+            contentScale = ContentScale.FillBounds,
+            modifier = Modifier.matchParentSize(),
+        )
+        Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(pk.aNama.ifBlank { "Host" }, color = GoldLight, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                    Text(pk.aSkor.toString(), color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Image(
+                        painter = painterResource(R.drawable.pk_waktu),
+                        contentDescription = null,
+                        modifier = Modifier.size(13.dp),
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        if (pk.selesai) tr("Selesai") else String.format("%d:%02d", menit, detik),
+                        color = Gold,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+                Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                    Text(pk.bNama.ifBlank { tr("Lawan") }, color = GoldLight, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                    Text(pk.bSkor.toString(), color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                }
             }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    if (pk.selesai) tr("Selesai") else String.format("%d:%02d", menit, detik),
-                    color = Gold,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
+            Spacer(Modifier.height(6.dp))
+            // Pita perbandingan: kiri kubu A, kanan kubu B, penanda di tengah.
+            BoxWithConstraints(Modifier.fillMaxWidth().height(12.dp)) {
+                val lebar = maxWidth
+                Row(
+                    Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(6.dp))
+                        .background(Color(0xFF3A1414)),
+                ) {
+                    Box(
+                        Modifier.fillMaxWidth(bagianA).height(12.dp)
+                            .background(Brush.horizontalGradient(listOf(Gold, GoldLight))),
+                    )
+                    Box(
+                        Modifier.weight(1f).height(12.dp)
+                            .background(Brush.horizontalGradient(listOf(Color(0xFF6E1B1B), Color(0xFFB33A3A)))),
+                    )
+                }
+                Image(
+                    painter = painterResource(R.drawable.pk_progres),
+                    contentDescription = null,
+                    modifier = Modifier.align(Alignment.CenterStart)
+                        .offset(x = (lebar * bagianA) - 13.dp)
+                        .size(26.dp),
                 )
-                Text(
-                    if (pk.mode == "tim") tr("Tim") else "1v1",
-                    color = Color(0xFFBDBDBD),
-                    fontSize = 9.sp,
-                )
             }
-            Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
-                Text(pk.bNama.ifBlank { tr("Lawan") }, color = GoldLight, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                Text(pk.bSkor.toString(), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            }
-        }
-        Spacer(Modifier.height(6.dp))
-        // Pita perbandingan: kiri kubu A, kanan kubu B.
-        Row(
-            Modifier.fillMaxWidth().height(10.dp).clip(RoundedCornerShape(5.dp))
-                .background(Color(0xFF3A1414)),
-        ) {
-            Box(
-                Modifier.fillMaxWidth(bagianA).height(10.dp)
-                    .background(Brush.horizontalGradient(listOf(Gold, GoldLight))),
-            )
-            Box(
-                Modifier.weight(1f).height(10.dp)
-                    .background(Brush.horizontalGradient(listOf(Color(0xFF6E1B1B), Color(0xFFB33A3A)))),
-            )
         }
     }
 }
@@ -264,99 +280,107 @@ fun PkBuatDialog(
     var mode by remember { mutableStateOf("1v1") }
     var durasi by remember { mutableStateOf(300) }
     var lawan by remember { mutableStateOf<Pair<String, String>?>(null) }
-    val shape = RoundedCornerShape(18.dp)
+    val shape = RoundedCornerShape(22.dp)
     Box(Modifier.fillMaxSize().background(Color(0xAA000000)).clickable { onDismiss() }, contentAlignment = Alignment.Center) {
-        Column(
-            Modifier.fillMaxWidth(0.92f).clip(shape).background(Color(0xFF1A1010))
-                .border(1.dp, GoldBrush, shape)
-                .clickable(enabled = false) { }
-                .padding(16.dp),
-        ) {
-            Text(tr("Mulai PK"), color = Gold, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(10.dp))
-            Text(tr("Mode"), color = Color(0xFFBDBDBD), fontSize = 12.sp)
-            Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("1v1" to "1v1", "tim" to tr("Tim")).forEach { (nilai, label) ->
-                    val on = mode == nilai
-                    Text(
-                        label,
-                        color = if (on) Color.Black else Color.White,
-                        fontSize = 13.sp,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(if (on) Gold else Color(0xFF2A1A1A))
-                            .clickable { mode = nilai }
-                            .padding(horizontal = 14.dp, vertical = 8.dp),
-                    )
-                }
-            }
-            Spacer(Modifier.height(10.dp))
-            Text(tr("Durasi"), color = Color(0xFFBDBDBD), fontSize = 12.sp)
-            Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(180 to "3 mnt", 300 to "5 mnt", 600 to "10 mnt").forEach { (nilai, label) ->
-                    val on = durasi == nilai
-                    Text(
-                        label,
-                        color = if (on) Color.Black else Color.White,
-                        fontSize = 13.sp,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(if (on) Gold else Color(0xFF2A1A1A))
-                            .clickable { durasi = nilai }
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                    )
-                }
-            }
-            Spacer(Modifier.height(10.dp))
-            Text(tr("Pilih lawan"), color = Color(0xFFBDBDBD), fontSize = 12.sp)
-            Spacer(Modifier.height(4.dp))
-            if (calon.isEmpty()) {
-                Text(tr("Belum ada user lain di mic"), color = Color(0xFF8A8A8A), fontSize = 12.sp)
-            } else {
-                calon.take(8).forEach { c ->
-                    val on = lawan?.first == c.first
-                    Row(
-                        Modifier.fillMaxWidth().padding(vertical = 2.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(if (on) Color(0xFF3A2A10) else Color(0xFF241717))
-                            .clickable { lawan = c }
-                            .padding(horizontal = 10.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Box(Modifier.size(8.dp).clip(CircleShape).background(if (on) Gold else Color(0xFF5A4A2A)))
-                        Spacer(Modifier.width(8.dp))
-                        Text(c.second, color = Color.White, fontSize = 13.sp, maxLines = 1)
+        Box(Modifier.fillMaxWidth(0.94f).clip(shape)) {
+            // Latar dialog dari aset panel (bg_mic_pk_create).
+            Image(
+                painter = painterResource(R.drawable.pk_latar_buat),
+                contentDescription = null,
+                contentScale = ContentScale.FillBounds,
+                modifier = Modifier.matchParentSize(),
+            )
+            Column(Modifier.fillMaxWidth().padding(18.dp)) {
+                Image(
+                    painter = painterResource(R.drawable.pk_judul),
+                    contentDescription = tr("Mulai PK"),
+                    modifier = Modifier.height(30.dp),
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(tr("Mode"), color = Color(0xFFD9D0C0), fontSize = 12.sp)
+                Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("1v1" to "1v1", "tim" to tr("Tim")).forEach { (nilai, label) ->
+                        val on = mode == nilai
+                        Text(
+                            label,
+                            color = if (on) Color.Black else Color.White,
+                            fontSize = 13.sp,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (on) Gold else Color(0x66000000))
+                                .clickable { mode = nilai }
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                        )
                     }
                 }
-            }
-            Spacer(Modifier.height(14.dp))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(
-                    tr("Batal"),
-                    color = Color(0xFFCFCFCF),
-                    fontSize = 14.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFF2A1A1A)).clickable { onDismiss() }
-                        .padding(vertical = 11.dp),
-                )
-                Text(
-                    tr("Mulai"),
-                    color = Color.Black,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp))
-                        .background(GoldBrush)
-                        .clickable(enabled = lawan != null) {
-                            val l = lawan ?: return@clickable
-                            onMulai(mode, durasi, l.first, l.second)
+                Spacer(Modifier.height(10.dp))
+                Text(tr("Durasi"), color = Color(0xFFD9D0C0), fontSize = 12.sp)
+                Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(180 to "3 mnt", 300 to "5 mnt", 600 to "10 mnt").forEach { (nilai, label) ->
+                        val on = durasi == nilai
+                        Text(
+                            label,
+                            color = if (on) Color.Black else Color.White,
+                            fontSize = 13.sp,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (on) Gold else Color(0x66000000))
+                                .clickable { durasi = nilai }
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                        )
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+                Text(tr("Pilih lawan"), color = Color(0xFFD9D0C0), fontSize = 12.sp)
+                Spacer(Modifier.height(4.dp))
+                if (calon.isEmpty()) {
+                    Text(tr("Belum ada user lain di mic"), color = Color(0xFFB0A99C), fontSize = 12.sp)
+                } else {
+                    calon.take(6).forEach { c ->
+                        val on = lawan?.first == c.first
+                        Row(
+                            Modifier.fillMaxWidth().padding(vertical = 2.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (on) Color(0x99D4AF37) else Color(0x66000000))
+                                .clickable { lawan = c }
+                                .padding(horizontal = 10.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Box(Modifier.size(8.dp).clip(CircleShape).background(if (on) Color.Black else Gold))
+                            Spacer(Modifier.width(8.dp))
+                            Text(c.second, color = if (on) Color.Black else Color.White, fontSize = 13.sp, maxLines = 1)
                         }
-                        .padding(vertical = 11.dp),
-                )
+                    }
+                }
+                Spacer(Modifier.height(14.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        tr("Batal"),
+                        color = Color(0xFFE0E0E0),
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp))
+                            .background(Color(0x66000000)).clickable { onDismiss() }
+                            .padding(vertical = 11.dp),
+                    )
+                    Text(
+                        tr("Mulai"),
+                        color = Color.Black,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp))
+                            .background(GoldBrush)
+                            .clickable(enabled = lawan != null) {
+                                val l = lawan ?: return@clickable
+                                onMulai(mode, durasi, l.first, l.second)
+                            }
+                            .padding(vertical = 11.dp),
+                    )
+                }
+                Spacer(Modifier.height(6.dp))
+                Text(tr("Host: ") + aNama, color = Color(0xFFB0A99C), fontSize = 11.sp)
             }
-            Spacer(Modifier.height(6.dp))
-            Text(tr("Host: ") + aNama, color = Color(0xFF8A8A8A), fontSize = 11.sp)
         }
     }
 }
@@ -364,56 +388,77 @@ fun PkBuatDialog(
 /** Dialog hasil PK: pemenang, skor akhir, dan penyumbang teratas tiap kubu. */
 @Composable
 fun PkHasilDialog(pk: PkState, namaUser: (String) -> String, onDismiss: () -> Unit) {
-    val shape = RoundedCornerShape(18.dp)
+    val shape = RoundedCornerShape(22.dp)
     val pemenang = pk.pemenang
     Box(Modifier.fillMaxSize().background(Color(0xAA000000)).clickable { onDismiss() }, contentAlignment = Alignment.Center) {
-        Column(
-            Modifier.fillMaxWidth(0.9f).clip(shape).background(Color(0xFF1A1010))
-                .border(1.dp, GoldBrush, shape)
-                .clickable(enabled = false) { }
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                when (pemenang) {
-                    "a" -> tr("Kubu kiri menang")
-                    "b" -> tr("Kubu kanan menang")
-                    else -> tr("Seri")
-                },
-                color = Gold,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
+        Box(Modifier.fillMaxWidth(0.92f).clip(shape)) {
+            // Latar dialog hasil (bg_mic_pk_result).
+            Image(
+                painter = painterResource(R.drawable.pk_latar_hasil),
+                contentDescription = null,
+                contentScale = ContentScale.FillBounds,
+                modifier = Modifier.matchParentSize(),
             )
-            Spacer(Modifier.height(12.dp))
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(pk.aNama.ifBlank { "Host" }, color = GoldLight, fontSize = 13.sp, maxLines = 1)
-                    Text(pk.aSkor.toString(), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                    pk.aAnggota.entries.sortedByDescending { it.value }.take(3).forEach {
-                        Text(namaUser(it.key) + " · " + it.value, color = Color(0xFFBDBDBD), fontSize = 10.sp, maxLines = 1)
+            Column(Modifier.fillMaxWidth().padding(18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Image(
+                    painter = painterResource(R.drawable.pk_header_hasil),
+                    contentDescription = tr("Hasil PK"),
+                    modifier = Modifier.height(34.dp),
+                )
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    when (pemenang) {
+                        "a" -> pk.aNama.ifBlank { tr("Kubu kiri") } + " " + tr("menang")
+                        "b" -> pk.bNama.ifBlank { tr("Kubu kanan") } + " " + tr("menang")
+                        else -> tr("Seri")
+                    },
+                    color = Gold,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                )
+                if (pemenang != "seri") {
+                    Spacer(Modifier.height(6.dp))
+                    Image(
+                        painter = painterResource(R.drawable.pk_menang),
+                        contentDescription = null,
+                        modifier = Modifier.height(48.dp),
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(pk.aNama.ifBlank { "Host" }, color = GoldLight, fontSize = 13.sp, maxLines = 1)
+                        Text(pk.aSkor.toString(), color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                        pk.aAnggota.entries.sortedByDescending { it.value }.take(3).forEach {
+                            Text(namaUser(it.key) + " · " + it.value, color = Color(0xFFD9D0C0), fontSize = 10.sp, maxLines = 1)
+                        }
+                    }
+                    Image(
+                        painter = painterResource(R.drawable.pk_vs),
+                        contentDescription = null,
+                        modifier = Modifier.size(38.dp),
+                    )
+                    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(pk.bNama.ifBlank { tr("Lawan") }, color = GoldLight, fontSize = 13.sp, maxLines = 1)
+                        Text(pk.bSkor.toString(), color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                        pk.bAnggota.entries.sortedByDescending { it.value }.take(3).forEach {
+                            Text(namaUser(it.key) + " · " + it.value, color = Color(0xFFD9D0C0), fontSize = 10.sp, maxLines = 1)
+                        }
                     }
                 }
-                Text("VS", color = Color(0xFF8A8A8A), fontSize = 12.sp)
-                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(pk.bNama.ifBlank { tr("Lawan") }, color = GoldLight, fontSize = 13.sp, maxLines = 1)
-                    Text(pk.bSkor.toString(), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                    pk.bAnggota.entries.sortedByDescending { it.value }.take(3).forEach {
-                        Text(namaUser(it.key) + " · " + it.value, color = Color(0xFFBDBDBD), fontSize = 10.sp, maxLines = 1)
-                    }
-                }
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    tr("Tutup"),
+                    color = Color.Black,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                        .background(GoldBrush).clickable { onDismiss() }
+                        .padding(vertical = 11.dp),
+                )
             }
-            Spacer(Modifier.height(16.dp))
-            Text(
-                tr("Tutup"),
-                color = Color.Black,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-                    .background(GoldBrush).clickable { onDismiss() }
-                    .padding(vertical = 11.dp),
-            )
         }
     }
 }

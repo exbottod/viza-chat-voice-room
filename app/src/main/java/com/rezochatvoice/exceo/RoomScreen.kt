@@ -1197,7 +1197,14 @@ fun RoomScreen(
                                 panel = P_NONE
                                 pkBuat = true
                             }
-                        }) { Text("\u2694", fontSize = 24.sp) }
+                        }) {
+                            androidx.compose.foundation.Image(
+                                painter = androidx.compose.ui.res.painterResource(R.drawable.pk_tombol),
+                                contentDescription = "PK",
+                                modifier = Modifier.size(26.dp),
+                                contentScale = ContentScale.Fit,
+                            )
+                        }
                     }
                     if (canManage) {
                         RmTool("Mode kamar", onClick = { panel = P_MODE }) { GridIcon(Modifier.size(26.dp)) }

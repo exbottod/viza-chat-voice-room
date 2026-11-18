@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
@@ -384,14 +386,21 @@ fun GameWinBannerHost(modifier: Modifier = Modifier) {
                     modifier = Modifier.matchParentSize(),
                 )
             }
-            Row(
-                Modifier
-                    .matchParentSize()
-                    .padding(start = 10.dp, end = 16.dp, top = 12.dp, bottom = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
+            // Isi banner diletakkan dengan ukuran proporsional terhadap lebar pelat,
+            // jadi foto pas di lingkaran kiri dan nama tidak menimpa tepi pelat pada
+            // ukuran layar apa pun.
+            BoxWithConstraints(Modifier.matchParentSize()) {
+                val lebar = maxWidth
+                val tinggi = maxHeight
+                val foto = (tinggi.value * 0.62f).dp
+                val geserKiri = (lebar.value * 0.055f).dp
+                val mulaiNama = geserKiri + foto + (lebar.value * 0.02f).dp
+                val kananIsi = (lebar.value * 0.075f).dp
+                val lebarKanan = (lebar.value * 0.30f).dp
                 // Kiri: foto pemenang, pas di lingkaran kiri pelat.
-                Box(Modifier.size(if (pelat) 44.dp else 48.dp)) {
+                Box(
+                    Modifier.align(Alignment.CenterStart).padding(start = geserKiri).size(foto),
+                ) {
                     Box(
                         Modifier
                             .fillMaxSize()
@@ -417,7 +426,10 @@ fun GameWinBannerHost(modifier: Modifier = Modifier) {
                 }
                 // Tengah: nama dan peringkat, di badan pelat.
                 Column(
-                    Modifier.weight(1f).padding(start = 10.dp, end = 56.dp),
+                    Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(start = mulaiNama)
+                        .width(lebar - mulaiNama - lebarKanan - kananIsi),
                     verticalArrangement = Arrangement.Center,
                 ) {
                     Text(
@@ -437,7 +449,10 @@ fun GameWinBannerHost(modifier: Modifier = Modifier) {
                 }
                 // Kanan: coin menang, ikon game kecil di bawahnya.
                 Column(
-                    Modifier.widthIn(max = 118.dp),
+                    Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = kananIsi)
+                        .width(lebarKanan),
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -446,14 +461,14 @@ fun GameWinBannerHost(modifier: Modifier = Modifier) {
                         angkanya,
                         color = Color(0xFF6A3300),
                         fontWeight = FontWeight.Bold,
-                        fontSize = if (angkanya.length > 13) 10.sp else if (angkanya.length > 10) 11.sp else 13.sp,
+                        fontSize = if (angkanya.length > 13) 9.sp else if (angkanya.length > 10) 11.sp else 13.sp,
                         textAlign = TextAlign.End,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     Box(
-                        Modifier.size(14.dp).clip(CircleShape),
+                        Modifier.size((tinggi.value * 0.20f).dp).clip(CircleShape),
                         contentAlignment = Alignment.Center,
                     ) {
                         val ikon = if (e.game.contains("fruit")) {

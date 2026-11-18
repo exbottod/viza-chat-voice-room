@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.250",
-  "catatan": "• Aturan Keanggotaan kamar: grup, tabel level, metode poin, gabung/keluar",
-  "ukuran_apk": 56524984,
-  "sha256_apk": "3138a4a37240a3291bb0f65cd1f473d6ffa66c29eb0004be367381ce7e3d01e4",
+  "versi": "1.0.251",
+  "catatan": "• Aset logo level kamar (55 tingkat) dari owner di drawable-xxhdpi, dipakai di Level kamar",
+  "ukuran_apk": 56975711,
+  "sha256_apk": "22195e15e6bdbb346ae2b7a45b9dfe88883642e49947441676630c5a0857451e",
   "abis": {
     "arm64": {
-      "ukuran": 56524984,
-      "sha256": "3138a4a37240a3291bb0f65cd1f473d6ffa66c29eb0004be367381ce7e3d01e4"
+      "ukuran": 56975711,
+      "sha256": "22195e15e6bdbb346ae2b7a45b9dfe88883642e49947441676630c5a0857451e"
     },
     "armv7": {
-      "ukuran": 54676150,
-      "sha256": "8712c261fb9b5583991c974fafa4ae45ffe3319653ffc68716f7d3792ed152b0"
+      "ukuran": 55126861,
+      "sha256": "b103e565f732dd1d908f3cf0c121b2bfcacf1403e2c32e394ef0a3f48ebe033c"
     },
     "universal": {
-      "ukuran": 74940971,
-      "sha256": "b0ceffeb6555790c389ea7c77cbf0b051429344acb04b90546d63294f90c6f9a"
+      "ukuran": 75391706,
+      "sha256": "e14a3ca1be1ade632cd2ee7fc5b68c105aa7cc52cf36170699e305d6c6821f2d"
     }
   }
 }

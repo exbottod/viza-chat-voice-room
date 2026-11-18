@@ -1,3 +1,1 @@
-• Poin kamar per menit dari server: naik mic dan kamar aktif dihitung tiap menit (81.000 poin, anggota 162.000, batas 10 menit per user per hari)
-• Gift: user biasa 1 poin per koin emas, anggota kamar 2 poin per koin emas
-• Ambang level kamar baru: Lv.1 10.000.000 poin sampai Lv.55 10.000.000.000.000.000 poin
+• Aset logo level kamar (55 tingkat) dari owner di drawable-xxhdpi, dipakai di Level kamar

@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.232",
-  "catatan": "• Banner efek masuk tidak lagi terbang 2-3 kali\n• Ralat kompilasi: rujukan done sebelum dideklarasikan\n• Diagnosa efek masuk di Blok Efek dan percobaan ulang SVGA",
-  "ukuran_apk": 55011893,
-  "sha256_apk": "7e4286ac6bdeaa3d6017b9ce9d36c52cbabf64cd520c53bbe3306a06d16855be",
+  "versi": "1.0.233",
+  "catatan": "• Ralat tipe: penghitung waktu memakai Long\n• Efek masuk VIP diputar penuh dan SVGA tampil langsung di Item VIP",
+  "ukuran_apk": 55011307,
+  "sha256_apk": "9af81613043f8b9d029586be7f3d6e80d0d72b112ef7b5b5ebe9b7540e90a480",
   "abis": {
     "arm64": {
-      "ukuran": 55011893,
-      "sha256": "7e4286ac6bdeaa3d6017b9ce9d36c52cbabf64cd520c53bbe3306a06d16855be"
+      "ukuran": 55011307,
+      "sha256": "9af81613043f8b9d029586be7f3d6e80d0d72b112ef7b5b5ebe9b7540e90a480"
     },
     "armv7": {
-      "ukuran": 53163052,
-      "sha256": "a8783e3054ec02db32c7dd2b12364a7398b5ff66dcde71c74b442fd7a8b9ccc6"
+      "ukuran": 53162449,
+      "sha256": "319306f7747276de5eaeaefe439cf89e5d227b170065827aac0035cd90dac877"
     },
     "universal": {
-      "ukuran": 73427865,
-      "sha256": "33efb6937fe802bf106c7d1aa80c9a761a2a6fbbabb6bb45b02baa3d72794e59"
+      "ukuran": 73427263,
+      "sha256": "25dff0ff516bfb26d9c5e09ad097b435f48543d460cd7ad1a64529df42618cbc"
     }
   }
 }

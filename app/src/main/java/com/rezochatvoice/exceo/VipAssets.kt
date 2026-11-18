@@ -53,6 +53,32 @@ import java.io.File
 import java.nio.ByteBuffer
 import kotlin.coroutines.resume
 
+/**
+ * Jenis aset yang sebenarnya dipakai pemutar.
+ *
+ * Panel sering menyimpan kind "image" padahal berkasnya .svga atau .mp4 (mis. saat
+ * aset diunggah lewat jalur lama atau namanya tanpa akhiran). Akibatnya aplikasi
+ * hanya menggambar sampul PNG dan animasinya tidak pernah diputar. Jenis ditebak
+ * ulang dari isi berkas lebih dulu, lalu dari akhiran alamatnya.
+ */
+fun kindAset(kind: String, url: String, data: ByteArray? = null): String {
+    if (data != null && data.size > 12) {
+        // SVGA 1.x/2.x: arsip zip (PK) atau aliran zlib.
+        val p = data[0].toInt() and 0xFF
+        val q = data[1].toInt() and 0xFF
+        if (p == 0x50 && q == 0x4B) return "svga"
+        if (p == 0x78 && (q == 0x01 || q == 0x5E || q == 0x9C || q == 0xDA)) return "svga"
+        // MP4/MOV: kotak "ftyp" di byte 4..7.
+        if (data[4].toInt() == 0x66 && data[5].toInt() == 0x74 &&
+            data[6].toInt() == 0x79 && data[7].toInt() == 0x70
+        ) return "mp4"
+    }
+    val u = url.lowercase().substringBefore('?').substringBefore('#')
+    if (u.endsWith(".svga")) return "svga"
+    if (u.endsWith(".mp4") || u.endsWith(".webm") || u.endsWith(".mov")) return "mp4"
+    return kind.ifBlank { "image" }
+}
+
 /** Aset VIP yang diatur dari panel developer: slot = title | frame | entry, kind = image | svga | mp4. */
 data class VipAsset(
     val n: Int,
@@ -106,10 +132,11 @@ object VipAssets {
                 val n = (c.child("n").getValue(Long::class.java) ?: 0L).toInt()
                 val slot = c.child("slot").getValue(String::class.java) ?: continue
                 if (n !in 1..9) continue
+                val urlRtdb = c.child("url").getValue(String::class.java) ?: ""
                 rtdbMap["${n}_$slot"] = VipAsset(
                     n, slot,
-                    c.child("kind").getValue(String::class.java) ?: "image",
-                    c.child("url").getValue(String::class.java) ?: "",
+                    kindAset(c.child("kind").getValue(String::class.java) ?: "image", urlRtdb),
+                    urlRtdb,
                     c.child("hasData").getValue(Boolean::class.java) ?: false,
                     c.child("updatedAt").getValue(Long::class.java) ?: 0L,
                     (c.child("chunks").getValue(Long::class.java) ?: 0L).toInt(),
@@ -133,10 +160,11 @@ object VipAssets {
                         val n = (d.getLong("n") ?: 0L).toInt()
                         val slot = d.getString("slot") ?: continue
                         if (n !in 1..9) continue
+                        val urlFs = d.getString("url") ?: ""
                         fresh["${n}_$slot"] = VipAsset(
                             n, slot,
-                            d.getString("kind") ?: "image",
-                            d.getString("url") ?: "",
+                            kindAset(d.getString("kind") ?: "image", urlFs),
+                            urlFs,
                             d.getBoolean("hasData") ?: false,
                             d.getLong("updatedAt") ?: 0L,
                             (d.getLong("chunks") ?: 0L).toInt(),
@@ -400,7 +428,9 @@ private fun VipSvga(
                         postDelayed({ try { startAnimation() } catch (e: Exception) { } }, 900L)
                     }
 
-                    override fun onError() {}
+                    override fun onError() {
+                        VipAssets.diag["${a.n}_${a.slot}"] = "SVGA gagal dibaca"
+                    }
                 }
                 if (a.url.isNotBlank()) {
                     // Unduh sendiri lewat HTTP lalu decode dari byte: decodeFromURL
@@ -469,7 +499,9 @@ fun VipMedia(
     }
     val remote = a.url.isNotBlank()
     if (!remote && data == null) return
-    when (a.kind) {
+    // Jenis dipakai dari isi berkas/akhiran, bukan hanya catatan panel, supaya
+    // SVGA tetap diputar walau panel menandainya sebagai gambar.
+    when (kindAset(a.kind, a.url, data)) {
         "mp4" -> VipVideo(a, data, modifier, loop, onEnd, sound, onMulai)
         "svga" -> VipSvga(a, data, modifier, loop, contentScale, onEnd, onSiap, onLangkah, onMulai)
         else -> AsyncImage(
@@ -956,7 +988,7 @@ fun VipEntryEffect(roomId: String) {
                     val skala = lebarBanner.value / 750f                      // dp per piksel kanvas
                     // b adalah properti delegasi, jadi disalin dulu supaya bisa dipakai.
                     val asetBanner = b!!
-                    val svgaBanner = asetBanner.kind == "svga"
+                    val svgaBanner = kindAset(asetBanner.kind, asetBanner.url) == "svga"
                     // Waktu banner mulai tampil dan tanda "animasi sudah selesai".
                     // Dulu banner langsung ditutup begitu pemutar SVGA melapor
                     // selesai, dan sebagian HP melapor selesai di frame awal,

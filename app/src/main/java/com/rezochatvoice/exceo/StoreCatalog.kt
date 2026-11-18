@@ -150,7 +150,7 @@ object StoreCatalog {
                     id, o.getString("slot"), o.getString("name"),
                     o.optLong("price"), o.optLong("days", 7L).coerceAtLeast(1L), o.optLong("order"),
                     VipAsset(
-                        0, "st_$id", o.optString("kind", "image"), o.optString("url"),
+                        0, "st_$id", kindAset(o.optString("kind", "image"), o.optString("url")), o.optString("url"),
                         o.optBoolean("hasData"), o.optLong("updatedAt"), o.optInt("chunks"),
                     ),
                     store = o.optBoolean("store", true),
@@ -189,10 +189,11 @@ object StoreCatalog {
                 val dijual = if (c.hasChild("store"))
                     c.child("store").getValue(Boolean::class.java) == true else true
                 val slot = c.child("slot").getValue(String::class.java) ?: continue
+                val urlKatalog = c.child("url").getValue(String::class.java) ?: ""
                 val asset = VipAsset(
                     0, "st_$id",
-                    c.child("kind").getValue(String::class.java) ?: "image",
-                    c.child("url").getValue(String::class.java) ?: "",
+                    kindAset(c.child("kind").getValue(String::class.java) ?: "image", urlKatalog),
+                    urlKatalog,
                     c.child("hasData").getValue(Boolean::class.java) ?: false,
                     c.child("updatedAt").getValue(Long::class.java) ?: 0L,
                     (c.child("chunks").getValue(Long::class.java) ?: 0L).toInt(),
@@ -230,10 +231,11 @@ object StoreCatalog {
                         // Aset VIP (meta=true, id vip_<tier>_<slot>) BUKAN item toko:
                         // dipakai otomatis oleh tier VIP dan tampil di Item VIP saja.
                         if (d.getBoolean("meta") == true || id.matches(Regex("^vip_\\d+_.*"))) continue
+                        val urlFs = d.getString("url") ?: ""
                         val asset = VipAsset(
                             0, "st_$id",
-                            d.getString("kind") ?: "image",
-                            d.getString("url") ?: "",
+                            kindAset(d.getString("kind") ?: "image", urlFs),
+                            urlFs,
                             d.getBoolean("hasData") ?: false,
                             d.getLong("updatedAt") ?: 0L,
                             (d.getLong("chunks") ?: 0L).toInt(),
@@ -338,7 +340,7 @@ object StoreCatalog {
                     val id = c.child("id").getValue(String::class.java) ?: key
                     val asset = VipAsset(
                         0, "st_$id",
-                        c.child("kind").getValue(String::class.java) ?: "image",
+                        kindAset(c.child("kind").getValue(String::class.java) ?: "image", url),
                         url, hasData,
                         c.child("updatedAt").getValue(Long::class.java) ?: 0L,
                         (c.child("chunks").getValue(Long::class.java) ?: 0L).toInt(),

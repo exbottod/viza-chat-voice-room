@@ -1,1 +1,2 @@
-• Rules: node roomCfg, micRequests, roomFollowers, roomPoin disamakan di kedua berkas
+• Bersihkan layar publik sekarang langsung kosong di layar, termasuk riwayat gift, dan panelnya langsung menutup
+• Kalau aturan database menolak hapus satu simpul, isi chat dihapus satu per satu supaya tetap bersih

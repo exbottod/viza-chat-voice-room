@@ -1623,15 +1623,34 @@ fun RoomScreen(
                 Spacer(Modifier.height(12.dp))
                 GoldButton(tr("Bersihkan layar publik")) {
                     scope.launch {
+                        val simpul = Rtdb.ref("messages/" + r.id)
                         val err = try {
-                            Rtdb.ref("messages/" + r.id).removeValue().await()
-                            try { Rtdb.ref("gifts/" + r.id).removeValue() } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { }
+                            simpul.removeValue().await()
+                            try { Rtdb.ref("gifts/" + r.id).removeValue().await() } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { }
                             null
                         } catch (e: kotlinx.coroutines.CancellationException) {
                             throw e
                         } catch (e: Exception) {
-                            e.message ?: "Gagal membersihkan"
+                            // Aturan database kadang menolak menghapus satu simpul,
+                            // jadi isinya dihapus satu per satu.
+                            try {
+                                val anak = simpul.get().await()
+                                val hapus = HashMap<String, Any?>()
+                                for (c in anak.children) {
+                                    val k = c.key ?: continue
+                                    hapus[k] = null
+                                }
+                                if (hapus.isNotEmpty()) simpul.updateChildren(hapus).await()
+                                null
+                            } catch (e2: kotlinx.coroutines.CancellationException) {
+                                throw e2
+                            } catch (e2: Exception) {
+                                e2.message ?: "Gagal membersihkan"
+                            }
                         }
+                        // Layar langsung bersih tanpa menunggu jaringan.
+                        clearedAt = System.currentTimeMillis()
+                        panel = P_NONE
                         toast(err ?: "Layar publik dibersihkan untuk semua orang")
                     }
                 }

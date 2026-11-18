@@ -701,14 +701,16 @@ fun RoomScreen(
                             ) {
                                 if (i < r.micCount) {
                                     ProvidePeranRoom(DataPeranRoom(r.ownerUid, r.admins)) {
-                                        RmSeatView(
+                                        // Poin dibaca di dalam sel kursi, bukan di sini, supaya
+                                        // perubahan poin tidak membuat seluruh layar room dihitung ulang.
+                                        RmSeatCell(
                                             i,
                                             seats[i],
                                             seatSize,
                                             locked = r.lockedSeats.contains(i),
                                             emote = seats[i]?.uid?.let { emotes[it] },
                                             emotSudahTampil = emotSudahTampil,
-                                            points = if (cfgPoin) (micPoints[i] ?: 0L) else 0L,
+                                            poin = { if (cfgPoin) (micPoints[i] ?: 0L) else 0L },
                                         ) { seatSheet = i }
                                     }
                                 }
@@ -1826,6 +1828,33 @@ private fun GelembungSuara(size: Dp, level: Float) {
             }
         }
     }
+}
+
+/**
+ * Satu kursi mic. Dibuat sebagai komponen sendiri supaya pembaruan poin mic
+ * hanya menghitung ulang kursinya, bukan seluruh layar room (penyebab macet).
+ */
+@Composable
+private fun RmSeatCell(
+    index: Int,
+    seat: Seat?,
+    size: Dp,
+    locked: Boolean,
+    emote: SeatEmote?,
+    emotSudahTampil: MutableList<String>,
+    poin: () -> Long,
+    onClick: () -> Unit,
+) {
+    RmSeatView(
+        index = index,
+        seat = seat,
+        size = size,
+        locked = locked,
+        emote = emote,
+        emotSudahTampil = emotSudahTampil,
+        points = poin(),
+        onClick = onClick,
+    )
 }
 
 @Composable

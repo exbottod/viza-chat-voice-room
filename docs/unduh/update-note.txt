@@ -1,2 +1,1 @@
-• Matikan kalkulator: ikon poin di kursi mic langsung hilang, tidak muncul lagi dengan angka 0
-• Pengaturan room (mic bebas, kalkulator, bicara publik) disimpan lewat server kalau database menolak dari HP, jadi tidak balik sendiri
+• Room lebih ringan: perubahan poin mic hanya menghitung ulang kursi, bukan seluruh layar room

@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.243",
-  "catatan": "• Aksi admin di sheet profil, larangan mic/chat, laporan user, ikon emoji",
-  "ukuran_apk": 56457974,
-  "sha256_apk": "e5b8efb5da824791e0b253bad10a0618c49e84d0216ef033dd2e893ae227d23c",
+  "versi": "1.0.244",
+  "catatan": "• Ikon VS PK memakai berkas PNG kiriman pemilik (latar transparan)\n• Ikon VS PK dari aset pemilik",
+  "ukuran_apk": 56475823,
+  "sha256_apk": "84966c8d210e707e10849380a6e04dc4fa73b177072bfba4f95cf81950b66fea",
   "abis": {
     "arm64": {
-      "ukuran": 56457974,
-      "sha256": "e5b8efb5da824791e0b253bad10a0618c49e84d0216ef033dd2e893ae227d23c"
+      "ukuran": 56475823,
+      "sha256": "84966c8d210e707e10849380a6e04dc4fa73b177072bfba4f95cf81950b66fea"
     },
     "armv7": {
-      "ukuran": 54609128,
-      "sha256": "f2b9b64fa799204617b3f6aa7095af69b76b8d89a6834fa247a7c7eba4ab7e8f"
+      "ukuran": 54626979,
+      "sha256": "73b9f7f4164792f9df2ec32b8f42f6c80c8a49a2075ad063dc854a286c7716d8"
     },
     "universal": {
-      "ukuran": 74873965,
-      "sha256": "03d4fbaff568b10fe941579229095cc29b8b88c8cf5ac39e8346d2026565e651"
+      "ukuran": 74891806,
+      "sha256": "6a68f7aa69a1efc25ecb9b7716ff226d0c0b9c7e6e155323ebb418dcefa9ddac"
     }
   }
 }

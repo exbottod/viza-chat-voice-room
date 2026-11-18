@@ -496,20 +496,30 @@ fun GameWinBannerHost(modifier: Modifier = Modifier) {
                             Text("$", color = Color(0xFF7A3F00), fontWeight = FontWeight.ExtraBold, fontSize = 11.sp)
                         }
                     }
-                    Box(
-                        Modifier.size((tinggi.value * 0.22f).dp).clip(CircleShape),
-                        contentAlignment = Alignment.Center,
+                    // Nama game dituliskan supaya jelas menang di game yang mana:
+                    // Greedy King atau Crazy Fruit, sesuai ronde yang dimenangkan.
+                    val fruit = e.game.contains("fruit")
+                    val ikon = if (fruit) R.drawable.ic_game_fruit else R.drawable.ic_game_greedy
+                    val namaGame = if (fruit) "Crazy Fruit" else "Greedy King"
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.End,
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
-                        val ikon = if (e.game.contains("fruit")) {
-                            R.drawable.ic_game_fruit
-                        } else {
-                            R.drawable.ic_game_greedy
-                        }
                         Image(
                             painter = painterResource(ikon),
-                            contentDescription = e.game,
+                            contentDescription = namaGame,
                             contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize().clip(CircleShape),
+                            modifier = Modifier.size((tinggi.value * 0.20f).dp).clip(CircleShape),
+                        )
+                        Spacer(Modifier.width(3.dp))
+                        Text(
+                            namaGame,
+                            color = Color(0xFF4A2400),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 9.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }

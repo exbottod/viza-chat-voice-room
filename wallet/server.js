@@ -7,7 +7,7 @@
  * jadi saldo Viza tidak pernah bercampur dengan saldo Rezo.
  */
 import http from "node:http";
-import worker from "./index.js";
+import worker, { hadiahMenitRoom } from "./index.js";
 
 // Semua variabel lingkungan diteruskan ke kode dompet, supaya kunci seperti
 // LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL, WA_OTP_URL ikut terbaca.
@@ -55,3 +55,15 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, HOST, () => console.log("dompet Viza jalan di http://" + HOST + ":" + PORT));
+
+// Poin kamar per menit (level kamar). Dihitung di server supaya tidak bisa
+// dinaikkan sendiri dari HP. Dijalankan tiap menit setelah server siap.
+setTimeout(() => {
+  const jalan = () => {
+    hadiahMenitRoom(process.env)
+      .then((r) => { if (r && r.ok) console.log("poin menit kamar:", r.room, "room"); })
+      .catch(() => {});
+  };
+  jalan();
+  setInterval(jalan, 60_000);
+}, 20_000);

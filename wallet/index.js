@@ -1911,6 +1911,90 @@ async function patchRtdbSa(env, path, nilai) {
   return true;
 }
 
+/**
+ * Poin kamar per menit (level kamar).
+ *
+ * Dijalankan dari server VPS tiap menit, bukan dari HP, jadi poin tidak bisa
+ * dinaikkan sendiri oleh pengguna. Aturannya mengikuti tabel Metode Poin:
+ * - naik mic: 81.000 poin/menit (anggota 162.000), batas 10 menit per user per hari
+ * - kamar aktif: 81.000 poin/menit (anggota 162.000), batas 10 menit per user per hari
+ * Poin disimpan di roomPoin/{roomId}: total, harian, bulanan, anggota, menit, aktif.
+ */
+const MENIT_MAKS_PER_HARI = 10;
+const POIN_NAIK_MIC = { biasa: 81000, anggota: 162000 };
+const POIN_KAMAR_AKTIF = { biasa: 81000, anggota: 162000 };
+
+function kunciTanggalWib() {
+  const bagian = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta", year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(new Date()).split("-");
+  return { hari: bagian[0] + bagian[1] + bagian[2], bulan: bagian[0] + bagian[1] };
+}
+
+async function hadiahMenitRoom(env) {
+  try {
+    const token = await tokenLayanan(env);
+    if (!token) return { ok: 0, e: "kunci layanan belum siap" };
+    const [rooms, seats, members, pengikut, poinLama] = await Promise.all([
+      cfgRtdbSa(env, "roomsPub"),
+      cfgRtdbSa(env, "seats"),
+      cfgRtdbSa(env, "members"),
+      cfgRtdbSa(env, "roomFollowers"),
+      cfgRtdbSa(env, "roomPoin"),
+    ]);
+    const { hari, bulan } = kunciTanggalWib();
+    let roomDiproses = 0;
+    for (const roomId of Object.keys(rooms || {})) {
+      try {
+        const seatMap = (seats || {})[roomId] || {};
+        const mem = (members || {})[roomId] || {};
+        const anggotaRoom = (pengikut || {})[roomId] || {};
+        const lama = (poinLama || {})[roomId] || {};
+        const menitHari = (lama.menit || {})[hari] || {};
+        const aktifHari = (lama.aktif || {})[hari] || {};
+        const ubah = {};
+        const sumbang = {};
+        let tambah = 0;
+
+        const beri = (uid, jenis, menitLama, nilai) => {
+          if (menitLama >= MENIT_MAKS_PER_HARI) return 0;
+          ubah[jenis + "/" + hari + "/" + uid] = menitLama + 1;
+          sumbang[uid] = (sumbang[uid] || 0) + nilai;
+          return nilai;
+        };
+
+        // Naik mic: hanya user yang duduk di kursi dan masih ada di room.
+        for (const kursi of Object.values(seatMap)) {
+          const uid = kursi && kursi.uid;
+          if (!uid || !mem[uid]) continue;
+          const nilai = anggotaRoom[uid] ? POIN_NAIK_MIC.anggota : POIN_NAIK_MIC.biasa;
+          tambah += beri(uid, "menit", Number(menitHari[uid] || 0), nilai);
+        }
+        // Kamar aktif: semua yang ada di room.
+        for (const uid of Object.keys(mem)) {
+          const nilai = anggotaRoom[uid] ? POIN_KAMAR_AKTIF.anggota : POIN_KAMAR_AKTIF.biasa;
+          tambah += beri(uid, "aktif", Number(aktifHari[uid] || 0), nilai);
+        }
+        if (tambah <= 0) continue;
+
+        ubah.total = Number(lama.total || 0) + tambah;
+        ubah["harian/" + hari] = Number((lama.harian || {})[hari] || 0) + tambah;
+        ubah["bulanan/" + bulan] = Number((lama.bulanan || {})[bulan] || 0) + tambah;
+        for (const [uid, nilai] of Object.entries(sumbang)) {
+          ubah["anggota/" + uid] = Number((lama.anggota || {})[uid] || 0) + nilai;
+        }
+        await patchRtdbSa(env, "roomPoin/" + roomId, ubah);
+        roomDiproses++;
+      } catch (e) {
+        // Satu room gagal tidak boleh menghentikan room lain.
+      }
+    }
+    return { ok: 1, room: roomDiproses };
+  } catch (e) {
+    return { ok: 0, e: String(e?.message || "gagal") };
+  }
+}
+
 async function rewardCfg(env) {
   const d = (await cfgRtdbSa(env, "rewardRoom/cfg")) || {};
   const mentah = Array.isArray(d.tiers) ? d.tiers : [];
@@ -5877,6 +5961,8 @@ h1{font-size:20px}ul{line-height:2.2;padding-left:18px}a{color:#f5c542}</style><
     return new Response("Berkas belum tersedia", { status: 404 });
   }
 }
+
+export { hadiahMenitRoom };
 
 export default {
   async fetch(req, env) {

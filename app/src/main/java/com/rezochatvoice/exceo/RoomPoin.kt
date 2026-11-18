@@ -64,8 +64,18 @@ object RoomPoin {
         return b.toString()
     }
 
-    suspend fun tambah(roomId: String, uid: String, nilai: Long) {
-        if (roomId.isBlank() || nilai <= 0L) return
+    suspend fun tambah(roomId: String, uid: String, nilaiAwal: Long) {
+        if (roomId.isBlank() || nilaiAwal <= 0L) return
+        // Anggota kamar (yang follow room) mendapat 2 poin per koin emas,
+        // user biasa 1 poin, sesuai tabel Metode Poin.
+        var nilai = nilaiAwal
+        try {
+            val anggota = Rtdb.ref("roomFollowers/$roomId/$uid").get().await().exists()
+            if (anggota) nilai = nilaiAwal * 2
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+        }
         try {
             val base = Rtdb.ref("roomPoin/$roomId")
             val naik = hashMapOf<String, Any?>(

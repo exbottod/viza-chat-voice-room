@@ -6355,15 +6355,6 @@
       }
     },
     {
-      "dari": "1.0.241",
-      "ke": "1.0.245",
-      "arm64": {
-        "file": "patch-1.0.241-1.0.245-arm64.bsdiff",
-        "ukuran": 12243291,
-        "sha256": "8fe8742a38818c601d2a999a9a3a39795ff6ad649266c86f97276fe588f32004"
-      }
-    },
-    {
       "dari": "1.0.242",
       "ke": "1.0.243",
       "arm64": {
@@ -6383,11 +6374,11 @@
     },
     {
       "dari": "1.0.242",
-      "ke": "1.0.245",
+      "ke": "1.0.246",
       "arm64": {
-        "file": "patch-1.0.242-1.0.245-arm64.bsdiff",
-        "ukuran": 4195471,
-        "sha256": "55711ce3547ed412ca4740901741747021827daf5d91b383cdd0c2c79366972e"
+        "file": "patch-1.0.242-1.0.246-arm64.bsdiff",
+        "ukuran": 4194506,
+        "sha256": "4fe7334ea2758a5c920d943263fe80044e6ab91d7214d22514ba53ee2ccca1ce"
       }
     },
     {
@@ -6401,20 +6392,29 @@
     },
     {
       "dari": "1.0.243",
-      "ke": "1.0.245",
+      "ke": "1.0.246",
       "arm64": {
-        "file": "patch-1.0.243-1.0.245-arm64.bsdiff",
-        "ukuran": 4099842,
-        "sha256": "060e34cbe3b007f33df391c6c0b390f459bcacdc1a7b6536fd6e9cfa5d99e146"
+        "file": "patch-1.0.243-1.0.246-arm64.bsdiff",
+        "ukuran": 4099934,
+        "sha256": "c7f46843c7ab9caf16c021d48cf09b93db58404f30282d34f24bc7f55b0ff26f"
       }
     },
     {
       "dari": "1.0.244",
-      "ke": "1.0.245",
+      "ke": "1.0.246",
       "arm64": {
-        "file": "patch-1.0.244-1.0.245-arm64.bsdiff",
-        "ukuran": 4189189,
-        "sha256": "2b0d2e8df04dbf29c82f016cdbd3a7b9366d1182217610223cea24402b1bc0c3"
+        "file": "patch-1.0.244-1.0.246-arm64.bsdiff",
+        "ukuran": 4083707,
+        "sha256": "b1194936deab42018b884ec8e9705827422b6ac7d1a8accdc6542bdc272695d5"
+      }
+    },
+    {
+      "dari": "1.0.245",
+      "ke": "1.0.246",
+      "arm64": {
+        "file": "patch-1.0.245-1.0.246-arm64.bsdiff",
+        "ukuran": 4122605,
+        "sha256": "37693ec6e3ed1ed166af450de23230c256c61382e5d9785ed76a6ccc36864693"
       }
     }
   ]

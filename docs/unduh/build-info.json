@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.245",
-  "catatan": "• Add files via upload",
+  "versi": "1.0.246",
+  "catatan": "• Aturan lengkap: email owner terisi, roomBans dan userReports disamakan di kedua salinan",
   "ukuran_apk": 56449589,
-  "sha256_apk": "89396bb5daa389c836b3d0ce32b949880eed40223ddc007a8f5b24a978a41695",
+  "sha256_apk": "9cd05c2e9b0b8fad25274c0af87a4303fcf5b926b89adad3e232dedc6ee20cdb",
   "abis": {
     "arm64": {
       "ukuran": 56449589,
-      "sha256": "89396bb5daa389c836b3d0ce32b949880eed40223ddc007a8f5b24a978a41695"
+      "sha256": "9cd05c2e9b0b8fad25274c0af87a4303fcf5b926b89adad3e232dedc6ee20cdb"
     },
     "armv7": {
-      "ukuran": 54600733,
-      "sha256": "f653b01bfc0d40693044261e1cb0d71ca097d663d3f2472e4af07bcddaaa5590"
+      "ukuran": 54600735,
+      "sha256": "f227805afb4af9008da983dfe372f5fade27ed92caea4c6f1839f8fb4c3c08ca"
     },
     "universal": {
-      "ukuran": 74865556,
-      "sha256": "4f310a4a3eb0b259f0fa5a914d6055a89cd779437b250c285b07b345a9305869"
+      "ukuran": 74865567,
+      "sha256": "4cdf9b37715428ebf754bdd40fc4f637b698113ba5da282a44c5d0f02467585c"
     }
   }
 }

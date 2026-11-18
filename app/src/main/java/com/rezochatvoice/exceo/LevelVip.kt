@@ -224,7 +224,9 @@ fun activeEquip(w: Wallet, slot: String): String {
     // dan baru masuk ke inv setelah listener RTDB menyala. Tanpa ini bingkai
     // kiriman dianggap "tidak dimiliki" lalu yang tampil malah bingkai VIP.
     // Item Store tidak terkena karena sudah tercatat di inv.
-    return if (id.startsWith("sx_") && StoreCatalog.find(id) != null) id else ""
+    // Tidak menunggu katalog termuat: id sx_ yang sudah dipasang tetap dipakai,
+    // aset digambar begitu katalog siap.
+    return if (id.startsWith("sx_")) id else ""
 }
 
 /**

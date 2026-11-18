@@ -135,6 +135,10 @@ private const val P_MEMBERS = 9
 
 private const val P_EFEK = 10
 
+private const val P_KALK = 11
+
+private const val P_BICARA = 12
+
 private val Teal = Color(0xFF2BD9C4)
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
@@ -204,6 +208,14 @@ fun RoomScreen(
         siapRoom = true
     }
     var micPoints by remember { mutableStateOf<Map<Int, Long>>(emptyMap()) }
+    // Pengaturan room (RTDB roomCfg): mic bebas, kalkulator poin, bicara publik.
+    var cfgMicBebas by remember { mutableStateOf(true) }
+    var cfgPoin by remember { mutableStateOf(true) }
+    var cfgBicaraAdmin by remember { mutableStateOf(false) }
+    // Permintaan naik mic (mode minta mic): kursi -> (uid -> nama).
+    var micReq by remember { mutableStateOf<Map<Int, Map<String, String>>>(emptyMap()) }
+    // Tab awal saat Pengaturan dibuka dari Alat dasar (2 = Tema kamar).
+    var subAwalSettings by remember { mutableStateOf(0) }
     var followed by remember { mutableStateOf(false) }
     var showRank by remember { mutableStateOf(false) }
     val seats = rawSeats.filterValues { it.uid in members }
@@ -343,6 +355,24 @@ fun RoomScreen(
             micPoints = snap.children.associate { c ->
                 (c.key?.toIntOrNull() ?: -1) to (c.getValue(Long::class.java) ?: 0L)
             }
+        }
+        val cfgReg = Rtdb.listen(Rtdb.ref("roomCfg/" + roomId)) { snap ->
+            cfgMicBebas = snap.child("micBebas").getValue(Boolean::class.java) ?: true
+            cfgPoin = snap.child("hitungPoin").getValue(Boolean::class.java) ?: true
+            cfgBicaraAdmin = snap.child("bicaraAdmin").getValue(Boolean::class.java) ?: false
+        }
+        val reqReg = Rtdb.listen(Rtdb.ref("micRequests/" + roomId)) { snap ->
+            val m = HashMap<Int, Map<String, String>>()
+            for (kursi in snap.children) {
+                val idx = kursi.key?.toIntOrNull() ?: continue
+                val isi = HashMap<String, String>()
+                for (u in kursi.children) {
+                    val uid = u.key ?: continue
+                    isi[uid] = u.child("name").getValue(String::class.java) ?: uid
+                }
+                if (isi.isNotEmpty()) m[idx] = isi
+            }
+            micReq = m
         }
         val c = RoomRepo.observeMessages(roomId) { baru ->
             // Gift masuk: berlian penerima ditambahkan di server, jadi dompet
@@ -659,7 +689,7 @@ fun RoomScreen(
                                             locked = r.lockedSeats.contains(i),
                                             emote = seats[i]?.uid?.let { emotes[it] },
                                             emotSudahTampil = emotSudahTampil,
-                                            points = micPoints[i] ?: 0L,
+                                            points = if (cfgPoin) (micPoints[i] ?: 0L) else 0L,
                                         ) { seatSheet = i }
                                     }
                                 }
@@ -802,8 +832,11 @@ fun RoomScreen(
                     myFam = myFam,
                     onTextChange = { draft = it },
                     onSend = { t ->
-                        if (larangan[myUid]?.ketik == true) {
-                            toast(tr("Kamu dilarang mengetik di room ini"))
+                        if (larangan[myUid]?.ketik == true || (cfgBicaraAdmin && !canManage)) {
+                            toast(
+                                if (larangan[myUid]?.ketik == true) tr("Kamu dilarang mengetik di room ini")
+                                else tr("Hanya owner dan admin room yang bisa mengetik"),
+                            )
                         } else {
                             sendTick++
                             scope.launch { RoomExtras.sendChat(r.id, myUid, myName, t)?.let { toast(it) } }
@@ -820,6 +853,7 @@ fun RoomScreen(
                 ) {
                     RmIkonBtn(R.drawable.rm_chat_umum) {
                         if (larangan[myUid]?.ketik == true) toast(tr("Kamu dilarang mengetik di room ini"))
+                        else if (cfgBicaraAdmin && !canManage) toast(tr("Hanya owner dan admin room yang bisa mengetik"))
                         else { typing = true; emoteOpen = false }
                     }
                     Spacer(Modifier.width(10.dp))
@@ -948,9 +982,62 @@ fun RoomScreen(
                             }
                         }
                     } else {
-                        GoldButton(if (mySeat == null) "Naik kursi mic" else "Pindah ke kursi ini") {
-                            seatSheet = null
-                            scope.launch { RoomRepo.takeSeat(r.id, idx, myUid, myName, myAvatarB64)?.let { toast(it) } }
+                        val minta = micReq[idx] ?: emptyMap()
+                        if (canManage && minta.isNotEmpty()) {
+                            Text(tr("Permintaan naik mic"), color = GoldLight, fontSize = 13.sp)
+                            Spacer(Modifier.height(6.dp))
+                            for ((uidMinta, namaMinta) in minta) {
+                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                    Text(namaMinta, color = Color.White, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                                    OutlineButton(tr("Setujui")) {
+                                        seatSheet = null
+                                        scope.launch {
+                                            val err = RoomRepo.inviteSeat(r.id, idx, uidMinta, namaMinta, null)
+                                            try { Rtdb.ref("micRequests/" + r.id + "/" + idx + "/" + uidMinta).removeValue() } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { }
+                                            toast(err ?: "Disetujui, user langsung naik kursi")
+                                        }
+                                    }
+                                    Spacer(Modifier.width(8.dp))
+                                    OutlineButton(tr("Tolak")) {
+                                        seatSheet = null
+                                        scope.launch {
+                                            try { Rtdb.ref("micRequests/" + r.id + "/" + idx + "/" + uidMinta).removeValue() } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { }
+                                            toast(tr("Permintaan ditolak"))
+                                        }
+                                    }
+                                }
+                                Spacer(Modifier.height(8.dp))
+                            }
+                            Spacer(Modifier.height(6.dp))
+                        }
+                        if (!cfgMicBebas && !canManage) {
+                            Text(
+                                tr("Mic bebas dimatikan. Minta izin dulu ke owner atau admin room."),
+                                color = Color(0xFFBDBDBD), fontSize = 12.sp,
+                            )
+                            Spacer(Modifier.height(10.dp))
+                            val sudahMinta = minta.containsKey(myUid)
+                            GoldButton(if (sudahMinta) tr("Menunggu persetujuan") else tr("Minta mic"), enabled = !sudahMinta) {
+                                seatSheet = null
+                                scope.launch {
+                                    val err = try {
+                                        Rtdb.ref("micRequests/" + r.id + "/" + idx + "/" + myUid)
+                                            .setValue(hashMapOf<String, Any?>("name" to myName, "at" to System.currentTimeMillis()))
+                                            .await()
+                                        null
+                                    } catch (e: kotlinx.coroutines.CancellationException) {
+                                        throw e
+                                    } catch (e: Exception) {
+                                        e.message ?: "Gagal mengirim permintaan"
+                                    }
+                                    toast(err ?: "Permintaan terkirim, tunggu persetujuan owner/admin")
+                                }
+                            }
+                        } else {
+                            GoldButton(if (mySeat == null) "Naik kursi mic" else "Pindah ke kursi ini") {
+                                seatSheet = null
+                                scope.launch { RoomRepo.takeSeat(r.id, idx, myUid, myName, myAvatarB64)?.let { toast(it) } }
+                            }
                         }
                         if (canManage) {
                             Spacer(Modifier.height(10.dp))
@@ -1295,7 +1382,11 @@ fun RoomScreen(
             RmPanel(onDismiss = { panel = P_NONE }) {
                 Text(tr("Alat dasar"), color = Color.White, fontSize = 22.sp)
                 Spacer(Modifier.height(16.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                androidx.compose.foundation.layout.FlowRow(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
                     RmTool(
                         if (roomMuted) "Aktifkan suara" else "Matikan suara",
                         onClick = {
@@ -1310,8 +1401,87 @@ fun RoomScreen(
                             null, Modifier.size(30.dp), contentScale = ContentScale.Fit,
                         )
                     }
+                    RmTool("Musik", onClick = { panel = P_MUSIC }) { Text("\uD83C\uDFB5", fontSize = 24.sp) }
                     if (canManage) {
-                        RmTool(if (pk?.aktif == true && pk?.selesai != true) tr("Stop PK") else "PK", onClick = {
+                        RmTool("Mode kamar", onClick = { panel = P_MODE }) { GridIcon(Modifier.size(26.dp)) }
+                    }
+                    RmTool(tr("Blok Efek"), onClick = { panel = P_EFEK }) { BlokEfekIcon() }
+                    if (canManage) {
+                        RmTool("Tema kamar", onClick = { panel = P_SETTINGS; subAwalSettings = 2 }) {
+                            Text("\uD83D\uDDBC", fontSize = 22.sp)
+                        }
+                    }
+                    if (canManage) {
+                        RmTool(if (cfgMicBebas) "Mic bebas" else "Minta mic", onClick = {
+                            panel = P_NONE
+                            scope.launch {
+                                val baru = !cfgMicBebas
+                                val err = try {
+                                    Rtdb.ref("roomCfg/" + r.id + "/micBebas").setValue(baru).await(); null
+                                } catch (e: kotlinx.coroutines.CancellationException) {
+                                    throw e
+                                } catch (e: Exception) {
+                                    e.message ?: "Gagal menyimpan"
+                                }
+                                toast(err ?: if (baru) "Mic bebas aktif: user bisa naik mic sendiri" else "Minta mic aktif: user menunggu persetujuan")
+                            }
+                        }) {
+                            Text(if (cfgMicBebas) "\uD83C\uDF99" else "\u270B", fontSize = 22.sp)
+                        }
+                    }
+                    if (canManage) {
+                        RmTool("Kamar umum", onClick = { panel = P_LOCK }) { Text("\uD83C\uDF10", fontSize = 22.sp) }
+                    }
+                    if (canManage) {
+                        RmTool("Kalkulator", onClick = { panel = P_KALK }) { Text("\uD83E\uDDEE", fontSize = 22.sp) }
+                    }
+                    if (canManage) {
+                        RmTool("Atur bicara\ndi layar publik", onClick = { panel = P_BICARA }) { Text("\uD83D\uDCAC", fontSize = 22.sp) }
+                    }
+                    if (canManage) {
+                        RmTool("Pengaturan", onClick = { panel = P_SETTINGS; subAwalSettings = 0 }) {
+                            Image(painterResource(R.drawable.ic_settings), null, Modifier.size(24.dp), contentScale = ContentScale.Fit)
+                        }
+                    }
+                    RmTool("Game", onClick = { panel = P_NONE; waveOpen = true }) {
+                        Image(painterResource(R.drawable.ic_room_game), null, Modifier.size(26.dp), contentScale = ContentScale.Fit)
+                    }
+                    RmTool(
+                        "Bersihkan chat",
+                        onClick = {
+                            clearedAt = messages.maxOfOrNull { it.createdAt } ?: System.currentTimeMillis()
+                            panel = P_NONE
+                            toast(tr("Chat dibersihkan di layar kamu"))
+                        },
+                    ) { Text("\uD83E\uDDF9", fontSize = 24.sp) }
+                    if (canManage) {
+                        RmTool("Hapus chat semua", onClick = { panel = P_CLEAR }) { Text("\uD83D\uDDD1", fontSize = 24.sp) }
+                    }
+                    if (canManage) {
+                        RmTool("Daftar hitam", onClick = { panel = P_BLACKLIST }) { Text("\uD83D\uDEAB", fontSize = 24.sp) }
+                    }
+                    if (canManage) {
+                        RmTool("Anggota", onClick = { panel = P_MEMBERS }) { Text("\uD83D\uDC65", fontSize = 22.sp) }
+                    }
+                    if (canManage) {
+                        RmTool("Clear poin mic", onClick = {
+                            panel = P_NONE
+                            scope.launch {
+                                micPoints = emptyMap()
+                                val simpul = Rtdb.ref("micPoints/" + r.id)
+                                try { simpul.removeValue() } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { }
+                                try {
+                                    val nol = mutableMapOf<String, Any>()
+                                    for (i in 0 until seats.size) nol[i.toString()] = 0L
+                                    if (nol.isNotEmpty()) simpul.updateChildren(nol)
+                                } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { }
+                                micPoints = emptyMap()
+                                toast(tr("Poin mic dihapus"))
+                            }
+                        }) { Text("\uD83D\uDC97", fontSize = 24.sp) }
+                    }
+                    if (canManage) {
+                        RmTool(if (pk?.aktif == true && pk?.selesai != true) tr("Stop PK") else "Grup PK", onClick = {
                             if (pk?.aktif == true && pk?.selesai != true) {
                                 RoomPk.hentikan(r.id)
                                 toast(tr("PK dihentikan"))
@@ -1330,224 +1500,9 @@ fun RoomScreen(
                         }
                     }
                     if (canManage) {
-                        RmTool("Mode kamar", onClick = { panel = P_MODE }) { GridIcon(Modifier.size(26.dp)) }
-                        RmTool("Pengaturan", onClick = { panel = P_SETTINGS }) {
-                            Image(painterResource(R.drawable.ic_settings), null, Modifier.size(24.dp), contentScale = ContentScale.Fit)
-                        }
                         RmTool(if (r.locked) "Buka kunci room" else "Kunci room", onClick = { panel = P_LOCK }) {
-                            if (r.locked) Text("🔓", fontSize = 24.sp)
+                            if (r.locked) Text("\uD83D\uDD13", fontSize = 24.sp)
                             else Icon(Icons.Default.Lock, null, tint = GoldLight)
-                        }
-                    }
-                }
-                Spacer(Modifier.height(14.dp))
-                Text(tr("Efek di layar"), color = Color(0xFF9A9A9A), fontSize = 12.sp)
-                Spacer(Modifier.height(8.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    // Satu pintu untuk semua efek: masuk, gift, banner, roket, game.
-                    RmTool(tr("Blok Efek"), onClick = { panel = P_EFEK }) { Text("\u2728", fontSize = 24.sp) }
-                }
-                Spacer(Modifier.height(14.dp))
-                androidx.compose.foundation.layout.FlowRow(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    if (canManage) {
-                        RmTool(
-                            "Clear poin mic",
-                            onClick = {
-                                panel = P_NONE
-                                scope.launch {
-                                    // Langsung nol di layar, tidak menunggu kursi kosong.
-                                    micPoints = emptyMap()
-                                    val simpul = Rtdb.ref("micPoints/" + r.id)
-                                    // Hapus simpulnya, lalu tulis 0 eksplisit untuk setiap
-                                    // kursi. Sebagian aturan database menolak penghapusan,
-                                    // dan itulah sebabnya angka baru hilang setelah pengguna
-                                    // turun kursi.
-                                    try { simpul.removeValue() } catch (e: Exception) { }
-                                    try {
-                                        val nol = mutableMapOf<String, Any>()
-                                        for (i in 0 until seats.size) nol[i.toString()] = 0L
-                                        if (nol.isNotEmpty()) simpul.updateChildren(nol)
-                                    } catch (e: Exception) { }
-                                    micPoints = emptyMap()
-                                    toast(tr("Poin mic dihapus"))
-                                }
-                            },
-                        ) { Text("💗", fontSize = 24.sp) }
-                    }
-                    RmTool("Musik", onClick = { panel = P_MUSIC }) { Text("🎵", fontSize = 24.sp) }
-                    RmTool("Game", onClick = { panel = P_NONE; waveOpen = true }) {
-                        Image(painterResource(R.drawable.ic_room_game), null, Modifier.size(26.dp), contentScale = ContentScale.Fit)
-                    }
-                    RmTool(
-                        "Bersihkan chat",
-                        onClick = {
-                            clearedAt = messages.maxOfOrNull { it.createdAt } ?: System.currentTimeMillis()
-                            panel = P_NONE
-                            toast(tr("Chat dibersihkan di layar kamu"))
-                        },
-                    ) { Text("🧹", fontSize = 24.sp) }
-                    if (canManage) {
-                        RmTool("Hapus chat semua", onClick = { panel = P_CLEAR }) { Text("🗑", fontSize = 24.sp) }
-                    }
-                    if (canManage) {
-                        RmTool("Daftar hitam", onClick = { panel = P_BLACKLIST }) { Text("🚫", fontSize = 24.sp) }
-                    }
-                    if (canManage) {
-                        RmTool("Anggota", onClick = { panel = P_MEMBERS }) { Text("👥", fontSize = 22.sp) }
-                    }
-                }
-                Spacer(Modifier.height(8.dp))
-            }
-        }
-
-        if (panel == P_CLEAR) {
-            Dialog(onDismissRequest = { panel = P_NONE }) {
-                DialogCard {
-                    Text(tr("Hapus semua chat publik?"), color = GoldLight, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(8.dp))
-                    Text(tr("Chat akan terhapus untuk semua orang di room ini."), color = Color(0xFFBDBDBD), fontSize = 13.sp)
-                    Spacer(Modifier.height(18.dp))
-                    GoldButton(tr("Hapus")) {
-                        panel = P_NONE
-                        scope.launch { toast(RoomRepo.clearMessages(r.id) ?: "Chat publik dihapus") }
-                    }
-                    Spacer(Modifier.height(10.dp))
-                    OutlineButton(tr("Batal")) { panel = P_NONE }
-                }
-            }
-        }
-
-        if (panel == P_BLACKLIST) {
-            var bUsers by remember(bans) { mutableStateOf<Map<String, PublicUser?>>(emptyMap()) }
-            LaunchedEffect(bans) {
-                val m = HashMap<String, PublicUser?>()
-                for (b in bans) {
-                    m[b.uid] = try {
-                        UserCache.byUid(b.uid)
-                    } catch (e: kotlinx.coroutines.CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        null
-                    }
-                }
-                bUsers = m
-            }
-            RmPanel(onDismiss = { panel = P_NONE }) {
-                Text(tr("Daftar hitam"), color = GoldLight, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(14.dp))
-                Text(
-                    tr("User di daftar ini tidak bisa masuk room sampai kick-nya dibuka. Kick sementara berakhir sendiri."),
-                    color = Color(0xFFBDBDBD), fontSize = 12.sp,
-                )
-                Spacer(Modifier.height(12.dp))
-                if (bans.isEmpty()) {
-                    Text(tr("Belum ada user yang di-kick"), color = Color(0xFFBDBDBD))
-                } else {
-                    LazyColumn(Modifier.heightIn(max = 320.dp)) {
-                        items(bans.size) { i ->
-                            val b = bans[i]
-                            val pu = bUsers[b.uid]
-                            Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                                InvAvatar(pu, b.uid)
-                                Spacer(Modifier.width(10.dp))
-                                Column(Modifier.weight(1f)) {
-                                    Text(
-                                        pu?.name ?: b.name.ifBlank { "UID ${b.uid}" },
-                                        color = Color.White, fontSize = 15.sp, maxLines = 1,
-                                    )
-                                    Text(
-                                        if (b.until <= 0L) tr("Kick permanen") else tr("Kick ") + b.sisa(),
-                                        color = if (b.until <= 0L) Color(0xFFFF8A65) else Color(0xFF9A9A9A),
-                                        fontSize = 12.sp,
-                                    )
-                                }
-                                OutlineButton(tr("Buka kick")) {
-                                    scope.launch {
-                                        toast(RoomRepo.unbanFromRoom(r.id, b.uid) ?: (tr("Kick dibuka, user boleh masuk lagi")))
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                Spacer(Modifier.height(10.dp))
-                OutlineButton(tr("Tutup")) { panel = P_NONE }
-            }
-        }
-        if (panel == P_MEMBERS && canManage) {
-            val others = members.filter { it != myUid }
-            var info by remember(others) { mutableStateOf<Map<String, PublicUser?>>(emptyMap()) }
-            LaunchedEffect(others) {
-                val m = HashMap<String, PublicUser?>()
-                for (u in others) {
-                    m[u] = try { UserCache.byUid(u) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { null }
-                }
-                info = m
-            }
-            RmPanel(onDismiss = { panel = P_NONE }) {
-                Text(tr("Anggota room"), color = GoldLight, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    tr(
-                        if (isOwner) "Owner dan admin room bisa menurunkan dari mic atau mengeluarkan user. Tekan Jadikan admin untuk memberi akses mengurus room ini."
-                        else "Kamu admin room ini: bisa menurunkan dari mic, mengeluarkan user, dan mengurus room.",
-                    ),
-                    color = Color(0xFFBDBDBD), fontSize = 12.sp,
-                )
-                Spacer(Modifier.height(12.dp))
-                if (others.isEmpty()) {
-                    Text(tr("Belum ada anggota lain"), color = Color(0xFFBDBDBD))
-                } else {
-                    LazyColumn(Modifier.heightIn(max = 320.dp)) {
-                        items(others.size) { i ->
-                            val uid = others.elementAt(i)
-                            val pu = info[uid]
-                            val seatIdx = seats.entries.firstOrNull { it.value.uid == uid }?.key
-                            val adminRoom = r.isAdminRoom(uid)
-                            Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                                    InvAvatar(pu, uid)
-                                    Spacer(Modifier.width(10.dp))
-                                    Column(Modifier.weight(1f)) {
-                                        Text(pu?.name ?: ("UID " + uid), color = Color.White, fontSize = 14.sp, maxLines = 1)
-                                        Text(
-                                            (if (seatIdx != null) "Mic " + (seatIdx + 1) else "Penonton") +
-                                                if (adminRoom) " · Admin room" else "",
-                                            color = if (adminRoom) GoldLight else Color(0xFF9A9A9A),
-                                            fontSize = 11.sp,
-                                        )
-                                    }
-                                    if (seatIdx != null) {
-                                        OutlineButton(tr("Turunkan")) {
-                                            scope.launch {
-                                                val err = RoomRepo.removeFromSeat(r.id, seatIdx)
-                                                toast(err ?: ((pu?.name ?: "User") + " diturunkan dari mic"))
-                                            }
-                                        }
-                                        Spacer(Modifier.width(8.dp))
-                                    }
-                                    OutlineButton(tr("Kick")) {
-                                        kickPick = uid to (pu?.name ?: "User")
-                                    }
-                                }
-                                // Hanya pemilik room yang boleh memberi atau mencabut akses admin room.
-                                if (isOwner) {
-                                    Spacer(Modifier.height(6.dp))
-                                    OutlineButton(tr(if (adminRoom) "Cabut admin room" else "Jadikan admin room")) {
-                                        scope.launch {
-                                            val err = RoomRepo.setRoomAdmin(r.id, uid, !adminRoom)
-                                            toast(
-                                                err ?: if (!adminRoom) (pu?.name ?: "User") + " jadi admin room"
-                                                else "Admin room " + (pu?.name ?: "User") + " dicabut",
-                                            )
-                                        }
-                                    }
-                                }
-                            }
                         }
                     }
                 }
@@ -1555,7 +1510,108 @@ fun RoomScreen(
         }
 
         if (panel == P_MODE) RmPanel(onDismiss = { panel = P_NONE }) { RmMode(r) { panel = P_NONE } }
-        if (panel == P_SETTINGS) RmPanel(onDismiss = { panel = P_NONE }) { RmSettings(r, onBlacklist = { panel = P_BLACKLIST }) { panel = P_NONE } }
+
+        // Kalkulator: reset poin mic, atau sembunyikan ikon poin di kursi.
+        if (panel == P_KALK) {
+            RmPanel(onDismiss = { panel = P_NONE }) {
+                Text(tr("Kalkulator"), color = Color.White, fontSize = 22.sp)
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    tr("Poin mic tampil di bawah tiap kursi."),
+                    color = Color(0xFF9A9A9A), fontSize = 12.sp,
+                )
+                Spacer(Modifier.height(16.dp))
+                GoldButton(tr("Mengatur ulang kalkulator")) {
+                    scope.launch {
+                        micPoints = emptyMap()
+                        val simpul = Rtdb.ref("micPoints/" + r.id)
+                        try { simpul.removeValue() } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { }
+                        try {
+                            val nol = mutableMapOf<String, Any>()
+                            for (i in 0 until seats.size) nol[i.toString()] = 0L
+                            if (nol.isNotEmpty()) simpul.updateChildren(nol)
+                        } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { }
+                        micPoints = emptyMap()
+                        toast(tr("Poin mic di layar publik sudah bersih"))
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+                OutlineButton(if (cfgPoin) tr("Matikan kalkulator") else tr("Aktifkan kalkulator")) {
+                    scope.launch {
+                        val baru = !cfgPoin
+                        val err = try {
+                            Rtdb.ref("roomCfg/" + r.id + "/hitungPoin").setValue(baru).await(); null
+                        } catch (e: kotlinx.coroutines.CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            e.message ?: "Gagal menyimpan"
+                        }
+                        toast(err ?: if (baru) "Ikon poin mic aktif lagi" else "Ikon poin mic di kursi disembunyikan")
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+                OutlineButton(tr("Tutup")) { panel = P_NONE }
+            }
+        }
+
+        // Atur bicara di layar publik: hanya owner/admin yang boleh mengetik,
+        // dan bersihkan layar publik untuk semua orang.
+        if (panel == P_BICARA) {
+            RmPanel(onDismiss = { panel = P_NONE }) {
+                Text(tr("Atur bicara di layar publik"), color = Color.White, fontSize = 20.sp)
+                Spacer(Modifier.height(16.dp))
+                Box(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Color(0xFF151515))
+                        .clickable {
+                            scope.launch {
+                                val baru = !cfgBicaraAdmin
+                                val err = try {
+                                    Rtdb.ref("roomCfg/" + r.id + "/bicaraAdmin").setValue(baru).await(); null
+                                } catch (e: kotlinx.coroutines.CancellationException) {
+                                    throw e
+                                } catch (e: Exception) {
+                                    e.message ?: "Gagal menyimpan"
+                                }
+                                toast(
+                                    err ?: if (baru) "Hanya owner dan admin room yang bisa mengetik"
+                                    else "Semua user bisa mengetik lagi",
+                                )
+                            }
+                        }
+                        .padding(horizontal = 14.dp, vertical = 14.dp),
+                ) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            tr("Owner room dan admin yg bicara"),
+                            color = Color(0xFFEDEDED), fontSize = 15.sp, modifier = Modifier.weight(1f),
+                        )
+                        Text(
+                            if (cfgBicaraAdmin) "AKTIF" else "MATI",
+                            color = if (cfgBicaraAdmin) Teal else Color(0xFF9A9A9A),
+                            fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+                GoldButton(tr("Bersihkan layar publik")) {
+                    scope.launch {
+                        val err = try {
+                            Rtdb.ref("messages/" + r.id).removeValue().await()
+                            try { Rtdb.ref("gifts/" + r.id).removeValue() } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { }
+                            null
+                        } catch (e: kotlinx.coroutines.CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            e.message ?: "Gagal membersihkan"
+                        }
+                        toast(err ?: "Layar publik dibersihkan untuk semua orang")
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+                OutlineButton(tr("Tutup")) { panel = P_NONE }
+            }
+        }
+        if (panel == P_SETTINGS) RmPanel(onDismiss = { panel = P_NONE }) { RmSettings(r, awalSub = subAwalSettings, onBlacklist = { panel = P_BLACKLIST }) { panel = P_NONE } }
         if (panel == P_LOCK) RmPanel(onDismiss = { panel = P_NONE }) { RmLock(r) { panel = P_NONE } }
         if (panel == P_EFEK) RmPanel(onDismiss = { panel = P_NONE }) {
             RmBlokEfek(
@@ -2125,14 +2181,14 @@ private fun RmMode(r: RoomInfo, onClose: () -> Unit) {
 }
 
 @Composable
-private fun RmSettings(r: RoomInfo, onBlacklist: () -> Unit, onClose: () -> Unit) {
+private fun RmSettings(r: RoomInfo, awalSub: Int = 0, onBlacklist: () -> Unit, onClose: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var name by remember { mutableStateOf(r.name) }
     var ann by remember { mutableStateOf(r.announcement) }
     var busy by remember { mutableStateOf(false) }
-    // 0 = Info Kamar, 1 = daftar anggota (pengikut room)
-    var sub by remember { mutableStateOf(0) }
+    // 0 = Info Kamar, 1 = daftar anggota (pengikut room), 2 = tema kamar
+    var sub by remember { mutableStateOf(awalSub) }
     var editNama by remember { mutableStateOf(false) }
     var editAnn by remember { mutableStateOf(false) }
     var bans by remember { mutableStateOf<List<RoomRepo.RoomBan>>(emptyList()) }
@@ -2563,6 +2619,24 @@ private fun TemaTile(
         Spacer(Modifier.height(5.dp))
         Text(label, color = Color(0xFFEDEDED), fontSize = 12.sp, maxLines = 1)
         Text(ket, color = Color(0xFF9A9A9A), fontSize = 11.sp, maxLines = 1)
+    }
+}
+
+/** Ikon Blok Efek digambar sendiri (gaya CSS): kotak gradasi dengan kilau. */
+@Composable
+private fun BlokEfekIcon() {
+    Box(
+        Modifier
+            .size(30.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(
+                androidx.compose.ui.graphics.Brush.linearGradient(
+                    listOf(Color(0xFF6A5BFF), Color(0xFF2BD9C4)),
+                ),
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text("\u2726", color = Color.White, fontSize = 17.sp)
     }
 }
 

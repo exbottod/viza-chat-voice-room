@@ -207,6 +207,26 @@
         }
       }
     },
+    "roomCfg": {
+      "$roomId": {
+        ".read": "auth != null",
+        "$key": {
+          ".write": "auth != null",
+          ".validate": "newData.isBoolean() || !newData.exists()"
+        }
+      }
+    },
+    "micRequests": {
+      "$roomId": {
+        ".read": "auth != null",
+        "$index": {
+          "$uid": {
+            ".write": "auth != null",
+            ".validate": "!newData.exists() || newData.hasChildren(['name'])"
+          }
+        }
+      }
+    },
     "roomFollowers": {
       "$roomId": {
         ".read": "auth != null",

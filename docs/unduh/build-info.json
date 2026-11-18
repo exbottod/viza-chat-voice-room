@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.228",
-  "catatan": "• Efek masuk dan banner pakai cadangan katalog panel",
-  "ukuran_apk": 55010731,
-  "sha256_apk": "fb99779b3f3f47c99c96fb5822ce5e4777329dd99c57415379c3d8cf335f8e55",
+  "versi": "1.0.229",
+  "catatan": "• Perbaiki layar tidak bisa disentuh setelah keluar dari room yang diminimize",
+  "ukuran_apk": 55009470,
+  "sha256_apk": "b193f09c3aa4d754214e605cabcb7605ddb84f87a6973426566ebb3517e1f1e7",
   "abis": {
     "arm64": {
-      "ukuran": 55010731,
-      "sha256": "fb99779b3f3f47c99c96fb5822ce5e4777329dd99c57415379c3d8cf335f8e55"
+      "ukuran": 55009470,
+      "sha256": "b193f09c3aa4d754214e605cabcb7605ddb84f87a6973426566ebb3517e1f1e7"
     },
     "armv7": {
-      "ukuran": 53161882,
-      "sha256": "ddea4a54e53233e4be20400527d77b3d67d06a2ca6a94b2354af0c5855c599f9"
+      "ukuran": 53160635,
+      "sha256": "e9a348e8835c068acb954a73fa6f39e0a268461988eae45d935ba23549bac1d8"
     },
     "universal": {
-      "ukuran": 73426707,
-      "sha256": "de3f46bd4cd3bbe6938aac73a256795e0b6c8fa2b28fc9689e626b4a299d9ff7"
+      "ukuran": 73425434,
+      "sha256": "7d73780d89ae93f4fd476f46bfa20182c939faccf0b637f8524c5cf186951769"
     }
   }
 }

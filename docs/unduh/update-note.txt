@@ -1,1 +1,1 @@
-• Efek masuk dan banner pakai cadangan katalog panel
+• Perbaiki layar tidak bisa disentuh setelah keluar dari room yang diminimize

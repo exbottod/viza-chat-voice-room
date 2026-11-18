@@ -1,1 +1,1 @@
-• Perbaiki layar tidak bisa disentuh setelah keluar dari room yang diminimize
+• Efek masuk memutar SVGA/MP4 walau panel menandainya sebagai gambar

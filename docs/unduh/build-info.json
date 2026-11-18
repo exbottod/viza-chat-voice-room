@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.229",
-  "catatan": "• Perbaiki layar tidak bisa disentuh setelah keluar dari room yang diminimize",
-  "ukuran_apk": 55009928,
-  "sha256_apk": "7f1125c1e7923906617c513b9396fe3ab503e997434448f8218ac55b327db5ae",
+  "versi": "1.0.230",
+  "catatan": "• Efek masuk memutar SVGA/MP4 walau panel menandainya sebagai gambar",
+  "ukuran_apk": 55010311,
+  "sha256_apk": "a53ea602fe31de1386eacf181faac100e959b48016bf4bb4c24a03b70afa6c86",
   "abis": {
     "arm64": {
-      "ukuran": 55009928,
-      "sha256": "7f1125c1e7923906617c513b9396fe3ab503e997434448f8218ac55b327db5ae"
+      "ukuran": 55010311,
+      "sha256": "a53ea602fe31de1386eacf181faac100e959b48016bf4bb4c24a03b70afa6c86"
     },
     "armv7": {
-      "ukuran": 53161073,
-      "sha256": "2f1f3b1865534b6bea6428bba31eab58a0f4832904110046954d4f0c9068608b"
+      "ukuran": 53161462,
+      "sha256": "59fbd1ac4d5c30f5d3fb05a603d2918d836ff9f94255b75f146ab9e8b71d19bb"
     },
     "universal": {
-      "ukuran": 73425892,
-      "sha256": "dcd6146e2ec4406e1862d4d0ebbac0cfac06f20e391b4e8ffd7c7f4e34c52b53"
+      "ukuran": 73426286,
+      "sha256": "e90152cefa86df8ad8178a18d9c6ddc5792d1e933adb5039cf8365f9ddd59e07"
     }
   }
 }

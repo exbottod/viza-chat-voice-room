@@ -180,7 +180,10 @@ private fun vipAssetSlot(id: String, fallback: String): String = when {
 
 fun findItem(id: String?): StoreItem? {
     if (id.isNullOrBlank()) return null
-    if (id.startsWith("sx_")) return StoreCatalog.find(id)?.toStoreItem()
+    // Item katalog (sx_) dan item kiriman panel versi lama (tanpa awalan) sama-sama
+    // harus tampil di My Item, supaya lencana/bingkai kiriman tidak hilang dari tas.
+    StoreCatalog.find(id)?.toStoreItem()?.let { return it }
+    if (id.startsWith("sx_")) return null
     val base = ALL_ITEMS.firstOrNull { it.id == id } ?: return null
     // FIX: item bawaan VIP/SVIP sebelumnya selalu tanpa aset, jadi medali muncul
     // sebagai emoji. Sekarang aset hasil upload panel admin dipakai kalau ada.

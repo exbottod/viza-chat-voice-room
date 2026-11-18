@@ -2860,7 +2860,7 @@ async function gambarKirim() {
       if (!uid) throw new Error("ID user tidak ditemukan");
       const slot = $("lncSlot").value;
       const hari = Number($("lncHari").value) || 30;
-      const idItem = "lnc_" + Date.now().toString(36);
+      const idItem = "sx_lnc_" + Date.now().toString(36);
       await simpanVip("item_" + idItem, {
         id: idItem, slot, name: nama,
         price: Number($("lncHarga").value) || 0,
@@ -2871,7 +2871,8 @@ async function gambarKirim() {
       });
       // Lewat server: aturan /pub menolak tulisan staf panel dari browser.
       await walletAdmin({ op: "kirim_item", uid, item: idItem, hari });
-      hasil.textContent = "Lencana " + nama + " terkirim, berlaku " + hari + " hari.";
+      const namaJenis = { frame: "Bingkai", badge: "Lencana", medal: "Medali", bubble: "Gelembung", entry: "Efek masuk", banner: "Banner", emote: "Emote", uid: "ID unik" }[slot] || "Item";
+      hasil.textContent = namaJenis + " " + nama + " terkirim, berlaku " + hari + " hari.";
       catatLog("Kirim lencana", nama + " ke " + $("lncUser").value.trim());
       toast("Lencana dibuat dan dikirim");
     } catch (e) {
@@ -3220,7 +3221,10 @@ function formItemToko(item) {
       let sampulItem = (document.getElementById("iSampul")?.value || "").trim();
       if (!sampulItem && item && item.url === url && item.poster) sampulItem = item.poster;
       if (!sampulItem && (jenisI === "svga" || jenisI === "mp4")) sampulItem = await buatSampul(url, jenisI === "mp4" ? "video" : "svga", "item");
-      const idItem = item?.id || (nama.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 20) + "_" + Date.now().toString().slice(-4));
+      // Awalan sx_ wajib: aplikasi hanya mengenali item katalog berawalan sx_.
+      // Dulu item dibuat tanpa awalan sehingga bingkai kiriman panel tidak dipakai
+      // dan yang tampil malah bingkai VIP bawaan user.
+      const idItem = item?.id || ("sx_" + nama.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 20) + "_" + Date.now().toString().slice(-4));
       await simpanVip(`item_${idItem}`, {
         id: idItem, slot: $("iSlot").value, name: nama,
         price: Number($("iHarga").value) || 0,

@@ -280,11 +280,17 @@ object StoreCatalog {
         customId.isNotBlank() && !idTerpakai[customId].isNullOrBlank()
 
     fun find(itemId: String?): CatalogItem? {
-        if (itemId == null || !itemId.startsWith("sx_")) return null
-        val key = itemId.removePrefix("sx_")
-        items[key]?.let { return it }
-        rtdbMap[key]?.let { return it }
-        ambilSatu(key)
+        if (itemId.isNullOrBlank()) return null
+        // Item baru selalu berawalan sx_, tetapi item kiriman panel versi lama
+        // tersimpan tanpa awalan (mis. "lnc_xxx"). Keduanya harus dikenali,
+        // kalau tidak bingkai kiriman panel tidak dipakai dan yang tampil
+        // malah bingkai VIP bawaan user.
+        val kunci = if (itemId.startsWith("sx_")) listOf(itemId.removePrefix("sx_")) else listOf(itemId, "sx_$itemId")
+        for (key in kunci) {
+            items[key]?.let { return it }
+            rtdbMap[key]?.let { return it }
+        }
+        ambilSatu(kunci.first())
         return null
     }
 
@@ -347,7 +353,11 @@ object StoreCatalog {
 
 /** Aset bingkai yang harus dipasang di avatar: item store (sx_) dulu, lalu bingkai VIP. */
 fun frameAssetOf(frameId: String?, vip: Int, until: Long): VipAsset? {
-    if (!frameId.isNullOrBlank() && frameId.startsWith("sx_")) return StoreCatalog.find(frameId)?.asset
+    if (!frameId.isNullOrBlank()) {
+        // Bingkai yang dipakai user MENANG. Dulu yang dicek hanya id berawalan sx_,
+        // jadi bingkai kiriman panel terlewat dan bingkai VIP yang tampil.
+        StoreCatalog.find(frameId)?.asset?.let { return it }
+    }
     val tier = vipFrameTier(frameId, vip, until)
     return if (tier in 1..9) VipAssets.get(tier, "frame") else null
 }

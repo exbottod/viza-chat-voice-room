@@ -1,2 +1,2 @@
-• Mengatur ulang kalkulator sekarang benar-benar mengosongkan poin mic; kalau database menolak dari HP, penghapusan dikerjakan server
-• Poin mic tidak lagi muncul kembali setelah direset
+• Matikan kalkulator: ikon poin di kursi mic langsung hilang, tidak muncul lagi dengan angka 0
+• Pengaturan room (mic bebas, kalkulator, bicara publik) disimpan lewat server kalau database menolak dari HP, jadi tidak balik sendiri

@@ -694,6 +694,22 @@ object RoomRepo {
     }
 
     /** Membuka kick: user boleh masuk room lagi. */
+    /** Simpan pengaturan room (roomCfg); kalau HP ditolak, dikerjakan server. */
+    suspend fun setCfgRoom(roomId: String, kunci: String, nilai: Boolean): String? {
+        try {
+            Rtdb.ref("roomCfg/$roomId/$kunci").setValue(nilai).await()
+            return null
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            val err = aksiKelolaRoom(
+                roomId, "cfg",
+                org.json.JSONObject().put("key", kunci).put("nilai", nilai),
+            )
+            return err ?: null
+        }
+    }
+
     /**
      * Kosongkan poin mic di layar publik (kalkulator).
      *

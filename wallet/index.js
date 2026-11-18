@@ -6307,6 +6307,14 @@ export default {
           await tulisRtdbSa(env, "messages/" + roomRa, null);
           return json({ ok: 1 });
         }
+        if (aksiRa === "cfg") {
+          // Pengaturan room (mic bebas, kalkulator, bicara publik). Dipakai
+          // kalau aturan RTDB menolak tulisan dari HP.
+          const kunciCfg = String(bRa.key || "").replace(/[^0-9A-Za-z_]/g, "").slice(0, 40);
+          if (!kunciCfg) return json({ ok: 0, e: "Kunci tidak sah" }, 400);
+          await tulisRtdbSa(env, "roomCfg/" + roomRa + "/" + kunciCfg, bRa.nilai === true);
+          return json({ ok: 1 });
+        }
         if (aksiRa === "poin") {
           // Mengatur ulang kalkulator: poin mic di layar publik dikosongkan.
           await tulisRtdbSa(env, "micPoints/" + roomRa, null);

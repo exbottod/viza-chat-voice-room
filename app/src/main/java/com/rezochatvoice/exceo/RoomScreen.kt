@@ -1435,13 +1435,7 @@ fun RoomScreen(
                             panel = P_NONE
                             scope.launch {
                                 val baru = !cfgMicBebas
-                                val err = try {
-                                    Rtdb.ref("roomCfg/" + r.id + "/micBebas").setValue(baru).await(); null
-                                } catch (e: kotlinx.coroutines.CancellationException) {
-                                    throw e
-                                } catch (e: Exception) {
-                                    e.message ?: "Gagal menyimpan"
-                                }
+                                val err = RoomRepo.setCfgRoom(r.id, "micBebas", baru)
                                 toast(err ?: if (baru) "Mic bebas aktif: user bisa naik mic sendiri" else "Minta mic aktif: user menunggu persetujuan")
                             }
                         }) {
@@ -1556,13 +1550,7 @@ fun RoomScreen(
                 OutlineButton(if (cfgPoin) tr("Matikan kalkulator") else tr("Aktifkan kalkulator")) {
                     scope.launch {
                         val baru = !cfgPoin
-                        val err = try {
-                            Rtdb.ref("roomCfg/" + r.id + "/hitungPoin").setValue(baru).await(); null
-                        } catch (e: kotlinx.coroutines.CancellationException) {
-                            throw e
-                        } catch (e: Exception) {
-                            e.message ?: "Gagal menyimpan"
-                        }
+                        val err = RoomRepo.setCfgRoom(r.id, "hitungPoin", baru)
                         toast(err ?: if (baru) "Ikon poin mic aktif lagi" else "Ikon poin mic di kursi disembunyikan")
                     }
                 }
@@ -1582,13 +1570,7 @@ fun RoomScreen(
                         .clickable {
                             scope.launch {
                                 val baru = !cfgBicaraAdmin
-                                val err = try {
-                                    Rtdb.ref("roomCfg/" + r.id + "/bicaraAdmin").setValue(baru).await(); null
-                                } catch (e: kotlinx.coroutines.CancellationException) {
-                                    throw e
-                                } catch (e: Exception) {
-                                    e.message ?: "Gagal menyimpan"
-                                }
+                                val err = RoomRepo.setCfgRoom(r.id, "bicaraAdmin", baru)
                                 toast(
                                     err ?: if (baru) "Hanya owner dan admin room yang bisa mengetik"
                                     else "Semua user bisa mengetik lagi",
@@ -1957,7 +1939,8 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
                 modifier = Modifier.weight(1f, fill = false),
             )
         }
-        Text("💗 " + fmtCompact(points), color = Color.White, fontSize = 11.sp)
+        // Ikon poin hanya muncul kalau ada poin dan kalkulator menyala.
+        if (points > 0L) Text("💗 " + fmtCompact(points), color = Color.White, fontSize = 11.sp)
     }
 }
 

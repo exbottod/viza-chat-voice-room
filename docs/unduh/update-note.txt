@@ -1,5 +1,1 @@
-• Alat dasar baru: Matikan suara, Musik, Mode kamar, Blok Efek (ikon baru), Tema kamar, Mic bebas, Kamar umum, Kalkulator, Atur bicara di layar publik, Pengaturan, Game, Grup PK
-• Mic bebas bisa dimatikan jadi Minta mic: user menunggu persetujuan owner/admin room, begitu disetujui langsung naik kursi
-• Kalkulator: Mengatur ulang kalkulator membersihkan poin mic di layar publik, Matikan kalkulator menyembunyikan ikon poin di kursi
-• Atur bicara di layar publik: hanya owner dan admin room yang bisa mengetik, dan Bersihkan layar publik menghapus riwayat chat serta gift untuk semua orang
-• Tema kamar bisa langsung dibuka dari Alat dasar
+• Alat dasar baru: mic bebas/minta mic, kalkulator poin, atur bicara publik, tema kamar dari alat dasa

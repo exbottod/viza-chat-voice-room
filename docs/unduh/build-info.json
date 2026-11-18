@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.247",
-  "catatan": "• Perbaiki import Uri dan FileProvider di RoomScreen\n• Info Kamar: sampul/tema room dengan kamera, crop, pratinjau; daftar anggota dan blokir; latar room d\n• Server roomadmin: cadangan roomsPub supaya Larang Mic tidak gagal room tidak ditemukan",
-  "ukuran_apk": 56480458,
-  "sha256_apk": "47659c0d3381eedae9e1ceece349c9ea641dd38853995390a8b44fc90c57cb39",
+  "versi": "1.0.248",
+  "catatan": "• Alat dasar baru: mic bebas/minta mic, kalkulator poin, atur bicara publik, tema kamar dari alat dasa",
+  "ukuran_apk": 56481553,
+  "sha256_apk": "1e475a70877c3bdcc76e730f983744f0f11b5cd6ffe6c45660f8bd40864cf92a",
   "abis": {
     "arm64": {
-      "ukuran": 56480458,
-      "sha256": "47659c0d3381eedae9e1ceece349c9ea641dd38853995390a8b44fc90c57cb39"
+      "ukuran": 56481553,
+      "sha256": "1e475a70877c3bdcc76e730f983744f0f11b5cd6ffe6c45660f8bd40864cf92a"
     },
     "armv7": {
-      "ukuran": 54631615,
-      "sha256": "a3d7759ff31aa9511e8a29e48bc78fa06e8d7cb7f3e2826b13988e0a2344c0d9"
+      "ukuran": 54632707,
+      "sha256": "bc6a0f7504e56cf27ca37b64ce3eee44d7106a54573781bfe79eebe6cd4defd2"
     },
     "universal": {
-      "ukuran": 74896447,
-      "sha256": "e772ed9800299a7c58c31390bdca9f28d1e3d093809739d8ee254a7c68785a3e"
+      "ukuran": 74897527,
+      "sha256": "1cad3d7f3e8bf1bd5a6fd7684ba6a0f3fd4ffed2e8df5205c10753629eb6505d"
     }
   }
 }

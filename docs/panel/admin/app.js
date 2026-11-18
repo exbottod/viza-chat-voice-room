@@ -1270,6 +1270,7 @@ const daftarHal = {
   database: { judul: "Database", crumb: "Dashboard / Data", gambar: gambarDatabase },
   latar: { judul: "Background tab", crumb: "Dashboard / Background tab", gambar: gambarLatar },
   cs: { judul: "Customer Service", crumb: "Dashboard / Customer Service", gambar: gambarCs },
+  laporan: { judul: "Laporan user", crumb: "Dashboard / Laporan user", gambar: gambarLaporan },
   pengumuman: { judul: "Pengumuman resmi", crumb: "Dashboard / Pengumuman resmi", gambar: gambarPengumuman },
   log: { judul: "Log admin", crumb: "Dashboard / Data", gambar: gambarLog },
   pengaturan: { judul: "Pengaturan", crumb: "Dashboard / Pengaturan", gambar: gambarPengaturan }
@@ -1285,6 +1286,7 @@ const keteranganHal = {
   kirim: "Kirim lencana, medali, frame, efek, banner, ID unik ke akun user",
   staf: "Tambah staf dan seller yang boleh masuk panel",
   cs: "Pilih akun yang menerima chat Customer Service, atau cabut",
+  laporan: "Laporan user dari sheet profil room, lengkap dengan ID user yang dilaporkan",
   wallet: "Kirim coin, VIP, reset coin/diamond/exp, topup manual, reset nama dan foto",
   cekin: "Atur hadiah cek in harian hari 1 sampai 7 yang tampil di aplikasi",
   aset: "Kartu VIP, frame, efek masuk, gelembung chat, medali, ID unik",
@@ -3908,6 +3910,62 @@ async function gambarEmote() {
       toast("Emote dihapus");
       await gambarEmote();
     } catch (e) { toast("Gagal menghapus: " + (e.message || ""), true); }
+  }));
+}
+
+/** Laporan user dari sheet profil room (koleksi userReports). */
+async function gambarLaporan() {
+  $("aksiTopbar").innerHTML = '<button class="tombolAtas" id="lapMuat">Muat ulang</button>';
+  let daftar = [];
+  try {
+    daftar = (await ambilSemua("userReports", 500))
+      .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+  } catch (e) { toast("Gagal membaca laporan: " + (e.code || e.message), true); }
+
+  const baru = daftar.filter((d) => (d.status || "baru") !== "selesai").length;
+  const baris = daftar.map((d) => {
+    const waktu = d.createdAt ? new Date(Number(d.createdAt)).toLocaleString("id-ID") : "-";
+    const selesai = d.status === "selesai";
+    return `<tr>
+      <td>${aman(waktu)}</td>
+      <td><b>${aman(d.targetName || "-")}</b><br><span class="mono">ID ${aman(String(d.targetUserId || "-"))}</span><br><span class="mono" style="font-size:11px;opacity:.7">${aman(String(d.targetUid || ""))}</span></td>
+      <td>${aman(d.reason || "-")}</td>
+      <td>${aman(d.reporterName || "-")}<br><span class="mono" style="font-size:11px;opacity:.7">${aman(String(d.reporterUid || ""))}</span></td>
+      <td class="mono">${aman(String(d.roomId || "-"))}</td>
+      <td>${selesai ? '<span style="color:#7bd88f">Selesai</span>' : '<span style="color:#ffb74d">Baru</span>'}</td>
+      <td style="white-space:nowrap">
+        ${selesai ? "" : `<button class="polos" data-lap-selesai="${aman(d.id)}">Selesai</button>`}
+        <button class="polos" data-lap-hapus="${aman(d.id)}">Hapus</button>
+      </td>
+    </tr>`;
+  }).join("");
+
+  $("isiHal").innerHTML = `
+    <div class="panel">
+      <div class="panelAtas"><h3>Laporan user</h3>
+        <div class="sub">${rupiah(daftar.length)} laporan, ${rupiah(baru)} belum ditangani</div></div>
+      ${daftar.length ? `<div style="overflow:auto"><table>
+        <thead><tr><th>Waktu</th><th>User dilaporkan</th><th>Alasan</th><th>Pelapor</th><th>Room</th><th>Status</th><th></th></tr></thead>
+        <tbody>${baris}</tbody></table></div>`
+        : '<div class="kosong">Belum ada laporan. Laporan dari sheet profil room muncul di sini.</div>'}
+    </div>`;
+
+  $("lapMuat").onclick = () => gambarLaporan();
+  document.querySelectorAll("[data-lap-selesai]").forEach((b) => (b.onclick = async () => {
+    try {
+      await setDoc(doc(kumpulan("userReports"), b.dataset.lapSelesai), { status: "selesai", handledAt: Date.now() }, { merge: true });
+      catatLog("Laporan user selesai", b.dataset.lapSelesai);
+      toast("Laporan ditandai selesai");
+      await gambarLaporan();
+    } catch (e) { toast("Gagal: " + (e.message || e.code || ""), true); }
+  }));
+  document.querySelectorAll("[data-lap-hapus]").forEach((b) => (b.onclick = async () => {
+    if (!confirm("Hapus laporan ini?")) return;
+    try {
+      await deleteDoc(doc(kumpulan("userReports"), b.dataset.lapHapus));
+      toast("Laporan dihapus");
+      await gambarLaporan();
+    } catch (e) { toast("Gagal menghapus: " + (e.message || e.code || ""), true); }
   }));
 }
 

@@ -670,6 +670,12 @@ fun UserProfileSheet(
     onOpenFull: () -> Unit = {},
     extra: (@Composable RowScope.() -> Unit)? = null,
     topAction: (@Composable () -> Unit)? = null,
+    /** Baris aksi admin di dasar sheet (Turun Mic, Larang Mic, Admin, Diusir). */
+    bottomActions: (@Composable RowScope.() -> Unit)? = null,
+    /** Tombol @ (tag user): dipanggil dengan nama user. */
+    onTag: ((PublicUser) -> Unit)? = null,
+    /** Tombol Laporkan di kiri atas sheet. */
+    onReport: ((PublicUser) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -881,15 +887,42 @@ fun UserProfileSheet(
                                     GoldButton(tr("Ikuti"), Modifier.weight(1f), enabled = !busy) { toggleFollow() }
                                 }
                                 OutlineButton("Chat", Modifier.weight(1f)) { onChat(u) }
+                                if (onTag != null) {
+                                    Box(
+                                        Modifier.size(42.dp).clip(CircleShape)
+                                            .background(Color(0x33FFFFFF))
+                                            .border(1.dp, Color(0x66FFC107), CircleShape)
+                                            .clickable { onTag(u) },
+                                        contentAlignment = Alignment.Center,
+                                    ) { Text("@", color = Color(0xFFFFD54F), fontSize = 20.sp, fontWeight = FontWeight.Bold) }
+                                }
                             }
                         } else if (extra == null) {
                             Text(tr("Ini profil kamu"), color = Color(0xFF9A9A9A))
+                        }
+                        if (bottomActions != null) {
+                            Spacer(Modifier.height(8.dp))
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) { bottomActions() }
                         }
                     }
                 }
             }
             if (topAction != null) {
                 Box(Modifier.align(Alignment.TopEnd).padding(top = 8.dp, end = 10.dp)) { topAction() }
+            }
+            val uLapor = user
+            if (onReport != null && uLapor != null && !isMe) {
+                Text(
+                    tr("Laporkan"),
+                    color = Color(0xFFFFB74D),
+                    fontSize = 13.sp,
+                    modifier = Modifier.align(Alignment.TopStart).padding(top = 12.dp, start = 14.dp)
+                        .clickable { onReport(uLapor) },
+                )
             }
         }
     }
@@ -1122,4 +1155,23 @@ private fun FollowPill(text: String, busy: Boolean, onClick: () -> Unit) {
             .clickable(enabled = !busy, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 7.dp),
     )
+}
+
+
+/** Tombol aksi admin di dasar sheet profil: ikon emas bulat + label kecil. */
+@Composable
+fun AksiAdminSheet(label: String, simbol: String, warna: Color = Color(0xFFFFD54F), onClick: () -> Unit) {
+    Column(
+        Modifier.clickable(onClick = onClick).padding(horizontal = 10.dp, vertical = 2.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            Modifier.size(34.dp).clip(CircleShape)
+                .background(Brush.verticalGradient(listOf(Color(0xFF2A2415), Color(0xFF15120B))))
+                .border(1.dp, warna.copy(alpha = 0.6f), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) { Text(simbol, color = warna, fontSize = 16.sp) }
+        Spacer(Modifier.height(2.dp))
+        Text(label, color = Color(0xFFE0E0E0), fontSize = 11.sp, maxLines = 1)
+    }
 }

@@ -748,6 +748,9 @@ object RoomRepo {
         return try {
             val base = Rtdb.ref("seats/$roomId")
             if (Rtdb.ref("locks/$roomId/$index").get().await().exists()) return "Mic ini dikunci oleh owner"
+            if (Rtdb.ref("roomBans/$roomId/$uid/mic").get().await().getValue(Boolean::class.java) == true) {
+                return "Kamu dilarang naik mic di room ini"
+            }
             val present = Rtdb.ref("members/$roomId").get().await().children.mapNotNull { it.key }.toSet()
             val err = Rtdb.tx(base.child(index.toString())) { d ->
                 val curUid = d.child("uid").getValue(String::class.java)

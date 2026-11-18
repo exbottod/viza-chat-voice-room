@@ -217,6 +217,14 @@ fun RoomScreen(
     // Pilihan durasi saat menekan "Kick dari room": uid ke nama user.
     var kickPick by remember { mutableStateOf<Pair<String, String>?>(null) }
     var roomMuted by remember { mutableStateOf(false) }
+    // ---- Moderasi room: larangan mic/ketik, jadi admin, laporan ----
+    var larangan by remember(roomId) { mutableStateOf<Map<String, LaranganRoom>>(emptyMap()) }
+    androidx.compose.runtime.DisposableEffect(roomId) {
+        val reg = RoomModerasi.observeLarangan(roomId) { larangan = it }
+        onDispose { reg.remove() }
+    }
+    var adminPick by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var laporPick by remember { mutableStateOf<PublicUser?>(null) }
     // ---- Room PK ----
     var pk by remember(roomId) { mutableStateOf<PkState?>(null) }
     var pkBuat by remember { mutableStateOf(false) }
@@ -276,6 +284,9 @@ fun RoomScreen(
         }
     }
     var typing by remember { mutableStateOf(false) }
+    androidx.compose.runtime.LaunchedEffect(larangan[myUid]?.ketik) {
+        if (larangan[myUid]?.ketik == true) typing = false
+    }
     var emoteOpen by remember { mutableStateOf(false) }
     var giftOpen by remember { mutableStateOf(false) }
     var rocketOpen by remember { mutableStateOf(false) }
@@ -782,8 +793,12 @@ fun RoomScreen(
                     myFam = myFam,
                     onTextChange = { draft = it },
                     onSend = { t ->
-                        sendTick++
-                        scope.launch { RoomExtras.sendChat(r.id, myUid, myName, t)?.let { toast(it) } }
+                        if (larangan[myUid]?.ketik == true) {
+                            toast(tr("Kamu dilarang mengetik di room ini"))
+                        } else {
+                            sendTick++
+                            scope.launch { RoomExtras.sendChat(r.id, myUid, myName, t)?.let { toast(it) } }
+                        }
                     },
                     onClose = { typing = false },
                     onPickImage = { if (!imgBusy) imgPicker.launch("image/*") },
@@ -794,7 +809,10 @@ fun RoomScreen(
                     Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    RmIkonBtn(R.drawable.rm_chat_umum) { typing = true; emoteOpen = false }
+                    RmIkonBtn(R.drawable.rm_chat_umum) {
+                        if (larangan[myUid]?.ketik == true) toast(tr("Kamu dilarang mengetik di room ini"))
+                        else { typing = true; emoteOpen = false }
+                    }
                     Spacer(Modifier.width(10.dp))
                     RmIkonBtn(R.drawable.rm_emoji) { emoteOpen = !emoteOpen }
 
@@ -837,51 +855,49 @@ fun RoomScreen(
                     onChat = { u -> seatSheet = null; appActions.openChat(u) },
                     onFollowChanged = { },
                     onOpenFull = { seatSheet = null; appActions.openFullProfile(s.uid) },
-                    topAction = if (canManage && s.uid != myUid) {
+                    onTag = { u ->
+                        // Tag user: langsung ke tab ketik dengan @nama di depan.
+                        seatSheet = null
+                        val sebut = "@" + u.name.replace(" ", "") + " "
+                        if (!draft.contains(sebut)) draft = sebut + draft
+                        typing = true
+                        emoteOpen = false
+                    },
+                    onReport = { u -> seatSheet = null; laporPick = u },
+                    bottomActions = if (canManage && s.uid != myUid) {
                         {
-                            var menu by remember { mutableStateOf(false) }
-                            Box {
-                                // Ikon pengaturan (gear) sebagai tombol menu aksi user:
-                                // turunkan dari mic, mute, kick dari room.
-                                Image(
-                                    painterResource(R.drawable.ic_settings),
-                                    contentDescription = tr("Aksi user"),
-                                    modifier = Modifier
-                                        .size(26.dp)
-                                        .clip(CircleShape)
-                                        .clickable { menu = true }
-                                        .padding(2.dp),
-                                    contentScale = ContentScale.Fit,
-                                )
-                                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }, containerColor = Color(0xFF1E1A16)) {
-                                    DropdownMenuItem(
-                                        text = { Text(tr("Turunkan dari mic"), color = Color.White) },
-                                        onClick = {
-                                            menu = false
-                                            seatSheet = null
-                                            scope.launch {
-                                                val err = RoomRepo.removeFromSeat(r.id, idx)
-                                                if (err != null) toast(err) else toast(tr("${s.name} diturunkan dari mic"))
-                                            }
-                                        },
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text(tr("Kick dari room"), color = Color(0xFFFF6B6B)) },
-                                        onClick = {
-                                            menu = false
-                                            seatSheet = null
-                                            kickPick = s.uid to s.name
-                                        },
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text(tr("Kunci mic"), color = Color.White) },
-                                        onClick = {
-                                            menu = false
-                                            seatSheet = null
-                                            scope.launch { RoomExtras.lockSeat(r.id, idx)?.let { toast(it) } }
-                                        },
-                                    )
+                            val dilarang = larangan[s.uid]?.mic == true
+                            val adminSudah = r.isAdminRoom(s.uid)
+                            AksiAdminSheet(tr("Turun Mic"), "\u2B07") {
+                                seatSheet = null
+                                scope.launch {
+                                    val err = RoomRepo.removeFromSeat(r.id, idx)
+                                    if (err != null) toast(err) else toast(tr("${s.name} diturunkan dari mic"))
                                 }
+                            }
+                            AksiAdminSheet(
+                                if (dilarang) tr("Buka Larangan") else tr("Larang Mic"),
+                                "\uD83D\uDEAB",
+                            ) {
+                                seatSheet = null
+                                scope.launch {
+                                    val err = RoomModerasi.larang(r.id, s.uid, !dilarang)
+                                    if (err != null) toast(err)
+                                    else toast(if (dilarang) tr("Larangan ${s.name} dibuka") else tr("${s.name} dilarang mic dan chat"))
+                                }
+                            }
+                            if (isOwner || isDevAdmin) {
+                                AksiAdminSheet(
+                                    if (adminSudah) tr("Cabut Admin") else tr("Admin"),
+                                    "\uD83D\uDEE1",
+                                ) {
+                                    seatSheet = null
+                                    adminPick = s.uid to s.name
+                                }
+                            }
+                            AksiAdminSheet(tr("Diusir"), "\u2716", Color(0xFFFF6B6B)) {
+                                seatSheet = null
+                                kickPick = s.uid to s.name
                             }
                         }
                     } else {
@@ -1103,6 +1119,87 @@ fun RoomScreen(
                         else -> "${durasiMs / 86_400_000L} hari"
                     }
                     RoomExtras.sendSystemNotice(r.id, "🚫 Sistem: $targetName telah di-kick dari room ($lama)")
+                }
+            }
+        }
+
+        // Konfirmasi jadikan / cabut admin room.
+        adminPick?.let { pick ->
+            val jadi = !r.isAdminRoom(pick.first)
+            Dialog(onDismissRequest = { adminPick = null }) {
+                DialogCard {
+                    Text(
+                        if (jadi) tr("Jadikan admin room?") else tr("Cabut admin room?"),
+                        color = GoldLight, fontSize = 20.sp, fontWeight = FontWeight.Bold,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        if (jadi) pick.second + " " + tr("akan bisa menurunkan mic, melarang mic dan chat, serta mengusir user di room ini.")
+                        else pick.second + " " + tr("tidak lagi menjadi admin room."),
+                        color = Color(0xFFBDBDBD), fontSize = 13.sp,
+                    )
+                    Spacer(Modifier.height(14.dp))
+                    GoldButton(tr("Konfirmasi")) {
+                        val target = pick.first
+                        val nama = pick.second
+                        adminPick = null
+                        scope.launch {
+                            val err = RoomRepo.setRoomAdmin(r.id, target, jadi)
+                            if (err != null) toast(err)
+                            else toast(if (jadi) tr("$nama jadi admin room") else tr("Admin $nama dicabut"))
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        tr("Batal"), color = Color(0xFFBDBDBD), fontSize = 13.sp,
+                        modifier = Modifier.clickable { adminPick = null }.padding(8.dp),
+                    )
+                }
+            }
+        }
+
+        // Laporkan user: masuk ke tab Laporan user di panel.
+        laporPick?.let { tgt ->
+            var alasan by remember(tgt.uid) { mutableStateOf("") }
+            var kirim by remember(tgt.uid) { mutableStateOf(false) }
+            Dialog(onDismissRequest = { laporPick = null }) {
+                DialogCard {
+                    Text(tr("Laporkan") + " " + tgt.name, color = Color(0xFFFFB74D), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(6.dp))
+                    Text(tr("ID: ") + tgt.userId, color = Color(0xFFBDBDBD), fontSize = 12.sp)
+                    Spacer(Modifier.height(10.dp))
+                    listOf("Spam", "Kata kasar", "Penipuan", "Konten tidak pantas").forEach { opsi ->
+                        val on = alasan == opsi
+                        Text(
+                            tr(opsi),
+                            color = if (on) Color.Black else Color.White,
+                            fontSize = 13.sp,
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (on) Gold else Color(0x33FFFFFF))
+                                .clickable { alasan = opsi }
+                                .padding(horizontal = 12.dp, vertical = 9.dp),
+                        )
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    GoldButton(tr("Kirim laporan"), enabled = alasan.isNotBlank() && !kirim) {
+                        kirim = true
+                        scope.launch {
+                            val err = RoomModerasi.laporkan(
+                                myUid, myName, tgt.uid, tgt.name, tgt.userId, r.id, alasan,
+                            )
+                            kirim = false
+                            if (err != null) toast(err) else {
+                                toast(tr("Laporan terkirim"))
+                                laporPick = null
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        tr("Batal"), color = Color(0xFFBDBDBD), fontSize = 13.sp,
+                        modifier = Modifier.clickable { laporPick = null }.padding(8.dp),
+                    )
                 }
             }
         }

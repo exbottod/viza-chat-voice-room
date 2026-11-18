@@ -35,6 +35,13 @@ service cloud.firestore {
 
     // Dokumen users berisi email & tanggal lahir, jadi hanya pemilik/admin yang boleh baca.
     // Data publik (nama, avatar, bio) ada di koleksi userIds.
+    // Laporan user dari sheet profil room. Siapa pun yang login boleh melapor
+    // (atas nama dirinya sendiri), hanya admin/staf yang boleh membaca dan menutup.
+    match /userReports/{id} {
+      allow create: if signedIn() && request.resource.data.reporterUid == request.auth.uid;
+      allow read, update, delete: if isAdmin();
+    }
+
     match /users/{uid} {
       allow read: if isOwner(uid) || isAdmin();
       allow write: if isOwner(uid) || isAdmin();

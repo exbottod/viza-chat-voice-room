@@ -252,6 +252,13 @@ fun RoomEmoteBar(emotes: List<RoomEmote> = emptyList(), onPick: (String) -> Unit
             .padding(8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        // Ikon tab emote memakai aset panel (noble7 room bottom emoji).
+        androidx.compose.foundation.Image(
+            painter = androidx.compose.ui.res.painterResource(R.drawable.rm_emoji),
+            contentDescription = "Emot",
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.size(30.dp).padding(1.dp),
+        )
         // Hanya emote kustom dari panel developer (gif/png/jpg); emote bawaan dihapus.
         emotes.forEach { em ->
             AsyncImage(

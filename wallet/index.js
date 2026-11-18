@@ -6177,6 +6177,28 @@ export default {
           });
           return json({ ok: 1 });
         }
+        if (aksiRa === "larang") {
+          // Larang mic / larang ketik: disimpan di roomBans/{room}/{uid}, dibaca HP.
+          const uidL = String(bRa.uid || "").replace(/[^0-9A-Za-z_-]/g, "").slice(0, 80);
+          if (!uidL) return json({ ok: 0, e: "User tidak sah" }, 400);
+          if (uidL === pemilikRa) return json({ ok: 0, e: "Owner room tidak bisa dilarang" }, 400);
+          const aktifL = bRa.aktif !== false;
+          if (!aktifL) {
+            await tulisRtdbSa(env, "roomBans/" + roomRa + "/" + uidL, null);
+            return json({ ok: 1, aktif: false });
+          }
+          await tulisRtdbSa(env, "roomBans/" + roomRa + "/" + uidL, {
+            mic: true, ketik: true, at: Date.now(), oleh: uidRa,
+          });
+          // Larang mic: kursi user dikosongkan dan mic dimatikan.
+          try {
+            const kursiL = await cfgRtdbSa(env, "seats/" + roomRa);
+            for (const [k, v] of Object.entries(kursiL || {})) {
+              if (v && v.uid === uidL) await tulisRtdbSa(env, "seats/" + roomRa + "/" + k, null);
+            }
+          } catch { }
+          return json({ ok: 1, aktif: true });
+        }
         if (aksiRa === "unban") {
           const uidB = String(bRa.uid || "").replace(/[^0-9A-Za-z_-]/g, "").slice(0, 80);
           if (!uidB) return json({ ok: 0, e: "User tidak sah" }, 400);

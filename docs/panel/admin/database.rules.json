@@ -35,6 +35,11 @@
         }
       }
     },
+    "roomBans": {
+      "$roomId": {
+        ".read": "auth != null"
+      }
+    },
     "emotes": {
       "$roomId": {
         ".read": "auth != null",

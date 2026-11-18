@@ -6607,15 +6607,6 @@
       }
     },
     {
-      "dari": "1.0.250",
-      "ke": "1.0.254",
-      "arm64": {
-        "file": "patch-1.0.250-1.0.254-arm64.bsdiff",
-        "ukuran": 11716705,
-        "sha256": "e8bb3954ac719560f1efa466be7044a7feb894205520cee65c0d4ef43a4af08a"
-      }
-    },
-    {
       "dari": "1.0.251",
       "ke": "1.0.252",
       "arm64": {
@@ -6635,11 +6626,11 @@
     },
     {
       "dari": "1.0.251",
-      "ke": "1.0.254",
+      "ke": "1.0.255",
       "arm64": {
-        "file": "patch-1.0.251-1.0.254-arm64.bsdiff",
-        "ukuran": 4222806,
-        "sha256": "49cfd0e463e5c09269e2a5c045bb8950a2bf651c2a9470eec4e063d15bd95409"
+        "file": "patch-1.0.251-1.0.255-arm64.bsdiff",
+        "ukuran": 4233874,
+        "sha256": "17c3bc48d9835d4f54be45459f13bd72e2a6f13edf2ad75d8fd8191fa6e6f4f5"
       }
     },
     {
@@ -6653,20 +6644,29 @@
     },
     {
       "dari": "1.0.252",
-      "ke": "1.0.254",
+      "ke": "1.0.255",
       "arm64": {
-        "file": "patch-1.0.252-1.0.254-arm64.bsdiff",
-        "ukuran": 4218162,
-        "sha256": "f7a6ddcb8afa1de0394858cb3df7c880610291c850843532b90500d791aec9bb"
+        "file": "patch-1.0.252-1.0.255-arm64.bsdiff",
+        "ukuran": 4226509,
+        "sha256": "1172b0ddee5fb01191237c77289f0d20f5209d1f6829299dfb89ecd9974e5457"
       }
     },
     {
       "dari": "1.0.253",
-      "ke": "1.0.254",
+      "ke": "1.0.255",
       "arm64": {
-        "file": "patch-1.0.253-1.0.254-arm64.bsdiff",
-        "ukuran": 4221541,
-        "sha256": "ebeb90964e9d9e9191926a870e58f1052714d48ed1162865f7cce36ca3b36e5c"
+        "file": "patch-1.0.253-1.0.255-arm64.bsdiff",
+        "ukuran": 4232387,
+        "sha256": "8df1af734e7b88d4d0149318f68b034875dabfab5d5facdfaed71155d382e139"
+      }
+    },
+    {
+      "dari": "1.0.254",
+      "ke": "1.0.255",
+      "arm64": {
+        "file": "patch-1.0.254-1.0.255-arm64.bsdiff",
+        "ukuran": 4214411,
+        "sha256": "b473116c35241c2f77a9dc57303a40d2afbfffa763fd94962086d0dda12e27de"
       }
     }
   ]

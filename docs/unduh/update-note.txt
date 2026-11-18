@@ -1,1 +1,4 @@
+• Room lebih ringan: poin mic dibaca di dalam sel kursi
+• Matikan kalkulator menyembunyikan ikon poin; pengaturan room punya cadangan server
+• Reset kalkulator: hapus poin mic lewat server kalau HP ditolak
 • Bersihkan layar publik langsung kosong di layar dan tutup panel

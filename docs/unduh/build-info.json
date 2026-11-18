@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.254",
-  "catatan": "• Bersihkan layar publik langsung kosong di layar dan tutup panel",
-  "ukuran_apk": 56979286,
-  "sha256_apk": "2c1db0d76a653e49d947562cc39e7ce4647e19cbe13fe7e68d63af9643aeba1a",
+  "versi": "1.0.255",
+  "catatan": "• Room lebih ringan: poin mic dibaca di dalam sel kursi\n• Matikan kalkulator menyembunyikan ikon poin; pengaturan room punya cadangan server\n• Reset kalkulator: hapus poin mic lewat server kalau HP ditolak\n• Bersihkan layar publik langsung kosong di layar dan tutup panel",
+  "ukuran_apk": 56979938,
+  "sha256_apk": "1f62ee1221e6833659c5175eeedabcc1c835102fb98a51e0fb55cd67eed8edcf",
   "abis": {
     "arm64": {
-      "ukuran": 56979286,
-      "sha256": "2c1db0d76a653e49d947562cc39e7ce4647e19cbe13fe7e68d63af9643aeba1a"
+      "ukuran": 56979938,
+      "sha256": "1f62ee1221e6833659c5175eeedabcc1c835102fb98a51e0fb55cd67eed8edcf"
     },
     "armv7": {
-      "ukuran": 55130438,
-      "sha256": "0ba1f186df2d8ce6115696a05d980164858ae6f5b9255a892a070e67555c06bd"
+      "ukuran": 55131080,
+      "sha256": "3ccc9402da6dcef2a0a34da0503b710f5ab3d919e064665e87d8ff0d1bb46012"
     },
     "universal": {
-      "ukuran": 75395286,
-      "sha256": "d388ca8a764bd9537bfd076158c27ee20aa278a744b31f2aff854bcbf7cf5598"
+      "ukuran": 75395940,
+      "sha256": "be1470ed2e4147a38dd93fde507474cc422ea3ce37f24bf76fca3f799fdcad70"
     }
   }
 }

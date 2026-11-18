@@ -1,1 +1,1 @@
-• Preview Efek masuk SVIP tidak lagi kosong: SVGA diunduh sendiri, sampul PNG di belakang, cadangan as
+• SVGA pratinjau benar-benar berputar, bukan hanya frame pertama

@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.217",
-  "catatan": "• Preview Efek masuk SVIP tidak lagi kosong: SVGA diunduh sendiri, sampul PNG di belakang, cadangan as",
-  "ukuran_apk": 55002969,
-  "sha256_apk": "b3c617fc59aa0dc6bb54d13f6c0b0905350e137a139d393942d33a18e437a4b9",
+  "versi": "1.0.218",
+  "catatan": "• SVGA pratinjau benar-benar berputar, bukan hanya frame pertama",
+  "ukuran_apk": 55002684,
+  "sha256_apk": "087452066d319ede2c558069a14484406d4c179417020f292ceede0e061360c0",
   "abis": {
     "arm64": {
-      "ukuran": 55002969,
-      "sha256": "b3c617fc59aa0dc6bb54d13f6c0b0905350e137a139d393942d33a18e437a4b9"
+      "ukuran": 55002684,
+      "sha256": "087452066d319ede2c558069a14484406d4c179417020f292ceede0e061360c0"
     },
     "armv7": {
-      "ukuran": 53154112,
-      "sha256": "89a4fe0d782e6119a3bb8390c659420a8b7d64d7980f33845c474a1f975f78c9"
+      "ukuran": 53153842,
+      "sha256": "0b6676b7560de045ba2f8411439808efe4445d65f53fab0e09d9c02a93936fba"
     },
     "universal": {
-      "ukuran": 73418926,
-      "sha256": "0623d18ce9ebd79f6b9631a78d2d92f0b909c67a05fbf7901ccd1e627fdfa663"
+      "ukuran": 73418655,
+      "sha256": "adb8ab160e35f7117e5abef8daa191d42954c0ed0cdb837854b289f444991b8b"
     }
   }
 }

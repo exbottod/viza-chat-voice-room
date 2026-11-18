@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.224",
   "catatan": "• Bingkai kiriman panel tampil saat dipasang, bukan bingkai VIP",
-  "ukuran_apk": 55009495,
-  "sha256_apk": "56d86be5e730b2285b3cf07d0ce1d3f9a497ba93eac19023893e6fa4ff09ad71",
+  "ukuran_apk": 55009444,
+  "sha256_apk": "07c2e7fd23534ad39c83a3853730003bb8359d6fced4d998d43454050a9d9158",
   "abis": {
     "arm64": {
-      "ukuran": 55009495,
-      "sha256": "56d86be5e730b2285b3cf07d0ce1d3f9a497ba93eac19023893e6fa4ff09ad71"
+      "ukuran": 55009444,
+      "sha256": "07c2e7fd23534ad39c83a3853730003bb8359d6fced4d998d43454050a9d9158"
     },
     "armv7": {
-      "ukuran": 53160657,
-      "sha256": "133b4c837f9ee24fd1a1476da08a13c8a820eee25f3b94d3f4fdac27ed7c660a"
+      "ukuran": 53160592,
+      "sha256": "a3ca6c21e0bdd8129b3845b2f59858447c8e6380c0bf47f0d358851afa546549"
     },
     "universal": {
-      "ukuran": 73425454,
-      "sha256": "f22ef9e743726d724119c3ac88e6f8ee4711d87b402a4dba38a33131584da8d2"
+      "ukuran": 73425410,
+      "sha256": "e02d5bf43b37285fe3e3a792af0fa09017822bb2051d9c76460d1749f0f1cb83"
     }
   }
 }

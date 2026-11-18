@@ -1067,17 +1067,11 @@ fun VipEntryEffect(roomId: String) {
         }
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             if (p != null) {
-                // Sampul PNG digambar lebih dulu. Kalau berkas SVGA/MP4 gagal
-                // diputar (mis. unduhan lambat), efeknya tetap terlihat.
+                // Sampul PNG TIDAK dipakai di room. Sampul itu hanya ikon kartu di
+                // Item VIP/Store. Di room yang tampil harus berkas aslinya (SVGA/MP4),
+                // jadi kalau animasinya belum siap layar dibiarkan kosong, bukan
+                // menampilkan foto sampul.
                 var animJalan by remember(p.n, p.slot, p.updatedAt) { mutableStateOf(false) }
-                if (p.poster.isNotBlank() && !animJalan) {
-                    coil.compose.AsyncImage(
-                        model = p.poster,
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop,
-                    )
-                }
                 VipMedia(
                     p,
                     Modifier.fillMaxSize(),

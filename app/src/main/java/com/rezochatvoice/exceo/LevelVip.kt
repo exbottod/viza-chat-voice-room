@@ -911,36 +911,33 @@ private fun LegacyItemPreview(item: StoreItem) {
  */
 @Composable
 private fun EntryPreview(item: StoreItem, size: Dp) {
+    // Aset dicari berantai seperti di dialog pratinjau: data item dulu, lalu
+    // katalog panel, lalu aset tier VIP dari halaman Aset & VIP.
     val dyn = item.asset
-    var main by remember(item.id) { mutableStateOf(false) }
+        ?: findItem(item.id)?.asset
+        ?: (if (item.vip in 1..9) VipAssets.get(item.vip, vipAssetSlot(item.id, item.slot)) else null)
+        ?: entryAssetCadangan(item.vip)
     Box(Modifier.size(size), contentAlignment = Alignment.Center) {
-        if (main && dyn != null) {
-            key(dyn.updatedAt) { VipMedia(dyn, Modifier.fillMaxSize(), loop = false) }
-            Box(
-                Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)).clickable { main = false },
-                contentAlignment = Alignment.Center,
-            ) { }
-        } else {
-            // Ikon di luar memakai sampul PNG unggahan panel (frame animasi diam),
-            // bukan lagi kotak kosong dengan emoji.
-            key(dyn?.updatedAt) {
-                VipMediaSafe(
-                    dyn, Modifier.fillMaxSize(), loop = false,
-                    contentScale = ContentScale.Fit, diam = true,
-                    fallback = {
-                        Box(
-                            Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp)).background(Color(0x22FFFFFF)),
-                            contentAlignment = Alignment.Center,
-                        ) { Text("\u2728", fontSize = (size.value * 0.46f).sp) }
-                    },
+        if (dyn != null) {
+            // Sampul PNG hanya pengisi sampai berkas siap.
+            if (dyn.poster.isNotBlank()) {
+                coil.compose.AsyncImage(
+                    model = dyn.poster,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit,
                 )
             }
+            // Efek masuk yang diunggah dari panel (SVGA/MP4) langsung diputar di
+            // kartu Item VIP, tidak lagi menunggu tombol play.
+            key(dyn.n, dyn.updatedAt) {
+                VipMedia(dyn, Modifier.fillMaxSize(), loop = true, contentScale = ContentScale.Fit)
+            }
+        } else {
             Box(
-                Modifier.align(Alignment.BottomEnd).padding(2.dp)
-                    .clip(CircleShape).background(Color(0xCC000000))
-                    .clickable(enabled = dyn != null) { main = true }
-                    .padding(horizontal = 7.dp, vertical = 3.dp),
-            ) { Text("\u25B6", color = Color.White, fontSize = 9.sp) }
+                Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp)).background(Color(0x22FFFFFF)),
+                contentAlignment = Alignment.Center,
+            ) { Text("\u2728", fontSize = (size.value * 0.46f).sp) }
         }
     }
 }

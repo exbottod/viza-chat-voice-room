@@ -772,6 +772,8 @@ object EfekMasukTercatat {
 @Composable
 fun VipEntryEffect(roomId: String) {
     var playing by remember { mutableStateOf<VipAsset?>(null) }
+    // Animasi benar-benar mulai berjalan (frame pertama SVGA/MP4 tampil)?
+    var mulaiAnim by remember { mutableStateOf(false) }
     var banner by remember { mutableStateOf<VipAsset?>(null) }
     var bannerName by remember { mutableStateOf<String?>(null) }
     var bannerUid by remember { mutableStateOf<String?>(null) }
@@ -880,6 +882,7 @@ fun VipEntryEffect(roomId: String) {
         if (!EfekMasukTercatat.perluTampil(roomId)) return@LaunchedEffect
         playing = a
         banner = b
+        mulaiAnim = false
         // Catatan diagnosa (dibaca di menu Blok Efek) supaya kelihatan apakah
         // asetnya benar SVGA dan apakah animasinya benar-benar mulai.
         VipAssets.diag["entry"] = a?.let {
@@ -953,8 +956,35 @@ fun VipEntryEffect(roomId: String) {
     if (p != null || b != null) {
         if (p != null) {
             LaunchedEffect(p) {
-                delay(if (p.kind == "mp4" || p.kind == "svga") 8000L else 5000L)
-                playing = null
+                val berat = p.kind == "mp4" || p.kind == "svga"
+                if (!berat) {
+                    delay(5000L)
+                    playing = null
+                    return@LaunchedEffect
+                }
+                // Selama berkas diunduh, yang tampil hanya sampul PNG. Dulu efek
+                // ditutup setelah 8 detik walau unduhan belum selesai, sehingga
+                // animasi SVGA efek masuk VIP tidak pernah terlihat. Sekarang efek
+                // ditutup saat animasinya selesai; kalau berkasnya memang gagal
+                // diputar, ditutup setelah 30 detik supaya layar tidak tertahan.
+                var tunggu = 0
+                while (tunggu < 30000L && playing != null && !mulaiAnim) {
+                    delay(300L)
+                    tunggu += 300L
+                }
+                if (!mulaiAnim) {
+                    VipAssets.diag["entry_main"] = "berkas tidak bisa diputar"
+                    playing = null
+                    return@LaunchedEffect
+                }
+                // Sudah berjalan: tunggu sampai animasi selesai (onEnd menutupnya),
+                // dengan jaring pengaman 30 detik.
+                var jalan = 0
+                while (jalan < 30000L && playing != null) {
+                    delay(300L)
+                    jalan += 300L
+                }
+                if (playing != null) playing = null
             }
         }
         if (b != null) {
@@ -1001,6 +1031,7 @@ fun VipEntryEffect(roomId: String) {
                     sound = true,
                     onMulai = {
                         animJalan = true
+                        mulaiAnim = true
                         VipAssets.diag["entry_main"] = "animasi jalan"
                     },
                 )

@@ -1,1 +1,1 @@
-• Banner game menyebut nama game pemenang: Greedy King atau Crazy Fruit
+• Efek masuk dan banner dipaksa tampil setiap masuk room seperti versi awal

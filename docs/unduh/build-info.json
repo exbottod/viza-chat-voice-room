@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.222",
-  "catatan": "• Banner game menyebut nama game pemenang: Greedy King atau Crazy Fruit",
-  "ukuran_apk": 55008732,
-  "sha256_apk": "5defdcd155cef446524f75e9e6e56aac866eecf5490cd5f07aefca4953d9403e",
+  "versi": "1.0.223",
+  "catatan": "• Efek masuk dan banner dipaksa tampil setiap masuk room seperti versi awal",
+  "ukuran_apk": 55009373,
+  "sha256_apk": "2f2d0246e958f2d2677ff900d25ed105243ad97086f091a239faa1ec0d26de44",
   "abis": {
     "arm64": {
-      "ukuran": 55008732,
-      "sha256": "5defdcd155cef446524f75e9e6e56aac866eecf5490cd5f07aefca4953d9403e"
+      "ukuran": 55009373,
+      "sha256": "2f2d0246e958f2d2677ff900d25ed105243ad97086f091a239faa1ec0d26de44"
     },
     "armv7": {
-      "ukuran": 53159874,
-      "sha256": "79dea31c2c5f11180ba4389c477309708cb0e1831e7d707d1a32c484e20da182"
+      "ukuran": 53160525,
+      "sha256": "75ddbe123c7a66e9cd230d85ca07027afcfa23482b6f15fb8a0388f63f5b12bf"
     },
     "universal": {
-      "ukuran": 73424693,
-      "sha256": "8ed324a51909dcdf7af07340789afe40ca610e998aaa1eec6f3577a2c4e46bf8"
+      "ukuran": 73425346,
+      "sha256": "70212f8d877e0a9e7b2e87348cc7d231ce94d27ab28c4def7a3707a4c60b766a"
     }
   }
 }

@@ -1,1 +1,1 @@
-• Bar mengetik dikembalikan: lencana dan medali hanya tampil di chat, bukan di bar mengetik
+• ID unik kiriman panel tampil juga di baris nama chat room

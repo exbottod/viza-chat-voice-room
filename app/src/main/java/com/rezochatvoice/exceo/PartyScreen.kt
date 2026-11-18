@@ -142,7 +142,18 @@ fun PartyTab(
         // FITUR CODE ROOM DIHAPUS: masuk room cukup lewat daftar room / link room
         // (rezo://room/<id>) yang dibagikan pemilik room.
         if (subTab == 2) {
-            item(span = { GridItemSpan(maxLineSpan) }) { EmptyBlock(tr("Belum ada aktivitas")) }
+            // Tab Aktivitas berisi daftar banner yang sama dengan banner di atas
+            // tab Party, ditumpuk ke bawah dan bisa diklik seperti geseran itu.
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Text(
+                    tr("Acara Hot"),
+                    color = Gold,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 4.dp, bottom = 2.dp),
+                )
+            }
+            item(span = { GridItemSpan(maxLineSpan) }) { BannerFeed() }
         } else {
             if (subTab == 1) {
                 // Banner Koin banyak ikut jadi geseran di banner atas (bisa
@@ -242,6 +253,131 @@ private fun TopTabs(
 }
 
 private data class AppBanner(val title: String, val subtitle: String, val imageB64: String?, val link: String = "", val imageUrl: String = "")
+
+/** Ambil semua banner yang tampil di atas tab Party (vipCfg + Firestore lama). */
+private suspend fun muatSemuaBanner(): List<AppBanner> {
+    val disembunyikan = mutableSetOf<String>()
+    val dariVip: List<AppBanner> = try {
+        val snap = kotlinx.coroutines.withTimeoutOrNull(6000L) {
+            com.google.firebase.database.FirebaseDatabase.getInstance().getReference("vipCfg").get().await()
+        }
+        snap?.children?.mapNotNull { c ->
+            val x = c.value as? Map<*, *> ?: return@mapNotNull null
+            if (x["banner"] != true) return@mapNotNull null
+            (x["hiddenFs"] as? String)?.let { disembunyikan.add(it) }
+            if (x["active"] == false) return@mapNotNull null
+            val url = x["imageUrl"] as? String ?: ""
+            val b64 = x["imageB64"] as? String
+            if (url.isBlank() && b64.isNullOrBlank()) return@mapNotNull null
+            Pair(
+                (x["order"] as? Number)?.toLong() ?: 0L,
+                AppBanner(x["title"] as? String ?: "", x["subtitle"] as? String ?: "", b64, x["link"] as? String ?: "", url),
+            )
+        }?.sortedBy { it.first }?.map { it.second }.orEmpty()
+    } catch (e: kotlinx.coroutines.CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        emptyList()
+    }
+    val dariFsSemua: List<AppBanner> = try {
+        val snap = kotlinx.coroutines.withTimeoutOrNull(5000L) {
+            com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("banners").get().await()
+        }
+        snap?.documents
+            ?.filter { it.id !in disembunyikan && it.getBoolean("active") != false && (!it.getString("imageB64").isNullOrBlank() || !it.getString("imageUrl").isNullOrBlank()) }
+            ?.sortedBy { it.getLong("order") ?: 0L }
+            ?.map {
+                AppBanner(
+                    it.getString("title") ?: "", it.getString("subtitle") ?: "",
+                    it.getString("imageB64"), it.getString("link") ?: "",
+                    it.getString("imageUrl") ?: "",
+                )
+            }.orEmpty()
+    } catch (e: kotlinx.coroutines.CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        emptyList()
+    }
+    return dariVip + dariFsSemua.filter { f -> dariVip.none { v -> v.imageUrl.isNotBlank() && v.imageUrl == f.imageUrl } }
+}
+
+/** Daftar banner untuk tab Aktivitas: sama isinya dengan banner atas Party. */
+@Composable
+private fun BannerFeed() {
+    val context = LocalContext.current
+    var daftar by remember { mutableStateOf<List<AppBanner>>(emptyList()) }
+    var sudah by remember { mutableStateOf(false) }
+    var rewardBanner by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) {
+        RewardRoomApi.muatTampilan()
+        rewardBanner = RewardRoomApi.bannerUrl
+        daftar = muatSemuaBanner()
+        sudah = true
+    }
+    val buka = { url: String ->
+        try {
+            val u = if (url.startsWith("http", ignoreCase = true)) url else "https://$url"
+            context.startActivity(
+                android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(u))
+                    .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        } catch (e: Exception) {
+            Toast.makeText(context, tr("Tidak bisa membuka link"), Toast.LENGTH_SHORT).show()
+        }
+    }
+    val frame = RoundedCornerShape(18.dp)
+    val goldBorder = Brush.linearGradient(listOf(GoldDark, GoldLight, GoldDark))
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        if (rewardBanner.isNotBlank()) {
+            Box(
+                modifier = Modifier.fillMaxWidth().aspectRatio(3f).clip(frame)
+                    .background(Color(0xFF1A1A1A)).border(1.dp, goldBorder, frame)
+                    .clickable { RewardRoomOpen.buka() },
+            ) {
+                coil.compose.AsyncImage(
+                    model = rewardBanner, contentDescription = tr("Koin banyak"),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+        daftar.forEach { b ->
+            val bmp = remember(b.imageB64) { ProfileRepo.decodeB64(b.imageB64) }
+            Box(
+                modifier = Modifier.fillMaxWidth().aspectRatio(3f).clip(frame)
+                    .background(Color(0xFF1A1A1A)).border(1.dp, goldBorder, frame)
+                    .clickable(enabled = b.link.isNotBlank()) { buka(b.link) },
+            ) {
+                if (bmp != null) {
+                    androidx.compose.foundation.Image(
+                        bitmap = bmp, contentDescription = null,
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                } else if (b.imageUrl.isNotBlank()) {
+                    coil.compose.AsyncImage(
+                        model = b.imageUrl, contentDescription = null,
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+                if (b.title.isNotBlank() || b.subtitle.isNotBlank()) {
+                    Column(
+                        Modifier.align(Alignment.BottomStart).fillMaxWidth()
+                            .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xCC000000))))
+                            .padding(12.dp),
+                    ) {
+                        if (b.title.isNotBlank()) Text(b.title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        if (b.subtitle.isNotBlank()) Text(b.subtitle, color = Color(0xFFE0E0E0), fontSize = 12.sp)
+                    }
+                }
+            }
+        }
+        if (sudah && daftar.isEmpty() && rewardBanner.isBlank()) {
+            EmptyBlock(tr("Belum ada aktivitas"))
+        }
+    }
+}
 
 @Composable
 private fun BannerPager() {

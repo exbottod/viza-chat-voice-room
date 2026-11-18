@@ -1,7 +1,3 @@
-• Pengaturan room gaya Info Kamar: Sampul kamar, ID Kamar, Nama kamar, Pengumuman, Tema kamar, Daftar anggota, Daftar blokir
-• Tema kamar: halaman baru dengan background kustom dan Tema default, kartu aktif bertanda centang
-• Sampul dan tema kamar bisa diambil dari kamera atau album, ada layar potong (geser dan zoom) lalu pratinjau sebelum disimpan
-• Pratinjau tema: tombol Unggah lagi dan Konfirmasi sebelum foto benar-benar disimpan
-• Daftar anggota room: user yang mengikuti room, lengkap dengan nama dan ID
-• Daftar blokir: user yang di-kick dari room bisa dibuka kick-nya dari pengaturan room
-• Room sendiri tidak lagi berat: latar dan foto room dibaca diperkecil dan di-cache, jadi suara tidak putus-nyambung dan lencana cepat muncul
+• Perbaiki import Uri dan FileProvider di RoomScreen
+• Info Kamar: sampul/tema room dengan kamera, crop, pratinjau; daftar anggota dan blokir; latar room d
+• Server roomadmin: cadangan roomsPub supaya Larang Mic tidak gagal room tidak ditemukan

@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.246",
-  "catatan": "• Aturan lengkap: email owner terisi, roomBans dan userReports disamakan di kedua salinan",
-  "ukuran_apk": 56449589,
-  "sha256_apk": "9cd05c2e9b0b8fad25274c0af87a4303fcf5b926b89adad3e232dedc6ee20cdb",
+  "versi": "1.0.247",
+  "catatan": "• Perbaiki import Uri dan FileProvider di RoomScreen\n• Info Kamar: sampul/tema room dengan kamera, crop, pratinjau; daftar anggota dan blokir; latar room d\n• Server roomadmin: cadangan roomsPub supaya Larang Mic tidak gagal room tidak ditemukan",
+  "ukuran_apk": 56480458,
+  "sha256_apk": "47659c0d3381eedae9e1ceece349c9ea641dd38853995390a8b44fc90c57cb39",
   "abis": {
     "arm64": {
-      "ukuran": 56449589,
-      "sha256": "9cd05c2e9b0b8fad25274c0af87a4303fcf5b926b89adad3e232dedc6ee20cdb"
+      "ukuran": 56480458,
+      "sha256": "47659c0d3381eedae9e1ceece349c9ea641dd38853995390a8b44fc90c57cb39"
     },
     "armv7": {
-      "ukuran": 54600735,
-      "sha256": "f227805afb4af9008da983dfe372f5fade27ed92caea4c6f1839f8fb4c3c08ca"
+      "ukuran": 54631615,
+      "sha256": "a3d7759ff31aa9511e8a29e48bc78fa06e8d7cb7f3e2826b13988e0a2344c0d9"
     },
     "universal": {
-      "ukuran": 74865567,
-      "sha256": "4cdf9b37715428ebf754bdd40fc4f637b698113ba5da282a44c5d0f02467585c"
+      "ukuran": 74896447,
+      "sha256": "e772ed9800299a7c58c31390bdca9f28d1e3d093809739d8ee254a7c68785a3e"
     }
   }
 }

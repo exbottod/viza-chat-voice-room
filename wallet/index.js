@@ -6080,17 +6080,23 @@ export default {
         const rDoc = await fetch(alamatDoc, { headers: { authorization: "Bearer " + tokenRa } });
         if (rDoc.ok) docRa = await rDoc.json();
       } catch { docRa = null; }
-      if (!docRa) return json({ ok: 0, e: "Room tidak ditemukan" }, 404);
+      // Room bisa belum ada di Firestore (mis. dibuat/diatur dari panel) tetapi
+      // sudah ada di RTDB roomsPub. Jangan langsung 404: pakai roomsPub sebagai
+      // cadangan supaya Larang Mic tetap jalan.
+      let pubRa = null;
+      try { pubRa = await cfgRtdbSa(env, "roomsPub/" + roomRa); } catch { pubRa = null; }
+      if (!docRa && !pubRa) return json({ ok: 0, e: "Room tidak ditemukan" }, 404);
       const ambilRa = (n) => {
-        const f = docRa.fields?.[n];
+        const f = docRa?.fields?.[n];
         return f ? Object.values(f)[0] : "";
       };
-      const pemilikRa = String(ambilRa("ownerUid") || "");
-      const adminRa = (docRa.fields?.admins?.arrayValue?.values || []).map((v) => String(v.stringValue || ""));
+      const pemilikRa = String(ambilRa("ownerUid") || (pubRa && pubRa.ownerUid) || "");
+      const adminRa = (docRa?.fields?.admins?.arrayValue?.values || []).map((v) => String(v.stringValue || ""));
       const pemiliknya = pemilikRa === uidRa;
       if (!pemiliknya && !adminRa.includes(uidRa)) return json({ ok: 0, e: "Hanya owner atau admin room" }, 403);
 
       const patchFs = async (fields) => {
+        if (!docRa) throw new Error("Room belum ada di Firestore");
         const mask = Object.keys(fields).map((k) => "updateMask.fieldPaths=" + encodeURIComponent(k)).join("&");
         const isi = { fields: {} };
         for (const [k, v] of Object.entries(fields)) isi.fields[k] = { stringValue: String(v ?? "") };

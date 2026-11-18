@@ -2860,7 +2860,7 @@ async function gambarKirim() {
       if (!uid) throw new Error("ID user tidak ditemukan");
       const slot = $("lncSlot").value;
       const hari = Number($("lncHari").value) || 30;
-      const idItem = "sx_lnc_" + Date.now().toString(36);
+      const idItem = "lnc_" + Date.now().toString(36);
       await simpanVip("item_" + idItem, {
         id: idItem, slot, name: nama,
         price: Number($("lncHarga").value) || 0,
@@ -3224,7 +3224,9 @@ function formItemToko(item) {
       // Awalan sx_ wajib: aplikasi hanya mengenali item katalog berawalan sx_.
       // Dulu item dibuat tanpa awalan sehingga bingkai kiriman panel tidak dipakai
       // dan yang tampil malah bingkai VIP bawaan user.
-      const idItem = item?.id || ("sx_" + nama.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 20) + "_" + Date.now().toString().slice(-4));
+      // ID disimpan polos (tanpa sx_): aplikasi dan server yang menambah awalan sx_,
+      // sama seperti item Store yang sudah terbukti jalan.
+      const idItem = item?.id || (nama.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 20) + "_" + Date.now().toString().slice(-4));
       await simpanVip(`item_${idItem}`, {
         id: idItem, slot: $("iSlot").value, name: nama,
         price: Number($("iHarga").value) || 0,

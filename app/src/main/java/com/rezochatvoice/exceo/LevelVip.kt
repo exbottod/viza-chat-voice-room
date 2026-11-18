@@ -216,7 +216,15 @@ fun activeEquip(w: Wallet, slot: String): String {
         }.joinToString(",")
     }
     val id = raw
-    return if ((w.inv[id] ?: 0L) > System.currentTimeMillis()) id else ""
+    if (id.isBlank()) return ""
+    val exp = w.inv[id]
+    // Ada catatan masa aktif: ikuti catatan itu.
+    if (exp != null) return if (exp > System.currentTimeMillis()) id else ""
+    // Item kiriman panel (sx_) tersimpan di pub/{uid}/svipInv, bukan di dompet,
+    // dan baru masuk ke inv setelah listener RTDB menyala. Tanpa ini bingkai
+    // kiriman dianggap "tidak dimiliki" lalu yang tampil malah bingkai VIP.
+    // Item Store tidak terkena karena sudah tercatat di inv.
+    return if (id.startsWith("sx_") && StoreCatalog.find(id) != null) id else ""
 }
 
 /**

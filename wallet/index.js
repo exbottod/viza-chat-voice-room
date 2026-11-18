@@ -4594,7 +4594,12 @@ async function admin(env, body) {
   if (op === "kirim_item") {
     const uidI = String(p.uid ?? "").trim();
     if (!/^[A-Za-z0-9_-]{4,80}$/.test(uidI)) return gagal("UID penerima tidak valid");
-    const itemI = String(p.item ?? "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 80);
+    let itemI = String(p.item ?? "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 80);
+    if (!itemI) return gagal("Item kosong");
+    // Awalan sx_ dibuang dulu lalu dipasang sekali saja. Dulu id yang sudah
+    // berawalan sx_ ikut diberi awalan lagi (sx_sx_...), akibatnya item tidak
+    // ketemu di katalog dan bingkai kiriman panel tidak tampil saat dipasang.
+    itemI = itemI.replace(/^(sx_)+/, "");
     if (!itemI) return gagal("Item kosong");
     const hariI = Math.max(1, Math.min(3650, Math.trunc(Number(p.hari ?? 30)) || 30));
     const sampaiI = Date.now() + hariI * 86400000;

@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.251",
   "catatan": "• Aset logo level kamar (55 tingkat) dari owner di drawable-xxhdpi, dipakai di Level kamar",
-  "ukuran_apk": 56975711,
-  "sha256_apk": "22195e15e6bdbb346ae2b7a45b9dfe88883642e49947441676630c5a0857451e",
+  "ukuran_apk": 56977004,
+  "sha256_apk": "28965b735e15bc0d621623a06e3e1f6540ea6a6c4c62b28959353c49d782bd34",
   "abis": {
     "arm64": {
-      "ukuran": 56975711,
-      "sha256": "22195e15e6bdbb346ae2b7a45b9dfe88883642e49947441676630c5a0857451e"
+      "ukuran": 56977004,
+      "sha256": "28965b735e15bc0d621623a06e3e1f6540ea6a6c4c62b28959353c49d782bd34"
     },
     "armv7": {
-      "ukuran": 55126861,
-      "sha256": "b103e565f732dd1d908f3cf0c121b2bfcacf1403e2c32e394ef0a3f48ebe033c"
+      "ukuran": 55128146,
+      "sha256": "b0a0e3438dd90d096d25ff7405796f299a5dc63d42616fc28136f500650b8974"
     },
     "universal": {
-      "ukuran": 75391706,
-      "sha256": "e14a3ca1be1ade632cd2ee7fc5b68c105aa7cc52cf36170699e305d6c6821f2d"
+      "ukuran": 75392998,
+      "sha256": "255a8d4e8fb9be729ad43e12de2eaf50c2ff7996ec4dc4d1121b97ffd444842d"
     }
   }
 }

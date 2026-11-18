@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.233",
-  "catatan": "• Ralat tipe: penghitung waktu memakai Long\n• Efek masuk VIP diputar penuh dan SVGA tampil langsung di Item VIP",
-  "ukuran_apk": 55011307,
-  "sha256_apk": "9af81613043f8b9d029586be7f3d6e80d0d72b112ef7b5b5ebe9b7540e90a480",
+  "versi": "1.0.234",
+  "catatan": "• Aset tier VIP didahulukan seperti di Rezo",
+  "ukuran_apk": 55011559,
+  "sha256_apk": "e2974e72541f3941d85438e3f64b5f24da722857704c1806fbfe96103de8a26b",
   "abis": {
     "arm64": {
-      "ukuran": 55011307,
-      "sha256": "9af81613043f8b9d029586be7f3d6e80d0d72b112ef7b5b5ebe9b7540e90a480"
+      "ukuran": 55011559,
+      "sha256": "e2974e72541f3941d85438e3f64b5f24da722857704c1806fbfe96103de8a26b"
     },
     "armv7": {
-      "ukuran": 53162449,
-      "sha256": "319306f7747276de5eaeaefe439cf89e5d227b170065827aac0035cd90dac877"
+      "ukuran": 53162719,
+      "sha256": "c4634b9758560b2560933553214e9d882a0e753b89950e93b4ffa355061be541"
     },
     "universal": {
-      "ukuran": 73427263,
-      "sha256": "25dff0ff516bfb26d9c5e09ad097b435f48543d460cd7ad1a64529df42618cbc"
+      "ukuran": 73427520,
+      "sha256": "a2f0335c1c751f373bcc7f00dc886cf42c6e2a6418ac9a14b0a67bf3054a9cb8"
     }
   }
 }

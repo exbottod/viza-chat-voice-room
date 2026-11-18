@@ -1,2 +1,1 @@
-• Ralat tipe: penghitung waktu memakai Long
-• Efek masuk VIP diputar penuh dan SVGA tampil langsung di Item VIP
+• Aset tier VIP didahulukan seperti di Rezo

@@ -1,1 +1,1 @@
-• Bingkai kiriman panel tampil saat dipasang, bukan bingkai VIP
+• Bar mengetik dikembalikan: lencana dan medali hanya tampil di chat, bukan di bar mengetik

@@ -5599,6 +5599,15 @@
       }
     },
     {
+      "dari": "1.0.219",
+      "ke": "1.0.223",
+      "arm64": {
+        "file": "patch-1.0.219-1.0.223-arm64.bsdiff",
+        "ukuran": 4116486,
+        "sha256": "08cf6197154633200dd4c87b95530393b34748c633082dd2cca987b5d17fa44b"
+      }
+    },
+    {
       "dari": "1.0.220",
       "ke": "1.0.221",
       "arm64": {
@@ -5618,11 +5627,11 @@
     },
     {
       "dari": "1.0.220",
-      "ke": "1.0.224",
+      "ke": "1.0.223",
       "arm64": {
-        "file": "patch-1.0.220-1.0.224-arm64.bsdiff",
-        "ukuran": 4103178,
-        "sha256": "8fbd8bb38ad35e29e5fee389328b2b302dbee371621dfc6671346a4103181c46"
+        "file": "patch-1.0.220-1.0.223-arm64.bsdiff",
+        "ukuran": 4073294,
+        "sha256": "e2048523942410968abcc65c1b50c9d67dee3b0df45730d40b8217a5ac191332"
       }
     },
     {
@@ -5636,29 +5645,56 @@
     },
     {
       "dari": "1.0.221",
-      "ke": "1.0.224",
+      "ke": "1.0.223",
       "arm64": {
-        "file": "patch-1.0.221-1.0.224-arm64.bsdiff",
-        "ukuran": 4078055,
-        "sha256": "0869e4bc57be383a5716a4257ac60086c5cdfdb3d30ea9f429dba44e1087b845"
+        "file": "patch-1.0.221-1.0.223-arm64.bsdiff",
+        "ukuran": 4100409,
+        "sha256": "eeff68a138c65be5de7e62ed0b22a366b2d258cfb7c304109d70d16a9ff0e246"
+      }
+    },
+    {
+      "dari": "1.0.221",
+      "ke": "1.0.225",
+      "arm64": {
+        "file": "patch-1.0.221-1.0.225-arm64.bsdiff",
+        "ukuran": 4097073,
+        "sha256": "96cf56af5a26efa66166a622bce6c9ad53468ba4ebb2acbe4dbdf57115752176"
       }
     },
     {
       "dari": "1.0.222",
-      "ke": "1.0.224",
+      "ke": "1.0.223",
       "arm64": {
-        "file": "patch-1.0.222-1.0.224-arm64.bsdiff",
-        "ukuran": 4097256,
-        "sha256": "da934ae1c26eba1acca92d05e2e004f26dafcaf92137b62f9c321e5d1845ed9c"
+        "file": "patch-1.0.222-1.0.223-arm64.bsdiff",
+        "ukuran": 4095431,
+        "sha256": "05b8a3e68587150c9c97c90c1cfdf4d49df7bc995be9ec3c6e5ab3ead729dcdc"
+      }
+    },
+    {
+      "dari": "1.0.222",
+      "ke": "1.0.225",
+      "arm64": {
+        "file": "patch-1.0.222-1.0.225-arm64.bsdiff",
+        "ukuran": 4099865,
+        "sha256": "b4e02bc69aaf1914fc3ae5e472c8ad3bd066bd78afe167926b8137701e81c722"
       }
     },
     {
       "dari": "1.0.223",
-      "ke": "1.0.224",
+      "ke": "1.0.225",
       "arm64": {
-        "file": "patch-1.0.223-1.0.224-arm64.bsdiff",
-        "ukuran": 3963183,
-        "sha256": "86c1c6dfaec55c7e5801e05fc9e3552651c2054c06c50a80c265129c1d1910e2"
+        "file": "patch-1.0.223-1.0.225-arm64.bsdiff",
+        "ukuran": 4111426,
+        "sha256": "6f81381f8d98a1990f81f78f3eb5488d0fd6abffd777330d567fa7dee40c5b21"
+      }
+    },
+    {
+      "dari": "1.0.224",
+      "ke": "1.0.225",
+      "arm64": {
+        "file": "patch-1.0.224-1.0.225-arm64.bsdiff",
+        "ukuran": 4108756,
+        "sha256": "10030ccedfcc57d281327817fe538ebb2910d275a18409a8e7e1c1d29524d1ba"
       }
     }
   ]

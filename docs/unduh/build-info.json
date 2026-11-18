@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.249",
-  "catatan": "• Level kamar: daftar poin kamar harian/bulanan/keseluruhan dan kontribusi anggota\n• Musik: daftar putar permanen, pindai musik lokal; Lucky number 777",
-  "ukuran_apk": 56506752,
-  "sha256_apk": "a3f113235931c07abbe5c9e1a3a125ec9e9a554e2ec51fd1046b64954a6d5fc1",
+  "versi": "1.0.250",
+  "catatan": "• Aturan Keanggotaan kamar: grup, tabel level, metode poin, gabung/keluar",
+  "ukuran_apk": 56524984,
+  "sha256_apk": "3138a4a37240a3291bb0f65cd1f473d6ffa66c29eb0004be367381ce7e3d01e4",
   "abis": {
     "arm64": {
-      "ukuran": 56506752,
-      "sha256": "a3f113235931c07abbe5c9e1a3a125ec9e9a554e2ec51fd1046b64954a6d5fc1"
+      "ukuran": 56524984,
+      "sha256": "3138a4a37240a3291bb0f65cd1f473d6ffa66c29eb0004be367381ce7e3d01e4"
     },
     "armv7": {
-      "ukuran": 54657904,
-      "sha256": "6e24247cd55c129ba50f1f080582ccf173da5003ae6a32b613faf83cdf6cca27"
+      "ukuran": 54676150,
+      "sha256": "8712c261fb9b5583991c974fafa4ae45ffe3319653ffc68716f7d3792ed152b0"
     },
     "universal": {
-      "ukuran": 74922732,
-      "sha256": "4c512177fdad79dd11d5d059a1fdaf5eb74369ee9cc8c0ab588eea3ee101747e"
+      "ukuran": 74940971,
+      "sha256": "b0ceffeb6555790c389ea7c77cbf0b051429344acb04b90546d63294f90c6f9a"
     }
   }
 }

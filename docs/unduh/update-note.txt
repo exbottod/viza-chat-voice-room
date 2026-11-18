@@ -1,5 +1,1 @@
-• Level kamar: Daftar Poin Kamar (harian, bulanan, keseluruhan) dan Daftar Kontribusi Anggota
-• Tombol ? membuka aturan Keanggotaan: grup keanggotaan, tabel level dan hadiah, metode poin, bergabung dan keluar
-• Musik: tombol garis tiga membuka Daftar putar, Tambah musik memindai musik di HP, pilih satu atau semua
-• Daftar putar tersimpan permanen dan tetap ada setelah aplikasi ditutup, kualitas file asli
-• Lucky number: tombol 777 di Alat dasar mengirim angka acak ke chat dengan tampilan khusus
+• Aturan Keanggotaan kamar: grup, tabel level, metode poin, gabung/keluar

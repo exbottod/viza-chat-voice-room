@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.229",
   "catatan": "• Perbaiki layar tidak bisa disentuh setelah keluar dari room yang diminimize",
-  "ukuran_apk": 55009470,
-  "sha256_apk": "b193f09c3aa4d754214e605cabcb7605ddb84f87a6973426566ebb3517e1f1e7",
+  "ukuran_apk": 55009928,
+  "sha256_apk": "7f1125c1e7923906617c513b9396fe3ab503e997434448f8218ac55b327db5ae",
   "abis": {
     "arm64": {
-      "ukuran": 55009470,
-      "sha256": "b193f09c3aa4d754214e605cabcb7605ddb84f87a6973426566ebb3517e1f1e7"
+      "ukuran": 55009928,
+      "sha256": "7f1125c1e7923906617c513b9396fe3ab503e997434448f8218ac55b327db5ae"
     },
     "armv7": {
-      "ukuran": 53160635,
-      "sha256": "e9a348e8835c068acb954a73fa6f39e0a268461988eae45d935ba23549bac1d8"
+      "ukuran": 53161073,
+      "sha256": "2f1f3b1865534b6bea6428bba31eab58a0f4832904110046954d4f0c9068608b"
     },
     "universal": {
-      "ukuran": 73425434,
-      "sha256": "7d73780d89ae93f4fd476f46bfa20182c939faccf0b637f8524c5cf186951769"
+      "ukuran": 73425892,
+      "sha256": "dcd6146e2ec4406e1862d4d0ebbac0cfac06f20e391b4e8ffd7c7f4e34c52b53"
     }
   }
 }

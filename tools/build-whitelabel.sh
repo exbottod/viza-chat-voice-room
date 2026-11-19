@@ -39,7 +39,7 @@ grep -rl "$PAKET_REZO" "$KERJA/app/src/main" 2>/dev/null | while read -r f; do
 done
 
 echo "3) Membersihkan merek Rezo, diganti $MEREK"
-python3 "$AKAR/tools/debrand.py" "$KERJA" "$MEREK" "$SLUG"
+python3 "$AKAR/tools/debrand.py" "$KERJA" "$MEREK" "$SLUG" "${VIZA_SERVER:-}"
 
 SISA=$(grep -ril "rezo" "$KERJA/app/src/main" "$KERJA/gradle.properties" 2>/dev/null | head -5)
 if [ -n "$SISA" ]; then

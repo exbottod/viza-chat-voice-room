@@ -1018,15 +1018,6 @@
       }
     },
     {
-      "dari": "1.0.266",
-      "ke": "1.0.270",
-      "arm64": {
-        "file": "patch-1.0.266-1.0.270-arm64.bsdiff",
-        "ukuran": 4266400,
-        "sha256": "d910b9134aeb86a3afb0abfb9776c3ab4cbe5e5067f1965dec1b6944f136d6f0"
-      }
-    },
-    {
       "dari": "1.0.267",
       "ke": "1.0.268",
       "arm64": {
@@ -1046,11 +1037,11 @@
     },
     {
       "dari": "1.0.267",
-      "ke": "1.0.270",
+      "ke": "1.0.271",
       "arm64": {
-        "file": "patch-1.0.267-1.0.270-arm64.bsdiff",
-        "ukuran": 4290427,
-        "sha256": "9c311e6142fb405c0617555bc9e8d305247d36b480f1c264aca6caacc4f9464b"
+        "file": "patch-1.0.267-1.0.271-arm64.bsdiff",
+        "ukuran": 4288903,
+        "sha256": "3f4e4d7e9b1ac9645e4c0041febc60ed1edcc9734168793662ad995ff9c7b137"
       }
     },
     {
@@ -1064,20 +1055,29 @@
     },
     {
       "dari": "1.0.268",
-      "ke": "1.0.270",
+      "ke": "1.0.271",
       "arm64": {
-        "file": "patch-1.0.268-1.0.270-arm64.bsdiff",
-        "ukuran": 4264483,
-        "sha256": "297b57311efcfb73fd63ab0139dddba5b662a921de4b60240bbdbc6502e53848"
+        "file": "patch-1.0.268-1.0.271-arm64.bsdiff",
+        "ukuran": 4287509,
+        "sha256": "c5dd0e623c03aaee1da9049e6433a2992be42d98db84cca71dd898c69533c65e"
       }
     },
     {
       "dari": "1.0.269",
-      "ke": "1.0.270",
+      "ke": "1.0.271",
       "arm64": {
-        "file": "patch-1.0.269-1.0.270-arm64.bsdiff",
-        "ukuran": 4262719,
-        "sha256": "849c6cf37b4769a0906c038a1e6a61211a0b63d6d128a814bf8bea2a1796ecaa"
+        "file": "patch-1.0.269-1.0.271-arm64.bsdiff",
+        "ukuran": 4262354,
+        "sha256": "c2212b1f2e1d1a4b6ab5ef799c9b02d48123fcc7d041a34639c0a9bd7ff4f289"
+      }
+    },
+    {
+      "dari": "1.0.270",
+      "ke": "1.0.271",
+      "arm64": {
+        "file": "patch-1.0.270-1.0.271-arm64.bsdiff",
+        "ukuran": 4169703,
+        "sha256": "61c2e43172442ffc12b0811118bc7989ab02bfe0946b211a0d77fa24408b3224"
       }
     }
   ]

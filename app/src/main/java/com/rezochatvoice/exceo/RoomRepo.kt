@@ -7,6 +7,7 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.tasks.await
 import java.security.MessageDigest
 
@@ -65,6 +66,13 @@ internal fun Any?.keBool(): Boolean = when (this) {
 }
 
 object RoomRepo {
+    /**
+     * Semua perubahan kursi dijalankan satu per satu. Firebase membatalkan
+     * transaksi kalau ada tulisan lain ke node kursi yang sama pada saat yang
+     * bersamaan, dan itu yang membuat "naik kursi" gagal di room ramai.
+     */
+    private val kunciKursi = kotlinx.coroutines.sync.Mutex()
+
     private const val VPS = "https://viza.43-156-99-4.sslip.io"
 
     /** Token login untuk memanggil server Viza. */
@@ -795,7 +803,10 @@ object RoomRepo {
         }
     }
 
-    suspend fun takeSeat(roomId: String, index: Int, uid: String, name: String, avatarB64: String?): String? {
+    suspend fun takeSeat(roomId: String, index: Int, uid: String, name: String, avatarB64: String?): String? =
+        kunciKursi.withLock { takeSeatSekali(roomId, index, uid, name, avatarB64) }
+
+    private suspend fun takeSeatSekali(roomId: String, index: Int, uid: String, name: String, avatarB64: String?): String? {
         return try {
             val base = Rtdb.ref("seats/$roomId")
             if (Rtdb.ref("locks/$roomId/$index").get().await().exists()) return "Mic ini dikunci oleh owner"
@@ -822,11 +833,16 @@ object RoomRepo {
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {
-            e.message ?: "Gagal naik kursi"
+            val m = (e.message ?: "").lowercase()
+            if (m.contains("overridden") || m.contains("subsequent set")) {
+                "Kursi sedang dipakai orang lain, coba lagi"
+            } else {
+                e.message ?: "Gagal naik kursi"
+            }
         }
     }
 
-    suspend fun leaveSeat(roomId: String, index: Int) {
+    suspend fun leaveSeat(roomId: String, index: Int) = kunciKursi.withLock {
         try {
             Rtdb.ref("seats/$roomId/$index").removeValue().await()
             Rtdb.ref("micPoints/$roomId/$index").removeValue()

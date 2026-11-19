@@ -69,6 +69,7 @@ object AgoraVoice {
     private var room: Room? = null
     private var appCtx: Context? = null
     private var joinJob: Job? = null
+    private var pantauSambung: Job? = null
     private var eventJob: Job? = null
     private val joinLock = Mutex()
 
@@ -269,6 +270,20 @@ object AgoraVoice {
                 try {
                     closeRoom()
                     lastStatus = "Suara: menyambung…"
+                    // Penghitung detik: dulu status hanya "menyambung…" tanpa
+                    // batas waktu sehingga tidak jelas apakah sambungan macet.
+                    pantauSambung = mainScope.launch {
+                        var detik = 0
+                        while (detik < 30) {
+                            delay(1000L)
+                            detik++
+                            if (joined || roomId != id || sengajaKeluar) break
+                            lastStatus = "Suara: menyambung… (${detik}s)"
+                        }
+                        if (!joined && roomId == id && !sengajaKeluar) {
+                            problem("Suara tidak tersambung setelah 30 detik. Coba ganti jaringan atau VPN, lalu masuk room lagi.")
+                        }
+                    }
                     val r = LiveKit.create(app, ROOM_OPSI)
                     room = r
                     eventJob = mainScope.launch {
@@ -323,6 +338,7 @@ object AgoraVoice {
                         r.connect(t.url, t.token)
                         true
                     }
+                    pantauSambung?.cancel(); pantauSambung = null
                     if (selesai == null) {
                         joined = false
                         try { r.disconnect() } catch (e: Exception) { }
@@ -341,6 +357,7 @@ object AgoraVoice {
                         }
                         return@withLock
                     }
+                    pantauSambung?.cancel(); pantauSambung = null
                     joined = true
                     try { tuneAudioRoute(app) } catch (e: Exception) { }
                     lastStatus = "OK tersambung"
@@ -349,6 +366,7 @@ object AgoraVoice {
                 } catch (e: kotlinx.coroutines.CancellationException) {
                     throw e
                 } catch (e: Exception) {
+                    pantauSambung?.cancel(); pantauSambung = null
                     joined = false
                     problem("Suara gagal tersambung: ${e.message}".take(140))
                 }

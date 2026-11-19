@@ -64,7 +64,24 @@ object Rtdb {
     }
 
     /** Transaksi pada satu node. Return null kalau sukses, atau pesan error/alasan batal. */
-    suspend fun tx(ref: DatabaseReference, update: (MutableData) -> String?): String? =
+    suspend fun tx(ref: DatabaseReference, update: (MutableData) -> String?): String? {
+        // Firebase membatalkan transaksi dengan pesan "The transaction was
+        // overridden by a subsequent set" kalau ada tulisan lain ke node yang sama
+        // selagi transaksi berjalan (mis. tombol kursi ditekan dua kali, atau
+        // leave() ikut menulis seats). Dulu pesan Inggris itu langsung muncul
+        // sebagai toast ke pengguna dan kursi gagal dinaiki. Sekarang diulang.
+        var hasil: String? = null
+        for (coba in 1..4) {
+            hasil = txSekali(ref, update)
+            if (hasil == null) return null
+            val p = hasil.lowercase()
+            if (!(p.contains("overridden") || p.contains("subsequent set")) || coba == 4) return hasil
+            kotlinx.coroutines.delay(150L * coba)
+        }
+        return hasil
+    }
+
+    private suspend fun txSekali(ref: DatabaseReference, update: (MutableData) -> String?): String? =
         suspendCancellableCoroutine { cont ->
             var abortMsg: String? = null
             ref.runTransaction(object : Transaction.Handler {

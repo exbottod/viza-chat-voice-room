@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.258",
-  "catatan": "• Hasil PK lama tidak muncul lagi setelah keluar masuk room",
-  "ukuran_apk": 56981876,
-  "sha256_apk": "de97300f74446fb8be68cabc72381cae182e2f0b05528488ca52be8f54a23c68",
+  "versi": "1.0.259",
+  "catatan": "• Perbaiki crash saat masuk room: latar room aman dan hemat memori",
+  "ukuran_apk": 56981698,
+  "sha256_apk": "ed19f7f685346a042b5e94e9d2859340bc815a2a015fd7fc9ccd1824292c3e44",
   "abis": {
     "arm64": {
-      "ukuran": 56981876,
-      "sha256": "de97300f74446fb8be68cabc72381cae182e2f0b05528488ca52be8f54a23c68"
+      "ukuran": 56981698,
+      "sha256": "ed19f7f685346a042b5e94e9d2859340bc815a2a015fd7fc9ccd1824292c3e44"
     },
     "armv7": {
-      "ukuran": 55133025,
-      "sha256": "e8364a3d46752f26d662dc90272ce43cdec786b0c12a8dffc1a2291bde05ca23"
+      "ukuran": 55132848,
+      "sha256": "a4ac185b5fc33b189ae1db7b62118e704031ad4fba6047577347c38537cf8052"
     },
     "universal": {
-      "ukuran": 75397872,
-      "sha256": "4d4ab5ee8c2f6e3150aef615f82145b7a56c9b22acc99139738daaa97ecf2142"
+      "ukuran": 75397693,
+      "sha256": "a785ca1808c4ec5cb1365320c6a35c8dbca8f3d312ee341869961de7aa322a59"
     }
   }
 }

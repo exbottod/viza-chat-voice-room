@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.268",
-  "catatan": "• perf(room): avatar didekode di IO dan di-cache, cache lencana jadi LRU, profil kursi dipanaskan seka\n• perf(room): avatar didekode di IO dan di-cache, cache lencana jadi LRU, profil kursi dipanaskan seka\n• perf(room): avatar didekode di IO dan di-cache, cache lencana jadi LRU, profil kursi dipanaskan seka",
-  "ukuran_apk": 57055388,
-  "sha256_apk": "ef8b38b8f63466675ecea6efdf0e85d2efe28332550f3520d4f67f8f40c6dd54",
+  "versi": "1.0.269",
+  "catatan": "Room terasa lebih ringan:\n• Avatar kursi tidak lagi didekode di thread utama, jadi pindah kursi tidak tersendat.\n• Lencana dan medal tidak diunduh ulang setiap kali tampil.\n• Profil orang yang duduk dimuat sekali saja.\n• Judul dialog pembaruan kini berbahasa Indonesia.",
+  "ukuran_apk": 57058054,
+  "sha256_apk": "b4abfe9a8c3d3a366f2f3507af70f6e3b340983ef271e8eb431cb6718743286c",
   "abis": {
     "arm64": {
-      "ukuran": 57055388,
-      "sha256": "ef8b38b8f63466675ecea6efdf0e85d2efe28332550f3520d4f67f8f40c6dd54"
+      "ukuran": 57058054,
+      "sha256": "b4abfe9a8c3d3a366f2f3507af70f6e3b340983ef271e8eb431cb6718743286c"
     },
     "armv7": {
-      "ukuran": 55206534,
-      "sha256": "6aef0b81c1539c42c0a1b89eda71f77f2a7b8fc91883542a0c7167b8022a252f"
+      "ukuran": 55209189,
+      "sha256": "06936b53727ec350c2692d4d1bb36508ceced376b435f24de25e28e5db0ac6c4"
     },
     "universal": {
-      "ukuran": 75471364,
-      "sha256": "c17c68c820905b0fe314b3d88ed75d7454bd76f35dbc0886d1c47eebc987108b"
+      "ukuran": 75474039,
+      "sha256": "def4800a388abe6a47f75d799f26c3825c0499405d138eac75a5101ae020437e"
     }
   }
 }

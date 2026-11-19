@@ -29,6 +29,7 @@ FRASA = [
     ("Game Rezo", f"Game {MEREK}"),
     ("Tentang Rezo", f"Tentang {MEREK}"),
     ("About Rezo", f"About {MEREK}"),
+    ("viza.43-156-99-4.sslip.io", "GANTI-SERVER-DOMPET"),
     ("rezo-voice-chat-officialex.aws-ap-southeast-1.turso.io", "GANTI-SERVER-TURSO"),
     ("rezo-wallet.bangexx01.workers.dev", "GANTI-SERVER-DOMPET"),
     ("rezo-wallet.pages.dev", "GANTI-SERVER-DOMPET-CADANGAN"),
@@ -37,7 +38,7 @@ FRASA = [
     ("REZO_", SLUG.upper() + "_"),
 ]
 
-SISA_INFRA = ["bangexx01", "turso.io", "rezo-wallet", "rezo-agora-token"]
+SISA_INFRA = ["bangexx01", "turso.io", "rezo-wallet", "rezo-agora-token", "sslip.io", "43-156-99-4"]
 
 
 def olah(teks):

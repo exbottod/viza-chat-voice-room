@@ -80,6 +80,13 @@ object AgoraVoice {
     @Volatile private var sengajaKeluar = false
     @Volatile private var percobaan = 0
     @Volatile private var konekSejak = 0L
+    // Berapa kali sambungan putus dalam hitungan detik setelah tersambung. Kalau
+    // media tidak bisa terbangun (UDP/TCP media tertutup, jaringan seluler aneh),
+    // LiveKit akan connect lalu putus berulang. Dulu aplikasi menyambung ulang
+    // tanpa batas sehingga status "menyambung ulang" tidak pernah berhenti dan
+    // aplikasi jadi berat.
+    @Volatile private var gagalCepat = 0
+    private var pantauReconnect: Job? = null
 
     var lastStatus by androidx.compose.runtime.mutableStateOf("")
 
@@ -300,13 +307,27 @@ object AgoraVoice {
                                     konekSejak = System.currentTimeMillis()
                                     mainScope.launch {
                                         delay(60_000L)
-                                        if (joined) percobaan = 0
+                                        if (joined) { percobaan = 0; gagalCepat = 0 }
                                     }
                                     lastStatus = "OK tersambung"
                                     mulaiPantauLevel()
                                     appCtx?.let { c -> mainScope.launch { tuneAudioRoute(c) } }
                                 }
-                                is RoomEvent.Reconnecting -> { lastStatus = "Suara: menyambung ulang…" }
+                                is RoomEvent.Reconnecting -> {
+                                    lastStatus = "Suara: menyambung ulang…"
+                                    // Beri tenggang: kalau LiveKit tidak berhasil
+                                    // menyambung lagi dalam 8 detik, tutup room lama
+                                    // dan coba sekali dengan room baru. Tanpa ini
+                                    // LiveKit bisa berputar sendiri terus.
+                                    pantauReconnect?.cancel()
+                                    pantauReconnect = mainScope.launch {
+                                        delay(8_000L)
+                                        if (!joined && !sengajaKeluar && roomId == id) {
+                                            lastStatus = "Suara: menyambung ulang…"
+                                            cobaSambungUlang(id, "media lambat")
+                                        }
+                                    }
+                                }
                                 is RoomEvent.Reconnected -> {
                                     joined = true
                                     konekSejak = System.currentTimeMillis()
@@ -316,19 +337,14 @@ object AgoraVoice {
                                 }
                                 is RoomEvent.Disconnected -> {
                                     joined = false
-                                    // Sambung ulang otomatis: dulu app langsung menyerah dan
-                                    // menampilkan "Suara terputus" saat room ramai / jaringan goyang.
-                                    if (!sengajaKeluar && roomId == id && percobaan < 4) {
-                                        percobaan += 1
-                                        lastStatus = "Suara: menyambung ulang (${percobaan}/4)…"
-                                        mainScope.launch {
-                                            delay(2000L * percobaan)
-                                            val c = appCtx
-                                            if (!sengajaKeluar && roomId == id && c != null) join(c, id)
-                                        }
-                                    } else if (!sengajaKeluar) {
-                                        problem("Suara terputus: ${ev.error?.message ?: "jaringan tidak stabil"}")
-                                    }
+                                    pantauReconnect?.cancel(); pantauReconnect = null
+                                    // Sambungan yang putus beberapa detik setelah
+                                    // tersambung hampir selalu berarti media tidak
+                                    // terbangun, bukan jaringan goyang sebentar.
+                                    if (konekSejak > 0L &&
+                                        System.currentTimeMillis() - konekSejak < 15_000L
+                                    ) gagalCepat += 1
+                                    cobaSambungUlang(id, ev.error?.message)
                                 }
                                 is RoomEvent.FailedToConnect -> {
                                     // Jangan munculkan toast tiap gagal: cukup status
@@ -360,18 +376,7 @@ object AgoraVoice {
                         // audio device tetap hidup di tiap percobaan gagal dan
                         // aplikasi makin berat serta lambat memuat.
                         closeRoom()
-                        if (!sengajaKeluar && percobaan < 2) {
-                            percobaan += 1
-                            lastStatus = "Suara: menyambung ulang…"
-                            mainScope.launch {
-                                delay(800L * percobaan)
-                                val c = appCtx
-                                if (!sengajaKeluar && roomId == id && c != null) join(c, id)
-                            }
-                        } else {
-                            // Tanpa toast: cukup status tenang yang bisa diketuk.
-                            lastStatus = "Suara: belum tersambung, ketuk untuk coba"
-                        }
+                        cobaSambungUlang(id, "server tidak menjawab")
                         return@withLock
                     }
                     pantauSambung?.cancel(); pantauSambung = null
@@ -385,9 +390,45 @@ object AgoraVoice {
                 } catch (e: Exception) {
                     pantauSambung?.cancel(); pantauSambung = null
                     joined = false
-                    problem("Suara gagal tersambung: ${e.message}".take(140))
+                    // Tanpa toast berulang: cukup status tenang yang bisa diketuk,
+                    // dan sambung ulang tetap dibatasi.
+                    try { closeRoom() } catch (x: Exception) { }
+                    cobaSambungUlang(id, e.message)
                 }
             }
+        }
+    }
+
+    /**
+     * Sambung ulang dengan batas tegas.
+     *
+     * Sambungan yang putus berkali-kali dalam hitungan detik berarti media tidak
+     * bisa terbangun. Menyambung ulang terus hanya membuat aplikasi berat dan
+     * status berputar di "menyambung ulang". Setelah dua kali gagal cepat,
+     * berhenti dan biarkan pengguna mengetuk status untuk mencoba lagi.
+     */
+    private fun cobaSambungUlang(id: String, alasan: String?) {
+        if (sengajaKeluar || roomId != id) return
+        val terlaluSering = gagalCepat >= 2
+        val habis = percobaan >= 4
+        if (terlaluSering || habis) {
+            lastStatus = if (terlaluSering) {
+                "Suara: media tidak tersambung, ketuk untuk coba"
+            } else {
+                "Suara: belum tersambung, ketuk untuk coba"
+            }
+            percobaan = 0
+            gagalCepat = 0
+            // Room lama ditutup supaya PeerConnection dan audio tidak menumpuk.
+            mainScope.launch { closeRoom() }
+            return
+        }
+        percobaan += 1
+        lastStatus = "Suara: menyambung ulang (${percobaan}/4)…"
+        mainScope.launch {
+            delay(1500L * percobaan)
+            val c = appCtx
+            if (!sengajaKeluar && roomId == id && c != null) join(c, id)
         }
     }
 
@@ -445,6 +486,7 @@ object AgoraVoice {
 
     fun leave() {
         sengajaKeluar = true
+        pantauReconnect?.cancel(); pantauReconnect = null
         percobaan = 0
         try { restoreAudioRoute() } catch (e: Exception) { }
         joinJob?.cancel()

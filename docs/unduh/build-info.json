@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.268",
   "catatan": "• perf(room): avatar didekode di IO dan di-cache, cache lencana jadi LRU, profil kursi dipanaskan seka\n• perf(room): avatar didekode di IO dan di-cache, cache lencana jadi LRU, profil kursi dipanaskan seka\n• perf(room): avatar didekode di IO dan di-cache, cache lencana jadi LRU, profil kursi dipanaskan seka",
-  "ukuran_apk": 57056185,
-  "sha256_apk": "7eddb41fd0a53bb3d9a91459d5aa49339a59dc7196ff5c751fac369aff94590a",
+  "ukuran_apk": 57055877,
+  "sha256_apk": "aee26d464565af6ef13b215d19047271d18e85ebee661dc00b71b256d133852d",
   "abis": {
     "arm64": {
-      "ukuran": 57056185,
-      "sha256": "7eddb41fd0a53bb3d9a91459d5aa49339a59dc7196ff5c751fac369aff94590a"
+      "ukuran": 57055877,
+      "sha256": "aee26d464565af6ef13b215d19047271d18e85ebee661dc00b71b256d133852d"
     },
     "armv7": {
-      "ukuran": 55207320,
-      "sha256": "97ae03e9f82188825ec4b2f504cbe86ffa1e123a04523aee2ed99d7feb4102d4"
+      "ukuran": 55207014,
+      "sha256": "ff0421703b92e8b371e2b9f37f35ab5c0dec3876c6679f1dce50f7548e6d2990"
     },
     "universal": {
-      "ukuran": 75472162,
-      "sha256": "0350147946f3ce3131b9f3c969ecf404d277b7acbca368b5588d3a65ea161c36"
+      "ukuran": 75471852,
+      "sha256": "ee7cdc404e272869269ee97edcaf52e0e1b3d3b8aae641e057edebd38ba0e201"
     }
   }
 }

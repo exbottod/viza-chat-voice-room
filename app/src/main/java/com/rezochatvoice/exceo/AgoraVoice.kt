@@ -79,6 +79,7 @@ object AgoraVoice {
     @Volatile private var muteRemote = false
     @Volatile private var sengajaKeluar = false
     @Volatile private var percobaan = 0
+    @Volatile private var konekSejak = 0L
 
     var lastStatus by androidx.compose.runtime.mutableStateOf("")
 
@@ -272,6 +273,7 @@ object AgoraVoice {
                     lastStatus = "Suara: menyambung…"
                     // Penghitung detik: dulu status hanya "menyambung…" tanpa
                     // batas waktu sehingga tidak jelas apakah sambungan macet.
+                    pantauSambung?.cancel()
                     pantauSambung = mainScope.launch {
                         var detik = 0
                         while (detik < 30) {
@@ -291,7 +293,15 @@ object AgoraVoice {
                             when (ev) {
                                 is RoomEvent.Connected -> {
                                     joined = true
-                                    percobaan = 0
+                                    // Dulu penghitung langsung direset di sini, jadi
+                                    // sambungan yang nyambung-putus berulang terus
+                                    // membuat room LiveKit baru: aplikasi jadi berat.
+                                    // Sekarang direset hanya kalau sudah stabil 60 detik.
+                                    konekSejak = System.currentTimeMillis()
+                                    mainScope.launch {
+                                        delay(60_000L)
+                                        if (joined) percobaan = 0
+                                    }
                                     lastStatus = "OK tersambung"
                                     mulaiPantauLevel()
                                     appCtx?.let { c -> mainScope.launch { tuneAudioRoute(c) } }
@@ -299,7 +309,7 @@ object AgoraVoice {
                                 is RoomEvent.Reconnecting -> { lastStatus = "Suara: menyambung ulang…" }
                                 is RoomEvent.Reconnected -> {
                                     joined = true
-                                    percobaan = 0
+                                    konekSejak = System.currentTimeMillis()
                                     lastStatus = "OK tersambung"
                                     mulaiPantauLevel()
                                     appCtx?.let { c -> mainScope.launch { tuneAudioRoute(c) } }
@@ -308,11 +318,11 @@ object AgoraVoice {
                                     joined = false
                                     // Sambung ulang otomatis: dulu app langsung menyerah dan
                                     // menampilkan "Suara terputus" saat room ramai / jaringan goyang.
-                                    if (!sengajaKeluar && roomId == id && percobaan < 6) {
+                                    if (!sengajaKeluar && roomId == id && percobaan < 4) {
                                         percobaan += 1
-                                        lastStatus = "Suara: menyambung ulang (${percobaan}/6)…"
+                                        lastStatus = "Suara: menyambung ulang (${percobaan}/4)…"
                                         mainScope.launch {
-                                            delay(1200L * percobaan)
+                                            delay(2000L * percobaan)
                                             val c = appCtx
                                             if (!sengajaKeluar && roomId == id && c != null) join(c, id)
                                         }
@@ -341,14 +351,16 @@ object AgoraVoice {
                     pantauSambung?.cancel(); pantauSambung = null
                     if (selesai == null) {
                         joined = false
-                        try { r.disconnect() } catch (e: Exception) { }
-                        room = null
-                        eventJob?.cancel(); eventJob = null
-                        if (!sengajaKeluar && percobaan < 3) {
+                        // closeRoom() memanggil release(). Dulu cabang ini hanya
+                        // disconnect lalu lupa release(), jadi PeerConnection dan
+                        // audio device tetap hidup di tiap percobaan gagal dan
+                        // aplikasi makin berat serta lambat memuat.
+                        closeRoom()
+                        if (!sengajaKeluar && percobaan < 4) {
                             percobaan += 1
-                            lastStatus = "Suara: menyambung ulang (${percobaan}/3)…"
+                            lastStatus = "Suara: menyambung ulang (${percobaan}/4)…"
                             mainScope.launch {
-                                delay(1500L * percobaan)
+                                delay(2000L * percobaan)
                                 val c = appCtx
                                 if (!sengajaKeluar && roomId == id && c != null) join(c, id)
                             }

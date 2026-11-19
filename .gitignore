@@ -4,3 +4,8 @@ build/
 .gradle/
 local.properties
 app/google-services.json
+
+# sampah lokal
+__pycache__/
+*.pyc
+.DS_Store

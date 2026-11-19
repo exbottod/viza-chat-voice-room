@@ -26,10 +26,38 @@ object RoomImg {
     private val sudah = HashSet<String>()
     private val sedang = HashSet<String>()
 
-    /** Ambil gambar room sekali saja. Panggilan berikutnya memakai memori. */
+    private fun sp() = com.google.firebase.FirebaseApp.getInstance().applicationContext
+        .getSharedPreferences("room_img_cache", android.content.Context.MODE_PRIVATE)
+
+    /** Simpan gambar room di HP supaya tidak diunduh lagi setiap aplikasi dibuka. */
+    private fun simpanDisk(id: String) {
+        try {
+            sp().edit()
+                .putString(id + "_foto", foto[id] ?: "")
+                .putString(id + "_latar", latar[id] ?: "")
+                .apply()
+        } catch (e: Exception) {
+        }
+    }
+
+    /** Ambil gambar room sekali saja. Panggilan berikutnya memakai memori/HP. */
     suspend fun muat(id: String, paksa: Boolean = false) {
         if (id.isBlank()) return
         if (!paksa && (sudah.contains(id) || sedang.contains(id))) return
+        // Simpanan di HP dipakai lebih dulu: menghemat kuota internet.
+        if (!paksa && !foto.containsKey(id)) {
+            try {
+                val f = sp().getString(id + "_foto", null)
+                val l = sp().getString(id + "_latar", null)
+                if (f != null || l != null) {
+                    if (!f.isNullOrBlank()) foto[id] = f
+                    if (!l.isNullOrBlank()) latar[id] = l
+                    sudah.add(id)
+                    return
+                }
+            } catch (e: Exception) {
+            }
+        }
         sedang.add(id)
         var fotoAda = false
         try {
@@ -41,6 +69,7 @@ object RoomImg {
                 foto[id] = p
                 latar[id] = b
                 fotoAda = true
+                simpanDisk(id)
             }
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e

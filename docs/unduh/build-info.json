@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.267",
-  "catatan": "• Hapus berkas pycache yang ikut ter-commit",
-  "ukuran_apk": 57054374,
-  "sha256_apk": "f2b699c19d6a30f28a1ace3484ccbf8189cb6395f32b7fdacf8fe4b7a3512522",
+  "versi": "1.0.268",
+  "catatan": "• perf(room): avatar didekode di IO dan di-cache, cache lencana jadi LRU, profil kursi dipanaskan seka\n• perf(room): avatar didekode di IO dan di-cache, cache lencana jadi LRU, profil kursi dipanaskan seka\n• perf(room): avatar didekode di IO dan di-cache, cache lencana jadi LRU, profil kursi dipanaskan seka",
+  "ukuran_apk": 57056185,
+  "sha256_apk": "7eddb41fd0a53bb3d9a91459d5aa49339a59dc7196ff5c751fac369aff94590a",
   "abis": {
     "arm64": {
-      "ukuran": 57054374,
-      "sha256": "f2b699c19d6a30f28a1ace3484ccbf8189cb6395f32b7fdacf8fe4b7a3512522"
+      "ukuran": 57056185,
+      "sha256": "7eddb41fd0a53bb3d9a91459d5aa49339a59dc7196ff5c751fac369aff94590a"
     },
     "armv7": {
-      "ukuran": 55205511,
-      "sha256": "484795b57c28e1d512c849464e30dc5042235e725b0410ad4f50a2305f24326b"
+      "ukuran": 55207320,
+      "sha256": "97ae03e9f82188825ec4b2f504cbe86ffa1e123a04523aee2ed99d7feb4102d4"
     },
     "universal": {
-      "ukuran": 75470343,
-      "sha256": "811525952cec2016c9f062516f4152dea2cde0312598573d0b254962a45d2837"
+      "ukuran": 75472162,
+      "sha256": "0350147946f3ce3131b9f3c969ecf404d277b7acbca368b5588d3a65ea161c36"
     }
   }
 }

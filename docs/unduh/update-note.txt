@@ -1,1 +1,3 @@
-• Hapus berkas pycache yang ikut ter-commit
+• perf(room): avatar didekode di IO dan di-cache, cache lencana jadi LRU, profil kursi dipanaskan seka
+• perf(room): avatar didekode di IO dan di-cache, cache lencana jadi LRU, profil kursi dipanaskan seka
+• perf(room): avatar didekode di IO dan di-cache, cache lencana jadi LRU, profil kursi dipanaskan seka

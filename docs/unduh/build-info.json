@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.267",
   "catatan": "• Hapus berkas pycache yang ikut ter-commit",
-  "ukuran_apk": 57054337,
-  "sha256_apk": "05ecc76ebd2637a0bc4395bcc9671c6f9d06693d16c48b16a566d4d6e69047ca",
+  "ukuran_apk": 57054334,
+  "sha256_apk": "1ae1441e5fa2c664c239c114bd5684d840e02a9b8fd5d88b8f7569c415473a36",
   "abis": {
     "arm64": {
-      "ukuran": 57054337,
-      "sha256": "05ecc76ebd2637a0bc4395bcc9671c6f9d06693d16c48b16a566d4d6e69047ca"
+      "ukuran": 57054334,
+      "sha256": "1ae1441e5fa2c664c239c114bd5684d840e02a9b8fd5d88b8f7569c415473a36"
     },
     "armv7": {
-      "ukuran": 55205480,
-      "sha256": "ee0344052b15e11cc06cd33b521e6f6ec53247cea74aabe0b7b37c425027eb58"
+      "ukuran": 55205475,
+      "sha256": "1b35962cbf5fcdb3dfd5f944fb57dcbdcaa36f83ceb53746b77d1c8c4d368131"
     },
     "universal": {
-      "ukuran": 75470331,
-      "sha256": "a68a95dadffadb763df0f5413fbdaefce6d3e08662ecb9b801d4a22844872c27"
+      "ukuran": 75470315,
+      "sha256": "d43ba22ec08d0cd98d761e1b3af76bd73a294f4a1e3ff497d40861e88e4011c3"
     }
   }
 }

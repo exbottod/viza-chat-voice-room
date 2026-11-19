@@ -500,12 +500,14 @@ object FollowRepo {
 
 @Composable
 fun PublicAvatar(u: PublicUser?, size: Dp, fallback: String = "?", modifier: Modifier = Modifier) {
-    val bmp = remember(u?.avatarB64) { ProfileRepo.decodeB64(u?.avatarB64) }
+    // Tautan foto didahulukan: gambarnya diunduh sekali lalu disimpan di HP,
+    // jadi lebih hemat kuota daripada base64 yang ikut terunduh tiap ambil profil.
+    val tautan = u?.photoUrl?.takeIf { it.isNotBlank() }
+    val bmp = remember(u?.avatarB64) { if (tautan == null) ProfileRepo.decodeB64(u?.avatarB64) else null }
     val base = modifier.size(size).clip(CircleShape)
     when {
+        tautan != null -> AsyncImage(model = tautan, contentDescription = null, modifier = base, contentScale = ContentScale.Crop)
         bmp != null -> Image(bmp, null, base, contentScale = ContentScale.Crop)
-        u != null && !u.photoUrl.isNullOrBlank() ->
-            AsyncImage(model = u.photoUrl, contentDescription = null, modifier = base, contentScale = ContentScale.Crop)
         else -> Box(base.background(Color(0xFF263238)), contentAlignment = Alignment.Center) {
             when (u?.gender) {
                 // Foto profil default cowo / cewek saat awal daftar akun (belum upload foto).

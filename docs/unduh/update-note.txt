@@ -1,2 +1,1 @@
-• Sekali termuat, tidak diunduh lagi: profil, foto, bingkai, lencana, dan latar room dipakai dari simpanan HP
-• Data hanya diperbarui lagi setelah 24 jam atau saat membuka profil lengkap
+• Hemat kuota: foto profil baru disimpan lebih kecil (160px), dan tautan foto didahulukan lalu disimpan di HP

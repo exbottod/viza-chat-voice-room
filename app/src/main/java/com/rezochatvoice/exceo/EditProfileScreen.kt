@@ -133,7 +133,9 @@ fun EditProfileScreen(
     val avatarPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) scope.launch {
             busy = true
-            val b64 = ProfileRepo.encodeImage(context, uri, 320, square = true, quality = 85)
+            // 160px cukup tajam untuk avatar dan jauh lebih hemat kuota
+            // daripada 320px (data foto ikut terunduh setiap profil diambil).
+            val b64 = ProfileRepo.encodeImage(context, uri, 160, square = true, quality = 70)
             busy = false
             if (b64 != null) {
                 onChange(profile.copy(avatarB64 = b64))

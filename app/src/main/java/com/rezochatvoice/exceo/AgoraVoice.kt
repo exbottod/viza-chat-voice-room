@@ -273,17 +273,13 @@ object AgoraVoice {
                     lastStatus = "Suara: menyambung…"
                     // Penghitung detik: dulu status hanya "menyambung…" tanpa
                     // batas waktu sehingga tidak jelas apakah sambungan macet.
+                    // Tanpa hitungan detik: status cukup satu baris tenang, dan
+                    // kalau macet pengguna bisa mengetuknya untuk mencoba lagi.
                     pantauSambung?.cancel()
                     pantauSambung = mainScope.launch {
-                        var detik = 0
-                        while (detik < 30) {
-                            delay(1000L)
-                            detik++
-                            if (joined || roomId != id || sengajaKeluar) break
-                            lastStatus = "Suara: menyambung… (${detik}s)"
-                        }
+                        delay(10_000L)
                         if (!joined && roomId == id && !sengajaKeluar) {
-                            problem("Suara tidak tersambung setelah 30 detik. Coba ganti jaringan atau VPN, lalu masuk room lagi.")
+                            lastStatus = "Suara: belum tersambung, ketuk untuk coba"
                         }
                     }
                     val r = LiveKit.create(app, ROOM_OPSI)
@@ -330,7 +326,11 @@ object AgoraVoice {
                                         problem("Suara terputus: ${ev.error?.message ?: "jaringan tidak stabil"}")
                                     }
                                 }
-                                is RoomEvent.FailedToConnect -> problem("Suara gagal tersambung: ${ev.error.message}".take(140))
+                                is RoomEvent.FailedToConnect -> {
+                                    // Jangan munculkan toast tiap gagal: cukup status
+                                    // tenang yang bisa diketuk untuk mencoba lagi.
+                                    lastStatus = "Suara: belum tersambung, ketuk untuk coba"
+                                }
                                 is RoomEvent.ActiveSpeakersChanged -> {
                                     val ids = HashSet<String>()
                                     for (p in ev.speakers) p.identity?.value?.let { ids.add(it) }
@@ -344,7 +344,7 @@ object AgoraVoice {
                     // Server suara kadang tidak menjawab sama sekali, dan dulu
                     // connect() menunggu tanpa batas sehingga status tertahan di
                     // "Suara: menyambung…". Sekarang dibatasi 15 detik lalu coba lagi.
-                    val selesai = kotlinx.coroutines.withTimeoutOrNull(15_000L) {
+                    val selesai = kotlinx.coroutines.withTimeoutOrNull(10_000L) {
                         r.connect(t.url, t.token)
                         true
                     }
@@ -356,16 +356,17 @@ object AgoraVoice {
                         // audio device tetap hidup di tiap percobaan gagal dan
                         // aplikasi makin berat serta lambat memuat.
                         closeRoom()
-                        if (!sengajaKeluar && percobaan < 4) {
+                        if (!sengajaKeluar && percobaan < 2) {
                             percobaan += 1
-                            lastStatus = "Suara: menyambung ulang (${percobaan}/4)…"
+                            lastStatus = "Suara: menyambung ulang…"
                             mainScope.launch {
-                                delay(2000L * percobaan)
+                                delay(800L * percobaan)
                                 val c = appCtx
                                 if (!sengajaKeluar && roomId == id && c != null) join(c, id)
                             }
                         } else {
-                            problem("Suara gagal tersambung: server suara tidak menjawab")
+                            // Tanpa toast: cukup status tenang yang bisa diketuk.
+                            lastStatus = "Suara: belum tersambung, ketuk untuk coba"
                         }
                         return@withLock
                     }
@@ -428,6 +429,14 @@ object AgoraVoice {
     fun muteRoom(mute: Boolean) {
         muteRemote = mute
         applyMute()
+    }
+
+    /** Coba sambung ulang manual saat pengguna mengetuk status suara. */
+    fun sambungUlang(ctx: Context, id: String) {
+        percobaan = 0
+        sengajaKeluar = false
+        joined = false
+        join(ctx, id)
     }
 
     fun leave() {

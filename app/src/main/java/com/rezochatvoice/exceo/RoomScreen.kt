@@ -1258,7 +1258,10 @@ fun RoomScreen(
                 Box(
                     Modifier.align(Alignment.TopStart).padding(top = 64.dp, start = 8.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0xCC000000)).padding(horizontal = 6.dp, vertical = 3.dp),
+                        .background(Color(0xCC000000))
+                        // Ketuk status suara untuk mencoba menyambung lagi.
+                        .clickable { AgoraVoice.sambungUlang(context, r.id) }
+                        .padding(horizontal = 6.dp, vertical = 3.dp),
                 ) {
                     Text(st, color = Color(0xFFFFD24D), fontSize = 9.sp, maxLines = 2)
                 }

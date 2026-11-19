@@ -6,6 +6,16 @@ set -e
 AKAR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$AKAR"
 
+# Penjaga: APK dari repo ini tidak boleh memuat alamat placeholder milik
+# template white-label. Dulu ada rilis yang terbangun dari salinan debrand,
+# jadi aplikasi mencari host "ganti-server-dompet" yang tidak ada, token suara
+# gagal, dan seluruh room menunggu timeout.
+if grep -rqE 'GANTI-SERVER-DOMPET|GANTI-SERVER-TURSO|GANTI-SERVER-AGORA' app/src/main 2>/dev/null; then
+  echo "BERHENTI: app/src masih berisi alamat placeholder white-label:" >&2
+  grep -rnE 'GANTI-SERVER-DOMPET|GANTI-SERVER-TURSO|GANTI-SERVER-AGORA' app/src/main | head -5 >&2
+  exit 1
+fi
+
 NAMA="${NAMA_APP:-Viza Chat}"
 PAKET="${PAKET:-com.vizachatvoice.app}"
 RTDB="${RTDB_URL:-https://my-app-e7f8c-default-rtdb.asia-southeast1.firebasedatabase.app}"

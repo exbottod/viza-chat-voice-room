@@ -10,7 +10,7 @@ package com.rezochatvoice.exceo
 object RoomChatCache {
     private const val BATAS = 300
     private val pesan = HashMap<String, List<RoomMsg>>()
-    private val draf = HashMap<String, String>()
+    private val draf = java.util.concurrent.ConcurrentHashMap<String, String>()
 
     fun ambil(roomId: String): List<RoomMsg> = pesan[roomId] ?: emptyList()
 
@@ -29,6 +29,9 @@ object RoomChatCache {
     fun simpanDraf(roomId: String, teks: String) {
         if (teks.isEmpty()) draf.remove(roomId) else draf[roomId] = teks
     }
+
+    /** Naik setiap draf diubah dari luar kolom ketik (kirim, tag, reset). */
+    val versiDraf = androidx.compose.runtime.mutableIntStateOf(0)
 
     /** Dipakai kalau pengguna benar-benar keluar room. */
     fun hapus(roomId: String) {

@@ -100,7 +100,7 @@ object VipAssets {
     val diag = mutableStateMapOf<String, String>()
     fun jumlah(): Int = cfg.size
     private val cfg = mutableStateMapOf<String, VipAsset>()
-    private val blobs = HashMap<String, ByteArray>()
+    private val blobs = java.util.concurrent.ConcurrentHashMap<String, ByteArray>()
     private var reg: ListenerRegistration? = null
     // UTAMA: aset VIP kini dari Realtime Database (vipCfg) supaya upload panel
     // developer tetap tersimpan walau kuota Firestore habis. Firestore jadi cadangan.
@@ -248,6 +248,10 @@ object VipAssets {
         start(force)
     }
 
+    /** Baca bytes yang SUDAH ada di memori, tanpa menunggu. Dipakai sebagai nilai awal
+     *  supaya aset yang pernah dimuat langsung tampil di bingkai pertama. */
+    fun bytesSegera(a: VipAsset): ByteArray? = blobs["${a.n}_${a.slot}_${a.updatedAt}"]
+
     /** Ambil isi file yang di-upload dari HP (disimpan base64 di Firestore). Di-cache di memori. */
     suspend fun bytes(a: VipAsset): ByteArray? {
         val key = "${a.n}_${a.slot}_${a.updatedAt}"
@@ -322,7 +326,26 @@ fun vipBubbleTier(bubbleId: String?, vip: Int, until: Long): Int {
  * Ukur rasio lebar:tinggi aset supaya lencana/gelar panjang tidak digencet jadi kotak.
  * Bisa: gambar (png/jpg/webp/gif) dan svga. Return null kalau tidak terukur.
  */
+/**
+ * Rasio aset (lebar/tinggi) disimpan sekali per aset. Dulu setiap ikon lencana
+ * atau ID unik memulai dari rasio bawaan lalu mengukur ulang, jadi lebarnya
+ * melompat dan terlihat memuat ulang tiap baris chat dibuat ulang.
+ */
+private val cacheRasio = java.util.concurrent.ConcurrentHashMap<String, Float>()
+
+private fun kunciRasio(a: VipAsset) = "${a.n}_${a.slot}_${a.updatedAt}_${a.url.hashCode()}"
+
+/** Baca rasio yang sudah diukur, tanpa menunggu. null kalau belum pernah diukur. */
+internal fun rasioTersimpan(a: VipAsset): Float? = cacheRasio[kunciRasio(a)]
+
 internal suspend fun measureAssetRatio(ctx: android.content.Context, a: VipAsset): Float? {
+    cacheRasio[kunciRasio(a)]?.let { return it }
+    val hasil = ukurRasioAset(ctx, a)
+    if (hasil != null) cacheRasio[kunciRasio(a)] = hasil
+    return hasil
+}
+
+private suspend fun ukurRasioAset(ctx: android.content.Context, a: VipAsset): Float? {
     return when (a.kind) {
         "svga" -> {
             // Ambil bytes DULU (suspend), karena blok suspendCancellableCoroutine bukan suspend.
@@ -593,7 +616,11 @@ fun VipMedia(
     onLangkah: (Float) -> Unit = {},
     onMulai: () -> Unit = {},
 ) {
-    val data by produceState<ByteArray?>(null, a.n, a.slot, a.updatedAt) {
+    val data by produceState<ByteArray?>(
+        initialValue = if (a.hasData) VipAssets.bytesSegera(a) else null,
+        a.n, a.slot, a.updatedAt,
+    ) {
+        if (value != null) return@produceState
         value = if (a.hasData) {
             VipAssets.bytes(a)
         } else if (a.url.isNotBlank() && kotakAnimasi.contains(a.slot) &&

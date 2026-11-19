@@ -355,8 +355,16 @@ fun RoomScreen(
     var tambahEmotOpen by remember { mutableStateOf(false) }
     var bolehTambahEmot by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { bolehTambahEmot = EmotTambah.boleh() }
-    var draft by remember(roomId) { mutableStateOf(RoomChatCache.ambilDraf(roomId)) }
-    LaunchedEffect(roomId, draft) { RoomChatCache.simpanDraf(roomId, draft) }
+    // Draf TIDAK lagi state milik layar room. Dulu tiap huruf mengubah state di
+    // tubuh RoomScreen, sehingga seluruh room (chat, kursi, bingkai, medal) ikut
+    // dihitung ulang tiap ketukan dan terlihat memuat ulang. Sekarang teks
+    // dipegang kolom ketik sendiri; layar room hanya membaca/menulis draf saat
+    // perlu (kirim gambar, tag, reset) lewat RoomChatCache, tanpa berlangganan.
+    val bacaDraf: () -> String = { RoomChatCache.ambilDraf(roomId) }
+    val tulisDraf: (String) -> Unit = { v ->
+        RoomChatCache.simpanDraf(roomId, v)
+        RoomChatCache.versiDraf.intValue++
+    }
     var profileUid by remember { mutableStateOf<String?>(null) }
     var clearedAt by remember { mutableStateOf(0L) }
     var sendTick by remember { mutableStateOf(0) }
@@ -364,7 +372,7 @@ fun RoomScreen(
 
     // Hapus semua draft/state sementara (ketikan chat, panel gift, emot, dll)
     fun resetDrafts() {
-        draft = ""
+        tulisDraf("")
         typing = false
         emoteOpen = false
         giftOpen = false
@@ -543,10 +551,10 @@ fun RoomScreen(
             if (url == null) {
                 toast(err ?: "Gagal mengunggah gambar")
             } else {
-                val sisa = draft.trim()
+                val sisa = bacaDraf().trim()
                 val e = RoomExtras.sendImage(roomIdNow, myUidNow, myNameNow, url, sisa)
                 if (e == null) {
-                    draft = ""
+                    tulisDraf("")
                     sendTick++
                 } else {
                     toast(e)
@@ -921,9 +929,8 @@ fun RoomScreen(
             }
             if (typing) {
                 RoomTypingBar(
-                    text = draft,
+                    roomId = r.id,
                     myFam = myFam,
-                    onTextChange = { draft = it },
                     onSend = { t ->
                         if (larangan[myUid]?.ketik == true || (cfgBicaraAdmin && !canManage)) {
                             toast(
@@ -995,7 +1002,7 @@ fun RoomScreen(
                         // Tag user: langsung ke tab ketik dengan @nama di depan.
                         seatSheet = null
                         val sebut = "@" + u.name.replace(" ", "") + " "
-                        if (!draft.contains(sebut)) draft = sebut + draft
+                        if (!bacaDraf().contains(sebut)) tulisDraf(sebut + bacaDraf())
                         typing = true
                         emoteOpen = false
                     },

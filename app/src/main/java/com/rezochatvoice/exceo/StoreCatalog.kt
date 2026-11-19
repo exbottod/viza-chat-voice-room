@@ -414,10 +414,10 @@ fun entryAssetOf(m: RoomMsg): VipAsset? {
  */
 @Composable
 fun UidUnikId(a: VipAsset, tinggi: Dp = 20.dp) {
-    var ratio by remember(a.n, a.slot, a.updatedAt) { mutableStateOf(3f) }
+    var ratio by remember(a.n, a.slot, a.updatedAt) { mutableStateOf(rasioTersimpan(a) ?: 3f) }
     val ctx = LocalContext.current
     LaunchedEffect(a.n, a.slot, a.updatedAt) {
-        ratio = runCatching { measureAssetRatio(ctx, a) }.getOrNull() ?: 3f
+        if (rasioTersimpan(a) == null) ratio = runCatching { measureAssetRatio(ctx, a) }.getOrNull() ?: 3f
     }
     VipMedia(a, Modifier.height(tinggi).width((tinggi.value * ratio).dp), loop = true)
 }
@@ -430,10 +430,10 @@ fun StoreBadgeIcon(item: StoreItem, size: Dp = 24.dp) {
         return
     }
     
-    var ratio by remember(a.n, a.slot, a.updatedAt) { mutableStateOf(2.5f) }
+    var ratio by remember(a.n, a.slot, a.updatedAt) { mutableStateOf(rasioTersimpan(a) ?: 2.5f) }
     val ctx = LocalContext.current
     LaunchedEffect(a.n, a.slot, a.updatedAt) {
-        ratio = runCatching { measureAssetRatio(ctx, a) }.getOrNull() ?: 2.5f
+        if (rasioTersimpan(a) == null) ratio = runCatching { measureAssetRatio(ctx, a) }.getOrNull() ?: 2.5f
     }
     VipMedia(a, Modifier.height(size).width((size.value * ratio).dp), loop = true)
 }

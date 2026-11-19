@@ -170,7 +170,7 @@ fun UserMedals(
     rataKiri: Boolean = false,
     barisMaks: Int = 0,
 ) {
-    LaunchedEffect(Unit) { StoreCatalog.start(); VipAssets.load() }
+    muatKatalogSekali()
     // Aturan sama dengan activeMedalIds: medal VIP, store (sx_), SVIP (svm_), dan bawaan.
     val ids = gabungMedalTier(medalIdList(csv)).take(MAX_MEDALS).filter {
         it.startsWith("vipt_") || it.startsWith("sx_") || it.startsWith("svm_") || findItem(it) != null
@@ -271,7 +271,7 @@ fun GloryMedalScreen(uid: String, wallet: Wallet, onBack: () -> Unit) {
     val context = LocalContext.current
     var tab by remember { mutableStateOf(0) }
     var buying by remember { mutableStateOf<CatalogItem?>(null) }
-    LaunchedEffect(Unit) { StoreCatalog.start(); VipAssets.load() }
+    muatKatalogSekali()
     // Medal SVIP disimpan di Realtime Database (pub/{uid}/svipInv). Di sini dibaca
     // langsung dan digabung, supaya medal yang dibeli LANGSUNG tampil di MY MEDALS.
     var svInv by remember(uid) { mutableStateOf<Map<String, Long>>(emptyMap()) }
@@ -442,5 +442,20 @@ fun GloryMedalScreen(uid: String, wallet: Wallet, onBack: () -> Unit) {
             },
             dismissButton = { TextButton(onClick = { buying = null }) { Text(tr("Batal")) } },
         )
+    }
+}
+
+
+/** Katalog store dan aset VIP dimuat SEKALI per proses, bukan tiap baris/medal dibuat. */
+private val katalogSudahDipanggil = java.util.concurrent.atomic.AtomicBoolean(false)
+
+@Composable
+private fun muatKatalogSekali() {
+    if (katalogSudahDipanggil.get()) return
+    LaunchedEffect(Unit) {
+        if (katalogSudahDipanggil.compareAndSet(false, true)) {
+            StoreCatalog.start()
+            VipAssets.load()
+        }
     }
 }

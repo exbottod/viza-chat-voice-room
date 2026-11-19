@@ -182,9 +182,8 @@ val LocalRoomMinimized = androidx.compose.runtime.compositionLocalOf { false }
 
 @Composable
 fun RoomTypingBar(
-    text: String,
+    roomId: String,
     myFam: String = "",
-    onTextChange: (String) -> Unit,
     onSend: (String) -> Unit,
     onClose: () -> Unit,
     onPickImage: () -> Unit = {},
@@ -192,6 +191,20 @@ fun RoomTypingBar(
 ) {
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { focus.requestFocus() }
+    // Teks dipegang di SINI, bukan di layar room. Mengetik hanya menghitung ulang
+    // kolom ini, jadi chat, kursi, bingkai, medal, dan lencana tidak ikut
+    // dimuat ulang tiap huruf. Draf disalin ke cache tanpa memicu layar room.
+    var text by remember(roomId) { mutableStateOf(RoomChatCache.ambilDraf(roomId)) }
+    // Draf diubah dari luar (tag @nama, kirim gambar, reset): ikuti.
+    val versi = RoomChatCache.versiDraf.intValue
+    LaunchedEffect(versi) {
+        val luar = RoomChatCache.ambilDraf(roomId)
+        if (luar != text) text = luar
+    }
+    val onTextChange: (String) -> Unit = { v ->
+        text = v
+        RoomChatCache.simpanDraf(roomId, v)
+    }
     fun submit() {
         if (text.isNotBlank()) {
             onSend(text.trim())

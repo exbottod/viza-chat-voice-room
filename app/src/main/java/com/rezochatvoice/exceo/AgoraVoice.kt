@@ -316,7 +316,31 @@ object AgoraVoice {
                             }
                         }
                     }
-                    r.connect(t.url, t.token)
+                    // Server suara kadang tidak menjawab sama sekali, dan dulu
+                    // connect() menunggu tanpa batas sehingga status tertahan di
+                    // "Suara: menyambung…". Sekarang dibatasi 15 detik lalu coba lagi.
+                    val selesai = kotlinx.coroutines.withTimeoutOrNull(15_000L) {
+                        r.connect(t.url, t.token)
+                        true
+                    }
+                    if (selesai == null) {
+                        joined = false
+                        try { r.disconnect() } catch (e: Exception) { }
+                        room = null
+                        eventJob?.cancel(); eventJob = null
+                        if (!sengajaKeluar && percobaan < 3) {
+                            percobaan += 1
+                            lastStatus = "Suara: menyambung ulang (${percobaan}/3)…"
+                            mainScope.launch {
+                                delay(1500L * percobaan)
+                                val c = appCtx
+                                if (!sengajaKeluar && roomId == id && c != null) join(c, id)
+                            }
+                        } else {
+                            problem("Suara gagal tersambung: server suara tidak menjawab")
+                        }
+                        return@withLock
+                    }
                     joined = true
                     try { tuneAudioRoute(app) } catch (e: Exception) { }
                     lastStatus = "OK tersambung"

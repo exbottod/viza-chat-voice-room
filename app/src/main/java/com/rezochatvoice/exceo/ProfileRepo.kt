@@ -210,6 +210,32 @@ object ProfileRepo {
     }
 
     /**
+     * Cache avatar yang sudah didekode. Dulu setiap sel kursi yang dibangun ulang
+     * mendekode base64 lagi di thread UI, jadi pindah kursi terasa tersendat.
+     * Sekarang hasil decode disimpan dan dipakai ulang.
+     */
+    private val avatarCache = object : android.util.LruCache<String, ImageBitmap>(24) {}
+
+    private fun kunciAvatar(b64: String): String =
+        b64.length.toString() + ":" + b64.hashCode().toString(16)
+
+    /** Baca dari cache saja, tanpa decode. Dipakai untuk bingkai pertama supaya tidak berkedip. */
+    fun avatarCached(b64: String?): ImageBitmap? {
+        if (b64.isNullOrBlank()) return null
+        return avatarCache.get(kunciAvatar(b64))
+    }
+
+    /** Decode avatar di thread IO lalu simpan, supaya tidak diulang saat kursi dibuat ulang. */
+    suspend fun decodeAvatar(b64: String?): ImageBitmap? {
+        if (b64.isNullOrBlank()) return null
+        val kunci = kunciAvatar(b64)
+        avatarCache.get(kunci)?.let { return it }
+        val bmp = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { decodeB64(b64) }
+        if (bmp != null) avatarCache.put(kunci, bmp)
+        return bmp
+    }
+
+    /**
      * Baca gambar dari galeri, perbaiki rotasi, (opsional) crop persegi,
      * perkecil, lalu jadikan JPEG base64 supaya muat di dokumen Firestore (<1MB).
      */

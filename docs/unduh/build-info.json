@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.256",
   "catatan": "• Latar room dipanggang sekali supaya geser chat tidak berat",
-  "ukuran_apk": 56980817,
-  "sha256_apk": "85238696dc0a3f62850efb2dc0ce12b3c9e9ea71890668c29185e0aa678b2fc7",
+  "ukuran_apk": 56980704,
+  "sha256_apk": "89d81b3484e71c76bf12bd1f40443732b59499db82f4de6daefb0c875ba1a5b4",
   "abis": {
     "arm64": {
-      "ukuran": 56980817,
-      "sha256": "85238696dc0a3f62850efb2dc0ce12b3c9e9ea71890668c29185e0aa678b2fc7"
+      "ukuran": 56980704,
+      "sha256": "89d81b3484e71c76bf12bd1f40443732b59499db82f4de6daefb0c875ba1a5b4"
     },
     "armv7": {
-      "ukuran": 55131965,
-      "sha256": "94919b3a8651e872d9defd6a38c6ec3de1ed0b4d38634ac80513d5133ef72ce9"
+      "ukuran": 55131858,
+      "sha256": "24673c7a902663b179dcc30676f5582d0f91f24abb57db65fb7b0a9fd2cb6b90"
     },
     "universal": {
-      "ukuran": 75396802,
-      "sha256": "fd5f2e3d7d3a0d3e624032df157233a23f3b32bfc088e76bd938416c2df9500d"
+      "ukuran": 75396702,
+      "sha256": "15cea9a8551513092d909d218719e354420bc7355fbc06e428e3542f7b207a2f"
     }
   }
 }

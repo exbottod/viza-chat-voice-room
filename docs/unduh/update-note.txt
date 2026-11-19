@@ -1,2 +1,2 @@
-• Hemat kuota: foto dan latar room disimpan di HP, jadi tidak diunduh lagi setiap aplikasi dibuka
-• Data profil penghuni room dipakai dari simpanan HP sampai 30 menit
+• Semua penghuni room dimuat tanpa batas jumlah; yang sudah tersimpan di HP dilewati
+• Hemat kuota: foto dan latar room disimpan di HP, profil dipakai dari simpanan HP sampai 30 menit

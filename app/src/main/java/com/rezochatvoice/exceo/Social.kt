@@ -249,8 +249,10 @@ object UserCache {
      * lagi pemuatan ulang bingkai, lencana, dan medali: semua sudah ada di cache.
      */
     suspend fun prefetch(uids: Collection<String>) {
+        // Tanpa batas jumlah: semua penghuni room dimuat. Yang sudah tersimpan
+        // di HP dilewati supaya tidak ada unduhan ulang (hemat kuota).
         val perlu = uids.filter { it.isNotBlank() && !map.containsKey(it) && disk(it) == null }
-            .distinct().take(30)
+            .distinct()
         if (perlu.isEmpty()) return
         try {
             kotlinx.coroutines.coroutineScope {

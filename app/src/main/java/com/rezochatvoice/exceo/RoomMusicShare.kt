@@ -199,7 +199,10 @@ object RoomMusicShare {
                 try { muatSekali(room) } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) { }
-                delay(2000)
+                // Dulu cek tiap 2 detik terus-menerus, itu yang menghabiskan
+                // kuota dan membuat aplikasi lambat. Sekarang hanya sering kalau
+                // memang ada musik yang diputar.
+                delay(if (sedangMain) 5_000L else 30_000L)
             }
         }
         // Jalur cadangan: Realtime Database. Dipakai kalau server belum diperbarui
@@ -227,6 +230,13 @@ object RoomMusicShare {
         terapkan(url, judul, main, pos, at)
     }
 
+    /** Musik sedang diputar di room ini? Dipakai mengatur jarak cek ke server. */
+    @Volatile
+    private var sedangMain = false
+
+    /** Cegah dua loop pengecekan berjalan bersamaan (dulu bisa dobel). */
+    private var sedangJalan = false
+
     /** Ambil keadaan musik room sekali dari server. */
     private suspend fun muatSekali(room: String) {
         val t = token()
@@ -244,6 +254,7 @@ object RoomMusicShare {
         } ?: return
         val o = org.json.JSONObject(teks)
         if (o.optInt("ada", 0) != 1) {
+            sedangMain = false
             terapkanSumber("", "", false, 0L, 0L)
             return
         }
@@ -253,6 +264,7 @@ object RoomMusicShare {
             return
         }
         val main = o.optInt("playing", 0) == 1
+        sedangMain = main
         val pos = o.optLong("pos", 0L)
         val lewat = o.optLong("lewat", 0L)
         terapkanSumber(url, o.optString("title"), main, pos, System.currentTimeMillis() - lewat)

@@ -90,15 +90,16 @@ fun PartyTab(
         // Pemilik dan admin room tidak perlu kunci saat masuk room sendiri.
         if (room.locked && !room.bolehKelola(myUid)) lockedRoom = room else onEnterRoom(room)
     }
+    // Room kosong (tidak ada user di dalam) tidak ditampilkan di tab Party supaya
+    // daftar tetap ringan dan tidak menampilkan room "0". Room milik sendiri atau
+    // yang boleh dikelola tetap tampil agar bisa dibuka dan diisi.
+    val adaIsi = allRooms.filter { it.online > 0 || it.bolehKelola(myUid) }
     val shown = when {
         subTab == 0 -> allRooms.filter { it.bolehKelola(myUid) }
-        // Semua room yang ada di roomsPub selalu tampil. Dulu room disembunyikan
-        // kalau tidak disematkan dan jumlah online 0, jadi daftar terlihat kosong
-        // padahal room-nya masih ada.
-        filter == 0 -> allRooms
+        filter == 0 -> adaIsi
             .sortedByDescending { it.online }
             .sortedByDescending { if (it.pinned) it.pinnedAt.coerceAtLeast(1L) else 0L }
-        else -> allRooms
+        else -> adaIsi
             .sortedByDescending { it.pinnedAt.coerceAtLeast(1L) }
     }
 

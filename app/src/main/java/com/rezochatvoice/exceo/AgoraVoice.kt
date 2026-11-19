@@ -517,17 +517,10 @@ fun AgoraRoomBridge(roomId: String, myUid: String) {
         AgoraVoice.join(ctx, roomId)
         val a = RoomRepo.observeMembers(roomId) { members = it }
         val b = RoomRepo.observeSeats(roomId) { seats ->
-            val punyaku = seats.values.filter { it.uid == myUid }.sortedBy { it.index }
-            mySeat = punyaku.firstOrNull()
-            // Kursi ganda: pindah mic dulu menulis kursi baru sebelum kursi lama
-            // dihapus, sehingga satu akun tampil di beberapa kursi sekaligus.
-            // Sekarang sisanya dibersihkan otomatis.
-            if (punyaku.size > 1) {
-                val keep = punyaku.first().index
-                CoroutineScope(Dispatchers.IO).launch {
-                    RoomRepo.rapikanKursiGanda(roomId, myUid, keep)
-                }
-            }
+            // Pindah kursi kini satu tulisan atomik, jadi tidak ada kursi ganda.
+            // Pembersihan otomatis di sini dihapus: dulu ia bisa membuang kursi
+            // yang baru dinaiki sehingga user turun sendiri.
+            mySeat = seats.values.firstOrNull { it.uid == myUid }
         }
         onDispose {
             a.remove()

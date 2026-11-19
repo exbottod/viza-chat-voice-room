@@ -44,6 +44,7 @@
   </main>
 <script>
 const DASAR = "https://github.com/exbottod/viza-chat-voice-room/releases/latest/download";
+const REPO_API = "https://api.github.com/repos/exbottod/viza-chat-voice-room/releases/latest";
 const JENIS = [
   ["arm64", "Unduh APK (arm64, HP modern)"],
   ["armv7", "Unduh APK armv7 (HP lama, kecil)"],
@@ -56,7 +57,19 @@ async function utama() {
     const r = await fetch("build-info.json?t=" + Date.now(), { cache: "no-store" });
     if (r.ok) info = await r.json();
   } catch (e) {}
-  const versi = info && info.versi ? info.versi : "";
+  const versiInfo = info && info.versi ? info.versi : "";
+  // Nomor versi diambil langsung dari rilis GitHub. Kalau halaman statis belum
+  // ter-deploy ulang, labelnya tetap menunjuk rilis terbaru, bukan versi lama.
+  let versiRilis = "";
+  try {
+    const rr = await fetch(REPO_API, { cache: "no-store", headers: { Accept: "application/vnd.github+json" } });
+    if (rr.ok) {
+      const rj = await rr.json();
+      const m = String(rj && rj.tag_name || "").match(/^viza-1\.0\.(\d+)$/);
+      if (m) versiRilis = "1.0." + m[1];
+    }
+  } catch (e) {}
+  const versi = versiRilis || versiInfo;
   if (versi) document.getElementById("versi").textContent = "VERSI " + versi;
   const abis = info && info.abis ? info.abis : {};
   const kotak = document.getElementById("tombol");
@@ -68,7 +81,10 @@ async function utama() {
     a.textContent = label + (abis[kunci] ? " · " + mb(abis[kunci].ukuran) : "");
     kotak.appendChild(a);
   });
-  if (info && info.catatan) {
+  // Catatan hanya ditampilkan kalau memang milik versi yang sedang terbit,
+  // supaya keterangan rilis lama tidak tertinggal di halaman.
+  const catatanAman = info && info.catatan && (!versiRilis || !versiInfo || versiRilis === versiInfo);
+  if (catatanAman) {
     const c = document.getElementById("catatan");
     c.textContent = info.catatan;
     c.hidden = false;

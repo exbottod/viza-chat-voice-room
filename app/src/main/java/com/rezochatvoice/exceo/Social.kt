@@ -1199,34 +1199,51 @@ fun AksiAdminSheet(label: String, simbol: String, warna: Color = Color(0xFFFFD54
 object ProfilRoom {
     private val data = androidx.compose.runtime.mutableStateMapOf<String, PublicUser>()
     private val sedangMuat = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+    // Waktu percobaan terakhir: akun yang memang tidak punya foto tidak boleh
+    // dipanggil ulang setiap kali kursi atau chat berubah (boros kuota).
+    private val percobaan = java.util.concurrent.ConcurrentHashMap<String, Long>()
+    private const val JEDA_COBA = 60_000L
     private val scope = kotlinx.coroutines.CoroutineScope(
         kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO,
     )
 
+    // Cadangan non-state: nilai dari cache disk. Dipakai saat komposisi berjalan,
+    // supaya membaca profil tidak menulis state di tengah komposisi.
+    private val cadangan = java.util.concurrent.ConcurrentHashMap<String, PublicUser>()
+
     /** Baca instan: memori dulu, lalu cache disk. Tidak pernah menunggu jaringan. */
     fun ambil(uid: String): PublicUser? {
         data[uid]?.let { return it }
+        cadangan[uid]?.let { return it }
         val d = UserCache.peek(uid)
-        if (d != null) data[uid] = d
+        if (d != null) cadangan[uid] = d
         return d
     }
 
     /** Pastikan profil ada. Kalau belum ada, muat sekali di belakang layar. */
     fun pastikan(uid: String, paksa: Boolean = false) {
         if (uid.isBlank()) return
-        if (!paksa && data[uid] != null && data[uid]!!.avatarB64 != null) return
+        if (!paksa && data[uid]?.avatarB64 != null) return
+        val kini = System.currentTimeMillis()
+        if (!paksa) {
+            val akhir = percobaan[uid]
+            if (akhir != null && kini - akhir < JEDA_COBA) return
+        }
         if (!sedangMuat.add(uid)) return
+        percobaan[uid] = kini
         scope.launch {
             try {
                 val u = UserCache.byUid(uid)
                 // Jangan pernah menimpa dengan data yang lebih miskin.
                 if (u != null) {
-                    val lama = data[uid]
-                    data[uid] = if (lama == null) u else u.copy(
+                    val lama = data[uid] ?: cadangan[uid]
+                    val gabung = if (lama == null) u else u.copy(
                         avatarB64 = u.avatarB64 ?: lama.avatarB64,
                         badge = u.badge.ifBlank { lama.badge },
                         medals = u.medals.ifBlank { lama.medals },
                     )
+                    cadangan[uid] = gabung
+                    data[uid] = gabung
                 }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e

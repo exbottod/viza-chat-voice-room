@@ -383,7 +383,12 @@ fun RoomScreen(
         val a = RoomRepo.observeRoom(roomId) { got -> if (got != null) room = got }
         // Musik room diputar dari tautan bersama: semua orang di room mendengar.
         RoomMusicShare.observe(roomId)
-        val b = RoomRepo.observeSeats(roomId) { rawSeats = it }
+        val b = RoomRepo.observeSeats(roomId) { seats ->
+            rawSeats = seats
+            // Profil penghuni kursi disiapkan sebelum sel kursi tampil, jadi foto,
+            // bingkai, dan medal langsung ada tanpa huruf awal nama.
+            ProfilRoom.hangatkan(seats.values.mapNotNull { it.uid.takeIf { u -> u.isNotBlank() } }.toSet())
+        }
         // Status follow room (RTDB, hemat kuota Firestore).
         val freg = Rtdb.listen(Rtdb.ref("followRooms/" + myUid + "/" + roomId)) { snap ->
             followed = snap.exists()
@@ -1929,7 +1934,11 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
     // Avatar didekode di thread IO dan disimpan di cache. Dulu decode base64 jalan
     // di thread UI untuk setiap sel kursi, dan itu penyebab layar tersendat saat
     // pindah kursi.
-    var seatUser by remember(seat?.uid) { mutableStateOf(seat?.uid?.let { UserCache.peekMem(it) }) }
+    // Profil kursi dibaca dari penampung bersama, sama seperti chat: bingkai dan
+    // medal langsung ada tanpa menunggu jaringan, dan tetap ada saat layar
+    // dihitung ulang (mis. keyboard dibuka).
+    val uidKursi = seat?.uid
+    val seatUser: PublicUser? = uidKursi?.let { ProfilRoom.ambil(it) ?: UserCache.peekMem(it) }
     // Foto kursi bisa kosong kalau profil belum termuat saat naik kursi, sehingga
     // yang tampil hanya huruf awal nama. Pakai foto dari cache profil sebagai
     // cadangan supaya kursi selalu ada fotonya.
@@ -1938,14 +1947,10 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
         initialValue = ProfileRepo.avatarCached(fotoKursi),
         key1 = fotoKursi,
     ) { value = ProfileRepo.decodeAvatar(fotoKursi) }
-    LaunchedEffect(seat?.uid) {
-        val id = seat?.uid
-        // Pindah kursi tidak boleh memuat ulang profil. Dulu setiap pindah kursi
-        // selalu memanggil server, jadi kursi terasa "memuat" dan lambat. Sekarang
-        // pakai data yang sudah ada di cache; server hanya dipanggil kalau user ini
-        // memang belum pernah dikenal.
-        if (id != null && seatUser == null) UserCache.byUid(id)?.let { seatUser = it }
-    }
+    // Pindah kursi tidak boleh memuat ulang profil: data yang sudah ada dipakai,
+    // server hanya dipanggil kalau user ini belum dikenal, dan hasilnya masuk ke
+    // penampung bersama tanpa mengosongkan tampilan.
+    LaunchedEffect(uidKursi) { if (uidKursi != null) ProfilRoom.pastikan(uidKursi) }
     val seatFrame = if (seat != null) frameAssetOf(seatUser?.frame, seatUser?.vip ?: 0, seatUser?.vipUntil ?: 0L) else null
     // Gelombang & gelembung suara: muncul di kursi mic saat orangnya bicara.
     val bicaraEvent = seat != null && !seat.muted && AgoraVoice.bicara.contains(seat.uid)
@@ -2189,8 +2194,13 @@ private fun RmSeatProfile(
     onKick: () -> Unit,
 ) {
     // Cadangkan ke foto profil kalau kursi tidak menyimpan foto.
-    val fotoProfil = seat.avatarB64?.takeIf { it.isNotBlank() } ?: UserCache.peek(seat.uid)?.avatarB64
-    val bmp = remember(fotoProfil) { ProfileRepo.decodeB64(fotoProfil) }
+    val fotoProfil = seat.avatarB64?.takeIf { it.isNotBlank() }
+        ?: ProfilRoom.ambil(seat.uid)?.avatarB64
+        ?: UserCache.peek(seat.uid)?.avatarB64
+    val bmp by androidx.compose.runtime.produceState<ImageBitmap?>(
+        initialValue = ProfileRepo.avatarCached(fotoProfil),
+        key1 = fotoProfil,
+    ) { value = ProfileRepo.decodeAvatar(fotoProfil) ?: value }
     val actions = LocalActions.current
     var counts by remember(seat.uid) { mutableStateOf(0L to 0L) }
     LaunchedEffect(seat.uid) {
@@ -2203,8 +2213,8 @@ private fun RmSeatProfile(
     }
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Column(Modifier.clickable { actions.openProfile(seat.uid) }, horizontalAlignment = Alignment.CenterHorizontally) {
-            var sheetUser by remember(seat.uid) { mutableStateOf(UserCache.peek(seat.uid)) }
-            LaunchedEffect(seat.uid) { if (sheetUser == null) sheetUser = UserCache.byUid(seat.uid) }
+            val sheetUser: PublicUser? = ProfilRoom.ambil(seat.uid) ?: UserCache.peek(seat.uid)
+            LaunchedEffect(seat.uid) { ProfilRoom.pastikan(seat.uid) }
             val sheetFrame = frameAssetOf(sheetUser?.frame, sheetUser?.vip ?: 0, sheetUser?.vipUntil ?: 0L)
             Box(Modifier.padding(bottom = 8.dp).size(76.dp), contentAlignment = Alignment.Center) {
                 RmAvatar(bmp, seat.name, 76.dp)

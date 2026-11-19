@@ -1,2 +1,1 @@
-• Pindah kursi tidak lagi membuat bingkai avatar dan lencana di chat dimuat ulang
-• Daftar chat, data peran owner/admin, dan daftar lencana dihitung sekali, tidak dibangun ulang tiap kursi berubah
+• Latar room dipanggang sekali supaya geser chat tidak berat

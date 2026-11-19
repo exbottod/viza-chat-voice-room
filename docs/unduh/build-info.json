@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.262",
-  "catatan": "• Matikan optimasi jalur resource supaya isi res APK tetap bernama jelas",
-  "ukuran_apk": 57053353,
-  "sha256_apk": "6e420fbee5ed969349ca85a2aa5deebb077943dec7082c9f30d7b799b622469e",
+  "versi": "1.0.263",
+  "catatan": "• Tab Party: room kosong tidak ditampilkan",
+  "ukuran_apk": 57053539,
+  "sha256_apk": "02dc6d3e778a90a11e6593196515bdff8c67cc9723f2f3615a85413f344ee5d7",
   "abis": {
     "arm64": {
-      "ukuran": 57053353,
-      "sha256": "6e420fbee5ed969349ca85a2aa5deebb077943dec7082c9f30d7b799b622469e"
+      "ukuran": 57053539,
+      "sha256": "02dc6d3e778a90a11e6593196515bdff8c67cc9723f2f3615a85413f344ee5d7"
     },
     "armv7": {
-      "ukuran": 55204493,
-      "sha256": "21f4992c8f96b59bde745045b257589051546cf49cdebecb17b603bf0d86edc3"
+      "ukuran": 55204683,
+      "sha256": "d7a317d68cda14b370a12e16b93f93cfdfe1e78b7f82f9ec1c615d88432b007e"
     },
     "universal": {
-      "ukuran": 75469328,
-      "sha256": "752412d9167f7bfe500723f42c376134834ae9259f4bd0810bccc9485d1f9b76"
+      "ukuran": 75469519,
+      "sha256": "6cbca1f1632468733a5dfce5e2e75eb7060ea890578da7079fbd7e4d1ce08f93"
     }
   }
 }

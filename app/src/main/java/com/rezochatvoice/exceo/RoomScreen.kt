@@ -1964,9 +1964,12 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
             ) {
                 // Avatar sedikit mengecil saat bicara supaya gelembung di belakangnya terlihat.
                 val skalaAvatar = 1f
+                // bmp berasal dari produceState (delegated property), jadi smart cast
+                // tidak bisa langsung dipakai. Ambil salinan lokal dulu.
+                val bmpTampil = bmp
                 when {
-                    seat != null && bmp != null ->
-                    Image(bitmap = bmp, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(skalaAvatar))
+                    seat != null && bmpTampil != null ->
+                    Image(bitmap = bmpTampil, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(skalaAvatar))
                     seat != null ->
                     Box(Modifier.fillMaxSize(skalaAvatar).clip(CircleShape).background(Color(0xFF0F3D33)), contentAlignment = Alignment.Center) {
                         Text(seat.name.take(1).uppercase(), color = GoldLight, fontWeight = FontWeight.Bold, fontSize = 22.sp)

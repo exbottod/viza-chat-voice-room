@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.261",
-  "catatan": "• Tab profil: cek hak panel maksimal tiga kali, segarkan 5 menit sekali",
-  "ukuran_apk": 56981980,
-  "sha256_apk": "0f9fb096b35c1db36cc801374edc3495323298c2b479ce7d2e7e4450b5dfff55",
+  "versi": "1.0.262",
+  "catatan": "• Matikan optimasi jalur resource supaya isi res APK tetap bernama jelas",
+  "ukuran_apk": 57053353,
+  "sha256_apk": "6e420fbee5ed969349ca85a2aa5deebb077943dec7082c9f30d7b799b622469e",
   "abis": {
     "arm64": {
-      "ukuran": 56981980,
-      "sha256": "0f9fb096b35c1db36cc801374edc3495323298c2b479ce7d2e7e4450b5dfff55"
+      "ukuran": 57053353,
+      "sha256": "6e420fbee5ed969349ca85a2aa5deebb077943dec7082c9f30d7b799b622469e"
     },
     "armv7": {
-      "ukuran": 55133125,
-      "sha256": "be3a87c45ce9ac70056ee1d9c8ea2e150914a219660f3b8dc4a1b93a1eb0f186"
+      "ukuran": 55204493,
+      "sha256": "21f4992c8f96b59bde745045b257589051546cf49cdebecb17b603bf0d86edc3"
     },
     "universal": {
-      "ukuran": 75397961,
-      "sha256": "3232403348d91b85a715e14feaa5108b2a8d9ca21381bb77e4d3e0ebef0561ed"
+      "ukuran": 75469328,
+      "sha256": "752412d9167f7bfe500723f42c376134834ae9259f4bd0810bccc9485d1f9b76"
     }
   }
 }

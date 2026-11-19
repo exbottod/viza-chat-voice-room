@@ -1,1 +1,1 @@
-• Tab profil: cek hak panel maksimal tiga kali, segarkan 5 menit sekali
+• Matikan optimasi jalur resource supaya isi res APK tetap bernama jelas

@@ -128,7 +128,17 @@ def main():
     # kalimat pembuka saja.
     baris = [b.strip() for b in (baru.get("body") or "").splitlines() if b.strip()]
     poin = [b.lstrip("-*\u2022 ").strip() for b in baris if b[:1] in "-*\u2022"]
-    if poin:
+    # Kata-kata di dialog diambil dari docs/unduh/catatan-rilis.txt yang ditulis
+    # manual setiap rilis. Jadi bahasanya manusiawi dan tiap update kata-katanya
+    # berbeda. Kalau berkas itu kosong, baru pakai poin rilis otomatis di bawah.
+    manual = ""
+    try:
+        manual = open(os.path.join(TARGET, "catatan-rilis.txt"), encoding="utf-8").read().strip()
+    except Exception:
+        manual = ""
+    if manual:
+        catatan = manual[:420]
+    elif poin:
         catatan = "\n".join("\u2022 " + x[:100] for x in poin[:4])[:420]
     else:
         catatan = (baris[0] if baris else f"Viza Chat {v_baru}")[:220]

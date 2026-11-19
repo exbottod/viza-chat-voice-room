@@ -81,7 +81,7 @@ object UserCache {
 
     private fun save(u: PublicUser) {
         try {
-            sp().edit().putString(
+            sp().edit().putLong(u.uid + "_t", System.currentTimeMillis()).putString(
                 u.uid,
                 org.json.JSONObject().put("userId", u.userId).put("name", u.name)
                     .put("countryCode", u.countryCode).put("photoUrl", u.photoUrl ?: "")
@@ -279,6 +279,20 @@ object UserCache {
         // yang besar, dan itu yang menghabiskan kuota internet pengguna.
         if (!force && c != null && System.currentTimeMillis() - c.first < 1_800_000) return c.second
         val prev = c?.second ?: disk(uid)
+        // SEKALI TERMUAT, TIDAK DIUNDUH LAGI: simpanan di HP dipakai langsung.
+        // Data baru diambil ulang hanya kalau sudah lewat 24 jam atau diminta
+        // paksa (mis. saat membuka profil lengkap).
+        if (!force && c == null && prev != null && prev.name.isNotBlank()) {
+            val umur = try {
+                System.currentTimeMillis() - sp().getLong(uid + "_t", 0L)
+            } catch (e: Exception) {
+                Long.MAX_VALUE
+            }
+            if (umur in 0 until 86_400_000L) {
+                map[uid] = System.currentTimeMillis() to prev
+                return prev
+            }
+        }
 
         // PROFIL SENDIRI: instan dari data lokal, tanpa jaringan sama sekali.
         val me = try {

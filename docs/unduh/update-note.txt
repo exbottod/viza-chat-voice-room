@@ -1,2 +1,2 @@
-• Semua penghuni room dimuat tanpa batas jumlah; yang sudah tersimpan di HP dilewati
-• Hemat kuota: foto dan latar room disimpan di HP, profil dipakai dari simpanan HP sampai 30 menit
+• Sekali termuat, tidak diunduh lagi: profil, foto, bingkai, lencana, dan latar room dipakai dari simpanan HP
+• Data hanya diperbarui lagi setelah 24 jam atau saat membuka profil lengkap

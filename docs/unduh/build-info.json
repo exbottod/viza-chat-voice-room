@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.260",
-  "catatan": "• Kembalikan file cache yang gagal kompilasi; simpan perbaikan musik\n• Musik room: cek server 30 detik sekali saat sepi, 5 detik saat main\n• Prefetch profil berurutan; baris chat tidak ambil ulang profil\n• Perbaiki kompilasi: kursi bisa kosong saat mengumpulkan uid room",
-  "ukuran_apk": 56981960,
-  "sha256_apk": "c121a4b5724d6d5b95c9eec474ef6fec36f86a2e3bd747384f74f4d897b0bc0b",
+  "versi": "1.0.261",
+  "catatan": "• Tab profil: cek hak panel maksimal tiga kali, segarkan 5 menit sekali",
+  "ukuran_apk": 56981980,
+  "sha256_apk": "0f9fb096b35c1db36cc801374edc3495323298c2b479ce7d2e7e4450b5dfff55",
   "abis": {
     "arm64": {
-      "ukuran": 56981960,
-      "sha256": "c121a4b5724d6d5b95c9eec474ef6fec36f86a2e3bd747384f74f4d897b0bc0b"
+      "ukuran": 56981980,
+      "sha256": "0f9fb096b35c1db36cc801374edc3495323298c2b479ce7d2e7e4450b5dfff55"
     },
     "armv7": {
-      "ukuran": 55133113,
-      "sha256": "b94a23e73cef926e2de4d6bebb422751ff5e78af26497457a9473e80598dbbc1"
+      "ukuran": 55133125,
+      "sha256": "be3a87c45ce9ac70056ee1d9c8ea2e150914a219660f3b8dc4a1b93a1eb0f186"
     },
     "universal": {
-      "ukuran": 75397955,
-      "sha256": "b54f80e5f47079da0cab5ce96dda182922d5bc8d917447771edfeab22e3fd556"
+      "ukuran": 75397961,
+      "sha256": "3232403348d91b85a715e14feaa5108b2a8d9ca21381bb77e4d3e0ebef0561ed"
     }
   }
 }

@@ -1,2 +1,1 @@
-• Cek hak panel di tab profil tidak lagi mencoba terus tiap 30 detik: paling banyak tiga kali, lalu berhenti
-• Ini menghapus permintaan HTTP berulang yang muncul di HTTP Canary saat membuka tab profil
+• Tab profil: cek hak panel maksimal tiga kali, segarkan 5 menit sekali

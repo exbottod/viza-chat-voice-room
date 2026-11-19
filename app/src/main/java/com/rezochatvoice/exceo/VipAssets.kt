@@ -186,7 +186,31 @@ object VipAssets {
     }
 
     /** Unduh isi berkas dari tautan (dipakai untuk memeriksa jenis aset). */
+    // Cache bingkai/efek: dulu setiap tampil diunduh ulang dari internet, jadi
+    // frame terasa "memuat" lama dan kuota cepat habis. Sekarang disimpan di
+    // memori dan di disk, jadi tampil seketika setelah pertama kali diunduh.
+    private val cacheUrl = java.util.concurrent.ConcurrentHashMap<String, ByteArray>()
+
+    private fun berkasCache(url: String): java.io.File? = try {
+        val ctx = com.google.firebase.FirebaseApp.getInstance().applicationContext
+        val dir = java.io.File(ctx.cacheDir, "vip_url")
+        if (!dir.exists()) dir.mkdirs()
+        java.io.File(dir, Integer.toHexString(url.hashCode()) + "_" + url.length + ".bin")
+    } catch (e: Exception) {
+        null
+    }
+
     suspend fun ambildariUrl(url: String): ByteArray? = withContext(Dispatchers.IO) {
+        if (url.isBlank()) return@withContext null
+        cacheUrl[url]?.let { return@withContext it }
+        val f = berkasCache(url)
+        if (f != null && f.exists() && f.length() > 0L) {
+            val lama = try { f.readBytes() } catch (e: Exception) { null }
+            if (lama != null && lama.isNotEmpty()) {
+                cacheUrl[url] = lama
+                return@withContext lama
+            }
+        }
         try {
             val kon = (java.net.URL(url).openConnection() as java.net.HttpURLConnection).apply {
                 connectTimeout = 10000
@@ -195,6 +219,11 @@ object VipAssets {
             }
             val isi = if (kon.responseCode in 200..299) kon.inputStream.use { it.readBytes() } else null
             kon.disconnect()
+            if (isi != null && isi.isNotEmpty() && isi.size <= 4_000_000) {
+                if (cacheUrl.size > 60) cacheUrl.clear()
+                cacheUrl[url] = isi
+                try { f?.writeBytes(isi) } catch (e: Exception) { }
+            }
             isi
         } catch (e: Exception) {
             null

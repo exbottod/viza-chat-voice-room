@@ -1,2 +1,4 @@
-• Cek musik room tidak lagi tiap 2 detik: 30 detik sekali saat tidak ada musik, 5 detik saat ada musik yang diputar
-• Ini yang paling banyak memakan kuota internet dan membuat aplikasi lambat
+• Kembalikan file cache yang gagal kompilasi; simpan perbaikan musik
+• Musik room: cek server 30 detik sekali saat sepi, 5 detik saat main
+• Prefetch profil berurutan; baris chat tidak ambil ulang profil
+• Perbaiki kompilasi: kursi bisa kosong saat mengumpulkan uid room

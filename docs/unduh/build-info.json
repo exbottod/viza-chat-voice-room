@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.259",
-  "catatan": "• Perbaiki crash saat masuk room: latar room aman dan hemat memori",
-  "ukuran_apk": 56981698,
-  "sha256_apk": "ed19f7f685346a042b5e94e9d2859340bc815a2a015fd7fc9ccd1824292c3e44",
+  "versi": "1.0.260",
+  "catatan": "• Kembalikan file cache yang gagal kompilasi; simpan perbaikan musik\n• Musik room: cek server 30 detik sekali saat sepi, 5 detik saat main\n• Prefetch profil berurutan; baris chat tidak ambil ulang profil\n• Perbaiki kompilasi: kursi bisa kosong saat mengumpulkan uid room",
+  "ukuran_apk": 56981960,
+  "sha256_apk": "c121a4b5724d6d5b95c9eec474ef6fec36f86a2e3bd747384f74f4d897b0bc0b",
   "abis": {
     "arm64": {
-      "ukuran": 56981698,
-      "sha256": "ed19f7f685346a042b5e94e9d2859340bc815a2a015fd7fc9ccd1824292c3e44"
+      "ukuran": 56981960,
+      "sha256": "c121a4b5724d6d5b95c9eec474ef6fec36f86a2e3bd747384f74f4d897b0bc0b"
     },
     "armv7": {
-      "ukuran": 55132848,
-      "sha256": "a4ac185b5fc33b189ae1db7b62118e704031ad4fba6047577347c38537cf8052"
+      "ukuran": 55133113,
+      "sha256": "b94a23e73cef926e2de4d6bebb422751ff5e78af26497457a9473e80598dbbc1"
     },
     "universal": {
-      "ukuran": 75397693,
-      "sha256": "a785ca1808c4ec5cb1365320c6a35c8dbca8f3d312ee341869961de7aa322a59"
+      "ukuran": 75397955,
+      "sha256": "b54f80e5f47079da0cab5ce96dda182922d5bc8d917447771edfeab22e3fd556"
     }
   }
 }

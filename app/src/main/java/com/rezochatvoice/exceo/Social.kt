@@ -590,7 +590,9 @@ fun GenderBadge(gender: String) {
 /** Avatar besar dengan bingkai emas (tempat bingkai khusus nanti). */
 @Composable
 fun FramedAvatar(u: PublicUser?, size: Dp) {
-    val fa = frameAssetOf(u?.frame, u?.vip ?: 0, u?.vipUntil ?: 0L)
+    // Aset bingkai dihitung sekali per isi bingkai/VIP. Dulu dihitung ulang tiap
+    // recompose sehingga animasi bingkai mulai dari awal dan terlihat memuat ulang.
+    val fa = remember(u?.frame, u?.vip, u?.vipUntil) { frameAssetOf(u?.frame, u?.vip ?: 0, u?.vipUntil ?: 0L) }
     Box(
         Modifier.size(size + 16.dp)
             .then(if (fa != null) Modifier else Modifier.border(3.dp, frameBrush(u?.frame), CircleShape))
@@ -598,7 +600,7 @@ fun FramedAvatar(u: PublicUser?, size: Dp) {
         contentAlignment = Alignment.Center,
     ) {
         PublicAvatar(u, size)
-        if (fa != null) FrameOverlay(fa, size + 30.dp)
+        if (fa != null) androidx.compose.runtime.key(fa) { FrameOverlay(fa, size + 30.dp) }
     }
 }
 
@@ -693,8 +695,16 @@ fun UserProfileSheet(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val isMe = uid == myUid
-    var user by remember(uid) { mutableStateOf(UserCache.peek(uid) ?: if (isMe) UserCache.meLocal(uid) else null) }
-    var loading by remember(uid) { mutableStateOf(true) }
+    // Sumber awal: penampung room yang sudah hangat (sama seperti baris chat dan
+    // kursi), lalu cache, lalu data lokal sendiri. Dengan begitu sheet langsung
+    // tampil lengkap (foto, bingkai, medal, lencana) di bingkai pertama, bukan
+    // spinner lalu kosong lalu terisi.
+    var user by remember(uid) {
+        mutableStateOf(
+            ProfilRoom.ambil(uid) ?: UserCache.peek(uid) ?: if (isMe) UserCache.meLocal(uid) else null,
+        )
+    }
+    var loading by remember(uid) { mutableStateOf(user == null) }
     var following by remember(uid) { mutableStateOf(false) }
     var busy by remember(uid) { mutableStateOf(false) }
 
@@ -715,7 +725,22 @@ fun UserProfileSheet(
                 )
             }
         }
-        user = UserCache.byUid(uid) ?: user
+        // Hasil jaringan DIGABUNG, tidak menimpa: foto, lencana, dan medal yang
+        // sudah ada tidak boleh hilang hanya karena fetch ini lebih miskin.
+        // Dan tidak ada tulis ulang kalau isinya sama, supaya sheet tidak kedip.
+        val segar = UserCache.byUid(uid)
+        if (segar != null) {
+            val lama = user
+            val gabung = if (lama == null) segar else segar.copy(
+                avatarB64 = segar.avatarB64 ?: lama.avatarB64,
+                photoUrl = if (segar.avatarB64 != null) segar.photoUrl else (segar.photoUrl ?: lama.photoUrl),
+                badge = segar.badge.ifBlank { lama.badge },
+                medals = segar.medals.ifBlank { lama.medals },
+                fam = segar.fam.ifBlank { lama.fam },
+            )
+            if (gabung != lama) user = gabung
+            ProfilRoom.pastikan(uid)
+        }
         loading = false
         if (!isMe) {
             try {
@@ -826,7 +851,7 @@ fun UserProfileSheet(
                             Spacer(Modifier.height(6.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 // ID unik: kalau pemilik memasangnya, gambar ID menggantikan angka.
-                                val asetIdUnik = StoreCatalog.find(u.uidItem.ifBlank { null })?.asset
+                                val asetIdUnik = remember(u.uidItem) { StoreCatalog.find(u.uidItem.ifBlank { null })?.asset }
                                 if (asetIdUnik != null) {
                                     UidUnikId(asetIdUnik, 20.dp)
                                 } else {
@@ -865,7 +890,7 @@ fun UserProfileSheet(
                             horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.Start),
                             verticalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
-                            medalIdList(u.badge).mapNotNull { findItem(it) }.forEach { b ->
+                            remember(u.badge) { medalIdList(u.badge).mapNotNull { findItem(it) } }.forEach { b ->
                                 Box(Modifier.height(24.dp), contentAlignment = Alignment.Center) { StoreBadgeIcon(b, 24.dp) }
                             }
                             if (u.fam.isNotBlank()) FamTag3D(u.fam)

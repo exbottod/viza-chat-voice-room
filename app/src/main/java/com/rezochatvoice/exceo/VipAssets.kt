@@ -114,16 +114,62 @@ object VipAssets {
 
     fun get(n: Int, slot: String): VipAsset? = cfg["${n}_$slot"]
 
+    // Aset VIP disimpan juga di perangkat. Dulu daftar ini kosong sampai server
+    // menjawab, jadi bingkai, medal, dan kartu VIP "belum ada" di awal lalu
+    // muncul belakangan (terlihat memuat ulang). Sekarang langsung tampil dari
+    // simpanan terakhir, lalu diperbarui diam-diam oleh server.
+    private fun sp() = FirebaseApp.getInstance().applicationContext
+        .getSharedPreferences("vip_assets_cache", android.content.Context.MODE_PRIVATE)
+    private var diskDibaca = false
+
+    private fun bacaDisk() {
+        if (diskDibaca) return
+        diskDibaca = true
+        try {
+            val arr = org.json.JSONArray(sp().getString("aset", "[]"))
+            for (i in 0 until arr.length()) {
+                val o = arr.getJSONObject(i)
+                val a = VipAsset(
+                    o.getInt("n"), o.getString("slot"), o.optString("kind", "image"), o.optString("url"),
+                    o.optBoolean("hasData"), o.optLong("updatedAt"), o.optInt("chunks"), o.optString("poster"),
+                )
+                cfg.putIfAbsent("${a.n}_${a.slot}", a)
+            }
+        } catch (e: Exception) {
+        }
+    }
+
+    private fun simpanDisk(semua: Collection<VipAsset>) {
+        try {
+            val arr = org.json.JSONArray()
+            for (a in semua) arr.put(
+                org.json.JSONObject()
+                    .put("n", a.n).put("slot", a.slot).put("kind", a.kind).put("url", a.url)
+                    .put("hasData", a.hasData).put("updatedAt", a.updatedAt)
+                    .put("chunks", a.chunks).put("poster", a.poster),
+            )
+            sp().edit().putString("aset", arr.toString()).apply()
+        } catch (e: Exception) {
+        }
+    }
+
     private fun apply() {
         val merged = HashMap<String, VipAsset>()
         merged.putAll(fsMap)
         merged.putAll(rtdbMap) // RTDB selalu menang
-        cfg.clear()
-        cfg.putAll(merged)
+        // Selisih saja: tulis yang berubah, hapus yang hilang. Tanpa clear(),
+        // aset VIP tidak pernah "hilang sesaat" lalu muncul lagi di layar.
+        // Kalau server menjawab kosong sesaat, jangan hapus isi yang sudah tampil.
+        if (merged.isEmpty() && cfg.isNotEmpty()) return
+        var berubah = false
+        for (k in cfg.keys.toList()) if (!merged.containsKey(k)) { cfg.remove(k); berubah = true }
+        for ((k, a) in merged) if (cfg[k] != a) { cfg[k] = a; berubah = true }
+        if (berubah) simpanDisk(merged.values)
     }
 
     /** Dengarkan aset VIP secara langsung: upload dari panel developer langsung tampil tanpa buka ulang app. */
     fun start(force: Boolean = false) {
+        bacaDisk()
         if (reg != null && !force) return
         reg?.remove()
         rtdbReg?.remove()

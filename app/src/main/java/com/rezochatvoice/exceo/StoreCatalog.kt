@@ -106,9 +106,18 @@ object StoreCatalog {
             // Jangan hapus isi yang sudah tampil hanya karena satu sumber kosong.
             return
         }
-        items.clear()
-        items.putAll(merged)
-        saveDisk(merged.values)
+        // Pembaruan SELISIH: tulis hanya yang berubah dan hapus hanya yang hilang.
+        // Dulu items.clear() lalu putAll() mengosongkan katalog sesaat walau
+        // isinya sama, sehingga semua bingkai, lencana, dan medal di layar
+        // dihitung "tidak ada" lalu muncul lagi: itu yang terlihat memuat ulang.
+        var berubah = false
+        for (k in items.keys.toList()) {
+            if (!merged.containsKey(k)) { items.remove(k); berubah = true }
+        }
+        for ((k, v) in merged) {
+            if (items[k] != v) { items[k] = v; berubah = true }
+        }
+        if (berubah) saveDisk(merged.values)
     }
 
     // Katalog disimpan juga di perangkat. Saat app dibuka / Firestore lambat
@@ -169,11 +178,15 @@ object StoreCatalog {
         // ID custom yang sudah dibeli (terdaftar di uidCustom) tidak dijual lagi.
         try {
             Rtdb.listen(Rtdb.ref("uidCustom")) { snap ->
-                idTerpakai.clear()
+                // Selisih saja, tanpa clear(): tidak ada jeda kosong yang membuat
+                // layar menghitung ulang.
+                val baru = HashMap<String, String>()
                 for (c in snap.children) {
                     val nomor = c.key.orEmpty()
-                    if (nomor.isNotBlank()) idTerpakai[nomor] = c.child("uid").getValue(String::class.java).orEmpty()
+                    if (nomor.isNotBlank()) baru[nomor] = c.child("uid").getValue(String::class.java).orEmpty()
                 }
+                for (k in idTerpakai.keys.toList()) if (!baru.containsKey(k)) idTerpakai.remove(k)
+                for ((k, v) in baru) if (idTerpakai[k] != v) idTerpakai[k] = v
             }
         } catch (e: Exception) { }
         rtdbReg = Rtdb.listen(Rtdb.ref("vipCfg"), onBatal = { jadwalUlangKatalog() }) { snap ->

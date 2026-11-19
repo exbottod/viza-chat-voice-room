@@ -1,2 +1,1 @@
-• Suara: batasi connect 15 detik lalu sambung ulang otomatis
-• Tab Party: room kosong tidak ditampilkan
+• Kursi mic: pindah kursi pakai cache, tidak memuat ulang profil

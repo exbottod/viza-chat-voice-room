@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.264",
-  "catatan": "• Suara: batasi connect 15 detik lalu sambung ulang otomatis\n• Tab Party: room kosong tidak ditampilkan",
-  "ukuran_apk": 57053583,
-  "sha256_apk": "5a4dfa8351580d5350eaa6275ed4634a554b59657c302ec06398b5e65abf2c0b",
+  "versi": "1.0.265",
+  "catatan": "• Kursi mic: pindah kursi pakai cache, tidak memuat ulang profil",
+  "ukuran_apk": 57053920,
+  "sha256_apk": "ef603efedda5defbc78cea7038d336fa71bc6e1f2d8fac361d9a58e12639cd5f",
   "abis": {
     "arm64": {
-      "ukuran": 57053583,
-      "sha256": "5a4dfa8351580d5350eaa6275ed4634a554b59657c302ec06398b5e65abf2c0b"
+      "ukuran": 57053920,
+      "sha256": "ef603efedda5defbc78cea7038d336fa71bc6e1f2d8fac361d9a58e12639cd5f"
     },
     "armv7": {
-      "ukuran": 55204722,
-      "sha256": "c20a1d5a0bb4e1060b629b5a6be98932385eac5149f9372a809b0d65874e5460"
+      "ukuran": 55205071,
+      "sha256": "3fd305ef44411f1a3c5ab4e6cc3c1e1cf0ac514e9c0fe14720a59e7efbb8e5d8"
     },
     "universal": {
-      "ukuran": 75469556,
-      "sha256": "bdaf47ee65cdae45fa363f8f0fa0bc5815e6fea8365c60b6469642c2dcf821db"
+      "ukuran": 75469895,
+      "sha256": "c972041ac88928b353eff29f8249943ea773311df47a568495353c6f58b89271"
     }
   }
 }

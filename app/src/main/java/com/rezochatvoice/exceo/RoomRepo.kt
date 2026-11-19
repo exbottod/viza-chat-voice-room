@@ -814,12 +814,15 @@ object RoomRepo {
                 return "Kamu dilarang naik mic di room ini"
             }
             val present = Rtdb.ref("members/$roomId").get().await().children.mapNotNull { it.key }.toSet()
+            // Foto kursi dulu kosong kalau profil belum termuat saat naik kursi,
+            // sehingga yang tampil hanya huruf awal nama. Ambil dari cache profil.
+            val avatar = avatarB64?.takeIf { it.isNotBlank() } ?: UserCache.peek(uid)?.avatarB64
             val err = Rtdb.tx(base.child(index.toString())) { d ->
                 val curUid = d.child("uid").getValue(String::class.java)
                 if (curUid != null && curUid != uid && curUid in present) {
                     "Kursi sudah terisi"
                 } else {
-                    d.value = hashMapOf<String, Any?>("uid" to uid, "name" to name, "avatarB64" to avatarB64, "muted" to false)
+                    d.value = hashMapOf<String, Any?>("uid" to uid, "name" to name, "avatarB64" to avatar, "muted" to false)
                     null
                 }
             }
@@ -839,6 +842,29 @@ object RoomRepo {
             } else {
                 e.message ?: "Gagal naik kursi"
             }
+        }
+    }
+
+    /**
+     * Rapikan kursi ganda: satu akun pernah tertinggal di beberapa kursi karena
+     * pindah mic menulis kursi baru sebelum kursi lama terhapus. Sisakan
+     * [keepIndex], hapus sisanya yang masih milik [uid].
+     */
+    suspend fun rapikanKursiGanda(roomId: String, uid: String, keepIndex: Int) = kunciKursi.withLock {
+        try {
+            val base = Rtdb.ref("seats/$roomId")
+            val upd = HashMap<String, Any?>()
+            for (c in base.get().await().children) {
+                val i = c.key?.toIntOrNull() ?: continue
+                if (i != keepIndex && c.child("uid").getValue(String::class.java) == uid) upd[c.key!!] = null
+            }
+            if (upd.isNotEmpty()) {
+                base.updateChildren(upd).await()
+                for (k in upd.keys) Rtdb.ref("micPoints/$roomId/$k").removeValue()
+            }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
         }
     }
 

@@ -1923,11 +1923,15 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
     // Avatar didekode di thread IO dan disimpan di cache. Dulu decode base64 jalan
     // di thread UI untuk setiap sel kursi, dan itu penyebab layar tersendat saat
     // pindah kursi.
-    val bmp by androidx.compose.runtime.produceState<ImageBitmap?>(
-        initialValue = ProfileRepo.avatarCached(seat?.avatarB64),
-        key1 = seat?.avatarB64,
-    ) { value = ProfileRepo.decodeAvatar(seat?.avatarB64) }
     var seatUser by remember(seat?.uid) { mutableStateOf(seat?.uid?.let { UserCache.peekMem(it) }) }
+    // Foto kursi bisa kosong kalau profil belum termuat saat naik kursi, sehingga
+    // yang tampil hanya huruf awal nama. Pakai foto dari cache profil sebagai
+    // cadangan supaya kursi selalu ada fotonya.
+    val fotoKursi = seat?.avatarB64?.takeIf { it.isNotBlank() } ?: seatUser?.avatarB64
+    val bmp by androidx.compose.runtime.produceState<ImageBitmap?>(
+        initialValue = ProfileRepo.avatarCached(fotoKursi),
+        key1 = fotoKursi,
+    ) { value = ProfileRepo.decodeAvatar(fotoKursi) }
     LaunchedEffect(seat?.uid) {
         val id = seat?.uid
         // Pindah kursi tidak boleh memuat ulang profil. Dulu setiap pindah kursi
@@ -2178,7 +2182,9 @@ private fun RmSeatProfile(
     onToggleMic: () -> Unit,
     onKick: () -> Unit,
 ) {
-    val bmp = remember(seat.avatarB64) { ProfileRepo.decodeB64(seat.avatarB64) }
+    // Cadangkan ke foto profil kalau kursi tidak menyimpan foto.
+    val fotoProfil = seat.avatarB64?.takeIf { it.isNotBlank() } ?: UserCache.peek(seat.uid)?.avatarB64
+    val bmp = remember(fotoProfil) { ProfileRepo.decodeB64(fotoProfil) }
     val actions = LocalActions.current
     var counts by remember(seat.uid) { mutableStateOf(0L to 0L) }
     LaunchedEffect(seat.uid) {

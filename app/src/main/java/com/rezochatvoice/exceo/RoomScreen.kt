@@ -228,6 +228,25 @@ fun RoomScreen(
     var followed by remember { mutableStateOf(false) }
     var showRank by remember { mutableStateOf(false) }
     val seats = rawSeats.filterValues { it.uid in members }
+    // Profil orang yang duduk dipanaskan SEKALI di sini, bukan dari dalam tiap sel
+    // kursi. Dulu setiap sel memanggil server sendiri saat dibuat ulang, jadi pindah
+    // kursi terasa "memuat" berkali-kali. Yang sudah dicoba dicatat supaya tidak diulang.
+    val profilDicoba = remember { java.util.Collections.synchronizedSet(HashSet<String>()) }
+    LaunchedEffect(seats.values.map { it.uid }.sorted()) {
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            for (uid in seats.values.map { it.uid }) {
+                if (uid.isBlank() || profilDicoba.contains(uid)) continue
+                if (UserCache.peek(uid) != null) continue
+                profilDicoba.add(uid)
+                try {
+                    UserCache.byUid(uid)
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                }
+            }
+        }
+    }
     // Posisi avatar tiap kursi (untuk animasi gift terbang ke penerima).
     val seatPoints = remember { mutableStateMapOf<Int, Offset>() }
     // Riwayat chat room disimpan di memori supaya tidak hilang saat aplikasi
@@ -1901,8 +1920,14 @@ private fun RmSeatCell(
 
 @Composable
 private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = false, emote: SeatEmote? = null, emotSudahTampil: MutableList<String> = mutableListOf(), points: Long? = 0L, onClick: () -> Unit) {
-    val bmp = remember(seat?.avatarB64) { ProfileRepo.decodeB64(seat?.avatarB64) }
-    var seatUser by remember(seat?.uid) { mutableStateOf(seat?.uid?.let { UserCache.peek(it) }) }
+    // Avatar didekode di thread IO dan disimpan di cache. Dulu decode base64 jalan
+    // di thread UI untuk setiap sel kursi, dan itu penyebab layar tersendat saat
+    // pindah kursi.
+    val bmp by androidx.compose.runtime.produceState<ImageBitmap?>(
+        initialValue = ProfileRepo.avatarCached(seat?.avatarB64),
+        key1 = seat?.avatarB64,
+    ) { value = ProfileRepo.decodeAvatar(seat?.avatarB64) }
+    var seatUser by remember(seat?.uid) { mutableStateOf(seat?.uid?.let { UserCache.peekMem(it) }) }
     LaunchedEffect(seat?.uid) {
         val id = seat?.uid
         // Pindah kursi tidak boleh memuat ulang profil. Dulu setiap pindah kursi

@@ -215,6 +215,28 @@ def main():
         return tuple(int(i) for i in v.split("."))
     daftar = [x for x in daftar if angka(x["ke"]) > angka(x["dari"])]
     daftar.sort(key=lambda x: (angka(x["dari"]), angka(x["ke"])))
+    # Batas situs GitHub Pages 1 GB dan folder docs sempat 3,75 GB karena 829
+    # berkas patch, sehingga deploy gagal terbit. Patch lama dipangkas otomatis:
+    # simpan sampai totalnya ~400 MB, minimal 10 versi terakhir. Pengguna versi
+    # sangat lama otomatis jatuh ke unduhan APK penuh.
+    ANGGARAN_PATCH = 400 * 1024 * 1024
+    pakai, simpan_versi = 0, []
+    for v in reversed(sorted({x["ke"] for x in daftar}, key=angka)):
+        ukuran_v = sum(x["arm64"]["ukuran"] for x in daftar if x["ke"] == v)
+        if len(simpan_versi) >= 10 and pakai + ukuran_v > ANGGARAN_PATCH:
+            break
+        simpan_versi.append(v)
+        pakai += ukuran_v
+    simpan_versi = set(simpan_versi)
+    daftar = [x for x in daftar if x["ke"] in simpan_versi]
+    nama_simpan = {x["arm64"]["file"] for x in daftar}
+    folder_patch = os.path.join(TARGET, "patch")
+    if os.path.isdir(folder_patch):
+        for f in os.listdir(folder_patch):
+            if f not in nama_simpan:
+                os.remove(os.path.join(folder_patch, f))
+    print(f"Patch disimpan {len(daftar)} entri, {pakai // (1024 * 1024)} MB")
+
     open(f"{TARGET}/patch-info.json", "w").write(json.dumps({"patch": daftar}, indent=2))
 
     pesan = f"Versi {v_baru} di halaman unduh [skip ci]"

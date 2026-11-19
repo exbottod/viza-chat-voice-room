@@ -253,23 +253,13 @@ object UserCache {
         // di HP dilewati supaya tidak ada unduhan ulang (hemat kuota).
         val perlu = uids.filter { it.isNotBlank() && !map.containsKey(it) && disk(it) == null }
             .distinct()
-        if (perlu.isEmpty()) return
-        try {
-            kotlinx.coroutines.coroutineScope {
-                perlu.forEach { uid ->
-                    launch {
-                        try {
-                            byUid(uid)
-                        } catch (e: kotlinx.coroutines.CancellationException) {
-                            throw e
-                        } catch (e: Exception) {
-                        }
-                    }
-                }
+        for (uid in perlu) {
+            try {
+                byUid(uid)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
             }
-        } catch (e: kotlinx.coroutines.CancellationException) {
-            throw e
-        } catch (e: Exception) {
         }
     }
 

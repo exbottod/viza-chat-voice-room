@@ -3196,7 +3196,7 @@ private fun RmChatRow(m: RoomMsg, myUid: String, onProfile: (String) -> Unit) {
     var u by remember(m.uid) {
         mutableStateOf(UserCache.peek(m.uid) ?: if (m.uid == myUid) UserCache.meLocal(m.uid) else null)
     }
-    LaunchedEffect(m.uid) { if (u == null || u?.avatarB64 == null) u = UserCache.byUid(m.uid) ?: u }
+    LaunchedEffect(m.uid) { if (u == null) u = UserCache.byUid(m.uid) ?: u }
     val shownName = u?.name?.takeIf { it.isNotBlank() } ?: m.name
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
         PublicAvatarFramed(u, 38.dp, fallback = shownName, modifier = Modifier.clickable { onProfile(m.uid) })
@@ -3307,7 +3307,7 @@ private fun RmPhotoRow(m: RoomMsg, myUid: String, onProfile: (String) -> Unit, o
     var u by remember(m.uid) {
         mutableStateOf(UserCache.peek(m.uid) ?: if (m.uid == myUid) UserCache.meLocal(m.uid) else null)
     }
-    LaunchedEffect(m.uid) { if (u == null || u?.avatarB64 == null) u = UserCache.byUid(m.uid) ?: u }
+    LaunchedEffect(m.uid) { if (u == null) u = UserCache.byUid(m.uid) ?: u }
     val shownName = u?.name?.takeIf { it.isNotBlank() } ?: m.name
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
         PublicAvatarFramed(u, 38.dp, fallback = shownName, modifier = Modifier.clickable { onProfile(m.uid) })

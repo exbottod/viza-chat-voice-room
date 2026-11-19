@@ -1,1 +1,3 @@
-• Hasil PK lama tidak muncul lagi setelah keluar masuk room
+• Perbaikan crash: aplikasi tidak tertutup lagi saat masuk room, pembuatan latar room dibatasi dan dibungkus aman
+• Latar room dibuat setengah ukuran layar supaya hemat memori dan tetap ringan saat geser chat
+• Bar PK memakai tinggi tetap 52dp, tetap pipih dan bisa disembunyikan

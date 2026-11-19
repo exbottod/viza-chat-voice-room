@@ -480,11 +480,17 @@ fun RoomScreen(
         val bg = rememberRoomBg(r)
         if (bg != null) {
             // Latar dipanggang sekali (crop + lapisan gelap) supaya geser chat ringan.
+            // Kalau gagal, layar tetap tampil memakai gambar biasa.
             val siap = LatarRoomSiap(bg)
-            Image(
-                bitmap = siap, contentDescription = null,
-                contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize(),
-            )
+            if (siap != null) {
+                Image(
+                    bitmap = siap, contentDescription = null,
+                    contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize(),
+                )
+            } else {
+                Image(bitmap = bg, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                Box(Modifier.fillMaxSize().background(Color(0x88000000)))
+            }
         }
         val isOwner = r.ownerUid == myUid
         // Pemilik room selalu boleh. Akun developer (pemilik aplikasi) tetap bisa
@@ -747,8 +753,8 @@ fun RoomScreen(
                         Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        // Bar PK pipih 6:1 supaya tidak memakan layar.
-                        PkBar(p, Modifier.weight(1f).aspectRatio(6f))
+                        // Bar PK pipih sekitar 6:1 supaya tidak memakan layar.
+                        PkBar(p, Modifier.weight(1f).height(52.dp))
                         Spacer(Modifier.width(6.dp))
                         Box(
                             Modifier.size(22.dp).clip(CircleShape).background(Color(0x66000000))

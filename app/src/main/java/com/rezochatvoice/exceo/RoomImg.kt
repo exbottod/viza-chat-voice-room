@@ -99,18 +99,21 @@ fun rememberRoomBg(r: RoomInfo): ImageBitmap? {
  * Latar room yang sudah disiapkan sekali untuk ukuran layar ini: gambar
  * dipotong sesuai layar dan lapisan gelap ikut dipanggang ke dalam bitmap.
  *
- * Sebelumnya gambar penuh diskalakan ulang setiap frame saat chat digeser,
- * dan itu yang membuat room berlatar kustom (mis. room sendiri) terasa berat.
+ * Dibuat setengah ukuran layar supaya hemat memori, dan seluruh prosesnya
+ * dibungkus supaya kegagalan apa pun (termasuk kehabisan memori) tidak
+ * membuat aplikasi tertutup. Kalau gagal, null dikembalikan dan layar
+ * memakai gambar biasa.
  */
 @androidx.compose.runtime.Composable
-fun LatarRoomSiap(bmp: ImageBitmap): ImageBitmap {
+fun LatarRoomSiap(bmp: ImageBitmap): ImageBitmap? {
     val context = androidx.compose.ui.platform.LocalContext.current
     return androidx.compose.runtime.remember(bmp) {
         try {
             val dm = context.resources.displayMetrics
-            val w = dm.widthPixels.coerceAtLeast(1)
-            val h = dm.heightPixels.coerceAtLeast(1)
+            val w = (dm.widthPixels / 2).coerceIn(1, 1080)
+            val h = (dm.heightPixels / 2).coerceIn(1, 1200)
             val sumber = bmp.asAndroidBitmap()
+            if (sumber.width <= 0 || sumber.height <= 0) return@remember null
             val skala = maxOf(w.toFloat() / sumber.width, h.toFloat() / sumber.height)
             val hasil = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888)
             val kanvas = android.graphics.Canvas(hasil)
@@ -121,8 +124,9 @@ fun LatarRoomSiap(bmp: ImageBitmap): ImageBitmap {
             kanvas.drawBitmap(sumber, m, android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG))
             kanvas.drawColor(0x88000000)
             hasil.asImageBitmap()
-        } catch (e: Exception) {
-            bmp
+        } catch (t: Throwable) {
+            // Termasuk OutOfMemoryError: jangan sampai aplikasi tertutup.
+            null
         }
     }
 }

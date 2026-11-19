@@ -242,6 +242,34 @@ object UserCache {
         )
     }
 
+    /**
+     * Muat profil beberapa user SEKALIGUS saat masuk room.
+     *
+     * Tujuannya supaya saat mengetik, membuka sheet, atau pindah kursi tidak ada
+     * lagi pemuatan ulang bingkai, lencana, dan medali: semua sudah ada di cache.
+     */
+    suspend fun prefetch(uids: Collection<String>) {
+        val perlu = uids.filter { it.isNotBlank() && !map.containsKey(it) }.distinct()
+        if (perlu.isEmpty()) return
+        try {
+            kotlinx.coroutines.coroutineScope {
+                perlu.forEach { uid ->
+                    launch {
+                        try {
+                            byUid(uid)
+                        } catch (e: kotlinx.coroutines.CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                        }
+                    }
+                }
+            }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+        }
+    }
+
     suspend fun byUid(uid: String, force: Boolean = false): PublicUser? {
         val c = map[uid]
         if (!force && c != null && System.currentTimeMillis() - c.first < 300_000) return c.second

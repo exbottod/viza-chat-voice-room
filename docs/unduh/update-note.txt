@@ -1,1 +1,1 @@
-• Perbaiki crash saat masuk room: latar room aman dan hemat memori
+• Profil semua penghuni room dimuat sekali saat masuk room, jadi bingkai, lencana, medali, dan sheet tidak memuat ulang saat mengetik atau pindah kursi

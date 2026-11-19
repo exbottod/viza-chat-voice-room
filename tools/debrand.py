@@ -29,12 +29,16 @@ FRASA = [
     ("Game Rezo", f"Game {MEREK}"),
     ("Tentang Rezo", f"Tentang {MEREK}"),
     ("About Rezo", f"About {MEREK}"),
+    ("rezo-voice-chat-officialex.aws-ap-southeast-1.turso.io", "GANTI-SERVER-TURSO"),
     ("rezo-wallet.bangexx01.workers.dev", "GANTI-SERVER-DOMPET"),
     ("rezo-wallet.pages.dev", "GANTI-SERVER-DOMPET-CADANGAN"),
     ("rezo-agora-token.bangexx01.workers.dev", "GANTI-SERVER-AGORA"),
     ("REZO-STAR", SLUG.upper()),
     ("REZO_", SLUG.upper() + "_"),
 ]
+
+SISA_INFRA = ["bangexx01", "turso.io", "rezo-wallet", "rezo-agora-token"]
+
 
 def olah(teks):
     # 1. Domain email akun nomor, ditangani lebih dulu agar tidak terpotong.

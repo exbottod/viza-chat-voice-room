@@ -817,38 +817,35 @@ object RoomRepo {
             // Foto kursi dulu kosong kalau profil belum termuat saat naik kursi,
             // sehingga yang tampil hanya huruf awal nama. Ambil dari cache profil.
             val avatar = avatarB64?.takeIf { it.isNotBlank() } ?: UserCache.peek(uid)?.avatarB64
-            // Pindah kursi harus SATU tulisan atomik: kursi baru dipasang dan
-            // kursi lama dibuang di transaksi yang sama. Dulu kursi baru ditulis
-            // dulu, kursi lama dihapus belakangan, sehingga sempat muncul dua
-            // kursi untuk akun yang sama dan pembersihan otomatis bisa membuang
-            // kursi yang baru dinaiki (user terlihat turun sendiri).
-            val sebelum = base.get().await()
-            val kursiLama = sebelum.children
-                .filter { it.child("uid").getValue(String::class.java) == uid }
-                .mapNotNull { it.key }
-                .filter { it != index.toString() }
-            val err = Rtdb.tx(base) { d ->
-                val curUid = d.child(index.toString()).child("uid").getValue(String::class.java)
+            // Menulis seluruh node seats kena "Permission denied": aturan database
+            // hanya mengizinkan menulis kursi milik sendiri. Jadi kursi baru
+            // diklaim lewat transaksi pada satu kursi itu saja, lalu kursi lama
+            // milik uid yang sama dihapus per kursi (updateChildren ke anak-anak).
+            // Pembersihan otomatis di layar (rapikanKursiGanda) sudah dihapus
+            // karena bisa membuang kursi yang baru dinaiki -> user turun sendiri.
+            val err = Rtdb.tx(base.child(index.toString())) { d ->
+                val curUid = d.child("uid").getValue(String::class.java)
                 if (curUid != null && curUid != uid && curUid in present) {
                     "Kursi sudah terisi"
                 } else {
-                    val baru = HashMap<String, Any?>()
-                    for (c in d.children) {
-                        val k = c.key ?: continue
-                        val pemilik = c.child("uid").getValue(String::class.java)
-                        // Kursi lain milik saya sendiri dibuang dalam tulisan ini juga.
-                        if (k != index.toString() && pemilik == uid) continue
-                        baru[k] = c.value
-                    }
-                    baru[index.toString()] =
-                        hashMapOf<String, Any?>("uid" to uid, "name" to name, "avatarB64" to avatar, "muted" to false)
-                    d.value = baru
+                    d.value = hashMapOf<String, Any?>(
+                        "uid" to uid,
+                        "name" to name,
+                        "avatarB64" to avatar,
+                        "muted" to false,
+                    )
                     null
                 }
             }
             if (err != null) return err
-            // Poin mic di kursi lama ikut dibersihkan supaya tidak menumpuk.
-            for (k in kursiLama) Rtdb.ref("micPoints/$roomId/$k").removeValue()
+            val lama = HashMap<String, Any?>()
+            for (c in base.get().await().children) {
+                if (c.key != index.toString() && c.child("uid").getValue(String::class.java) == uid) {
+                    lama[c.key!!] = null
+                }
+            }
+            if (lama.isNotEmpty()) base.updateChildren(lama).await()
+            for (k in lama.keys) Rtdb.ref("micPoints/$roomId/$k").removeValue()
             null
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e

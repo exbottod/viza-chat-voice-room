@@ -216,14 +216,17 @@ def main():
     daftar = [x for x in daftar if angka(x["ke"]) > angka(x["dari"])]
     daftar.sort(key=lambda x: (angka(x["dari"]), angka(x["ke"])))
     # Batas situs GitHub Pages 1 GB dan folder docs sempat 3,75 GB karena 829
-    # berkas patch, sehingga deploy gagal terbit. Patch lama dipangkas otomatis:
-    # simpan sampai totalnya ~400 MB, minimal 10 versi terakhir. Pengguna versi
-    # sangat lama otomatis jatuh ke unduhan APK penuh.
-    ANGGARAN_PATCH = 400 * 1024 * 1024
+    # berkas patch, sehingga deploy gagal terbit. Aturan pemangkasan: simpan patch
+    # 30 build terakhir. Pengaman tambahan: kalau 30 build itu melewati 800 MB,
+    # versi paling tua dilepas supaya deploy tetap bisa terbit. Pengguna versi
+    # yang patchnya sudah dilepas otomatis jatuh ke unduhan APK penuh.
+    SIMPAN_VERSI = 30
+    BATAS_PATCH = 800 * 1024 * 1024
     pakai, simpan_versi = 0, []
     for v in reversed(sorted({x["ke"] for x in daftar}, key=angka)):
         ukuran_v = sum(x["arm64"]["ukuran"] for x in daftar if x["ke"] == v)
-        if len(simpan_versi) >= 10 and pakai + ukuran_v > ANGGARAN_PATCH:
+        kalau_lebih = pakai + ukuran_v > BATAS_PATCH
+        if len(simpan_versi) >= SIMPAN_VERSI or (simpan_versi and kalau_lebih):
             break
         simpan_versi.append(v)
         pakai += ukuran_v
@@ -235,7 +238,8 @@ def main():
         for f in os.listdir(folder_patch):
             if f not in nama_simpan:
                 os.remove(os.path.join(folder_patch, f))
-    print(f"Patch disimpan {len(daftar)} entri, {pakai // (1024 * 1024)} MB")
+    print(f"Patch disimpan {len(daftar)} entri untuk {len(simpan_versi)} build, "
+          f"{pakai // (1024 * 1024)} MB")
 
     open(f"{TARGET}/patch-info.json", "w").write(json.dumps({"patch": daftar}, indent=2))
 

@@ -169,6 +169,10 @@ object UserCache {
 
     fun peek(uid: String): PublicUser? = map[uid]?.second ?: disk(uid)
 
+    /** Hanya salinan memori: tanpa baca disk, tanpa jaringan. Dipakai sel kursi
+     *  supaya thread UI tidak membaca SharedPreferences tiap kursi dibuat ulang. */
+    fun peekMem(uid: String): PublicUser? = map[uid]?.second
+
     /** Buang salinan memori profil ini supaya pembacaan berikutnya mengambil data segar. */
     fun forget(uid: String) {
         map.remove(uid)

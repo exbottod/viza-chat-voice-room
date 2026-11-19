@@ -550,10 +550,10 @@ fun RoomScreen(
         }
         // Muat semua profil penghuni room SEKALIGUS di awal, supaya bingkai,
         // lencana, dan medali tidak dimuat ulang saat mengetik atau pindah kursi.
-        val uidRoom = remember(members.keys.toList(), seats.values.map { it.uid }, messages.size) {
+        val uidRoom = remember(members.keys.toList(), seats.values.map { it?.uid }, messages.size) {
             LinkedHashSet<String>().apply {
                 addAll(members.keys)
-                seats.values.forEach { if (it.uid.isNotBlank()) add(it.uid) }
+                seats.values.forEach { kursi -> kursi?.uid?.takeIf { it.isNotBlank() }?.let { add(it) } }
                 messages.takeLast(60).forEach { if (it.uid.isNotBlank()) add(it.uid) }
             }
         }

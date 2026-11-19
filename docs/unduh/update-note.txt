@@ -1,1 +1,1 @@
-• Cache bingkai dan efek: simpan di memori dan disk, tidak unduh ulang
+• Hapus berkas pycache yang ikut ter-commit

@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.266",
-  "catatan": "• Cache bingkai dan efek: simpan di memori dan disk, tidak unduh ulang",
-  "ukuran_apk": 57054348,
-  "sha256_apk": "d14903dbe40e1db7cfbfcc8cad788b304242e3fa98b6c73f9c375280467badff",
+  "versi": "1.0.267",
+  "catatan": "• Hapus berkas pycache yang ikut ter-commit",
+  "ukuran_apk": 57054337,
+  "sha256_apk": "05ecc76ebd2637a0bc4395bcc9671c6f9d06693d16c48b16a566d4d6e69047ca",
   "abis": {
     "arm64": {
-      "ukuran": 57054348,
-      "sha256": "d14903dbe40e1db7cfbfcc8cad788b304242e3fa98b6c73f9c375280467badff"
+      "ukuran": 57054337,
+      "sha256": "05ecc76ebd2637a0bc4395bcc9671c6f9d06693d16c48b16a566d4d6e69047ca"
     },
     "armv7": {
-      "ukuran": 55205506,
-      "sha256": "3a21b9292d0e1e7ff7efe5bf7cc7dd0bbe6abf18341372c4fa01f4c7608f27e3"
+      "ukuran": 55205480,
+      "sha256": "ee0344052b15e11cc06cd33b521e6f6ec53247cea74aabe0b7b37c425027eb58"
     },
     "universal": {
-      "ukuran": 75470336,
-      "sha256": "1b6b84df22bf5a30c8593368f7e4a48c0c71a44e380a655150a676716f72e89e"
+      "ukuran": 75470331,
+      "sha256": "a68a95dadffadb763df0f5413fbdaefce6d3e08662ecb9b801d4a22844872c27"
     }
   }
 }

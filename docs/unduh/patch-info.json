@@ -6652,15 +6652,6 @@
       }
     },
     {
-      "dari": "1.0.252",
-      "ke": "1.0.256",
-      "arm64": {
-        "file": "patch-1.0.252-1.0.256-arm64.bsdiff",
-        "ukuran": 4237676,
-        "sha256": "d98ec661cc30886ce6c3311fae4515a48e07d84e429d1debfa56affee7693ffe"
-      }
-    },
-    {
       "dari": "1.0.253",
       "ke": "1.0.255",
       "arm64": {
@@ -6671,11 +6662,11 @@
     },
     {
       "dari": "1.0.253",
-      "ke": "1.0.256",
+      "ke": "1.0.257",
       "arm64": {
-        "file": "patch-1.0.253-1.0.256-arm64.bsdiff",
-        "ukuran": 4237492,
-        "sha256": "e16128eea85d0f9f35d05ff6a6af9de41b7d4ce9d9cd6e8fd0d7ad300222eec3"
+        "file": "patch-1.0.253-1.0.257-arm64.bsdiff",
+        "ukuran": 4221374,
+        "sha256": "50641ccde0162881451b7342b1f66088409d454cf1a20d37f349c1dd7f70fe09"
       }
     },
     {
@@ -6689,20 +6680,29 @@
     },
     {
       "dari": "1.0.254",
-      "ke": "1.0.256",
+      "ke": "1.0.257",
       "arm64": {
-        "file": "patch-1.0.254-1.0.256-arm64.bsdiff",
-        "ukuran": 4221288,
-        "sha256": "cb3b989126c98307ffa5632f9e2343951975e7bb473b7741d0c8dad1fcc85888"
+        "file": "patch-1.0.254-1.0.257-arm64.bsdiff",
+        "ukuran": 4215806,
+        "sha256": "6486694353c6975cd3e2b811361f50d1215b88ad28ff189a60fab62a479194ad"
       }
     },
     {
       "dari": "1.0.255",
-      "ke": "1.0.256",
+      "ke": "1.0.257",
       "arm64": {
-        "file": "patch-1.0.255-1.0.256-arm64.bsdiff",
-        "ukuran": 4168668,
-        "sha256": "28d3004e128a117eb10dd7d80776a9e5d202bfe33d3766c7b23a72a57d1fdb5c"
+        "file": "patch-1.0.255-1.0.257-arm64.bsdiff",
+        "ukuran": 4211613,
+        "sha256": "f4c58b36a0088ce52e928497b3e052f986564c4d33a84fd925f825411bfbea02"
+      }
+    },
+    {
+      "dari": "1.0.256",
+      "ke": "1.0.257",
+      "arm64": {
+        "file": "patch-1.0.256-1.0.257-arm64.bsdiff",
+        "ukuran": 4197212,
+        "sha256": "5364659bb3fe493bf2714b4b0236740629853aceaee5e6ccada1b28e2a56b934"
       }
     }
   ]

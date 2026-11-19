@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.256",
-  "catatan": "• Latar room dipanggang sekali supaya geser chat tidak berat",
-  "ukuran_apk": 56980704,
-  "sha256_apk": "89d81b3484e71c76bf12bd1f40443732b59499db82f4de6daefb0c875ba1a5b4",
+  "versi": "1.0.257",
+  "catatan": "• Pindah kursi tidak memuat ulang bingkai dan lencana di chat",
+  "ukuran_apk": 56980880,
+  "sha256_apk": "4ab71a7ee1a9e9a1dc243186af25fbdf2d00fb9643ff4c5c96221faf8e81e0f2",
   "abis": {
     "arm64": {
-      "ukuran": 56980704,
-      "sha256": "89d81b3484e71c76bf12bd1f40443732b59499db82f4de6daefb0c875ba1a5b4"
+      "ukuran": 56980880,
+      "sha256": "4ab71a7ee1a9e9a1dc243186af25fbdf2d00fb9643ff4c5c96221faf8e81e0f2"
     },
     "armv7": {
-      "ukuran": 55131858,
-      "sha256": "24673c7a902663b179dcc30676f5582d0f91f24abb57db65fb7b0a9fd2cb6b90"
+      "ukuran": 55132031,
+      "sha256": "f7fe565938c7f4c9d9723ad818810be4d51933a59060816fb7390bcda05e7dc5"
     },
     "universal": {
-      "ukuran": 75396702,
-      "sha256": "15cea9a8551513092d909d218719e354420bc7355fbc06e428e3542f7b207a2f"
+      "ukuran": 75396871,
+      "sha256": "e475ce05b8f8d796640e016950eb7b5bfd7a665648630d54ac2aa8810bb7c0c9"
     }
   }
 }

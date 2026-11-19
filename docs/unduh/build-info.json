@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.257",
-  "catatan": "• Pindah kursi tidak memuat ulang bingkai dan lencana di chat",
-  "ukuran_apk": 56980880,
-  "sha256_apk": "4ab71a7ee1a9e9a1dc243186af25fbdf2d00fb9643ff4c5c96221faf8e81e0f2",
+  "versi": "1.0.258",
+  "catatan": "• Hasil PK lama tidak muncul lagi setelah keluar masuk room",
+  "ukuran_apk": 56981421,
+  "sha256_apk": "4228627495e1d10d9ce3eef59382b3d176781a56b116f04da2e5a01641012464",
   "abis": {
     "arm64": {
-      "ukuran": 56980880,
-      "sha256": "4ab71a7ee1a9e9a1dc243186af25fbdf2d00fb9643ff4c5c96221faf8e81e0f2"
+      "ukuran": 56981421,
+      "sha256": "4228627495e1d10d9ce3eef59382b3d176781a56b116f04da2e5a01641012464"
     },
     "armv7": {
-      "ukuran": 55132031,
-      "sha256": "f7fe565938c7f4c9d9723ad818810be4d51933a59060816fb7390bcda05e7dc5"
+      "ukuran": 55132577,
+      "sha256": "1db0239d5109df77293c7102da16f39c749135e6cfea72f51c01221dbe28a831"
     },
     "universal": {
-      "ukuran": 75396871,
-      "sha256": "e475ce05b8f8d796640e016950eb7b5bfd7a665648630d54ac2aa8810bb7c0c9"
+      "ukuran": 75397410,
+      "sha256": "ac0d9082034be61dbeca77f2706c9102c3f23ef00140d2d8097323d9755ec81c"
     }
   }
 }

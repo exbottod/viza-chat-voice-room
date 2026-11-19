@@ -218,15 +218,15 @@ object AgoraVoice {
 
     private suspend fun fetchToken(channel: String): Tok? {
         var lastErr = ""
-        for (attempt in 1..3) {
+        for (attempt in 1..5) {
             try {
                 val idToken = FirebaseAuth.getInstance().currentUser
                     ?.getIdToken(attempt > 1)?.await()?.token
                 if (idToken == null) { problem("Suara mati: belum login"); return null }
                 val c = (URL(TOKEN_URL).openConnection() as HttpURLConnection).apply {
                     requestMethod = "POST"
-                    connectTimeout = 10_000
-                    readTimeout = 15_000
+                    connectTimeout = 12_000
+                    readTimeout = 25_000
                     doOutput = true
                     setRequestProperty("Authorization", "Bearer $idToken")
                     setRequestProperty("Content-Type", "application/json")
@@ -250,9 +250,13 @@ object AgoraVoice {
             } catch (e: Exception) {
                 lastErr = "token error ${e.message}"
             }
-            delay(700L * attempt)
+            // 502/503/timeout biasanya sesaat (VPS tersendat). Jeda dinaikkan dan
+            // percobaan ditambah supaya suara tidak mati hanya karena satu kedipan.
+            lastStatus = "Suara: menyambung…"
+            delay(1200L * attempt)
         }
-        problem("Suara mati: $lastErr".take(140))
+        // Tanpa toast: status tenang yang bisa diketuk untuk mencoba lagi.
+        lastStatus = "Suara: belum tersambung, ketuk untuk coba"
         return null
     }
 

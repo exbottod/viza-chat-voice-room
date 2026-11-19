@@ -457,10 +457,17 @@ object FollowRepo {
 
 @Composable
 fun PublicAvatar(u: PublicUser?, size: Dp, fallback: String = "?", modifier: Modifier = Modifier) {
-    val bmp = remember(u?.avatarB64) { ProfileRepo.decodeB64(u?.avatarB64) }
+    // Foto dibaca dari cache bitmap dulu (tanpa decode); kalau belum ada,
+    // didekode di thread IO. Dulu setiap baris mendekode base64 di thread UI.
+    val b64 = u?.avatarB64
+    val bmp by androidx.compose.runtime.produceState<androidx.compose.ui.graphics.ImageBitmap?>(
+        initialValue = ProfileRepo.avatarCached(b64),
+        key1 = b64,
+    ) { value = ProfileRepo.decodeAvatar(b64) ?: value }
     val base = modifier.size(size).clip(CircleShape)
+    val bmpTampil = bmp
     when {
-        bmp != null -> Image(bmp, null, base, contentScale = ContentScale.Crop)
+        bmpTampil != null -> Image(bmpTampil, null, base, contentScale = ContentScale.Crop)
         u != null && !u.photoUrl.isNullOrBlank() ->
             AsyncImage(model = u.photoUrl, contentDescription = null, modifier = base, contentScale = ContentScale.Crop)
         else -> Box(base.background(Color(0xFF263238)), contentAlignment = Alignment.Center) {
@@ -1179,5 +1186,59 @@ fun AksiAdminSheet(label: String, simbol: String, warna: Color = Color(0xFFFFD54
         ) { Text(simbol, color = warna, fontSize = 16.sp) }
         Spacer(Modifier.height(2.dp))
         Text(label, color = Color(0xFFE0E0E0), fontSize = 11.sp, maxLines = 1)
+    }
+}
+
+/**
+ * Profil yang tampil di room (chat, kursi). State ini hidup di memori proses,
+ * bukan di tiap baris, jadi saat keyboard dibuka/ditutup atau daftar dibuat
+ * ulang, foto, bingkai, medal, dan lencana langsung ada tanpa diproses lagi.
+ * Pola yang sama dengan profil: tampil dulu dari data yang sudah ada, lalu
+ * disegarkan diam-diam di belakang tanpa mengosongkan tampilan.
+ */
+object ProfilRoom {
+    private val data = androidx.compose.runtime.mutableStateMapOf<String, PublicUser>()
+    private val sedangMuat = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+    private val scope = kotlinx.coroutines.CoroutineScope(
+        kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO,
+    )
+
+    /** Baca instan: memori dulu, lalu cache disk. Tidak pernah menunggu jaringan. */
+    fun ambil(uid: String): PublicUser? {
+        data[uid]?.let { return it }
+        val d = UserCache.peek(uid)
+        if (d != null) data[uid] = d
+        return d
+    }
+
+    /** Pastikan profil ada. Kalau belum ada, muat sekali di belakang layar. */
+    fun pastikan(uid: String, paksa: Boolean = false) {
+        if (uid.isBlank()) return
+        if (!paksa && data[uid] != null && data[uid]!!.avatarB64 != null) return
+        if (!sedangMuat.add(uid)) return
+        scope.launch {
+            try {
+                val u = UserCache.byUid(uid)
+                // Jangan pernah menimpa dengan data yang lebih miskin.
+                if (u != null) {
+                    val lama = data[uid]
+                    data[uid] = if (lama == null) u else u.copy(
+                        avatarB64 = u.avatarB64 ?: lama.avatarB64,
+                        badge = u.badge.ifBlank { lama.badge },
+                        medals = u.medals.ifBlank { lama.medals },
+                    )
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+            } finally {
+                sedangMuat.remove(uid)
+            }
+        }
+    }
+
+    /** Hangatkan banyak profil sekaligus (mis. semua pengirim pesan terakhir). */
+    fun hangatkan(uids: Collection<String>) {
+        for (u in uids) if (u.isNotBlank()) { ambil(u); pastikan(u) }
     }
 }

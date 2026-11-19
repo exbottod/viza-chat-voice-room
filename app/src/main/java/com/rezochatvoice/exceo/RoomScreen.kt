@@ -422,6 +422,9 @@ fun RoomScreen(
                     t.contains(myName, true)
             }
             messages = RoomChatCache.satukan(roomId, baru)
+            // Profil semua pengirim dihangatkan SEBELUM barisnya tampil, jadi foto,
+            // bingkai, medal, dan lencana sudah siap seperti di halaman profil.
+            ProfilRoom.hangatkan(baru.mapNotNull { it.uid.takeIf { id -> id.isNotBlank() } }.toSet())
             if (adaGift) {
                 val kini = System.currentTimeMillis()
                 if (kini - segarGift > 3000L) {
@@ -3219,10 +3222,12 @@ fun FloatingRoomBubble(room: RoomInfo, onClick: () -> Unit) {
 private fun RmChatRow(m: RoomMsg, myUid: String, onProfile: (String) -> Unit) {
     // FIX avatar kosong di chat room: pesan SENDIRI langsung pakai profil lokal
     // (foto, nama, frame, level) tanpa nunggu jaringan; orang lain dari cache.
-    var u by remember(m.uid) {
-        mutableStateOf(UserCache.peek(m.uid) ?: if (m.uid == myUid) UserCache.meLocal(m.uid) else null)
-    }
-    LaunchedEffect(m.uid) { if (u == null || u?.avatarB64 == null) u = UserCache.byUid(m.uid) ?: u }
+    // Profil dibaca dari penampung bersama (ProfilRoom), bukan dimuat per baris.
+    // Dibaca sinkron dari memori, jadi foto, bingkai, medal, dan lencana langsung
+    // ada saat baris dibuat ulang (mis. keyboard dibuka). Penyegaran jalan diam-diam.
+    val u: PublicUser? = ProfilRoom.ambil(m.uid)
+        ?: if (m.uid == myUid) UserCache.meLocal(m.uid) else null
+    LaunchedEffect(m.uid) { ProfilRoom.pastikan(m.uid) }
     val shownName = u?.name?.takeIf { it.isNotBlank() } ?: m.name
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
         PublicAvatarFramed(u, 38.dp, fallback = shownName, modifier = Modifier.clickable { onProfile(m.uid) })
@@ -3330,10 +3335,9 @@ private fun RmChatRow(m: RoomMsg, myUid: String, onProfile: (String) -> Unit) {
 /** Pesan chat berisi gambar. Ketuk gambar untuk melihat ukuran penuh. */
 @Composable
 private fun RmPhotoRow(m: RoomMsg, myUid: String, onProfile: (String) -> Unit, onOpen: (String) -> Unit) {
-    var u by remember(m.uid) {
-        mutableStateOf(UserCache.peek(m.uid) ?: if (m.uid == myUid) UserCache.meLocal(m.uid) else null)
-    }
-    LaunchedEffect(m.uid) { if (u == null || u?.avatarB64 == null) u = UserCache.byUid(m.uid) ?: u }
+    val u: PublicUser? = ProfilRoom.ambil(m.uid)
+        ?: if (m.uid == myUid) UserCache.meLocal(m.uid) else null
+    LaunchedEffect(m.uid) { ProfilRoom.pastikan(m.uid) }
     val shownName = u?.name?.takeIf { it.isNotBlank() } ?: m.name
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
         PublicAvatarFramed(u, 38.dp, fallback = shownName, modifier = Modifier.clickable { onProfile(m.uid) })

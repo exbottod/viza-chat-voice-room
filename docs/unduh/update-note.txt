@@ -1,4 +1,2 @@
-• Kembalikan file cache yang gagal kompilasi; simpan perbaikan musik
-• Musik room: cek server 30 detik sekali saat sepi, 5 detik saat main
-• Prefetch profil berurutan; baris chat tidak ambil ulang profil
-• Perbaiki kompilasi: kursi bisa kosong saat mengumpulkan uid room
+• Cek hak panel di tab profil tidak lagi mencoba terus tiap 30 detik: paling banyak tiga kali, lalu berhenti
+• Ini menghapus permintaan HTTP berulang yang muncul di HTTP Canary saat membuka tab profil

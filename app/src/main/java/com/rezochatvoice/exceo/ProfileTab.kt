@@ -193,8 +193,12 @@ fun ProfileTab(
             PanelStaffRepo.lupakan()
             return@LaunchedEffect
         }
-        var jeda = 2_000L
-        while (true) {
+        // Cek hak panel secukupnya saja: paling banyak tiga percobaan, lalu
+        // berhenti. Dulu dicoba terus tiap 30 detik sehingga muncul permintaan
+        // HTTP berulang di HTTP Canary dan memakan kuota tanpa guna.
+        var percobaan = 0
+        while (percobaan < 3) {
+            percobaan++
             val hasil = try {
                 PanelStaffRepo.panels()
             } catch (e: kotlinx.coroutines.CancellationException) {
@@ -204,14 +208,22 @@ fun ProfileTab(
             }
             if (hasil != null) {
                 panelList = hasil
-                // Sudah dapat jawaban sah. Segarkan pelan-pelan supaya panel yang
-                // baru dikirim atau dicabut developer ikut berubah tanpa buka ulang app.
-                kotlinx.coroutines.delay(90_000L)
-                jeda = 2_000L
-            } else {
-                kotlinx.coroutines.delay(jeda)
-                jeda = minOf(jeda * 2, 30_000L)
+                break
             }
+            kotlinx.coroutines.delay(if (percobaan == 1) 2_000L else 5_000L)
+        }
+        // Sesudah dapat jawaban sah, segarkan pelan-pelan (5 menit sekali) supaya
+        // panel yang baru dikirim atau dicabut developer ikut berubah.
+        while (true) {
+            kotlinx.coroutines.delay(300_000L)
+            val hasil = try {
+                PanelStaffRepo.panels()
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
+            }
+            if (hasil != null) panelList = hasil
         }
     }
 

@@ -1,2 +1,2 @@
-• Mengatur ulang kalkulator hanya membuat poin mic jadi 0, ikon poin tetap tampil
-• Ikon poin di kursi hanya disembunyikan lewat Matikan kalkulator
+• Pindah kursi tidak lagi membuat bingkai avatar dan lencana di chat dimuat ulang
+• Daftar chat, data peran owner/admin, dan daftar lencana dihitung sekali, tidak dibangun ulang tiap kursi berubah

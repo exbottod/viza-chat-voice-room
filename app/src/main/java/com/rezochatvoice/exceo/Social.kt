@@ -484,10 +484,12 @@ fun PublicAvatar(u: PublicUser?, size: Dp, fallback: String = "?", modifier: Mod
 /** Avatar kecil/sedang dengan bingkai VIP (kalau ada) di atasnya. */
 @Composable
 fun PublicAvatarFramed(u: PublicUser?, size: Dp, fallback: String = "?", modifier: Modifier = Modifier) {
-    val fa = frameAssetOf(u?.frame, u?.vip ?: 0, u?.vipUntil ?: 0L)
+    // Aset bingkai dihitung sekali per isi bingkai/VIP, supaya bingkai tidak
+    // dimuat ulang setiap layar room dihitung ulang (mis. saat pindah kursi).
+    val fa = remember(u?.frame, u?.vip, u?.vipUntil) { frameAssetOf(u?.frame, u?.vip ?: 0, u?.vipUntil ?: 0L) }
     Box(modifier.size(size), contentAlignment = Alignment.Center) {
         PublicAvatar(u, size, fallback)
-        if (fa != null) FrameOverlay(fa, (size.value * 1.36f).dp)
+        if (fa != null) androidx.compose.runtime.key(fa) { FrameOverlay(fa, (size.value * 1.36f).dp) }
     }
 }
 

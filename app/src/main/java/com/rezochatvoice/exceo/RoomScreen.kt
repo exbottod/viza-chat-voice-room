@@ -539,10 +539,15 @@ fun RoomScreen(
         val listState = rememberLazyListState()
         // Tab chat: false = Semua (user + gift + sistem), true = Obrolan (hanya ketikan user).
         var onlyChat by remember { mutableStateOf(false) }
-        val visible = messages.filter {
-            (clearedAt == 0L || it.createdAt > clearedAt) &&
-                (!onlyChat || it.uid.isNotEmpty() || it.img.isNotBlank())
+        val visible = remember(messages, clearedAt, onlyChat) {
+            messages.filter {
+                (clearedAt == 0L || it.createdAt > clearedAt) &&
+                    (!onlyChat || it.uid.isNotEmpty() || it.img.isNotBlank())
+            }
         }
+        // Data peran dibuat sekali selama pemilik dan admin sama, supaya baris chat
+        // (bingkai avatar, lencana) tidak dibangun ulang tiap kursi berpindah.
+        val dataPeran = remember(r.ownerUid, r.admins) { DataPeranRoom(r.ownerUid, r.admins) }
         val total = visible.size + (if (r.announcement.isNotBlank() && !onlyChat) 1 else 0)
         val lastMsgId = visible.lastOrNull()?.id
         LaunchedEffect(onlyChat) {
@@ -704,7 +709,7 @@ fun RoomScreen(
                                 contentAlignment = Alignment.Center,
                             ) {
                                 if (i < r.micCount) {
-                                    ProvidePeranRoom(DataPeranRoom(r.ownerUid, r.admins)) {
+                                    ProvidePeranRoom(dataPeran) {
                                         // Poin dibaca di dalam sel kursi, bukan di sini, supaya
                                         // perubahan poin tidak membuat seluruh layar room dihitung ulang.
                                         RmSeatCell(
@@ -785,11 +790,11 @@ fun RoomScreen(
                 }
                 items(visible, key = { it.id }) { m ->
                     if (m.img.isNotBlank()) {
-                        ProvidePeranRoom(DataPeranRoom(r.ownerUid, r.admins)) {
+                        ProvidePeranRoom(dataPeran) {
                             RmPhotoRow(m, myUid, onProfile = { uid -> profileUid = uid }, onOpen = { lihatGambar = it })
                         }
                     } else if (m.uid.isNotEmpty()) {
-                        ProvidePeranRoom(DataPeranRoom(r.ownerUid, r.admins)) {
+                        ProvidePeranRoom(dataPeran) {
                             RmChatRow(m, myUid) { uid -> profileUid = uid }
                         }
                     } else {
@@ -3186,7 +3191,10 @@ private fun RmChatRow(m: RoomMsg, myUid: String, onProfile: (String) -> Unit) {
             // Lencana ditaruh di baris sendiri dan membungkus ke bawah, jadi
             // saat lencana banyak (atau layar sempit) tidak ada yang terpotong.
             if (LENCANA_AKTIF) {
-                val lencana = medalIdList(u?.badge.orEmpty()).mapNotNull { findItem(it) }
+                val badgeMentah = u?.badge.orEmpty()
+                // Daftar lencana dihitung sekali per isi lencana, bukan tiap baris
+                // dihitung ulang, supaya ikon tidak dimuat ulang saat kursi berpindah.
+                val lencana = remember(badgeMentah) { medalIdList(badgeMentah).mapNotNull { findItem(it) } }
                 if (lencana.isNotEmpty()) {
                     Spacer(Modifier.height(2.dp))
                     androidx.compose.foundation.layout.FlowRow(
@@ -3194,7 +3202,9 @@ private fun RmChatRow(m: RoomMsg, myUid: String, onProfile: (String) -> Unit) {
                         horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.Start),
                         verticalArrangement = Arrangement.spacedBy(3.dp),
                     ) {
-                        lencana.forEach { StoreBadgeIcon(it, 24.dp) }
+                        lencana.forEach { item ->
+                            androidx.compose.runtime.key(item) { StoreBadgeIcon(item, 24.dp) }
+                        }
                     }
                 }
             }

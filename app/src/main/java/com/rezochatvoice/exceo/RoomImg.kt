@@ -101,12 +101,14 @@ object RoomImg {
         if (photo != null) foto[id] = photo
         if (background != null) latar[id] = background
         sudah.add(id)
+        simpanDisk(id)
     }
 
     fun lupakan(id: String) {
         foto.remove(id)
         latar.remove(id)
         sudah.remove(id)
+        try { sp().edit().remove(id + "_foto").remove(id + "_latar").apply() } catch (e: Exception) { }
     }
 }
 

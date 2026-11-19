@@ -548,17 +548,6 @@ fun RoomScreen(
                 }
             }
         }
-        // Muat semua profil penghuni room SEKALIGUS di awal, supaya bingkai,
-        // lencana, dan medali tidak dimuat ulang saat mengetik atau pindah kursi.
-        val uidRoom = remember(members.keys.toList(), seats.values.map { it?.uid }, messages.size) {
-            LinkedHashSet<String>().apply {
-                addAll(members.keys)
-                seats.values.forEach { kursi -> kursi?.uid?.takeIf { it.isNotBlank() }?.let { add(it) } }
-                messages.takeLast(60).forEach { if (it.uid.isNotBlank()) add(it.uid) }
-            }
-        }
-        LaunchedEffect(uidRoom) { UserCache.prefetch(uidRoom) }
-
         val mySeat = seats.values.firstOrNull { it.uid == myUid }
         val roomBmp = rememberRoomPhoto(r)
         val cols = micColumns(r.micCount)
@@ -3196,7 +3185,7 @@ private fun RmChatRow(m: RoomMsg, myUid: String, onProfile: (String) -> Unit) {
     var u by remember(m.uid) {
         mutableStateOf(UserCache.peek(m.uid) ?: if (m.uid == myUid) UserCache.meLocal(m.uid) else null)
     }
-    LaunchedEffect(m.uid) { if (u == null) u = UserCache.byUid(m.uid) ?: u }
+    LaunchedEffect(m.uid) { if (u == null || u?.avatarB64 == null) u = UserCache.byUid(m.uid) ?: u }
     val shownName = u?.name?.takeIf { it.isNotBlank() } ?: m.name
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
         PublicAvatarFramed(u, 38.dp, fallback = shownName, modifier = Modifier.clickable { onProfile(m.uid) })
@@ -3307,7 +3296,7 @@ private fun RmPhotoRow(m: RoomMsg, myUid: String, onProfile: (String) -> Unit, o
     var u by remember(m.uid) {
         mutableStateOf(UserCache.peek(m.uid) ?: if (m.uid == myUid) UserCache.meLocal(m.uid) else null)
     }
-    LaunchedEffect(m.uid) { if (u == null) u = UserCache.byUid(m.uid) ?: u }
+    LaunchedEffect(m.uid) { if (u == null || u?.avatarB64 == null) u = UserCache.byUid(m.uid) ?: u }
     val shownName = u?.name?.takeIf { it.isNotBlank() } ?: m.name
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
         PublicAvatarFramed(u, 38.dp, fallback = shownName, modifier = Modifier.clickable { onProfile(m.uid) })

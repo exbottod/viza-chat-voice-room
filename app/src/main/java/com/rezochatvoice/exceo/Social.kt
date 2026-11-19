@@ -81,7 +81,7 @@ object UserCache {
 
     private fun save(u: PublicUser) {
         try {
-            sp().edit().putLong(u.uid + "_t", System.currentTimeMillis()).putString(
+            sp().edit().putString(
                 u.uid,
                 org.json.JSONObject().put("userId", u.userId).put("name", u.name)
                     .put("countryCode", u.countryCode).put("photoUrl", u.photoUrl ?: "")
@@ -242,47 +242,10 @@ object UserCache {
         )
     }
 
-    /**
-     * Muat profil beberapa user SEKALIGUS saat masuk room.
-     *
-     * Tujuannya supaya saat mengetik, membuka sheet, atau pindah kursi tidak ada
-     * lagi pemuatan ulang bingkai, lencana, dan medali: semua sudah ada di cache.
-     */
-    suspend fun prefetch(uids: Collection<String>) {
-        // Tanpa batas jumlah: semua penghuni room dimuat. Yang sudah tersimpan
-        // di HP dilewati supaya tidak ada unduhan ulang (hemat kuota).
-        val perlu = uids.filter { it.isNotBlank() && !map.containsKey(it) && disk(it) == null }
-            .distinct()
-        for (uid in perlu) {
-            try {
-                byUid(uid)
-            } catch (e: kotlinx.coroutines.CancellationException) {
-                throw e
-            } catch (e: Exception) {
-            }
-        }
-    }
-
     suspend fun byUid(uid: String, force: Boolean = false): PublicUser? {
         val c = map[uid]
-        // 30 menit, bukan 5 menit: setiap pengambilan ulang mengunduh foto base64
-        // yang besar, dan itu yang menghabiskan kuota internet pengguna.
-        if (!force && c != null && System.currentTimeMillis() - c.first < 1_800_000) return c.second
+        if (!force && c != null && System.currentTimeMillis() - c.first < 300_000) return c.second
         val prev = c?.second ?: disk(uid)
-        // SEKALI TERMUAT, TIDAK DIUNDUH LAGI: simpanan di HP dipakai langsung.
-        // Data baru diambil ulang hanya kalau sudah lewat 24 jam atau diminta
-        // paksa (mis. saat membuka profil lengkap).
-        if (!force && c == null && prev != null && prev.name.isNotBlank()) {
-            val umur = try {
-                System.currentTimeMillis() - sp().getLong(uid + "_t", 0L)
-            } catch (e: Exception) {
-                Long.MAX_VALUE
-            }
-            if (umur in 0 until 86_400_000L) {
-                map[uid] = System.currentTimeMillis() to prev
-                return prev
-            }
-        }
 
         // PROFIL SENDIRI: instan dari data lokal, tanpa jaringan sama sekali.
         val me = try {
@@ -490,14 +453,12 @@ object FollowRepo {
 
 @Composable
 fun PublicAvatar(u: PublicUser?, size: Dp, fallback: String = "?", modifier: Modifier = Modifier) {
-    // Tautan foto didahulukan: gambarnya diunduh sekali lalu disimpan di HP,
-    // jadi lebih hemat kuota daripada base64 yang ikut terunduh tiap ambil profil.
-    val tautan = u?.photoUrl?.takeIf { it.isNotBlank() }
-    val bmp = remember(u?.avatarB64) { if (tautan == null) ProfileRepo.decodeB64(u?.avatarB64) else null }
+    val bmp = remember(u?.avatarB64) { ProfileRepo.decodeB64(u?.avatarB64) }
     val base = modifier.size(size).clip(CircleShape)
     when {
-        tautan != null -> AsyncImage(model = tautan, contentDescription = null, modifier = base, contentScale = ContentScale.Crop)
         bmp != null -> Image(bmp, null, base, contentScale = ContentScale.Crop)
+        u != null && !u.photoUrl.isNullOrBlank() ->
+            AsyncImage(model = u.photoUrl, contentDescription = null, modifier = base, contentScale = ContentScale.Crop)
         else -> Box(base.background(Color(0xFF263238)), contentAlignment = Alignment.Center) {
             when (u?.gender) {
                 // Foto profil default cowo / cewek saat awal daftar akun (belum upload foto).

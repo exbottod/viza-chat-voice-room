@@ -1,1 +1,2 @@
-• Hemat kuota: foto profil baru disimpan lebih kecil (160px), dan tautan foto didahulukan lalu disimpan di HP
+• Cek musik room tidak lagi tiap 2 detik: 30 detik sekali saat tidak ada musik, 5 detik saat ada musik yang diputar
+• Ini yang paling banyak memakan kuota internet dan membuat aplikasi lambat

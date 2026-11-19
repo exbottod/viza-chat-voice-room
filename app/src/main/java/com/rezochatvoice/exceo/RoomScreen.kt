@@ -1905,11 +1905,11 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
     var seatUser by remember(seat?.uid) { mutableStateOf(seat?.uid?.let { UserCache.peek(it) }) }
     LaunchedEffect(seat?.uid) {
         val id = seat?.uid
-        if (id != null) {
-            // Selalu segarkan (cache 5 menit, tidak menimpa data bagus dengan yang kosong),
-            // supaya frame di kursi tidak hilang / telat.
-            UserCache.byUid(id)?.let { seatUser = it }
-        }
+        // Pindah kursi tidak boleh memuat ulang profil. Dulu setiap pindah kursi
+        // selalu memanggil server, jadi kursi terasa "memuat" dan lambat. Sekarang
+        // pakai data yang sudah ada di cache; server hanya dipanggil kalau user ini
+        // memang belum pernah dikenal.
+        if (id != null && seatUser == null) UserCache.byUid(id)?.let { seatUser = it }
     }
     val seatFrame = if (seat != null) frameAssetOf(seatUser?.frame, seatUser?.vip ?: 0, seatUser?.vipUntil ?: 0L) else null
     // Gelombang & gelembung suara: muncul di kursi mic saat orangnya bicara.

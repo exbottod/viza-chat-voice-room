@@ -14,12 +14,23 @@ Berkas yang disentuh: .kt, .xml, .html, .js, .css, .json, plus gradle.properties
 Halaman game di assets memanggil jembatan RezoBridge, jadi nama jembatan di
 Kotlin dan di halaman harus ikut berubah bersama supaya tetap tersambung.
 """
-import sys, pathlib, re
+import os, sys, pathlib, re
 
 AKAR = pathlib.Path(sys.argv[1])
 MEREK = sys.argv[2]
 SLUG = sys.argv[3].lower()
 CAMEL = "".join(kata.capitalize() for kata in MEREK.split())
+
+# Alamat server milik pembeli, kalau ada. Argumen ke-4 atau env VIZA_SERVER.
+# Tanpa alamat ini, build resmi memakai server Viza yang asli: alamat di dalam
+# repo TIDAK diganti placeholder. Dulu alamat Viza ikut diganti "GANTI-SERVER-
+# DOMPET", sehingga APK rilis mencari host yang tidak ada: token suara gagal dan
+# koin, level, medal, lencana, serta frame tampak kosong seolah ter-reset.
+SERVER_BARU = ""
+if len(sys.argv) > 4:
+    SERVER_BARU = sys.argv[4].strip().rstrip("/")
+if not SERVER_BARU:
+    SERVER_BARU = os.environ.get("VIZA_SERVER", "").strip().rstrip("/")
 
 FRASA = [
     ("Rezo Chat Voice", MEREK),
@@ -29,7 +40,6 @@ FRASA = [
     ("Game Rezo", f"Game {MEREK}"),
     ("Tentang Rezo", f"Tentang {MEREK}"),
     ("About Rezo", f"About {MEREK}"),
-    ("viza.43-156-99-4.sslip.io", "GANTI-SERVER-DOMPET"),
     ("rezo-voice-chat-officialex.aws-ap-southeast-1.turso.io", "GANTI-SERVER-TURSO"),
     ("rezo-wallet.bangexx01.workers.dev", "GANTI-SERVER-DOMPET"),
     ("rezo-wallet.pages.dev", "GANTI-SERVER-DOMPET-CADANGAN"),
@@ -38,7 +48,15 @@ FRASA = [
     ("REZO_", SLUG.upper() + "_"),
 ]
 
-SISA_INFRA = ["bangexx01", "turso.io", "rezo-wallet", "rezo-agora-token", "sslip.io", "43-156-99-4"]
+# Hanya alamat server Rezo yang wajib hilang dari build pembeli. Kalau build
+# memakai server Viza sendiri, alamat itu memang harus tetap ada.
+SISA_INFRA = ["bangexx01", "turso.io", "rezo-wallet", "rezo-agora-token"]
+if SERVER_BARU:
+    SISA_INFRA += ["sslip.io", "43-156-99-4"]
+
+# Penggantian alamat server: hanya kalau pembeli memberi alamatnya sendiri.
+if SERVER_BARU:
+    FRASA.insert(0, ("viza.43-156-99-4.sslip.io", SERVER_BARU))
 
 
 def olah(teks):

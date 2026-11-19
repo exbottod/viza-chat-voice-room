@@ -1,4 +1,2 @@
-• Room lebih ringan: poin mic dibaca di dalam sel kursi
-• Matikan kalkulator menyembunyikan ikon poin; pengaturan room punya cadangan server
-• Reset kalkulator: hapus poin mic lewat server kalau HP ditolak
-• Bersihkan layar publik langsung kosong di layar dan tutup panel
+• Room berlatar kustom lebih ringan: latar dipotong dan digelapkan sekali di awal, jadi geser chat dan kursi tidak tersendat
+• Perubahan poin mic hanya menghitung ulang kursi, bukan seluruh layar

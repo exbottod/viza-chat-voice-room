@@ -468,8 +468,12 @@ fun RoomScreen(
         }
         val bg = rememberRoomBg(r)
         if (bg != null) {
-            Image(bitmap = bg, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-            Box(Modifier.fillMaxSize().background(Color(0x88000000)))
+            // Latar dipanggang sekali (crop + lapisan gelap) supaya geser chat ringan.
+            val siap = LatarRoomSiap(bg)
+            Image(
+                bitmap = siap, contentDescription = null,
+                contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize(),
+            )
         }
         val isOwner = r.ownerUid == myUid
         // Pemilik room selalu boleh. Akun developer (pemilik aplikasi) tetap bisa

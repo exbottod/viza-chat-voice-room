@@ -5,6 +5,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
@@ -91,4 +93,36 @@ fun rememberRoomBg(r: RoomInfo): ImageBitmap? {
     LaunchedEffect(r.id) { RoomImg.muat(r.id) }
     val b64 = RoomImg.latar[r.id] ?: r.backgroundB64
     return remember(b64) { ProfileRepo.decodeB64Scaled(b64, 1280) }
+}
+
+/**
+ * Latar room yang sudah disiapkan sekali untuk ukuran layar ini: gambar
+ * dipotong sesuai layar dan lapisan gelap ikut dipanggang ke dalam bitmap.
+ *
+ * Sebelumnya gambar penuh diskalakan ulang setiap frame saat chat digeser,
+ * dan itu yang membuat room berlatar kustom (mis. room sendiri) terasa berat.
+ */
+@androidx.compose.runtime.Composable
+fun LatarRoomSiap(bmp: ImageBitmap): ImageBitmap {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    return androidx.compose.runtime.remember(bmp) {
+        try {
+            val dm = context.resources.displayMetrics
+            val w = dm.widthPixels.coerceAtLeast(1)
+            val h = dm.heightPixels.coerceAtLeast(1)
+            val sumber = bmp.asAndroidBitmap()
+            val skala = maxOf(w.toFloat() / sumber.width, h.toFloat() / sumber.height)
+            val hasil = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888)
+            val kanvas = android.graphics.Canvas(hasil)
+            val m = android.graphics.Matrix().apply {
+                postScale(skala, skala)
+                postTranslate((w - sumber.width * skala) / 2f, (h - sumber.height * skala) / 2f)
+            }
+            kanvas.drawBitmap(sumber, m, android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG))
+            kanvas.drawColor(0x88000000)
+            hasil.asImageBitmap()
+        } catch (e: Exception) {
+            bmp
+        }
+    }
 }

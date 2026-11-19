@@ -190,6 +190,21 @@ object VipAssets {
     // frame terasa "memuat" lama dan kuota cepat habis. Sekarang disimpan di
     // memori dan di disk, jadi tampil seketika setelah pertama kali diunduh.
     private val cacheUrl = java.util.concurrent.ConcurrentHashMap<String, ByteArray>()
+    // Urutan masuk untuk pembuangan LRU. Dulu begitu lewat 60 URL seluruh cache
+    // dikosongkan, jadi lencana yang sudah pernah tampil ikut memuat ulang.
+    private val urutanUrl = java.util.concurrent.ConcurrentLinkedQueue<String>()
+
+    /** Simpan ke cache memori, buang yang paling lama satu per satu (bukan semua). */
+    private fun simpanCache(url: String, isi: ByteArray) {
+        if (!cacheUrl.containsKey(url)) {
+            urutanUrl.add(url)
+            while (cacheUrl.size >= 60) {
+                val tua = urutanUrl.poll() ?: break
+                cacheUrl.remove(tua)
+            }
+        }
+        cacheUrl[url] = isi
+    }
 
     private fun berkasCache(url: String): java.io.File? = try {
         val ctx = com.google.firebase.FirebaseApp.getInstance().applicationContext
@@ -207,7 +222,7 @@ object VipAssets {
         if (f != null && f.exists() && f.length() > 0L) {
             val lama = try { f.readBytes() } catch (e: Exception) { null }
             if (lama != null && lama.isNotEmpty()) {
-                cacheUrl[url] = lama
+                simpanCache(url, lama)
                 return@withContext lama
             }
         }
@@ -220,8 +235,7 @@ object VipAssets {
             val isi = if (kon.responseCode in 200..299) kon.inputStream.use { it.readBytes() } else null
             kon.disconnect()
             if (isi != null && isi.isNotEmpty() && isi.size <= 4_000_000) {
-                if (cacheUrl.size > 60) cacheUrl.clear()
-                cacheUrl[url] = isi
+                simpanCache(url, isi)
                 try { f?.writeBytes(isi) } catch (e: Exception) { }
             }
             isi

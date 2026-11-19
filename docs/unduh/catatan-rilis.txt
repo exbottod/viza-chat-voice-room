@@ -1,0 +1,5 @@
+Room terasa lebih ringan:
+• Avatar kursi tidak lagi didekode di thread utama, jadi pindah kursi tidak tersendat.
+• Lencana dan medal tidak diunduh ulang setiap kali tampil.
+• Profil orang yang duduk dimuat sekali saja.
+• Judul dialog pembaruan kini berbahasa Indonesia.

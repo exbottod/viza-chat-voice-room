@@ -1,2 +1,2 @@
-• Room berlatar kustom lebih ringan: latar dipotong dan digelapkan sekali di awal, jadi geser chat dan kursi tidak tersendat
-• Perubahan poin mic hanya menghitung ulang kursi, bukan seluruh layar
+• Mengatur ulang kalkulator hanya membuat poin mic jadi 0, ikon poin tetap tampil
+• Ikon poin di kursi hanya disembunyikan lewat Matikan kalkulator

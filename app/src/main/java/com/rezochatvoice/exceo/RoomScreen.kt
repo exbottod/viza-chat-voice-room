@@ -714,7 +714,7 @@ fun RoomScreen(
                                             locked = r.lockedSeats.contains(i),
                                             emote = seats[i]?.uid?.let { emotes[it] },
                                             emotSudahTampil = emotSudahTampil,
-                                            poin = { if (cfgPoin) (micPoints[i] ?: 0L) else 0L },
+                                            poin = { if (cfgPoin) (micPoints[i] ?: 0L) else null },
                                         ) { seatSheet = i }
                                     }
                                 }
@@ -1846,7 +1846,7 @@ private fun RmSeatCell(
     locked: Boolean,
     emote: SeatEmote?,
     emotSudahTampil: MutableList<String>,
-    poin: () -> Long,
+    poin: () -> Long?,
     onClick: () -> Unit,
 ) {
     RmSeatView(
@@ -1862,7 +1862,7 @@ private fun RmSeatCell(
 }
 
 @Composable
-private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = false, emote: SeatEmote? = null, emotSudahTampil: MutableList<String> = mutableListOf(), points: Long = 0L, onClick: () -> Unit) {
+private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = false, emote: SeatEmote? = null, emotSudahTampil: MutableList<String> = mutableListOf(), points: Long? = 0L, onClick: () -> Unit) {
     val bmp = remember(seat?.avatarB64) { ProfileRepo.decodeB64(seat?.avatarB64) }
     var seatUser by remember(seat?.uid) { mutableStateOf(seat?.uid?.let { UserCache.peek(it) }) }
     LaunchedEffect(seat?.uid) {
@@ -1972,8 +1972,9 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
                 modifier = Modifier.weight(1f, fill = false),
             )
         }
-        // Ikon poin hanya muncul kalau ada poin dan kalkulator menyala.
-        if (points > 0L) Text("💗 " + fmtCompact(points), color = Color.White, fontSize = 11.sp)
+        // Ikon poin selalu tampil saat kalkulator menyala (termasuk 0 setelah
+        // direset), dan hanya hilang saat Matikan kalkulator dipilih.
+        if (points != null) Text("💗 " + fmtCompact(points), color = Color.White, fontSize = 11.sp)
     }
 }
 

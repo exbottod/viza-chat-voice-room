@@ -215,11 +215,11 @@ fun PkBar(pk: PkState, modifier: Modifier = Modifier) {
             contentScale = ContentScale.FillBounds,
             modifier = Modifier.matchParentSize(),
         )
-        Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp)) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(pk.aNama.ifBlank { "Host" }, color = GoldLight, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                    Text(pk.aSkor.toString(), color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                    Text(pk.aNama.ifBlank { "Host" }, color = GoldLight, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                    Text(pk.aSkor.toString(), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     // Ikon VS dari aset pemilik, tampil di tengah bar PK.
@@ -227,41 +227,41 @@ fun PkBar(pk: PkState, modifier: Modifier = Modifier) {
                         painter = painterResource(R.drawable.pk_vs),
                         contentDescription = null,
                         contentScale = ContentScale.Fit,
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(20.dp),
                     )
                     Spacer(Modifier.width(6.dp))
                     Image(
                         painter = painterResource(R.drawable.pk_waktu),
                         contentDescription = null,
-                        modifier = Modifier.size(13.dp),
+                        modifier = Modifier.size(11.dp),
                     )
                     Spacer(Modifier.width(4.dp))
                     Text(
                         if (pk.selesai) tr("Selesai") else String.format("%d:%02d", menit, detik),
                         color = Gold,
-                        fontSize = 13.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                     )
                 }
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
-                    Text(pk.bNama.ifBlank { tr("Lawan") }, color = GoldLight, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                    Text(pk.bSkor.toString(), color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                    Text(pk.bNama.ifBlank { tr("Lawan") }, color = GoldLight, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                    Text(pk.bSkor.toString(), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 }
             }
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(4.dp))
             // Pita perbandingan: kiri kubu A, kanan kubu B, penanda di tengah.
-            BoxWithConstraints(Modifier.fillMaxWidth().height(12.dp)) {
+            BoxWithConstraints(Modifier.fillMaxWidth().height(8.dp)) {
                 val lebar = maxWidth
                 Row(
-                    Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(6.dp))
+                    Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp))
                         .background(Color(0xFF3A1414)),
                 ) {
                     Box(
-                        Modifier.fillMaxWidth(bagianA).height(12.dp)
+                        Modifier.fillMaxWidth(bagianA).height(8.dp)
                             .background(Brush.horizontalGradient(listOf(Gold, GoldLight))),
                     )
                     Box(
-                        Modifier.weight(1f).height(12.dp)
+                        Modifier.weight(1f).height(8.dp)
                             .background(Brush.horizontalGradient(listOf(Color(0xFF6E1B1B), Color(0xFFB33A3A)))),
                     )
                 }
@@ -304,7 +304,7 @@ fun PkBuatDialog(
                     contentDescription = tr("Mulai PK"),
                     modifier = Modifier.height(30.dp),
                 )
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(8.dp))
                 Text(tr("Mode"), color = Color(0xFFD9D0C0), fontSize = 12.sp)
                 Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf("1v1" to "1v1", "tim" to tr("Tim")).forEach { (nilai, label) ->

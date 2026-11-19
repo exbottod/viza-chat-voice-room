@@ -1,2 +1,1 @@
-• Bar PK dipindah ke bawah kursi mic supaya kursi tidak tertutup
-• Bar PK punya ikon X untuk disembunyikan, dan muncul lagi saat PK baru dimulai
+• Bar PK dibuat lebih kecil dengan rasio 6:1, diletakkan di bawah kursi mic dan bisa disembunyikan lewat ikon X

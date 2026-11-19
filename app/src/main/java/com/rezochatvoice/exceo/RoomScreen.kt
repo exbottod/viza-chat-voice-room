@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -746,7 +747,8 @@ fun RoomScreen(
                         Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        PkBar(p, Modifier.weight(1f))
+                        // Bar PK pipih 6:1 supaya tidak memakan layar.
+                        PkBar(p, Modifier.weight(1f).aspectRatio(6f))
                         Spacer(Modifier.width(6.dp))
                         Box(
                             Modifier.size(22.dp).clip(CircleShape).background(Color(0x66000000))

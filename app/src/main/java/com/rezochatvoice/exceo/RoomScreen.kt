@@ -264,8 +264,13 @@ fun RoomScreen(
         if (sisa > 0L) kotlinx.coroutines.delay(sisa + 400L)
         RoomPk.tandaiSelesai(roomId)
     }
-    androidx.compose.runtime.LaunchedEffect(pk?.selesai) {
-        if (pk?.selesai == true) pkHasil = true
+    androidx.compose.runtime.LaunchedEffect(pk?.selesai, pk?.akhir) {
+        val p = pk ?: return@LaunchedEffect
+        if (!p.selesai) return@LaunchedEffect
+        // Hasil hanya ditampilkan untuk PK yang baru selesai. Sisa PK lama yang
+        // masih tersimpan di database tidak boleh muncul lagi saat masuk room.
+        val baruSaja = p.akhir > 0L && Rtdb.serverNow() - p.akhir < 120_000L
+        if (baruSaja) pkHasil = true
     }
     // Animasi mulai PK (video dari APK rujukan): sekali putar tiap PK dimulai.
     var pkAnim by remember(roomId) { mutableStateOf(false) }
@@ -1192,7 +1197,11 @@ fun RoomScreen(
                     namaUser = { uid ->
                         seats.values.firstOrNull { it.uid == uid }?.name ?: uid.takeLast(6)
                     },
-                    onDismiss = { pkHasil = false },
+                    onDismiss = {
+                        pkHasil = false
+                        // Sisa PK ditutup sekalian dihapus supaya tidak muncul lagi.
+                        RoomPk.hentikan(r.id)
+                    },
                 )
             }
         }
@@ -1508,9 +1517,10 @@ fun RoomScreen(
                         }
                     }) { Text("777", color = Color(0xFFFFC107), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold) }
                     if (canManage) {
-                        RmTool(if (pk?.aktif == true && pk?.selesai != true) tr("Stop PK") else "Grup PK", onClick = {
-                            if (pk?.aktif == true && pk?.selesai != true) {
+                        RmTool(if (pk?.aktif == true || pk?.selesai == true) tr("Stop PK") else "Grup PK", onClick = {
+                            if (pk?.aktif == true || pk?.selesai == true) {
                                 RoomPk.hentikan(r.id)
+                                pkHasil = false
                                 toast(tr("PK dihentikan"))
                                 panel = P_NONE
                             } else {

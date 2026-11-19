@@ -1,1 +1,2 @@
-• Pindah kursi tidak memuat ulang bingkai dan lencana di chat
+• Hasil PK tidak muncul lagi saat keluar dan masuk room kalau PK sudah dihentikan
+• Tombol Stop PK bekerja juga untuk PK yang sudah selesai, dan menutup hasil PK ikut menghapus sisanya

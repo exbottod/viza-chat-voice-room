@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.265",
-  "catatan": "• Kursi mic: pindah kursi pakai cache, tidak memuat ulang profil",
-  "ukuran_apk": 57053920,
-  "sha256_apk": "ef603efedda5defbc78cea7038d336fa71bc6e1f2d8fac361d9a58e12639cd5f",
+  "versi": "1.0.266",
+  "catatan": "• Cache bingkai dan efek: simpan di memori dan disk, tidak unduh ulang",
+  "ukuran_apk": 57054348,
+  "sha256_apk": "d14903dbe40e1db7cfbfcc8cad788b304242e3fa98b6c73f9c375280467badff",
   "abis": {
     "arm64": {
-      "ukuran": 57053920,
-      "sha256": "ef603efedda5defbc78cea7038d336fa71bc6e1f2d8fac361d9a58e12639cd5f"
+      "ukuran": 57054348,
+      "sha256": "d14903dbe40e1db7cfbfcc8cad788b304242e3fa98b6c73f9c375280467badff"
     },
     "armv7": {
-      "ukuran": 55205071,
-      "sha256": "3fd305ef44411f1a3c5ab4e6cc3c1e1cf0ac514e9c0fe14720a59e7efbb8e5d8"
+      "ukuran": 55205506,
+      "sha256": "3a21b9292d0e1e7ff7efe5bf7cc7dd0bbe6abf18341372c4fa01f4c7608f27e3"
     },
     "universal": {
-      "ukuran": 75469895,
-      "sha256": "c972041ac88928b353eff29f8249943ea773311df47a568495353c6f58b89271"
+      "ukuran": 75470336,
+      "sha256": "1b6b84df22bf5a30c8593368f7e4a48c0c71a44e380a655150a676716f72e89e"
     }
   }
 }

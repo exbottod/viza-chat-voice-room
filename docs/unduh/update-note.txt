@@ -1,1 +1,1 @@
-• Kursi mic: pindah kursi pakai cache, tidak memuat ulang profil
+• Cache bingkai dan efek: simpan di memori dan disk, tidak unduh ulang

@@ -6359,6 +6359,71 @@ export default {
         return json({ ok: 0, e: String(e?.message ?? e).slice(0, 160) }, 500);
       }
     }
+    // ===== API per tab (pola Funi): satu alamat untuk satu tab =====
+    // Aplikasi hanya memanggil alamat tab yang sedang dibuka, jadi jelas di
+    // HTTP Canary dan tidak ada paket data besar yang diambil terus-menerus.
+    if (url.pathname.toLowerCase().startsWith("/api/user/get_profile")) {
+      try {
+        const sesiU = await sesiDariToken(url.searchParams.get("token") ?? url.searchParams.get("t") ?? "");
+        if (!sesiU) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
+        const uidU = String(url.searchParams.get("uid") || sesiU.uid || sesiU.user_id || sesiU.sub || "");
+        if (!uidU) return json({ ok: 0, e: "uid kosong" }, 400);
+        const pub = (await bacaRtdbNilai(env, "pub/" + uidU)) || {};
+        const akun = (await bacaRtdbNilai(env, "users/" + uidU)) || {};
+        return json({
+          ok: 1,
+          uid: uidU,
+          user_id: pub.userId ?? akun.userId ?? "",
+          name: pub.name ?? akun.name ?? "",
+          photo: pub.photoUrl ?? pub.photo ?? akun.photoUrl ?? "",
+          country_code: pub.countryCode ?? akun.countryCode ?? "",
+          gender: pub.gender ?? akun.gender ?? "",
+          frame: akun.frame ?? pub.frame ?? "",
+          badge: akun.badge ?? pub.badge ?? "",
+          vip: akun.vip ?? 0,
+          svip: akun.svip ?? 0,
+        });
+      } catch (e) {
+        return json({ ok: 0, e: String(e?.message ?? e).slice(0, 160) }, 500);
+      }
+    }
+
+    if (url.pathname.toLowerCase().startsWith("/api/svip/get_user_svip")) {
+      try {
+        const sesiS = await sesiDariToken(url.searchParams.get("token") ?? url.searchParams.get("t") ?? "");
+        if (!sesiS) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
+        const uidS = String(url.searchParams.get("uid") || sesiS.uid || sesiS.user_id || sesiS.sub || "");
+        if (!uidS) return json({ ok: 0, e: "uid kosong" }, 400);
+        const punya = (await bacaRtdbNilai(env, "svip/" + uidS)) || (await bacaRtdbNilai(env, "users/" + uidS + "/svip")) || {};
+        const items = (await bacaRtdbNilai(env, "svipItems")) || (await bacaRtdbNilai(env, "cfg/svipItems")) || {};
+        return json({ ok: 1, uid: uidS, punya, items });
+      } catch (e) {
+        return json({ ok: 0, e: String(e?.message ?? e).slice(0, 160) }, 500);
+      }
+    }
+
+    if (url.pathname.toLowerCase().startsWith("/api/room/list")) {
+      try {
+        const semua = (await bacaRtdbNilai(env, "roomsPub")) || {};
+        const daftar = Object.entries(semua).map(([id, r]) => {
+          const isi = r && typeof r === "object" ? r : {};
+          const dalam = Number(isi.online ?? isi.users ?? isi.jumlah ?? 0) || 0;
+          return {
+            id,
+            name: isi.name ?? isi.title ?? id,
+            owner: isi.ownerUid ?? "",
+            cover: isi.cover ?? isi.photoUrl ?? "",
+            level: Number(isi.level ?? 1) || 1,
+            online: dalam,
+          };
+        // Room kosong tidak ditampilkan: bikin aplikasi lambat dan boros data.
+        }).filter((r) => r.online > 0);
+        return json({ ok: 1, jumlah: daftar.length, rooms: daftar });
+      } catch (e) {
+        return json({ ok: 0, e: String(e?.message ?? e).slice(0, 160) }, 500);
+      }
+    }
+
     if (url.pathname.toLowerCase().startsWith("/musikroom")) {
       const jalurMr = url.pathname.toLowerCase();
       const ruangParam = String(url.searchParams.get("room") || "").replace(/[^0-9A-Za-z_.:-]/g, "").slice(0, 64);

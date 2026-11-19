@@ -249,7 +249,8 @@ object UserCache {
      * lagi pemuatan ulang bingkai, lencana, dan medali: semua sudah ada di cache.
      */
     suspend fun prefetch(uids: Collection<String>) {
-        val perlu = uids.filter { it.isNotBlank() && !map.containsKey(it) }.distinct()
+        val perlu = uids.filter { it.isNotBlank() && !map.containsKey(it) && disk(it) == null }
+            .distinct().take(30)
         if (perlu.isEmpty()) return
         try {
             kotlinx.coroutines.coroutineScope {
@@ -272,7 +273,9 @@ object UserCache {
 
     suspend fun byUid(uid: String, force: Boolean = false): PublicUser? {
         val c = map[uid]
-        if (!force && c != null && System.currentTimeMillis() - c.first < 300_000) return c.second
+        // 30 menit, bukan 5 menit: setiap pengambilan ulang mengunduh foto base64
+        // yang besar, dan itu yang menghabiskan kuota internet pengguna.
+        if (!force && c != null && System.currentTimeMillis() - c.first < 1_800_000) return c.second
         val prev = c?.second ?: disk(uid)
 
         // PROFIL SENDIRI: instan dari data lokal, tanpa jaringan sama sekali.

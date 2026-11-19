@@ -1,1 +1,2 @@
-• Profil semua penghuni room dimuat sekali saat masuk room, jadi bingkai, lencana, medali, dan sheet tidak memuat ulang saat mengetik atau pindah kursi
+• Hemat kuota internet: data profil dan foto penghuni room dipakai dari simpanan HP sampai 30 menit, tidak diunduh ulang terus
+• Saat masuk room, pemuatan profil dibatasi 30 orang dan melewati yang sudah tersimpan di HP

@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.258",
   "catatan": "• Hasil PK lama tidak muncul lagi setelah keluar masuk room",
-  "ukuran_apk": 56981421,
-  "sha256_apk": "4228627495e1d10d9ce3eef59382b3d176781a56b116f04da2e5a01641012464",
+  "ukuran_apk": 56981968,
+  "sha256_apk": "37de27427edeb6b8f3bfed0776ed08a6deb143433215feb04f18d57890c9c449",
   "abis": {
     "arm64": {
-      "ukuran": 56981421,
-      "sha256": "4228627495e1d10d9ce3eef59382b3d176781a56b116f04da2e5a01641012464"
+      "ukuran": 56981968,
+      "sha256": "37de27427edeb6b8f3bfed0776ed08a6deb143433215feb04f18d57890c9c449"
     },
     "armv7": {
-      "ukuran": 55132577,
-      "sha256": "1db0239d5109df77293c7102da16f39c749135e6cfea72f51c01221dbe28a831"
+      "ukuran": 55133124,
+      "sha256": "7672b2c578f01d66a7ffb77c262fba1ddfbdabcf2b90d84869114401572d7156"
     },
     "universal": {
-      "ukuran": 75397410,
-      "sha256": "ac0d9082034be61dbeca77f2706c9102c3f23ef00140d2d8097323d9755ec81c"
+      "ukuran": 75397957,
+      "sha256": "2a692562ce6ce57d820319038abc452c8752c673321f1d96f8b244c62104b0ec"
     }
   }
 }

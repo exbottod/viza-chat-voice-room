@@ -1,1 +1,2 @@
+• Suara: batasi connect 15 detik lalu sambung ulang otomatis
 • Tab Party: room kosong tidak ditampilkan

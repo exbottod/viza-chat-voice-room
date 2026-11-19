@@ -6859,15 +6859,6 @@
       }
     },
     {
-      "dari": "1.0.259",
-      "ke": "1.0.263",
-      "arm64": {
-        "file": "patch-1.0.259-1.0.263-arm64.bsdiff",
-        "ukuran": 4308129,
-        "sha256": "e0e94fdbc41499d916e1944c577c7885c5f5001dfa7287d358cdbeeffbbeb8be"
-      }
-    },
-    {
       "dari": "1.0.260",
       "ke": "1.0.261",
       "arm64": {
@@ -6887,11 +6878,11 @@
     },
     {
       "dari": "1.0.260",
-      "ke": "1.0.263",
+      "ke": "1.0.264",
       "arm64": {
-        "file": "patch-1.0.260-1.0.263-arm64.bsdiff",
-        "ukuran": 4243884,
-        "sha256": "d01c90da334ae2549f38b05da47e57a7e39ee38553a19678acd1190afd0c7bd0"
+        "file": "patch-1.0.260-1.0.264-arm64.bsdiff",
+        "ukuran": 4271388,
+        "sha256": "b579ac53209274a5d73c81f6c618405db036faf59ec36d137270a02c27907aaf"
       }
     },
     {
@@ -6905,20 +6896,29 @@
     },
     {
       "dari": "1.0.261",
-      "ke": "1.0.263",
+      "ke": "1.0.264",
       "arm64": {
-        "file": "patch-1.0.261-1.0.263-arm64.bsdiff",
-        "ukuran": 4263782,
-        "sha256": "cdc7e490fc5151d26298bf7fc90480bdd52a07fd339ad47b4fb74c12d5a76ffa"
+        "file": "patch-1.0.261-1.0.264-arm64.bsdiff",
+        "ukuran": 4234922,
+        "sha256": "0b039cd703045fb04a16e66ede7269174bc885ff1335687e9cc8565b8102e66e"
       }
     },
     {
       "dari": "1.0.262",
-      "ke": "1.0.263",
+      "ke": "1.0.264",
       "arm64": {
-        "file": "patch-1.0.262-1.0.263-arm64.bsdiff",
-        "ukuran": 4177263,
-        "sha256": "d9a94032d59895bd94593c40a076a4b8d8256fd0f0da6a9dfd74e4cf0bd70e48"
+        "file": "patch-1.0.262-1.0.264-arm64.bsdiff",
+        "ukuran": 4209283,
+        "sha256": "32e307e0d6893e15620e25dba8b43a2485834c5322f7710dad19eb055a06c535"
+      }
+    },
+    {
+      "dari": "1.0.263",
+      "ke": "1.0.264",
+      "arm64": {
+        "file": "patch-1.0.263-1.0.264-arm64.bsdiff",
+        "ukuran": 4198018,
+        "sha256": "60e8f865b68c0f90d12a84630fbcdeec582055d66aa3604e0d04b324dc4566e4"
       }
     }
   ]

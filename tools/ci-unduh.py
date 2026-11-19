@@ -189,6 +189,28 @@ def main():
         else:
             print("Berkas patch tidak ditemukan:", src)
 
+    # Setiap rilis WAJIB punya unduhan kecil: patch dari versi tepat sebelumnya.
+    # Dulu kegagalan pembuatan patch hanya dicetak lalu build tetap "sukses",
+    # akibatnya pengguna terpaksa mengunduh APK penuh 57 MB. Sekarang patch yang
+    # hilang atau tidak cukup kecil menggagalkan langkah ini.
+    wajib = f"patch-{v_lama}-{v_baru}-arm64.bsdiff" if v_lama else ""
+    berkas_wajib = os.path.join(TARGET, "patch", wajib) if wajib else ""
+    kurang_patch = False
+    if wajib:
+        if not os.path.exists(berkas_wajib):
+            print(f"Patch wajib {wajib} tidak dibuat", file=sys.stderr)
+            kurang_patch = True
+        else:
+            ukuran_patch = os.path.getsize(berkas_wajib)
+            ukuran_apk = abis.get("arm64", {}).get("ukuran", 0)
+            if ukuran_apk and ukuran_patch > ukuran_apk * 0.4:
+                print(f"Patch {wajib} terlalu besar: {ukuran_patch} dari {ukuran_apk}",
+                      file=sys.stderr)
+                kurang_patch = True
+            else:
+                print(f"Patch wajib {wajib} ada: {ukuran_patch} bita "
+                      f"({ukuran_patch * 100 // max(ukuran_apk, 1)}% APK)")
+
     def angka(v):
         return tuple(int(i) for i in v.split("."))
     daftar = [x for x in daftar if angka(x["ke"]) > angka(x["dari"])]
@@ -201,7 +223,7 @@ def main():
     subprocess.run(["git", "add", TARGET], check=True)
     if subprocess.run(["git", "diff", "--cached", "--quiet"]).returncode == 0:
         print("Tidak ada perubahan halaman unduh")
-        return 0
+        return 1 if kurang_patch else 0
     # Simpan dulu isi berkas hasil generate. Kalau ada commit lain masuk ke main
     # saaat build berjalan, rebase dulu bentrok di berkas ini (dulu CI gagal dan
     # halaman unduh tertinggal). Jadi: tarik main terbaru, tulis ulang berkas
@@ -231,7 +253,7 @@ def main():
         subprocess.run(["git", "add", "-A", TARGET], check=True)
         if subprocess.run(["git", "diff", "--cached", "--quiet"]).returncode == 0:
             print("Halaman unduh sudah sama dengan versi terbaru")
-            return 0
+            return 1 if kurang_patch else 0
         subprocess.run(["git", "commit", "-m", pesan], check=True)
         if subprocess.run(["git", "push", "origin", f"HEAD:{cabang}"]).returncode == 0:
             berhasil = True
@@ -242,6 +264,9 @@ def main():
         # akibatnya halaman unduh tertinggal di versi lama dan dialog pembaruan
         # tidak pernah muncul. Sekarang kegagalan ini menggagalkan build.
         print("Push halaman unduh tetap gagal: halaman unduh TIDAK terbarui", file=sys.stderr)
+        return 1
+    if kurang_patch:
+        print("Rilis tanpa unduhan kecil: patch wajib tidak tersedia", file=sys.stderr)
         return 1
     print(f"Selesai: halaman unduh {v_baru}, patch {v_lama}->{v_baru}")
     return 0

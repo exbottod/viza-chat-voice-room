@@ -1027,15 +1027,6 @@
       }
     },
     {
-      "dari": "1.0.275",
-      "ke": "1.0.279",
-      "arm64": {
-        "file": "patch-1.0.275-1.0.279-arm64.bsdiff",
-        "ukuran": 4266344,
-        "sha256": "0f7b8ee11e4a7c0ef2aea20f92e3dfe451bef5a940eccdf894653e10aadb0514"
-      }
-    },
-    {
       "dari": "1.0.276",
       "ke": "1.0.278",
       "arm64": {
@@ -1046,11 +1037,11 @@
     },
     {
       "dari": "1.0.276",
-      "ke": "1.0.279",
+      "ke": "1.0.280",
       "arm64": {
-        "file": "patch-1.0.276-1.0.279-arm64.bsdiff",
-        "ukuran": 4260184,
-        "sha256": "a05a52115c3fed423020a6ee57bf51167795e0f87a3278eaaab45d587ea64c35"
+        "file": "patch-1.0.276-1.0.280-arm64.bsdiff",
+        "ukuran": 4264825,
+        "sha256": "befe7114e299a1cd7537c122a9626a6b55e7ccbb3725648ef12ea7f12f05df8a"
       }
     },
     {
@@ -1064,20 +1055,29 @@
     },
     {
       "dari": "1.0.277",
-      "ke": "1.0.279",
+      "ke": "1.0.280",
       "arm64": {
-        "file": "patch-1.0.277-1.0.279-arm64.bsdiff",
-        "ukuran": 4262963,
-        "sha256": "da3be1b19b173b44f480a6d1f4989dd69b853ad8cd44b36cabab49e12bb879df"
+        "file": "patch-1.0.277-1.0.280-arm64.bsdiff",
+        "ukuran": 4268440,
+        "sha256": "e9ddf28ab06f123028e41ca8b51e2a1e07be89ea3e9ca063b88fa82655d0a3c9"
       }
     },
     {
       "dari": "1.0.278",
-      "ke": "1.0.279",
+      "ke": "1.0.280",
       "arm64": {
-        "file": "patch-1.0.278-1.0.279-arm64.bsdiff",
-        "ukuran": 4216754,
-        "sha256": "51fab25f37a29b1e3e76ef00c5fed0dec87cdff4dd6dc6f0da9d8128dc35c4ad"
+        "file": "patch-1.0.278-1.0.280-arm64.bsdiff",
+        "ukuran": 4227387,
+        "sha256": "4c56d49064f1d2cb4d38ec82f5119c49b1c738a3557ab70d9283f95d541a02f9"
+      }
+    },
+    {
+      "dari": "1.0.279",
+      "ke": "1.0.280",
+      "arm64": {
+        "file": "patch-1.0.279-1.0.280-arm64.bsdiff",
+        "ukuran": 4238326,
+        "sha256": "cb24b6e75176840354ea30b43ffb6124faca0af9f29e603090bdf93ba182790f"
       }
     }
   ]

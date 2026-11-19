@@ -252,6 +252,8 @@ fun RoomScreen(
     var pk by remember(roomId) { mutableStateOf<PkState?>(null) }
     var pkBuat by remember { mutableStateOf(false) }
     var pkHasil by remember(roomId) { mutableStateOf(false) }
+    // Bar PK bisa disembunyikan sendiri lewat ikon X, dan muncul lagi saat PK baru.
+    var pkBarTutup by remember(roomId) { mutableStateOf(false) }
     androidx.compose.runtime.DisposableEffect(roomId) {
         val reg = RoomPk.observe(roomId) { pk = it }
         onDispose { reg.remove() }
@@ -276,7 +278,10 @@ fun RoomScreen(
     var pkAnim by remember(roomId) { mutableStateOf(false) }
     androidx.compose.runtime.LaunchedEffect(pk?.mulai) {
         val p = pk ?: return@LaunchedEffect
-        if (p.aktif && !p.selesai && p.mulai > 0L) pkAnim = true
+        if (p.aktif && !p.selesai && p.mulai > 0L) {
+            pkAnim = true
+            pkBarTutup = false
+        }
     }
 
     // Saklar efek (Kotak 4): matikan efek masuk room dan efek gift kalau ramai.
@@ -734,6 +739,24 @@ fun RoomScreen(
                 }
             }
 
+            // Bar PK diletakkan di bawah kursi mic supaya kursi tidak tertutup.
+            pk?.takeIf { it.aktif && !it.selesai }?.let { p ->
+                if (!waveOpen && !pkBarTutup) {
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        PkBar(p, Modifier.weight(1f))
+                        Spacer(Modifier.width(6.dp))
+                        Box(
+                            Modifier.size(22.dp).clip(CircleShape).background(Color(0x66000000))
+                                .clickable { pkBarTutup = true },
+                            contentAlignment = Alignment.Center,
+                        ) { Text("✕", color = Color(0xFFEDEDED), fontSize = 12.sp) }
+                    }
+                }
+            }
+
             // Pengumuman dan notifikasi masuk
             // Banner kemenangan game digambar di lapisan paling atas layar utama
             // (GameWinBannerHost di MainScreen), jadi tidak dipasang lagi di sini.
@@ -1151,15 +1174,7 @@ fun RoomScreen(
                 try { if (fxUid.isNotBlank()) Rtdb.ref("fxPrefs/$fxUid/rocket").setValue(true) } catch (e: Exception) { }
             },
         )
-        // Bar PK tampil di atas kursi selama pertandingan berjalan.
-        pk?.takeIf { it.aktif && !it.selesai }?.let { p ->
-            if (!waveOpen) {
-                PkBar(
-                    p,
-                    Modifier.align(Alignment.TopCenter).padding(top = 96.dp),
-                )
-            }
-        }
+
         if (pkAnim) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 GiftVideo(

@@ -1,2 +1,2 @@
-• Hasil PK tidak muncul lagi saat keluar dan masuk room kalau PK sudah dihentikan
-• Tombol Stop PK bekerja juga untuk PK yang sudah selesai, dan menutup hasil PK ikut menghapus sisanya
+• Bar PK dipindah ke bawah kursi mic supaya kursi tidak tertutup
+• Bar PK punya ikon X untuk disembunyikan, dan muncul lagi saat PK baru dimulai

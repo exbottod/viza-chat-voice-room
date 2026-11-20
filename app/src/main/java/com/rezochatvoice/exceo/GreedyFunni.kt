@@ -44,7 +44,9 @@ object GreedyFunni {
     const val NAMA = "Greedy"
 
     /** Halaman game. Versi ikut di jalur, jadi ganti di sini kalau CDN naik versi. */
-    const val URL_GAME = "https://cdn-web.funni.live/game/greedy/v17t1790238158/index.html"
+    const val URL_GAME = "https://games-api-prod.funni.live/greedy/web/index.html"
+    /** Alamat kedua kalau yang utama gagal dimuat. */
+    const val URL_CADANGAN = "https://cdn-web.funni.live/game/greedy/v17t1790238158/index.html"
 }
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -89,6 +91,21 @@ fun GreedyFunniScreen(onClose: () -> Unit) {
 
                         override fun onPageFinished(view: WebView?, url: String?) {
                             prog = 100
+                        }
+
+                        // Kalau alamat utama gagal (mis. domain prod sedang gangguan),
+                        // coba sekali ke alamat cadangan supaya layar tidak kosong.
+                        override fun onReceivedError(
+                            view: WebView?,
+                            request: android.webkit.WebResourceRequest?,
+                            error: android.webkit.WebResourceError?,
+                        ) {
+                            if (request?.isForMainFrame != true) return
+                            val v = view ?: return
+                            val sudah = v.tag == "cadangan"
+                            if (sudah) return
+                            v.tag = "cadangan"
+                            v.loadUrl(GreedyFunni.URL_CADANGAN)
                         }
                     }
                     webChromeClient = object : WebChromeClient() {

@@ -221,15 +221,50 @@ object AgoraVoice {
         try { onProblem?.invoke(msg) } catch (e: Exception) { }
     }
 
+    // Token disiapkan LEBIH DULU (saat masuk room), bukan saat menekan mic.
+    // Endpoint token di VPS pernah butuh 10-18 detik, dan karena dulu token
+    // selalu diambil tepat saat mau nyambung, suara terasa menunggu lama.
+    private var tokSimpan: Tok? = null
+    private var tokRoom: String? = null
+    private var tokWaktu = 0L
+    private const val TOK_UMUR = 10 * 60_000L
+
+    // Satu permintaan token saja walau pemanasan dan tombol mic berjalan bersamaan.
+    private val kunciToken = Mutex()
+
+    /** Ambil token siap pakai: dari simpanan kalau masih segar, kalau tidak ambil baru. */
+    private suspend fun tokenUntuk(id: String, diam: Boolean = false): Tok? = kunciToken.withLock {
+        val t = tokSimpan
+        if (t != null && tokRoom == id && System.currentTimeMillis() - tokWaktu < TOK_UMUR) return@withLock t
+        val baru = fetchToken(id, diam) ?: return@withLock null
+        tokSimpan = baru
+        tokRoom = id
+        tokWaktu = System.currentTimeMillis()
+        baru
+    }
+
+    /** Panaskan token di latar belakang begitu user masuk room. */
+    fun siapkanToken(ctx: Context, id: String) {
+        appCtx = ctx.applicationContext
+        if (tokSimpan != null && tokRoom == id && System.currentTimeMillis() - tokWaktu < TOK_UMUR) return
+        scope.launch {
+            try {
+                tokenUntuk(id, diam = true)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) { }
+        }
+    }
+
     private data class Tok(val token: String, val url: String)
 
-    private suspend fun fetchToken(channel: String): Tok? {
+    private suspend fun fetchToken(channel: String, diam: Boolean = false): Tok? {
         var lastErr = ""
         for (attempt in 1..5) {
             try {
                 val idToken = FirebaseAuth.getInstance().currentUser
                     ?.getIdToken(attempt > 1)?.await()?.token
-                if (idToken == null) { problem("Suara mati: belum login"); return null }
+                if (idToken == null) { if (!diam) problem("Suara mati: belum login"); return null }
                 val c = (URL(TOKEN_URL).openConnection() as HttpURLConnection).apply {
                     requestMethod = "POST"
                     connectTimeout = 12_000
@@ -263,7 +298,7 @@ object AgoraVoice {
             delay(1200L * attempt)
         }
         // Tanpa toast: status tenang yang bisa diketuk untuk mencoba lagi.
-        lastStatus = "Suara: belum tersambung, ketuk untuk coba"
+        if (!diam) lastStatus = "Suara: belum tersambung, ketuk untuk coba"
         return null
     }
 
@@ -277,7 +312,7 @@ object AgoraVoice {
         joinJob = scope.launch {
             joinLock.withLock {
                 if (roomId != id) return@withLock
-                val t = fetchToken(id) ?: return@withLock
+                val t = tokenUntuk(id) ?: return@withLock
                 if (roomId != id) return@withLock
                 try {
                     closeRoom()
@@ -569,6 +604,7 @@ fun AgoraRoomBridge(roomId: String, myUid: String) {
     DisposableEffect(roomId) {
         val main = android.os.Handler(android.os.Looper.getMainLooper())
         AgoraVoice.onProblem = { m -> main.post { android.widget.Toast.makeText(ctx, m, android.widget.Toast.LENGTH_LONG).show() } }
+        AgoraVoice.siapkanToken(ctx, roomId)
         AgoraVoice.join(ctx, roomId)
         val a = RoomRepo.observeMembers(roomId) { members = it }
         val b = RoomRepo.observeSeats(roomId) { seats ->

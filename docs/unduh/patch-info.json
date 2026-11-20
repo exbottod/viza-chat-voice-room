@@ -1027,15 +1027,6 @@
       }
     },
     {
-      "dari": "1.0.277",
-      "ke": "1.0.281",
-      "arm64": {
-        "file": "patch-1.0.277-1.0.281-arm64.bsdiff",
-        "ukuran": 4271365,
-        "sha256": "51836d76e2e51d5072d29fd1f791a2a974e2ec9d1960b5a078367a4ed96e7092"
-      }
-    },
-    {
       "dari": "1.0.278",
       "ke": "1.0.280",
       "arm64": {
@@ -1046,11 +1037,11 @@
     },
     {
       "dari": "1.0.278",
-      "ke": "1.0.281",
+      "ke": "1.0.282",
       "arm64": {
-        "file": "patch-1.0.278-1.0.281-arm64.bsdiff",
-        "ukuran": 4257751,
-        "sha256": "414f2719c5017bfdb9816285d0bbb7e4dbd2efd0d3b277585b7f7f792f971d62"
+        "file": "patch-1.0.278-1.0.282-arm64.bsdiff",
+        "ukuran": 4241744,
+        "sha256": "407cb144a646979421a013196d99bc2e34d167dbc881976b69b227995039acdb"
       }
     },
     {
@@ -1064,20 +1055,29 @@
     },
     {
       "dari": "1.0.279",
-      "ke": "1.0.281",
+      "ke": "1.0.282",
       "arm64": {
-        "file": "patch-1.0.279-1.0.281-arm64.bsdiff",
-        "ukuran": 4258512,
-        "sha256": "cd274e4402e827e6d58e61e5c012c730c060c4d3a8067e1f8e7dfef0fb0b3e6f"
+        "file": "patch-1.0.279-1.0.282-arm64.bsdiff",
+        "ukuran": 4263077,
+        "sha256": "702afcd167e2fd1f6695d9742e9fb52f40b7e517cd4a377d1cecf890296cc4c2"
       }
     },
     {
       "dari": "1.0.280",
-      "ke": "1.0.281",
+      "ke": "1.0.282",
       "arm64": {
-        "file": "patch-1.0.280-1.0.281-arm64.bsdiff",
-        "ukuran": 4234781,
-        "sha256": "32f5cffcbcc922a31a73206cf26d4c44c9d6e78916ff5f7645ab0688f32fa044"
+        "file": "patch-1.0.280-1.0.282-arm64.bsdiff",
+        "ukuran": 4226835,
+        "sha256": "82de76b8b7da46d2b55bb4bf808f39699b409b6d71ee89e9a322a9a25ac69ffe"
+      }
+    },
+    {
+      "dari": "1.0.281",
+      "ke": "1.0.282",
+      "arm64": {
+        "file": "patch-1.0.281-1.0.282-arm64.bsdiff",
+        "ukuran": 4227861,
+        "sha256": "52ebcfbce141d641c5251353b4be8feeec5133c2f8124ff4e503005ed96220af"
       }
     }
   ]

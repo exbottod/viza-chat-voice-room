@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.281",
+  "versi": "1.0.282",
   "catatan": "Room terasa lebih ringan:\n• Avatar kursi tidak lagi didekode di thread utama, jadi pindah kursi tidak tersendat.\n• Lencana dan medal tidak diunduh ulang setiap kali tampil.\n• Profil orang yang duduk dimuat sekali saja.\n• Judul dialog pembaruan kini berbahasa Indonesia.",
-  "ukuran_apk": 57066771,
-  "sha256_apk": "fd37ebbda229744b3e3451d8551fffe528f6079754b3b961f7f58780f309143e",
+  "ukuran_apk": 57067069,
+  "sha256_apk": "f816da7bb9d2cb189583709e73c89abdcce1f05147a6227c1cbf5d4df9a2dc3e",
   "abis": {
     "arm64": {
-      "ukuran": 57066771,
-      "sha256": "fd37ebbda229744b3e3451d8551fffe528f6079754b3b961f7f58780f309143e"
+      "ukuran": 57067069,
+      "sha256": "f816da7bb9d2cb189583709e73c89abdcce1f05147a6227c1cbf5d4df9a2dc3e"
     },
     "armv7": {
-      "ukuran": 55217918,
-      "sha256": "4d69c01bc89111c665cd05caf64c516115fc7a05ffcc6bec81a1ce0df4a34262"
+      "ukuran": 55218216,
+      "sha256": "d09253ac57c3a33cdf580ce1a1f79e99d37cd20ea148450ddc63ff9c7e090910"
     },
     "universal": {
-      "ukuran": 75482736,
-      "sha256": "52486227814d3c6db8b34fbc8644d9359d0e9353a3a40d04bc8921d768afd1a3"
+      "ukuran": 75483055,
+      "sha256": "aa883a2154b67b24ebe14add71179c7157d4a9496eef8c28cc8d7dc4d80c1c2e"
     }
   }
 }

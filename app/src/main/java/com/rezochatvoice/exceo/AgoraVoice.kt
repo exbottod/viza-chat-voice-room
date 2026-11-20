@@ -288,7 +288,10 @@ object AgoraVoice {
                     // kalau macet pengguna bisa mengetuknya untuk mencoba lagi.
                     pantauSambung?.cancel()
                     pantauSambung = mainScope.launch {
-                        delay(10_000L)
+                        // Negosiasi ICE di seluler/wifi lambat bisa lebih dari 10 detik.
+                        // Dulu status menyerah di detik ke-10 padahal masih berjalan
+                        // wajar, lalu room dibongkar dan dibangun ulang (makin lambat).
+                        delay(25_000L)
                         if (!joined && roomId == id && !sengajaKeluar) {
                             lastStatus = "Suara: belum tersambung, ketuk untuk coba"
                         }
@@ -321,7 +324,7 @@ object AgoraVoice {
                                     // LiveKit bisa berputar sendiri terus.
                                     pantauReconnect?.cancel()
                                     pantauReconnect = mainScope.launch {
-                                        delay(8_000L)
+                                        delay(20_000L)
                                         if (!joined && !sengajaKeluar && roomId == id) {
                                             lastStatus = "Suara: menyambung ulang…"
                                             cobaSambungUlang(id, "media lambat")
@@ -342,7 +345,7 @@ object AgoraVoice {
                                     // tersambung hampir selalu berarti media tidak
                                     // terbangun, bukan jaringan goyang sebentar.
                                     if (konekSejak > 0L &&
-                                        System.currentTimeMillis() - konekSejak < 15_000L
+                                        System.currentTimeMillis() - konekSejak < 6_000L
                                     ) gagalCepat += 1
                                     cobaSambungUlang(id, ev.error?.message)
                                 }
@@ -364,7 +367,7 @@ object AgoraVoice {
                     // Server suara kadang tidak menjawab sama sekali, dan dulu
                     // connect() menunggu tanpa batas sehingga status tertahan di
                     // "Suara: menyambung…". Sekarang dibatasi 15 detik lalu coba lagi.
-                    val selesai = kotlinx.coroutines.withTimeoutOrNull(10_000L) {
+                    val selesai = kotlinx.coroutines.withTimeoutOrNull(25_000L) {
                         r.connect(t.url, t.token)
                         true
                     }
@@ -478,9 +481,15 @@ object AgoraVoice {
 
     /** Coba sambung ulang manual saat pengguna mengetuk status suara. */
     fun sambungUlang(ctx: Context, id: String) {
+        // Ketukan pengguna selalu memulai dari nol. Dulu hitungan gagal cepat tidak
+        // ikut direset, jadi setelah dua kali gagal setiap ketukan langsung
+        // menyerah lagi tanpa benar-benar mencoba menyambung.
         percobaan = 0
+        gagalCepat = 0
+        konekSejak = 0L
         sengajaKeluar = false
         joined = false
+        pantauReconnect?.cancel(); pantauReconnect = null
         join(ctx, id)
     }
 

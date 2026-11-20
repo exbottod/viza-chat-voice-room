@@ -188,6 +188,11 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
             return
         }
         val old = activeRoom
+        // Setiap masuk room, penanda efek masuk dibersihkan supaya banner dan efek
+        // masuk benar-benar diputar. Dulu penanda hanya dibersihkan saat keluar
+        // lewat tombol; kalau aplikasi ditutup paksa, room tetap tercatat dan
+        // efek masuk tidak pernah muncul lagi.
+        EfekMasukTercatat.reset(room.id)
         // Layar room langsung tampil. Semua pemeriksaan (daftar hitam & dompet)
         // jalan di belakang layar supaya tidak terasa "menunggu" saat masuk.
         activeRoom = room
@@ -206,7 +211,12 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
                     null
                 }
             }
+            // Dompet server boleh belum termuat saat room pertama dibuka. Pakai
+            // salinan di HP dulu supaya efek masuk dan banner tidak kosong.
             var w = wallet
+            if (w.equip["entry"].isNullOrBlank() && w.equip["banner"].isNullOrBlank()) {
+                runCatching { WalletCache.load(uid) }.getOrNull()?.let { w = it }
+            }
             val perluDompet = w.equip["entry"].isNullOrBlank() && w.equip["banner"].isNullOrBlank()
             val dompetJob = if (perluDompet) async(kotlinx.coroutines.Dispatchers.IO) {
                 try {

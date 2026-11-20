@@ -1005,12 +1005,25 @@ fun VipEntryEffect(roomId: String) {
      */
     LaunchedEffect(roomId) {
         if (myUid.isBlank()) return@LaunchedEffect
-        // Tunggu sebentar supaya room dan suara siap dulu.
+        // Tunggu sebentar supaya room dan suara siap dulu. Kalau katalog aset atau
+        // dompet belum siap pada percobaan pertama, ulangi beberapa kali: dulu
+        // efek langsung dilepas sehingga banner efek masuk tidak pernah muncul.
         delay(1500)
         if (playing != null || banner != null) return@LaunchedEffect
         // Dompet boleh belum tersedia: cadangan katalog tetap dipakai supaya efek
         // masuk tidak hilang hanya karena cache dompet kosong.
-        val w = runCatching { WalletCache.load(myUid) }.getOrNull()
+        var w = runCatching { WalletCache.load(myUid) }.getOrNull()
+        if (w == null) {
+            // Dompet belum ada di HP: minta ke server sekali, jangan menyerah.
+            w = runCatching {
+                kotlinx.coroutines.withTimeoutOrNull(3000L) { SupaRepo.get(myUid).wallet }
+            }.getOrNull()
+            w?.let { runCatching { WalletCache.save(myUid, it) } }
+        }
+        // Beri kesempatan katalog aset termuat (bisa lambat di jaringan pelan).
+        if (VipAssets.jumlah() == 0) {
+            repeat(8) { if (VipAssets.jumlah() > 0) return@repeat; delay(300) }
+        }
         val vipNow = if (w != null && vipActive(w.vip, w.vipUntil)) w.vip else 0
         val eId = w?.let { fallbackEquip(it, "entry") }.orEmpty()
         val bId = w?.let { fallbackEquip(it, "banner") }.orEmpty()
@@ -1050,7 +1063,11 @@ fun VipEntryEffect(roomId: String) {
             bTier != null && kindAset(bTier.kind, bTier.url) != "image" &&
             (bAwal == null || kindAset(bAwal.kind, bAwal.url) == "image")
         ) bTier else bAwal
-        if (a == null && b == null) return@LaunchedEffect
+        if (a == null && b == null) {
+            // Aset masih belum ada: catat alasannya supaya mudah dicek di panel.
+            VipAssets.diag["entry_kosong"] = "Aset efek masuk belum termuat saat masuk room"
+            return@LaunchedEffect
+        }
         // Sekali per masuk room: setelah minimize lalu kembali, efek tidak diulang.
         if (playing != null || banner != null) return@LaunchedEffect
         if (!EfekMasukTercatat.perluTampil(roomId)) return@LaunchedEffect

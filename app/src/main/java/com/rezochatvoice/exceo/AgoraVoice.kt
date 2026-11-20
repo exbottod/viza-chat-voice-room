@@ -159,6 +159,11 @@ object AgoraVoice {
     private var prevSpeaker: Boolean? = null
     private var prevMode: Int? = null
     @Volatile private var routed = false
+    // Activity yang sedang dipakai. Dulu tuneAudioRoute hanya menerima application
+    // context, dan dari situ Activity tidak pernah ketemu, sehingga tombol volume
+    // tetap mengatur volume notifikasi, bukan volume suara room.
+    @Volatile private var actAktif: Activity? = null
+    @Volatile private var streamTerpasang = false
 
     private fun findActivity(c: Context?): Activity? {
         var x: Context? = c
@@ -177,9 +182,15 @@ object AgoraVoice {
                 audioMgr = mgr
                 prevMode = try { mgr.mode } catch (e: Exception) { null }
                 prevSpeaker = try { mgr.isSpeakerphoneOn } catch (e: Exception) { null }
-                findActivity(ctx)?.let { act ->
-                    prevVolumeStream = act.volumeControlStream
-                    act.volumeControlStream = AudioManager.STREAM_VOICE_CALL
+                val act = actAktif ?: findActivity(ctx)
+                actAktif = act
+                act?.let {
+                    // Jangan timpa nilai asli kalau sudah dipasang saat masuk room.
+                    if (!streamTerpasang) {
+                        prevVolumeStream = it.volumeControlStream
+                        streamTerpasang = true
+                    }
+                    it.volumeControlStream = AudioManager.STREAM_VOICE_CALL
                 }
                 val max = try { mgr.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL) } catch (e: Exception) { 0 }
                 val cur = try { mgr.getStreamVolume(AudioManager.STREAM_VOICE_CALL) } catch (e: Exception) { 0 }
@@ -196,16 +207,38 @@ object AgoraVoice {
         }
     }
 
+    /**
+     * Arahkan tombol volume ke volume panggilan (suara room) sejak user masuk room.
+     * Tanpa ini tombol volume mengatur volume notifikasi karena tidak ada stream
+     * media yang aktif, dan pengguna merasa tidak punya akses volume.
+     */
+    fun pasangVolumeStream(ctx: Context) {
+        try {
+            findActivity(ctx)?.let { actAktif = it }
+            val act = actAktif ?: return
+            if (!streamTerpasang) {
+                prevVolumeStream = act.volumeControlStream
+                act.volumeControlStream = AudioManager.STREAM_VOICE_CALL
+                streamTerpasang = true
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "pasangVolumeStream: ${e.message}")
+        }
+    }
+
     fun restoreAudioRoute() {
-        if (!routed) return
+        if (!routed && !streamTerpasang) return
         routed = false
+        streamTerpasang = false
         try {
             val mgr = audioMgr
             if (mgr != null) {
                 prevSpeaker?.let { try { mgr.isSpeakerphoneOn = it } catch (e: Exception) { } }
                 prevMode?.let { m -> try { mgr.mode = m } catch (e: Exception) { } }
             }
-            appCtx?.let { c -> findActivity(c)?.let { act -> prevVolumeStream?.let { act.volumeControlStream = it } } }
+            (actAktif ?: appCtx?.let { c -> findActivity(c) })?.let { act ->
+                prevVolumeStream?.let { act.volumeControlStream = it }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "restoreAudioRoute: ${e.message}")
         } finally {
@@ -305,6 +338,7 @@ object AgoraVoice {
     /** Masuk room (awalnya hanya mendengar; mic dibuka lewat setSpeaking). */
     fun join(ctx: Context, id: String) {
         sengajaKeluar = false
+        findActivity(ctx)?.let { actAktif = it }
         val app = ctx.applicationContext
         appCtx = app
         joinJob?.cancel()
@@ -605,6 +639,9 @@ fun AgoraRoomBridge(roomId: String, myUid: String) {
         val main = android.os.Handler(android.os.Looper.getMainLooper())
         AgoraVoice.onProblem = { m -> main.post { android.widget.Toast.makeText(ctx, m, android.widget.Toast.LENGTH_LONG).show() } }
         AgoraVoice.siapkanToken(ctx, roomId)
+        // Tombol volume langsung mengatur suara room sejak layar room terbuka,
+        // bukan volume notifikasi.
+        AgoraVoice.pasangVolumeStream(ctx)
         AgoraVoice.join(ctx, roomId)
         val a = RoomRepo.observeMembers(roomId) { members = it }
         val b = RoomRepo.observeSeats(roomId) { seats ->

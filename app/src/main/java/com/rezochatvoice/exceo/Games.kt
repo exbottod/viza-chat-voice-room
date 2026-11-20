@@ -122,8 +122,10 @@ fun GamesHub(myUid: String, roomId: String, myName: String = "", myAvatarB64: St
     val bukaGreedyRezo = open == "greedyking"
     val bukaSlotZeus = open == "slotzeus"
     val bukaCrazyFruit = open == "crazyfruit"
+    val bukaGreedyFunni = open == "greedyfunni"
 
     when {
+        bukaGreedyFunni -> GreedyFunniScreen(onClose = { open = "" })
         bukaSlotZeus -> SlotGameScreen(onClose = { open = "" })
         bukaCrazyFruit -> CrazyFruitScreen(
             myUid = myUid,
@@ -179,6 +181,15 @@ fun GamesHub(myUid: String, roomId: String, myName: String = "", myAvatarB64: St
                                     GcItem("Greedy King", R.drawable.ic_game_cat, "greedyking"),
                                     GcItem("Crazy Fruit", R.drawable.ic_game_fruit, "crazyfruit"),
                                     GcItem("Slot Zeus", R.drawable.ic_game_zeus, "slotzeus"),
+                                ),
+                            ) { open = it }
+                        }
+
+                        // ---- Game pihak ketiga (dibuka di dalam aplikasi)
+                        GcSection("Game pihak ketiga") {
+                            GcRows(
+                                listOf(
+                                    GcItem("Greedy", R.drawable.ic_game_cat, "greedyfunni"),
                                 ),
                             ) { open = it }
                         }

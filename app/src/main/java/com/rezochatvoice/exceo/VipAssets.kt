@@ -1,5 +1,6 @@
 package com.rezochatvoice.exceo
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
@@ -383,6 +384,77 @@ private fun kunciRasio(a: VipAsset) = "${a.n}_${a.slot}_${a.updatedAt}_${a.url.h
 
 /** Baca rasio yang sudah diukur, tanpa menunggu. null kalau belum pernah diukur. */
 internal fun rasioTersimpan(a: VipAsset): Float? = cacheRasio[kunciRasio(a)]
+
+/**
+ * Ukuran bagian lencana yang benar-benar terlihat. Pinggiran transparan
+ * dipangkas dulu, jadi GIF yang diekspor di kanvas persegi (banyak ruang
+ * kosong) tampil sebesar PNG yang gambarnya rapat.
+ * ratio = lebar/tinggi isi, skala = berapa kali gambar diperbesar agar isinya setinggi kotak.
+ */
+internal data class UkuranIsi(val ratio: Float, val skala: Float)
+
+private val cacheIsi = java.util.concurrent.ConcurrentHashMap<String, UkuranIsi>()
+
+internal fun isiTersimpan(a: VipAsset): UkuranIsi? = cacheIsi[kunciRasio(a)]
+
+internal suspend fun measureIsi(ctx: android.content.Context, a: VipAsset): UkuranIsi? {
+    cacheIsi[kunciRasio(a)]?.let { return it }
+    val bmp = muatBitmap(ctx, a) ?: return null
+    val hasil = runCatching { hitungIsi(bmp) }.getOrNull()
+    if (hasil != null) cacheIsi[kunciRasio(a)] = hasil
+    return hasil
+}
+
+private suspend fun muatBitmap(ctx: android.content.Context, a: VipAsset): Bitmap? {
+    if (a.url.isNotBlank()) {
+        val res = coil.Coil.imageLoader(ctx).execute(
+            coil.request.ImageRequest.Builder(ctx).data(a.url).allowHardware(false).build(),
+        )
+        val d = res.drawable ?: return null
+        if (d is android.graphics.drawable.BitmapDrawable) return d.bitmap
+        val w = d.intrinsicWidth
+        val h = d.intrinsicHeight
+        if (w <= 0 || h <= 0) return null
+        val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        d.setBounds(0, 0, w, h)
+        d.draw(android.graphics.Canvas(bmp))
+        return bmp
+    }
+    val data = VipAssets.bytes(a) ?: return null
+    return BitmapFactory.decodeByteArray(data, 0, data.size)
+}
+
+private fun hitungIsi(bmp: Bitmap): UkuranIsi? {
+    val w = bmp.width
+    val h = bmp.height
+    if (w <= 0 || h <= 0) return null
+    // Turunkan dulu supaya GIF besar tidak berat saat dihitung.
+    val faktor = if (w > 160 || h > 160) maxOf(w, h) / 160f else 1f
+    val bw = (w / faktor).toInt().coerceAtLeast(1)
+    val bh = (h / faktor).toInt().coerceAtLeast(1)
+    val kecil = if (faktor == 1f) bmp else Bitmap.createScaledBitmap(bmp, bw, bh, false)
+    val px = IntArray(bw * bh)
+    kecil.getPixels(px, 0, bw, 0, 0, bw, bh)
+    var x0 = bw
+    var y0 = bh
+    var x1 = -1
+    var y1 = -1
+    for (y in 0 until bh) {
+        for (x in 0 until bw) {
+            if ((px[y * bw + x] ushr 24) > 12) {
+                if (x < x0) x0 = x
+                if (x > x1) x1 = x
+                if (y < y0) y0 = y
+                if (y > y1) y1 = y
+            }
+        }
+    }
+    if (x1 < x0 || y1 < y0) return null
+    val cw = (x1 - x0 + 1).toFloat()
+    val ch = (y1 - y0 + 1).toFloat()
+    if (ch < 1f) return null
+    return UkuranIsi(cw / ch, (h / ch).coerceIn(1f, 4f))
+}
 
 internal suspend fun measureAssetRatio(ctx: android.content.Context, a: VipAsset): Float? {
     cacheRasio[kunciRasio(a)]?.let { return it }
@@ -1005,25 +1077,12 @@ fun VipEntryEffect(roomId: String) {
      */
     LaunchedEffect(roomId) {
         if (myUid.isBlank()) return@LaunchedEffect
-        // Tunggu sebentar supaya room dan suara siap dulu. Kalau katalog aset atau
-        // dompet belum siap pada percobaan pertama, ulangi beberapa kali: dulu
-        // efek langsung dilepas sehingga banner efek masuk tidak pernah muncul.
+        // Tunggu sebentar supaya room dan suara siap dulu.
         delay(1500)
         if (playing != null || banner != null) return@LaunchedEffect
         // Dompet boleh belum tersedia: cadangan katalog tetap dipakai supaya efek
         // masuk tidak hilang hanya karena cache dompet kosong.
-        var w = runCatching { WalletCache.load(myUid) }.getOrNull()
-        if (w == null) {
-            // Dompet belum ada di HP: minta ke server sekali, jangan menyerah.
-            w = runCatching {
-                kotlinx.coroutines.withTimeoutOrNull(3000L) { SupaRepo.get(myUid).wallet }
-            }.getOrNull()
-            w?.let { runCatching { WalletCache.save(myUid, it) } }
-        }
-        // Beri kesempatan katalog aset termuat (bisa lambat di jaringan pelan).
-        if (VipAssets.jumlah() == 0) {
-            repeat(8) { if (VipAssets.jumlah() > 0) return@repeat; delay(300) }
-        }
+        val w = runCatching { WalletCache.load(myUid) }.getOrNull()
         val vipNow = if (w != null && vipActive(w.vip, w.vipUntil)) w.vip else 0
         val eId = w?.let { fallbackEquip(it, "entry") }.orEmpty()
         val bId = w?.let { fallbackEquip(it, "banner") }.orEmpty()
@@ -1063,11 +1122,7 @@ fun VipEntryEffect(roomId: String) {
             bTier != null && kindAset(bTier.kind, bTier.url) != "image" &&
             (bAwal == null || kindAset(bAwal.kind, bAwal.url) == "image")
         ) bTier else bAwal
-        if (a == null && b == null) {
-            // Aset masih belum ada: catat alasannya supaya mudah dicek di panel.
-            VipAssets.diag["entry_kosong"] = "Aset efek masuk belum termuat saat masuk room"
-            return@LaunchedEffect
-        }
+        if (a == null && b == null) return@LaunchedEffect
         // Sekali per masuk room: setelah minimize lalu kembali, efek tidak diulang.
         if (playing != null || banner != null) return@LaunchedEffect
         if (!EfekMasukTercatat.perluTampil(roomId)) return@LaunchedEffect

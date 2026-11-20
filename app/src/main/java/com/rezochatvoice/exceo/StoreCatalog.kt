@@ -16,8 +16,11 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -443,10 +446,34 @@ fun StoreBadgeIcon(item: StoreItem, size: Dp = 24.dp) {
         return
     }
     
-    var ratio by remember(a.n, a.slot, a.updatedAt) { mutableStateOf(rasioTersimpan(a) ?: 2.5f) }
     val ctx = LocalContext.current
+    // Ukuran diambil dari bagian gambar yang terlihat. Lencana GIF sering
+    // diekspor di kanvas persegi dengan ruang kosong di sekelilingnya, jadi
+    // tanpa dipangkas dulu tampilannya jadi kecil dibanding lencana PNG.
+    var isi by remember(a.n, a.slot, a.updatedAt) { mutableStateOf(isiTersimpan(a)) }
     LaunchedEffect(a.n, a.slot, a.updatedAt) {
-        if (rasioTersimpan(a) == null) ratio = runCatching { measureAssetRatio(ctx, a) }.getOrNull() ?: 2.5f
+        if (isi == null) isi = runCatching { measureIsi(ctx, a) }.getOrNull()
     }
-    VipMedia(a, Modifier.height(size).width((size.value * ratio).dp), loop = true)
+    val u = isi
+    if (u == null) {
+        var ratio by remember(a.n, a.slot, a.updatedAt) { mutableStateOf(rasioTersimpan(a) ?: 2.5f) }
+        LaunchedEffect(a.n, a.slot, a.updatedAt) {
+            if (rasioTersimpan(a) == null) ratio = runCatching { measureAssetRatio(ctx, a) }.getOrNull() ?: 2.5f
+        }
+        VipMedia(a, Modifier.height(size).width((size.value * ratio).dp), loop = true)
+    } else {
+        Box(
+            Modifier.height(size).width((size.value * u.ratio).dp).clipToBounds(),
+            contentAlignment = Alignment.Center,
+        ) {
+            VipMedia(
+                a,
+                Modifier.fillMaxSize().graphicsLayer {
+                    scaleX = u.skala
+                    scaleY = u.skala
+                },
+                loop = true,
+            )
+        }
+    }
 }

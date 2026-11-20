@@ -1832,6 +1832,10 @@ private fun RmAvatar(bmp: ImageBitmap?, fallback: String, size: Dp) {
 @Composable
 private fun GelombangBicara(level: Float, size: Dp) {
     val l = level.coerceIn(0f, 1f)
+    // Kursi yang diam tidak perlu animasi. Dulu setiap kursi (20 buah) menjalankan
+    // animasi tanpa henti walau tidak ada suara, dan itu membuat room berat serta
+    // tersendat saat keyboard dibuka. Sekarang kanvas hanya digambar saat bicara.
+    if (l < 0.02f) return
     val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "gelombangKursi")
     val fase by t.animateFloat(
         initialValue = 0f,
@@ -1867,6 +1871,8 @@ private fun GelombangBicara(level: Float, size: Dp) {
 @Composable
 private fun GelembungSuara(size: Dp, level: Float) {
     val l = level.coerceIn(0f, 1f)
+    // Sama seperti gelombang: balon suara hanya hidup saat ada suara.
+    if (l < 0.02f) return
     val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "gelembungSuara")
     val detak by t.animateFloat(
         initialValue = 0f,

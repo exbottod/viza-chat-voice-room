@@ -63,6 +63,10 @@ object BikiniRush {
      * jadi tidak bergantung internet dan tidak ada halaman kosong karena host
      * luar tidak terjangkau.
      */
+    /** Disajikan dari VPS sendiri, satu domain dengan dompet, jadi tanpa CORS. */
+    const val GAME_VPS = "https://viza.43-156-99-4.sslip.io/game/bikini/index.html"
+
+    /** Cadangan: berkas yang ikut di dalam APK. */
     const val GAME = "https://appassets.androidplatform.net/assets/bikini/index.html"
 
     /** Berkas yang sama dibaca langsung dari folder aset, tanpa lapisan appassets. */
@@ -107,7 +111,7 @@ object BikiniRush {
         // Urutan percobaan: berkas di APK, berkas APK tanpa appassets, lalu internet.
         val kueri = hasil?.substringAfter("?", "") ?: ""
         val akhiran = if (kueri.isBlank()) "" else "?$kueri"
-        return listOf("$GAME$akhiran", "$GAME_FILE$akhiran", "$GAME_CADANGAN$akhiran")
+        return listOf("$GAME_VPS$akhiran", "$GAME$akhiran", "$GAME_FILE$akhiran", "$GAME_CADANGAN$akhiran")
     }
 }
 

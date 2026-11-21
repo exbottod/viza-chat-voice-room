@@ -38,7 +38,59 @@ function bacaIsi(req) {
   });
 }
 
+
+// ---------- Berkas game HTML5 (Bikini Wild Rush) ----------
+// Game disajikan dari VPS ini juga, jadi alamat game satu domain dengan dompet
+// (tanpa CORS) dan pembaruan game cukup ganti berkas di VPS, tanpa APK baru.
+const fs = require("node:fs");
+const path = require("node:path");
+const GAME_DIR = process.env.GAME_DIR || "/opt/viza-api/game";
+const JENIS = {
+  ".html": "text/html; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".webp": "image/webp",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".svg": "image/svg+xml",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+  ".mp3": "audio/mpeg",
+  ".mp4": "video/mp4",
+};
+
+function sajikanGame(req, res) {
+  const jalur = decodeURIComponent((req.url || "/").split("?")[0]);
+  let rel = jalur.replace(/^\/game\/?/, "");
+  if (!rel || rel.endsWith("/")) rel += "index.html";
+  const berkas = path.resolve(GAME_DIR, rel);
+  if (!berkas.startsWith(path.resolve(GAME_DIR))) {
+    res.writeHead(403);
+    return res.end("terlarang");
+  }
+  fs.stat(berkas, (galat, info) => {
+    if (galat || !info.isFile()) {
+      res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+      return res.end("berkas game tidak ada: " + rel);
+    }
+    res.writeHead(200, {
+      "content-type": JENIS[path.extname(berkas).toLowerCase()] || "application/octet-stream",
+      "content-length": info.size,
+      "cache-control": rel.endsWith("index.html") ? "no-cache" : "public, max-age=86400",
+      "access-control-allow-origin": "*",
+    });
+    fs.createReadStream(berkas).pipe(res);
+  });
+}
+
 const server = http.createServer(async (req, res) => {
+  // Berkas game tidak perlu lewat dompet.
+  if ((req.method === "GET" || req.method === "HEAD") && (req.url || "").startsWith("/game/")) {
+    return sajikanGame(req, res);
+  }
   try {
     const body = ["GET", "HEAD"].includes(req.method) ? undefined : await bacaIsi(req);
     const alamat = "https://" + (req.headers.host || HOST + ":" + PORT) + (req.url || "/");

@@ -1,5 +1,37 @@
 package com.rezochatvoice.exceo
 
+// Dipasang setelah halaman game selesai dimuat. Meja game dipaksa berukuran
+// piksel penuh layar karena di sebagian WebView ukuran halaman terbaca 0.
+private const val skripUkuran = """(function(){
+  function fix(){
+    var d=document.documentElement;
+    var st=document.querySelector('.bw-stage');
+    if(!st) return;
+    var w=window.innerWidth||d.clientWidth||0;
+    var h=window.innerHeight||d.clientHeight||0;
+    if(w<50||h<50) return;
+    var W=Math.round(Math.min(w,h*941/1672));
+    var H=Math.round(W*1672/941);
+    st.style.setProperty('max-width','none','important');
+    st.style.setProperty('max-height','none','important');
+    st.style.setProperty('width',W+'px','important');
+    st.style.setProperty('height',H+'px','important');
+    st.style.setProperty('--u',(W/941)+'px');
+  }
+  try{
+    var s=document.createElement('style');
+    s.textContent='html,body{width:100%;height:100%;margin:0;overflow:hidden}'+
+      '#app{position:fixed;left:0;top:0;right:0;bottom:0;width:100%;height:100%}';
+    document.head.appendChild(s);
+  }catch(e){}
+  fix();
+  [200,600,1200,2000,3000,4500,6000].forEach(function(t){setTimeout(fix,t);});
+  var n=0;
+  var iv=setInterval(function(){fix();n++;if(n>40){clearInterval(iv);}},500);
+  window.addEventListener('resize',fix);
+  window.addEventListener('orientationchange',fix);
+})();"""
+
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.webkit.WebChromeClient
@@ -203,28 +235,22 @@ private fun GameWebScreen(daftar: List<String>, onClose: () -> Unit) {
                             override fun onPageFinished(view: WebView?, alamat: String?) {
                                 prog = 100
                                 tahap = "selesai " + (alamat ?: "").substringAfter("//").take(30)
-                                // WebView lama kadang menghitung tinggi induk game 0 lalu tidak
-                                // menghitung ulang. Beri ukuran tegas dan picu hitung ulang.
-                                view?.evaluateJavascript(
-                                    "(function(){var s=document.createElement('style');" +
-                                        "s.textContent='html,body{width:100%;height:100%;margin:0;overflow:hidden}" +
-                                        "#app{position:fixed;left:0;top:0;right:0;bottom:0;width:100%;height:100%}';" +
-                                        "document.head.appendChild(s);" +
-                                        "[300,800,1600,3000].forEach(function(t){setTimeout(function(){" +
-                                        "window.dispatchEvent(new Event('resize'));},t);});})()",
-                                    null,
-                                )
+                                // Sebagian WebView menghitung ukuran halaman 0 saat game dimuat,
+                                // lalu tidak pernah menghitung ulang, sehingga meja game 0x0.
+                                // Ukuran meja dipaksa langsung dalam piksel, bukan satuan layar.
+                                view?.evaluateJavascript(skripUkuran, null)
                                 view?.postDelayed({
                                     view.evaluateJavascript(
                                         "(function(){var a=document.getElementById('app');" +
                                             "var g=document.querySelector('.bw-stage');" +
-                                            "var u=g?(g.offsetWidth+'x'+g.offsetHeight):'nostage';" +
+                                            "var c=g?getComputedStyle(g):null;" +
+                                            "var u=g?(g.offsetWidth+'x'+g.offsetHeight+' i='+(g.style.width||'-')+' c='+(c.width+'/'+c.height)+' m='+c.maxHeight):'nostage';" +
                                             "return (a?a.innerHTML.length:-1)+'|'+(document.body?document.body.innerText.length:-1)+'|'+u;})()",
                                     ) { hasil ->
                                         val bagian = (hasil ?: "").replace("\"", "").split("|")
                                         val isiApp = bagian.getOrNull(0)?.toIntOrNull() ?: -1
                                         val judul = bagian.getOrNull(2) ?: ""
-                                        tahap = "isi " + isiApp + " teks " + (bagian.getOrNull(1) ?: "?") + " stage " + judul.take(14)
+                                        tahap = "isi " + isiApp + " teks " + (bagian.getOrNull(1) ?: "?") + " " + judul.take(44)
                                         if (isiApp == 0 && galat.isBlank()) {
                                             galat = "Halaman game kosong. Coba lagi atau laporkan ke pengembang."
                                         }
@@ -260,6 +286,20 @@ private fun GameWebScreen(daftar: List<String>, onClose: () -> Unit) {
                                     galat = "Skrip game berhenti: " + pesan.take(160)
                                 }
                                 return true
+                            }
+                        }
+                        val mulaiTanpaUkuran = width == 0 || height == 0
+                        var sudahUkur = false
+                        addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
+                            if (sudahUkur || v.width <= 0 || v.height <= 0) return@addOnLayoutChangeListener
+                            sudahUkur = true
+                            // Kalau halaman dimuat saat ukuran masih 0, muat ulang sekali
+                            // supaya game membaca ukuran layar yang benar sejak awal.
+                            if (mulaiTanpaUkuran) {
+                                v.postDelayed({
+                                    v.evaluateJavascript(skripUkuran, null)
+                                    v.reload()
+                                }, 300)
                             }
                         }
                         loadUrl(daftar.getOrElse(0) { "about:blank" })

@@ -1699,6 +1699,17 @@ async function gambarRoom() {
 }
 
 /* ================= gift ================= */
+/** Jenis media gift dari alamat berkasnya: svga, video, gif, atau image. */
+function jenisMediaGift(url) {
+  const bersih = String(url || "").split("?")[0].toLowerCase();
+  const ext = bersih.split(".").pop();
+  if (ext === "svga") return "svga";
+  if (["mp4", "webm", "mov", "m4v"].includes(ext)) return "video";
+  if (ext === "gif") return "gif";
+  if (!ext || !bersih.includes(".")) return "";
+  return "image";
+}
+
 const contohGift = { name: "", emoji: "🎁", icon: "", price: 100, mediaUrl: "", mediaType: "", special: false, rocket: false, cashback: false, jpRate: 0, jpMult: 0, cbRate: 0, cbPrice: 0 };
 
 async function gambarGift() {
@@ -1738,15 +1749,16 @@ function formGift(gift) {
       <div class="isian"><label>Emoji</label><input id="gEmoji" value="${aman(g.emoji)}" placeholder="🌹"></div>
       <div class="isian"><label>Harga (koin)</label><input id="gHarga" type="number" value="${Number(g.price) || 0}"></div>
       <div class="isian"><label>Jenis media</label><select id="gJenis">
-        ${["", "image", "video", "gif"].map((t) => `<option value="${t}" ${g.mediaType === t ? "selected" : ""}>${t || "(tanpa media)"}</option>`).join("")}
+        ${["", "image", "gif", "svga", "video"].map((t) => `<option value="${t}" ${g.mediaType === t ? "selected" : ""}>${t || "(tanpa media)"}</option>`).join("")}
       </select></div>
     </div>
     <div class="isian" style="margin-top:10px">
-      <label>Ikon gift 1:1 (dari perangkat atau tautan)</label>
+      <label>Ikon gift 1:1 (opsional, dari perangkat atau tautan)</label>
       ${htmlSumber("gi", g.icon, "image/png,image/jpeg,image/webp")}
-      <div class="catatan">Gambar persegi (1:1). Kalau ikon diisi, emoji tidak dipakai lagi di daftar gift.</div>
+      <div class="catatan">Kosongkan saja. Kalau berkas media di bawah berupa SVGA atau MP4, ikon PNG 1:1 dibuat otomatis dari frame animasinya, sama seperti unggah frame di Store. Isi kolom ini hanya kalau ingin ikon sendiri.</div>
     </div>
-    <div style="margin-top:10px">${htmlSumber("g", g.mediaUrl)}</div>
+    <div style="margin-top:10px">${htmlSumber("g", g.mediaUrl)}
+      <div class="catatan">Berkas media yang diputar saat gift dikirim: SVGA, MP4, GIF, atau PNG. Untuk SVGA, ikon tab Hadiah dibuat otomatis dari frame pertama.</div></div>
     <div class="grid3" style="margin-top:10px">
       <div class="isian"><label>Jackpot rate</label><input id="gJp" type="number" value="${Number(g.jpRate) || 0}"></div>
       <div class="isian"><label>Jackpot multiplier</label><input id="gJpMult" type="number" value="${Number(g.jpMult) || 0}"></div>
@@ -1764,13 +1776,27 @@ function formGift(gift) {
     </div>
     <div class="catatan">Nama dokumen: <b>${aman(gift?.id || "otomatis")}</b>. Perubahan langsung terbaca aplikasi saat katalog gift dimuat ulang.</div>`,
     async () => {
+      const mediaUrl = await urlDariSumber("g", "gift");
+      // Ikon tab Hadiah: pakai berkas ikon kalau diunggah sendiri. Kalau tidak,
+      // ikon PNG dibuat otomatis dari frame animasi SVGA/MP4 (seperti frame Store).
+      let ikon = "";
+      try { ikon = await urlDariSumber("gi", "gift"); } catch (e) { ikon = ""; }
+      const jenisMedia = jenisMediaGift(mediaUrl);
+      if (!ikon && mediaUrl && (jenisMedia === "svga" || jenisMedia === "video")) {
+        const mediaBerubah = !gift || (gift.mediaUrl || "") !== mediaUrl;
+        if (mediaBerubah || !g.icon) {
+          ikon = await buatSampul(mediaUrl, jenisMedia === "video" ? "video" : "svga", "gift");
+          if (ikon) toast("Ikon PNG dibuat otomatis dari animasi gift");
+        }
+      }
+      if (!ikon) ikon = g.icon || "";
       const data = {
         name: $("gNama").value.trim(),
         emoji: $("gEmoji").value.trim() || "🎁",
-        icon: (await urlDariSumber("gi", "gift").catch(() => "")) || g.icon || "",
+        icon: ikon,
         price: Number($("gHarga").value) || 0,
-        mediaUrl: await urlDariSumber("g", "gift"),
-        mediaType: $("gJenis").value,
+        mediaUrl: mediaUrl,
+        mediaType: jenisMedia || $("gJenis").value,
         special: $("gSpecial").checked,
         rocket: $("gRocket").checked,
         cashback: $("gCashback").checked,

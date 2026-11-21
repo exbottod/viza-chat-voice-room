@@ -6,9 +6,52 @@
     <meta name="theme-color" content="#0a2d40" />
     <title>Bikini Wild Rush</title>
     <link rel="icon" type="image/png" href="./favicon.png" />
+    <!-- Boot screen: plain CSS so something is visible even before (or without) game.js. -->
+    <style>html,body{background:#000d17;height:100%;margin:0;padding:0}#bw-boot{color:#fcf8ed;text-align:center;flex-direction:column;justify-content:center;align-items:center;padding:0 24px;font:600 15px/1.4 sans-serif;display:flex;position:fixed;top:0;bottom:0;left:0;right:0}#bw-boot i{border:4px solid rgba(255,255,255,.2);border-top-color:#f7d66b;border-radius:50%;width:38px;height:38px;margin-bottom:14px;animation:.8s linear infinite bw-spin;display:block}@-webkit-keyframes bw-spin{to{-webkit-transform:rotate(360deg)}}@keyframes bw-spin{to{transform:rotate(360deg)}}#bw-error{z-index:2147483647;color:#fff;white-space:pre-wrap;word-wrap:break-word;background:#4a0d18;border-radius:8px;max-height:60%;padding:10px 12px;font:12px/1.45 monospace;display:none;position:fixed;bottom:8px;left:8px;right:8px;overflow:auto}</style>
+    <script>
+      // ES5 only: this must run on every WebView, including ones too old for game.js.
+      (function () {
+        var lines = [];
+        function show(message) {
+          lines.push(String(message));
+          var box = document.getElementById("bw-error");
+          if (!box) return;
+          box.style.display = "block";
+          box.textContent = "Bikini Wild Rush gagal dimuat (kirim screenshot ini ke developer):\n" + lines.join("\n");
+        }
+        window.__bwShowError = show;
+        window.addEventListener("error", function (event) {
+          var target = event && event.target;
+          if (target && target !== window && (target.src || target.href)) { show("File tidak ditemukan: " + (target.src || target.href)); return; }
+          show((event.message || "Error") + (event.filename ? " @ " + event.filename + ":" + event.lineno : ""));
+        }, true);
+        window.addEventListener("unhandledrejection", function (event) {
+          var reason = event && event.reason;
+          show("Promise: " + (reason && reason.message ? reason.message : reason));
+        });
+        // Older WebViews (Android 5-7 without updates, some in-app browsers) miss newer JavaScript
+        // functions the game uses; load the polyfills only there.
+        var ok = window.Promise && Promise.prototype["finally"] && window.Symbol && window.Map && window.Set && window.WeakMap &&
+          Object.assign && Object.entries && Object.values && Object.fromEntries && Array.from && Array.prototype.includes &&
+          Array.prototype.find && Array.prototype.fill && String.prototype.padStart && String.prototype.includes &&
+          String.prototype.startsWith && Number.isNaN && window.URLSearchParams;
+        if (!ok) document.write('<script src="./polyfills.js"><\/script>');
+        // Watchdog: if the game is still not visible after 10 seconds, say why on screen.
+        setTimeout(function () {
+          var stage = document.querySelector(".bw-stage");
+          if (stage && stage.offsetWidth > 0 && stage.offsetHeight > 0) return;
+          var de = document.documentElement;
+          show("Game belum tampil setelah 10 detik. " + (stage ? "Ukuran game 0." : "game.js tidak berjalan.") +
+            " Layar WebView: " + window.innerWidth + "x" + window.innerHeight + " (client " + de.clientWidth + "x" + de.clientHeight + ")" +
+            "\nAlamat: " + location.href + "\nBrowser: " + navigator.userAgent);
+        }, 10000);
+      })();
+    </script>
     </head>
   <body>
-    <div id="app"></div>
+    <div id="app"><div id="bw-boot"><i></i>Memuat game…</div></div>
+    <div id="bw-error" role="alert"></div>
+    <noscript><div style="position:fixed;top:40%;left:0;right:0;color:#fff;text-align:center;font:15px sans-serif;padding:0 20px">JavaScript mati di WebView. Aktifkan: <b>setJavaScriptEnabled(true)</b> (Android) atau <b>JavaScriptMode.unrestricted</b> (Flutter).</div></noscript>
     <script defer src="./game.js"></script>
   </body>
 </html>

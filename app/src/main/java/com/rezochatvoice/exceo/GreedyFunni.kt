@@ -65,7 +65,10 @@ object BikiniRush {
      */
     const val GAME = "https://appassets.androidplatform.net/assets/bikini/index.html"
 
-    /** Alamat kedua kalau aset di APK tidak terbaca. */
+    /** Berkas yang sama dibaca langsung dari folder aset, tanpa lapisan appassets. */
+    const val GAME_FILE = "file:///android_asset/bikini/index.html"
+
+    /** Alamat internet, cadangan terakhir kalau aset di APK bermasalah. */
     const val GAME_CADANGAN = "https://exbottod.github.io/viza-chat-voice-room/game/bikini/index.html"
 
     /** Dompet Viza di VPS: saldo dan hasil putaran ditentukan server ini. */
@@ -76,7 +79,7 @@ object BikiniRush {
      * Kalau server diam, game tetap dibuka dengan koin mainan lokal supaya
      * tidak ada layar kosong.
      */
-    suspend fun alamat(): Pair<String, String?> {
+    suspend fun alamat(): List<String> {
         // Batas waktu total: apa pun yang macet (token Firebase atau jaringan),
         // game tetap dibuka dengan koin mainan, jangan sampai layar hitam.
         val hasil = kotlinx.coroutines.withTimeoutOrNull(6000L) {
@@ -101,45 +104,42 @@ object BikiniRush {
                 null
             }
         }
-        val kueri = hasil?.substringAfter("?", "")
-        val cadangan = if (kueri.isNullOrBlank()) GAME_CADANGAN else "$GAME_CADANGAN?$kueri"
-        return (hasil ?: GAME) to cadangan
+        // Urutan percobaan: berkas di APK, berkas APK tanpa appassets, lalu internet.
+        val kueri = hasil?.substringAfter("?", "") ?: ""
+        val akhiran = if (kueri.isBlank()) "" else "?$kueri"
+        return listOf("$GAME$akhiran", "$GAME_FILE$akhiran", "$GAME_CADANGAN$akhiran")
     }
 }
 
 @Composable
 fun GreedyFunniScreen(onClose: () -> Unit) {
-    GameWebScreen(GreedyFunni.URL_GAME, GreedyFunni.URL_CADANGAN, onClose)
+    GameWebScreen(listOf(GreedyFunni.URL_GAME, GreedyFunni.URL_CADANGAN), onClose)
 }
 
 @Composable
 fun BikiniRushScreen(onClose: () -> Unit) {
-    var alamat by remember { mutableStateOf("") }
-    var cadangan by remember { mutableStateOf<String?>(null) }
-    androidx.compose.runtime.LaunchedEffect(Unit) {
-        val (utama, lain) = BikiniRush.alamat()
-        alamat = utama
-        cadangan = lain
-    }
-    if (alamat.isBlank()) {
+    var daftar by remember { mutableStateOf<List<String>>(emptyList()) }
+    androidx.compose.runtime.LaunchedEffect(Unit) { daftar = BikiniRush.alamat() }
+    if (daftar.isEmpty()) {
         Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
             Text("Menyiapkan meja...", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
         }
     } else {
-        GameWebScreen(alamat, cadangan, onClose)
+        GameWebScreen(daftar, onClose)
     }
 }
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-private fun GameWebScreen(url: String, cadangan: String?, onClose: () -> Unit) {
-    val ctx = LocalContext.current
+private fun GameWebScreen(daftar: List<String>, onClose: () -> Unit) {
     var web by remember { mutableStateOf<WebView?>(null) }
     var prog by remember { mutableStateOf(0) }
-    // Alasan layar kosong: dulu WebView hanya hitam tanpa keterangan, jadi tidak
-    // ketahuan apakah gagal memuat atau skrip game berhenti.
     var galat by remember { mutableStateOf("") }
     var ulang by remember { mutableStateOf(0) }
+    // Tahap ditampilkan terus di sudut, supaya kalau layar kosong tetap ketahuan
+    // alamat mana yang dipakai dan sampai mana prosesnya.
+    var tahap by remember { mutableStateOf("mulai") }
+    var ke by remember { mutableStateOf(0) }
 
     BackHandler {
         val w = web
@@ -168,12 +168,13 @@ private fun GameWebScreen(url: String, cadangan: String?, onClose: () -> Unit) {
                             builtInZoomControls = false
                             displayZoomControls = false
                             allowFileAccess = true
+                            allowFileAccessFromFileURLs = true
+                            allowUniversalAccessFromFileURLs = true
                             allowContentAccess = true
                             mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                             cacheMode = WebSettings.LOAD_DEFAULT
                         }
                         webViewClient = object : WebViewClient() {
-                            // Berkas game di dalam APK dibaca lewat appassets.
                             override fun shouldInterceptRequest(
                                 view: WebView,
                                 request: android.webkit.WebResourceRequest,
@@ -185,19 +186,22 @@ private fun GameWebScreen(url: String, cadangan: String?, onClose: () -> Unit) {
 
                             override fun onPageStarted(view: WebView?, alamat: String?, favicon: Bitmap?) {
                                 prog = 0
+                                tahap = "memuat " + (alamat ?: "").substringAfter("//").take(38)
                             }
 
                             override fun onPageFinished(view: WebView?, alamat: String?) {
                                 prog = 100
-                                // Kalau halaman ternyata kosong, sebutkan supaya tidak
-                                // berakhir sebagai layar hitam tanpa keterangan.
+                                tahap = "selesai " + (alamat ?: "").substringAfter("//").take(30)
                                 view?.postDelayed({
                                     view.evaluateJavascript(
                                         "(function(){var a=document.getElementById('app');" +
-                                            "return (a?a.innerHTML.length:-1)+'|'+(document.body?document.body.innerText.length:-1);})()",
+                                            "var t=document.title||'';" +
+                                            "return (a?a.innerHTML.length:-1)+'|'+(document.body?document.body.innerText.length:-1)+'|'+t;})()",
                                     ) { hasil ->
-                                        val angka = (hasil ?: "").replace("\"", "").split("|")
-                                        val isiApp = angka.getOrNull(0)?.toIntOrNull() ?: -1
+                                        val bagian = (hasil ?: "").replace("\"", "").split("|")
+                                        val isiApp = bagian.getOrNull(0)?.toIntOrNull() ?: -1
+                                        val judul = bagian.getOrNull(2) ?: ""
+                                        tahap = "isi " + isiApp + " teks " + (bagian.getOrNull(1) ?: "?") + " " + judul.take(18)
                                         if (isiApp == 0 && galat.isBlank()) {
                                             galat = "Halaman game kosong. Coba lagi atau laporkan ke pengembang."
                                         }
@@ -212,13 +216,14 @@ private fun GameWebScreen(url: String, cadangan: String?, onClose: () -> Unit) {
                             ) {
                                 if (request?.isForMainFrame != true) return
                                 val v = view ?: return
-                                val lain = cadangan
-                                if (lain != null && v.tag != "cadangan") {
-                                    v.tag = "cadangan"
-                                    v.loadUrl(lain)
+                                val kode = error?.errorCode ?: -1
+                                tahap = "gagal " + kode + " pada " + ke
+                                if (ke < daftar.lastIndex) {
+                                    ke += 1
+                                    v.loadUrl(daftar[ke])
                                     return
                                 }
-                                galat = "Gagal memuat halaman (" + (error?.errorCode ?: -1) + "). Periksa koneksi lalu coba lagi."
+                                galat = "Gagal memuat game (kode " + kode + "). Coba lagi."
                             }
                         }
                         webChromeClient = object : WebChromeClient() {
@@ -226,8 +231,6 @@ private fun GameWebScreen(url: String, cadangan: String?, onClose: () -> Unit) {
                                 prog = newProgress
                             }
 
-                            // Kesalahan skrip game ikut ditampilkan, supaya tidak
-                            // berakhir sebagai layar hitam tanpa penjelasan.
                             override fun onConsoleMessage(m: android.webkit.ConsoleMessage?): Boolean {
                                 val pesan = m?.message() ?: return false
                                 if (m.messageLevel() == android.webkit.ConsoleMessage.MessageLevel.ERROR) {
@@ -236,7 +239,7 @@ private fun GameWebScreen(url: String, cadangan: String?, onClose: () -> Unit) {
                                 return true
                             }
                         }
-                        loadUrl(url)
+                        loadUrl(daftar.getOrElse(0) { "about:blank" })
                     }
                 },
                 update = { web = it },
@@ -268,6 +271,7 @@ private fun GameWebScreen(url: String, cadangan: String?, onClose: () -> Unit) {
                         .clickable {
                             galat = ""
                             prog = 0
+                            ke = 0
                             ulang++
                         }
                         .padding(horizontal = 22.dp, vertical = 10.dp),
@@ -277,7 +281,16 @@ private fun GameWebScreen(url: String, cadangan: String?, onClose: () -> Unit) {
             }
         }
 
-        // Tombol tutup selalu ada di atas game, jadi tidak pernah terjebak.
+        // Keterangan tahap: kecil, di kiri bawah, selalu tampil.
+        Text(
+            tahap,
+            color = Color(0x99FFFFFF),
+            fontSize = 9.sp,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(start = 6.dp, bottom = 4.dp),
+        )
+
         Box(
             Modifier
                 .align(Alignment.TopEnd)

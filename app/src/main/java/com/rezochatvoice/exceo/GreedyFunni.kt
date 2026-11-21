@@ -49,9 +49,29 @@ object GreedyFunni {
     const val URL_CADANGAN = "https://cdn-web.funni.live/game/greedy/v17t1790238158/index.html"
 }
 
-@SuppressLint("SetJavaScriptEnabled")
+/**
+ * Game HTML5 milik Viza sendiri: Bikini Wild Rush. Berkasnya ikut repo di
+ * docs/game/bikini, jadi tidak bergantung layanan pihak lain.
+ * Tanpa parameter api, game memakai koin mainan lokal di HP.
+ */
+object BikiniRush {
+    const val NAMA = "Bikini Wild Rush"
+    const val URL_GAME = "https://exbottod.github.io/viza-chat-voice-room/game/bikini/index.html"
+}
+
 @Composable
 fun GreedyFunniScreen(onClose: () -> Unit) {
+    GameWebScreen(GreedyFunni.URL_GAME, GreedyFunni.URL_CADANGAN, onClose)
+}
+
+@Composable
+fun BikiniRushScreen(onClose: () -> Unit) {
+    GameWebScreen(BikiniRush.URL_GAME, null, onClose)
+}
+
+@SuppressLint("SetJavaScriptEnabled")
+@Composable
+private fun GameWebScreen(url: String, cadangan: String?, onClose: () -> Unit) {
     val ctx = LocalContext.current
     var web by remember { mutableStateOf<WebView?>(null) }
     var prog by remember { mutableStateOf(0) }
@@ -102,10 +122,10 @@ fun GreedyFunniScreen(onClose: () -> Unit) {
                         ) {
                             if (request?.isForMainFrame != true) return
                             val v = view ?: return
-                            val sudah = v.tag == "cadangan"
-                            if (sudah) return
+                            val lain = cadangan ?: return
+                            if (v.tag == "cadangan") return
                             v.tag = "cadangan"
-                            v.loadUrl(GreedyFunni.URL_CADANGAN)
+                            v.loadUrl(lain)
                         }
                     }
                     webChromeClient = object : WebChromeClient() {
@@ -113,7 +133,7 @@ fun GreedyFunniScreen(onClose: () -> Unit) {
                             prog = newProgress
                         }
                     }
-                    loadUrl(GreedyFunni.URL_GAME)
+                    loadUrl(url)
                 }
             },
             update = { web = it },

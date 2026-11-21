@@ -123,9 +123,11 @@ fun GamesHub(myUid: String, roomId: String, myName: String = "", myAvatarB64: St
     val bukaSlotZeus = open == "slotzeus"
     val bukaCrazyFruit = open == "crazyfruit"
     val bukaGreedyFunni = open == "greedyfunni"
+    val bukaBikiniRush = open == "bikinirush"
 
     when {
         bukaGreedyFunni -> GreedyFunniScreen(onClose = { open = "" })
+        bukaBikiniRush -> BikiniRushScreen(onClose = { open = "" })
         bukaSlotZeus -> SlotGameScreen(onClose = { open = "" })
         bukaCrazyFruit -> CrazyFruitScreen(
             myUid = myUid,
@@ -190,6 +192,7 @@ fun GamesHub(myUid: String, roomId: String, myName: String = "", myAvatarB64: St
                             GcRows(
                                 listOf(
                                     GcItem("Greedy", R.drawable.ic_game_cat, "greedyfunni"),
+                                    GcItem("Bikini Wild Rush", R.drawable.ic_game_fruit, "bikinirush"),
                                 ),
                             ) { open = it }
                         }

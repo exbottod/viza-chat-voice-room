@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.301",
   "catatan": "• Berkas game diganti paket v5, termasuk perbaikan scatter dan putaran gratis.\n• Taruhan dan tampilan angka tetap memakai koin Viza, satu koin sama dengan satu unit.\n• Susunan berkas tidak berubah, jadi layar game dan alamat VPS tetap sama.",
-  "ukuran_apk": 59398112,
-  "sha256_apk": "f2ffee80c0324d2809bf745bf34095020e7e4a2d4145788eeec7ca2f2a4c898f",
+  "ukuran_apk": 59398120,
+  "sha256_apk": "08cb211bee3bab25f6534118b09a9b187101c9098103d477bbd82d18ddd5f055",
   "abis": {
     "arm64": {
-      "ukuran": 59398112,
-      "sha256": "f2ffee80c0324d2809bf745bf34095020e7e4a2d4145788eeec7ca2f2a4c898f"
+      "ukuran": 59398120,
+      "sha256": "08cb211bee3bab25f6534118b09a9b187101c9098103d477bbd82d18ddd5f055"
     },
     "armv7": {
-      "ukuran": 57549255,
-      "sha256": "01a5d5d8f0a84e629e2446c68003c50a210a68ad50473b3e782346d8c321a7a1"
+      "ukuran": 57549263,
+      "sha256": "6d0c902b9681e168b8ae1b19d5cb0252b32bdfd1d23f5a39756d4d68a1fa53fe"
     },
     "universal": {
-      "ukuran": 77814096,
-      "sha256": "7a5044674c1750c2c11924391aef6da2deecd65849d1e73416530550bea80ead"
+      "ukuran": 77814090,
+      "sha256": "47aff787ce4963c55e50a9c28ab63d2517b5a47782ca6a94ef1713d59288960a"
     }
   }
 }

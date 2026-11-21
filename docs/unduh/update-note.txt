@@ -1,4 +1,4 @@
-• Setelah tiga scatter, putaran berhenti dan scatter bersinar sebelum pengumuman.
-• Pengumuman putaran gratis menunggu tombol MULAI, tidak menutup sendiri.
-• Tombol baru bisa ditekan setelah sekitar satu detik agar tidak ikut tertekan.
-• Putaran gratis selesai menunggu tombol OK, dan kotak WIN tampil lebih dulu.
+• Induk game diberi ukuran penuh layar setelah halaman selesai dimuat.
+• Hitung ulang ukuran dipicu beberapa kali agar game tampil di WebView lama.
+• Mode overview WebView dimatikan karena membuat ukuran halaman tidak menentu.
+• Tulisan kecil di sudut kini menampilkan ukuran game untuk memastikan hasilnya.

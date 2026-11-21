@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.302",
-  "catatan": "• Setelah tiga scatter, putaran berhenti dan scatter bersinar sebelum pengumuman.\n• Pengumuman putaran gratis menunggu tombol MULAI, tidak menutup sendiri.\n• Tombol baru bisa ditekan setelah sekitar satu detik agar tidak ikut tertekan.\n• Putaran gratis selesai menunggu tombol OK, dan kotak WIN tampil lebih dulu.",
-  "ukuran_apk": 59398264,
-  "sha256_apk": "b47a266e54b24413241c39a2823c3da28a29405f11066568208e5ae40a594d38",
+  "versi": "1.0.303",
+  "catatan": "• Induk game diberi ukuran penuh layar setelah halaman selesai dimuat.\n• Hitung ulang ukuran dipicu beberapa kali agar game tampil di WebView lama.\n• Mode overview WebView dimatikan karena membuat ukuran halaman tidak menentu.\n• Tulisan kecil di sudut kini menampilkan ukuran game untuk memastikan hasilnya.",
+  "ukuran_apk": 59398826,
+  "sha256_apk": "e9dbff9143efb931732fd4c12b559485708de38f8a37ac895de9e3920885ba61",
   "abis": {
     "arm64": {
-      "ukuran": 59398264,
-      "sha256": "b47a266e54b24413241c39a2823c3da28a29405f11066568208e5ae40a594d38"
+      "ukuran": 59398826,
+      "sha256": "e9dbff9143efb931732fd4c12b559485708de38f8a37ac895de9e3920885ba61"
     },
     "armv7": {
-      "ukuran": 57549397,
-      "sha256": "a51683ec58e08d9917b09995b58e21ed6d8a8d9c93f4e0eadd2c1366e1466cab"
+      "ukuran": 57549959,
+      "sha256": "1f0b896610f8459b8dfa2986f1e0e20de5cb9e5e86f0718fd7a49904a4819566"
     },
     "universal": {
-      "ukuran": 77814236,
-      "sha256": "77e71bb80754ba3c98d35477cd0150d9e5ee99bf271449b5dc77694a40362c02"
+      "ukuran": 77814804,
+      "sha256": "43373229e37621339a15d13c142e9548191a105bfe4b85560de01e01233a9c96"
     }
   }
 }

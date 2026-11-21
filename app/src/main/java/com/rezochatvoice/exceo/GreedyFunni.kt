@@ -1,37 +1,5 @@
 package com.rezochatvoice.exceo
 
-// Dipasang setelah halaman game selesai dimuat. Meja game dipaksa berukuran
-// piksel penuh layar karena di sebagian WebView ukuran halaman terbaca 0.
-private const val skripUkuran = """(function(){
-  function fix(){
-    var d=document.documentElement;
-    var st=document.querySelector('.bw-stage');
-    if(!st) return;
-    var w=window.innerWidth||d.clientWidth||0;
-    var h=window.innerHeight||d.clientHeight||0;
-    if(w<50||h<50) return;
-    var W=Math.round(Math.min(w,h*941/1672));
-    var H=Math.round(W*1672/941);
-    st.style.setProperty('max-width','none','important');
-    st.style.setProperty('max-height','none','important');
-    st.style.setProperty('width',W+'px','important');
-    st.style.setProperty('height',H+'px','important');
-    st.style.setProperty('--u',(W/941)+'px');
-  }
-  try{
-    var s=document.createElement('style');
-    s.textContent='html,body{width:100%;height:100%;margin:0;overflow:hidden}'+
-      '#app{position:fixed;left:0;top:0;right:0;bottom:0;width:100%;height:100%}';
-    document.head.appendChild(s);
-  }catch(e){}
-  fix();
-  [200,600,1200,2000,3000,4500,6000].forEach(function(t){setTimeout(fix,t);});
-  var n=0;
-  var iv=setInterval(function(){fix();n++;if(n>40){clearInterval(iv);}},500);
-  window.addEventListener('resize',fix);
-  window.addEventListener('orientationchange',fix);
-})();"""
-
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.webkit.WebChromeClient
@@ -65,6 +33,38 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.tasks.await
+
+// Dipasang setelah halaman game selesai dimuat. Meja game dipaksa berukuran
+// piksel penuh layar karena di sebagian WebView ukuran halaman terbaca 0.
+private const val skripUkuran = """(function(){
+  function fix(){
+    var d=document.documentElement;
+    var st=document.querySelector('.bw-stage');
+    if(!st) return;
+    var w=window.innerWidth||d.clientWidth||0;
+    var h=window.innerHeight||d.clientHeight||0;
+    if(w<50||h<50) return;
+    var W=Math.round(Math.min(w,h*941/1672));
+    var H=Math.round(W*1672/941);
+    st.style.setProperty('max-width','none','important');
+    st.style.setProperty('max-height','none','important');
+    st.style.setProperty('width',W+'px','important');
+    st.style.setProperty('height',H+'px','important');
+    st.style.setProperty('--u',(W/941)+'px');
+  }
+  try{
+    var s=document.createElement('style');
+    s.textContent='html,body{width:100%;height:100%;margin:0;overflow:hidden}'+
+      '#app{position:fixed;left:0;top:0;right:0;bottom:0;width:100%;height:100%}';
+    document.head.appendChild(s);
+  }catch(e){}
+  fix();
+  [200,600,1200,2000,3000,4500,6000].forEach(function(t){setTimeout(fix,t);});
+  var n=0;
+  var iv=setInterval(function(){fix();n++;if(n>40){clearInterval(iv);}},500);
+  window.addEventListener('resize',fix);
+  window.addEventListener('orientationchange',fix);
+})();"""
 
 /**
  * Game Greedy (cocos2d-js) dari CDN pihak ketiga, dimainkan di dalam aplikasi.

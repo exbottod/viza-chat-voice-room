@@ -1,1 +1,4 @@
-• fix(game): layar hitam Bikini Wild Rush diberi keterangan dan alamat cadangan
+• Catatan dialog update kini memakai kalimat penjelasan, bukan judul teknis commit.
+• Bila commit tidak menulis poin, judul commit dipakai sebagai cadangan.
+• Layar game tidak lagi hitam tanpa pesan, alasan kegagalan ikut ditampilkan.
+• Ada tombol Coba lagi tanpa harus keluar dari game.

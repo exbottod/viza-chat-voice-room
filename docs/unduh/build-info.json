@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.294",
-  "catatan": "• fix(game): layar hitam Bikini Wild Rush diberi keterangan dan alamat cadangan",
-  "ukuran_apk": 57144246,
-  "sha256_apk": "4b032445cf31a8e170109b07df4d6b357a3bc53ac6892da0a149f634553905f8",
+  "versi": "1.0.295",
+  "catatan": "• Catatan dialog update kini memakai kalimat penjelasan, bukan judul teknis commit.\n• Bila commit tidak menulis poin, judul commit dipakai sebagai cadangan.\n• Layar game tidak lagi hitam tanpa pesan, alasan kegagalan ikut ditampilkan.\n• Ada tombol Coba lagi tanpa harus keluar dari game.",
+  "ukuran_apk": 57144240,
+  "sha256_apk": "c84c711bd87136953dcb80989bc30fb3049f880e8cd752576acf7ce6aac08680",
   "abis": {
     "arm64": {
-      "ukuran": 57144246,
-      "sha256": "4b032445cf31a8e170109b07df4d6b357a3bc53ac6892da0a149f634553905f8"
+      "ukuran": 57144240,
+      "sha256": "c84c711bd87136953dcb80989bc30fb3049f880e8cd752576acf7ce6aac08680"
     },
     "armv7": {
-      "ukuran": 55295382,
-      "sha256": "ad30f7f7424d23f96db53b42318f94a1446d030e4d52f16ecb90d9c8e40f108e"
+      "ukuran": 55295384,
+      "sha256": "fb9ae842ebc58aef07bc7bcd6860078af4cd4aaea3e37be56bf0e8f020093f03"
     },
     "universal": {
-      "ukuran": 75560211,
-      "sha256": "382500146363d44ce04f099012b7af2f0a3fb714b141b2e07524d80c57101105"
+      "ukuran": 75560213,
+      "sha256": "4e213667970e401c7c5d20d47a7b33e14f124d8ac2f735dfb7a87d408895969a"
     }
   }
 }

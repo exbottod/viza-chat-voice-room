@@ -174,7 +174,7 @@ private fun GameWebScreen(daftar: List<String>, onClose: () -> Unit) {
                             databaseEnabled = true
                             mediaPlaybackRequiresUserGesture = false
                             useWideViewPort = true
-                            loadWithOverviewMode = true
+                            loadWithOverviewMode = false
                             setSupportZoom(false)
                             builtInZoomControls = false
                             displayZoomControls = false
@@ -203,16 +203,28 @@ private fun GameWebScreen(daftar: List<String>, onClose: () -> Unit) {
                             override fun onPageFinished(view: WebView?, alamat: String?) {
                                 prog = 100
                                 tahap = "selesai " + (alamat ?: "").substringAfter("//").take(30)
+                                // WebView lama kadang menghitung tinggi induk game 0 lalu tidak
+                                // menghitung ulang. Beri ukuran tegas dan picu hitung ulang.
+                                view?.evaluateJavascript(
+                                    "(function(){var s=document.createElement('style');" +
+                                        "s.textContent='html,body{width:100%;height:100%;margin:0;overflow:hidden}" +
+                                        "#app{position:fixed;left:0;top:0;right:0;bottom:0;width:100%;height:100%}';" +
+                                        "document.head.appendChild(s);" +
+                                        "[300,800,1600,3000].forEach(function(t){setTimeout(function(){" +
+                                        "window.dispatchEvent(new Event('resize'));},t);});})()",
+                                    null,
+                                )
                                 view?.postDelayed({
                                     view.evaluateJavascript(
                                         "(function(){var a=document.getElementById('app');" +
-                                            "var t=document.title||'';" +
-                                            "return (a?a.innerHTML.length:-1)+'|'+(document.body?document.body.innerText.length:-1)+'|'+t;})()",
+                                            "var g=document.querySelector('.bw-stage');" +
+                                            "var u=g?(g.offsetWidth+'x'+g.offsetHeight):'nostage';" +
+                                            "return (a?a.innerHTML.length:-1)+'|'+(document.body?document.body.innerText.length:-1)+'|'+u;})()",
                                     ) { hasil ->
                                         val bagian = (hasil ?: "").replace("\"", "").split("|")
                                         val isiApp = bagian.getOrNull(0)?.toIntOrNull() ?: -1
                                         val judul = bagian.getOrNull(2) ?: ""
-                                        tahap = "isi " + isiApp + " teks " + (bagian.getOrNull(1) ?: "?") + " " + judul.take(18)
+                                        tahap = "isi " + isiApp + " teks " + (bagian.getOrNull(1) ?: "?") + " stage " + judul.take(14)
                                         if (isiApp == 0 && galat.isBlank()) {
                                             galat = "Halaman game kosong. Coba lagi atau laporkan ke pengembang."
                                         }

@@ -61,6 +61,9 @@ object BikiniRush {
     /** Berkas game milik Viza sendiri, ikut repo di docs/game/bikini. */
     const val GAME = "https://exbottod.github.io/viza-chat-voice-room/game/bikini/index.html"
 
+    /** Alamat kedua kalau GitHub Pages tidak terjangkau dari jaringan pemain. */
+    const val GAME_CADANGAN = "https://raw.githack.com/exbottod/viza-chat-voice-room/main/docs/game/bikini/index.html"
+
     /** Dompet Viza di VPS: saldo dan hasil putaran ditentukan server ini. */
     const val DOMPET = "https://viza.43-156-99-4.sslip.io/bikini"
 
@@ -69,7 +72,7 @@ object BikiniRush {
      * Kalau server diam, game tetap dibuka dengan koin mainan lokal supaya
      * tidak ada layar kosong.
      */
-    suspend fun alamat(): String {
+    suspend fun alamat(): Pair<String, String?> {
         // Batas waktu total: apa pun yang macet (token Firebase atau jaringan),
         // game tetap dibuka dengan koin mainan, jangan sampai layar hitam.
         val hasil = kotlinx.coroutines.withTimeoutOrNull(6000L) {
@@ -94,7 +97,9 @@ object BikiniRush {
                 null
             }
         }
-        return hasil ?: GAME
+        val kueri = hasil?.substringAfter("?", "")
+        val cadangan = if (kueri.isNullOrBlank()) GAME_CADANGAN else "$GAME_CADANGAN?$kueri"
+        return (hasil ?: GAME) to cadangan
     }
 }
 
@@ -106,13 +111,18 @@ fun GreedyFunniScreen(onClose: () -> Unit) {
 @Composable
 fun BikiniRushScreen(onClose: () -> Unit) {
     var alamat by remember { mutableStateOf("") }
-    androidx.compose.runtime.LaunchedEffect(Unit) { alamat = BikiniRush.alamat() }
+    var cadangan by remember { mutableStateOf<String?>(null) }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        val (utama, lain) = BikiniRush.alamat()
+        alamat = utama
+        cadangan = lain
+    }
     if (alamat.isBlank()) {
         Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
             Text("Menyiapkan meja...", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
         }
     } else {
-        GameWebScreen(alamat, null, onClose)
+        GameWebScreen(alamat, cadangan, onClose)
     }
 }
 
@@ -122,6 +132,10 @@ private fun GameWebScreen(url: String, cadangan: String?, onClose: () -> Unit) {
     val ctx = LocalContext.current
     var web by remember { mutableStateOf<WebView?>(null) }
     var prog by remember { mutableStateOf(0) }
+    // Alasan layar kosong: dulu WebView hanya hitam tanpa keterangan, jadi tidak
+    // ketahuan apakah gagal memuat atau skrip game berhenti.
+    var galat by remember { mutableStateOf("") }
+    var ulang by remember { mutableStateOf(0) }
 
     BackHandler {
         val w = web
@@ -129,64 +143,76 @@ private fun GameWebScreen(url: String, cadangan: String?, onClose: () -> Unit) {
     }
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {
-        AndroidView(
-            modifier = Modifier.fillMaxSize(),
-            factory = { c ->
-                WebView(c).apply {
-                    setBackgroundColor(android.graphics.Color.BLACK)
-                    settings.apply {
-                        javaScriptEnabled = true
-                        domStorageEnabled = true
-                        databaseEnabled = true
-                        // Suara dan animasi game boleh jalan tanpa disentuh dulu.
-                        mediaPlaybackRequiresUserGesture = false
-                        useWideViewPort = true
-                        loadWithOverviewMode = true
-                        setSupportZoom(false)
-                        builtInZoomControls = false
-                        displayZoomControls = false
-                        allowFileAccess = true
-                        allowContentAccess = true
-                        // Aset game diambil dari beberapa domain.
-                        mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-                        cacheMode = WebSettings.LOAD_DEFAULT
-                    }
-                    webViewClient = object : WebViewClient() {
-                        override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-                            prog = 0
+        androidx.compose.runtime.key(ulang) {
+            AndroidView(
+                modifier = Modifier.fillMaxSize(),
+                factory = { c ->
+                    WebView(c).apply {
+                        setBackgroundColor(android.graphics.Color.BLACK)
+                        WebView.setWebContentsDebuggingEnabled(true)
+                        settings.apply {
+                            javaScriptEnabled = true
+                            domStorageEnabled = true
+                            databaseEnabled = true
+                            mediaPlaybackRequiresUserGesture = false
+                            useWideViewPort = true
+                            loadWithOverviewMode = true
+                            setSupportZoom(false)
+                            builtInZoomControls = false
+                            displayZoomControls = false
+                            allowFileAccess = true
+                            allowContentAccess = true
+                            mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                            cacheMode = WebSettings.LOAD_DEFAULT
                         }
+                        webViewClient = object : WebViewClient() {
+                            override fun onPageStarted(view: WebView?, alamat: String?, favicon: Bitmap?) {
+                                prog = 0
+                            }
 
-                        override fun onPageFinished(view: WebView?, url: String?) {
-                            prog = 100
-                        }
+                            override fun onPageFinished(view: WebView?, alamat: String?) {
+                                prog = 100
+                            }
 
-                        // Kalau alamat utama gagal (mis. domain prod sedang gangguan),
-                        // coba sekali ke alamat cadangan supaya layar tidak kosong.
-                        override fun onReceivedError(
-                            view: WebView?,
-                            request: android.webkit.WebResourceRequest?,
-                            error: android.webkit.WebResourceError?,
-                        ) {
-                            if (request?.isForMainFrame != true) return
-                            val v = view ?: return
-                            val lain = cadangan ?: return
-                            if (v.tag == "cadangan") return
-                            v.tag = "cadangan"
-                            v.loadUrl(lain)
+                            override fun onReceivedError(
+                                view: WebView?,
+                                request: android.webkit.WebResourceRequest?,
+                                error: android.webkit.WebResourceError?,
+                            ) {
+                                if (request?.isForMainFrame != true) return
+                                val v = view ?: return
+                                val lain = cadangan
+                                if (lain != null && v.tag != "cadangan") {
+                                    v.tag = "cadangan"
+                                    v.loadUrl(lain)
+                                    return
+                                }
+                                galat = "Gagal memuat halaman (" + (error?.errorCode ?: -1) + "). Periksa koneksi lalu coba lagi."
+                            }
                         }
-                    }
-                    webChromeClient = object : WebChromeClient() {
-                        override fun onProgressChanged(view: WebView?, newProgress: Int) {
-                            prog = newProgress
-                        }
-                    }
-                    loadUrl(url)
-                }
-            },
-            update = { web = it },
-        )
+                        webChromeClient = object : WebChromeClient() {
+                            override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                                prog = newProgress
+                            }
 
-        if (prog in 1..99) {
+                            // Kesalahan skrip game ikut ditampilkan, supaya tidak
+                            // berakhir sebagai layar hitam tanpa penjelasan.
+                            override fun onConsoleMessage(m: android.webkit.ConsoleMessage?): Boolean {
+                                val pesan = m?.message() ?: return false
+                                if (m.messageLevel() == android.webkit.ConsoleMessage.MessageLevel.ERROR) {
+                                    galat = "Skrip game berhenti: " + pesan.take(160)
+                                }
+                                return true
+                            }
+                        }
+                        loadUrl(url)
+                    }
+                },
+                update = { web = it },
+            )
+        }
+
+        if (prog in 1..99 && galat.isBlank()) {
             LinearProgressIndicator(
                 progress = { prog / 100f },
                 modifier = Modifier.fillMaxWidth().height(3.dp).align(Alignment.TopCenter),
@@ -195,19 +221,44 @@ private fun GameWebScreen(url: String, cadangan: String?, onClose: () -> Unit) {
             )
         }
 
+        if (galat.isNotBlank()) {
+            androidx.compose.foundation.layout.Column(
+                Modifier
+                    .align(Alignment.Center)
+                    .padding(horizontal = 28.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp),
+            ) {
+                Text(galat, color = Color(0xFFE8E8E8), fontSize = 13.sp)
+                Box(
+                    Modifier
+                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(20.dp))
+                        .background(Color(0xFFFFC107))
+                        .clickable {
+                            galat = ""
+                            prog = 0
+                            ulang++
+                        }
+                        .padding(horizontal = 22.dp, vertical = 10.dp),
+                ) {
+                    Text("Coba lagi", color = Color.Black, fontSize = 14.sp)
+                }
+            }
+        }
+
         // Tombol tutup selalu ada di atas game, jadi tidak pernah terjebak.
         Box(
             Modifier
                 .align(Alignment.TopEnd)
                 .statusBarsPadding()
-                .padding(8.dp)
-                .size(36.dp)
+                .padding(10.dp)
+                .size(34.dp)
                 .clip(CircleShape)
-                .background(Color(0x99000000))
+                .background(Color(0x66000000))
                 .clickable { onClose() },
             contentAlignment = Alignment.Center,
         ) {
-            Text("✕", color = Color.White, fontSize = 18.sp)
+            Text("\u2715", color = Color.White, fontSize = 16.sp)
         }
     }
 }

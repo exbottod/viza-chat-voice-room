@@ -58,7 +58,7 @@ object GreedyFunni {
 object BikiniRush {
     const val NAMA = "Bikini Wild Rush"
 
-    /** Berkas game milik Viza sendiri. */
+    /** Berkas game milik Viza sendiri, ikut repo di docs/game/bikini. */
     const val GAME = "https://exbottod.github.io/viza-chat-voice-room/game/bikini/index.html"
 
     /** Dompet Viza di VPS: saldo dan hasil putaran ditentukan server ini. */
@@ -66,8 +66,8 @@ object BikiniRush {
 
     /**
      * Minta token sesi pendek ke dompet Viza, lalu susun alamat game.
-     * Kalau server tidak menjawab, game tetap dibuka dengan koin mainan lokal
-     * supaya tidak ada layar kosong.
+     * Kalau server diam, game tetap dibuka dengan koin mainan lokal supaya
+     * tidak ada layar kosong.
      */
     suspend fun alamat(): String {
         return try {
@@ -94,6 +94,11 @@ object BikiniRush {
 }
 
 @Composable
+fun GreedyFunniScreen(onClose: () -> Unit) {
+    GameWebScreen(GreedyFunni.URL_GAME, GreedyFunni.URL_CADANGAN, onClose)
+}
+
+@Composable
 fun BikiniRushScreen(onClose: () -> Unit) {
     var alamat by remember { mutableStateOf("") }
     androidx.compose.runtime.LaunchedEffect(Unit) { alamat = BikiniRush.alamat() }
@@ -103,5 +108,101 @@ fun BikiniRushScreen(onClose: () -> Unit) {
         }
     } else {
         GameWebScreen(alamat, null, onClose)
+    }
+}
+
+@SuppressLint("SetJavaScriptEnabled")
+@Composable
+private fun GameWebScreen(url: String, cadangan: String?, onClose: () -> Unit) {
+    val ctx = LocalContext.current
+    var web by remember { mutableStateOf<WebView?>(null) }
+    var prog by remember { mutableStateOf(0) }
+
+    BackHandler {
+        val w = web
+        if (w != null && w.canGoBack()) w.goBack() else onClose()
+    }
+
+    Box(Modifier.fillMaxSize().background(Color.Black)) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { c ->
+                WebView(c).apply {
+                    setBackgroundColor(android.graphics.Color.BLACK)
+                    settings.apply {
+                        javaScriptEnabled = true
+                        domStorageEnabled = true
+                        databaseEnabled = true
+                        // Suara dan animasi game boleh jalan tanpa disentuh dulu.
+                        mediaPlaybackRequiresUserGesture = false
+                        useWideViewPort = true
+                        loadWithOverviewMode = true
+                        setSupportZoom(false)
+                        builtInZoomControls = false
+                        displayZoomControls = false
+                        allowFileAccess = true
+                        allowContentAccess = true
+                        // Aset game diambil dari beberapa domain.
+                        mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                        cacheMode = WebSettings.LOAD_DEFAULT
+                    }
+                    webViewClient = object : WebViewClient() {
+                        override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                            prog = 0
+                        }
+
+                        override fun onPageFinished(view: WebView?, url: String?) {
+                            prog = 100
+                        }
+
+                        // Kalau alamat utama gagal (mis. domain prod sedang gangguan),
+                        // coba sekali ke alamat cadangan supaya layar tidak kosong.
+                        override fun onReceivedError(
+                            view: WebView?,
+                            request: android.webkit.WebResourceRequest?,
+                            error: android.webkit.WebResourceError?,
+                        ) {
+                            if (request?.isForMainFrame != true) return
+                            val v = view ?: return
+                            val lain = cadangan ?: return
+                            if (v.tag == "cadangan") return
+                            v.tag = "cadangan"
+                            v.loadUrl(lain)
+                        }
+                    }
+                    webChromeClient = object : WebChromeClient() {
+                        override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                            prog = newProgress
+                        }
+                    }
+                    loadUrl(url)
+                }
+            },
+            update = { web = it },
+        )
+
+        if (prog in 1..99) {
+            LinearProgressIndicator(
+                progress = { prog / 100f },
+                modifier = Modifier.fillMaxWidth().height(3.dp).align(Alignment.TopCenter),
+                color = Color(0xFFFFC107),
+                trackColor = Color(0x33FFFFFF),
+            )
+        }
+
+        // Tombol tutup selalu ada di atas game, jadi tidak pernah terjebak.
+        Box(
+            Modifier
+                .align(Alignment.TopEnd)
+                .statusBarsPadding()
+                .padding(8.dp)
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(Color(0x99000000))
+                .clickable { onClose() },
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("✕", color = Color.White, fontSize = 18.sp)
+        }
     }
 }

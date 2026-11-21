@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.298",
-  "catatan": "• Game dibuka dari VPS lebih dulu, satu domain dengan dompet jadi tanpa CORS.\n• Berkas di dalam APK tetap jadi cadangan bila VPS tidak menjawab.\n• Skrip vps/pasang-game-viza.sh memasang berkas game di VPS sekali jalan.",
-  "ukuran_apk": 59305706,
-  "sha256_apk": "21bac2ba245d9fc1f81e9d1e8ac2eea969d3d1d058c967be43d97c079269ffaf",
+  "versi": "1.0.299",
+  "catatan": "• Berkas game diganti paket v4: index.html, game.js, polyfills.js, images, assets.\n• Layar boot dan kotak galat dari paket v4 tampil walau skrip game gagal.\n• Alamat VPS memakai /game/html5-game, cadangan di APK dan internet tetap ada.",
+  "ukuran_apk": 61468607,
+  "sha256_apk": "9ab2ecc5db04095a7079aef870bcd02877ed5d4e4aa6ac6cfb359aaeaf5d9876",
   "abis": {
     "arm64": {
-      "ukuran": 59305706,
-      "sha256": "21bac2ba245d9fc1f81e9d1e8ac2eea969d3d1d058c967be43d97c079269ffaf"
+      "ukuran": 61468607,
+      "sha256": "9ab2ecc5db04095a7079aef870bcd02877ed5d4e4aa6ac6cfb359aaeaf5d9876"
     },
     "armv7": {
-      "ukuran": 57456844,
-      "sha256": "7df451d659888179b54f891cefb841df77e7712e8fef596b19f39d0841b317fd"
+      "ukuran": 59619751,
+      "sha256": "0dfdd6643aa2fe6da50638a24e4473a45b33bd874ef03b193968b65023987e41"
     },
     "universal": {
-      "ukuran": 77721676,
-      "sha256": "b18de8aac74b3c6b75169c3bab21f390527c9517e48b53aee2cbc897d7cd9778"
+      "ukuran": 79884588,
+      "sha256": "15b4cfbd3951861922bb59d3d4db4a8c8698118c139dc2723d86dc28a770875e"
     }
   }
 }

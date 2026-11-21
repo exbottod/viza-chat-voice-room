@@ -1018,15 +1018,6 @@
       }
     },
     {
-      "dari": "1.0.294",
-      "ke": "1.0.298",
-      "arm64": {
-        "file": "patch-1.0.294-1.0.298-arm64.bsdiff",
-        "ukuran": 6431359,
-        "sha256": "7cf6a3e0d58ee81b3321320550e01e8a09e98f5c10f0acdd85a156bbc03437cc"
-      }
-    },
-    {
       "dari": "1.0.295",
       "ke": "1.0.296",
       "arm64": {
@@ -1046,11 +1037,11 @@
     },
     {
       "dari": "1.0.295",
-      "ke": "1.0.298",
+      "ke": "1.0.299",
       "arm64": {
-        "file": "patch-1.0.295-1.0.298-arm64.bsdiff",
-        "ukuran": 6428690,
-        "sha256": "bfce1e4402fa311360ec2e49cb166d0c82da7ca1030745cc127395c53cdd6a73"
+        "file": "patch-1.0.295-1.0.299-arm64.bsdiff",
+        "ukuran": 8599269,
+        "sha256": "d0f86c1f8acf9bf18a4f55bda198539ea0b503cb2e411d8466f736c550ce02de"
       }
     },
     {
@@ -1064,20 +1055,29 @@
     },
     {
       "dari": "1.0.296",
-      "ke": "1.0.298",
+      "ke": "1.0.299",
       "arm64": {
-        "file": "patch-1.0.296-1.0.298-arm64.bsdiff",
-        "ukuran": 4246916,
-        "sha256": "ca9cc593ab1c7cbeff86dd18b90d07554125f83ecd5979f33aeb36364c05e56a"
+        "file": "patch-1.0.296-1.0.299-arm64.bsdiff",
+        "ukuran": 4423276,
+        "sha256": "0323b3a32b9f7dc9ded41dfdcaaa23dffe2a769bced6f681f6c4a93ae93dce5e"
       }
     },
     {
       "dari": "1.0.297",
-      "ke": "1.0.298",
+      "ke": "1.0.299",
       "arm64": {
-        "file": "patch-1.0.297-1.0.298-arm64.bsdiff",
-        "ukuran": 4211206,
-        "sha256": "c606e07d05691226d79b2f63a92ea856b0696c92656bf1206a4e1a801fb000fe"
+        "file": "patch-1.0.297-1.0.299-arm64.bsdiff",
+        "ukuran": 4353076,
+        "sha256": "83699faff2f4ad4a6f3d5afe9ac7d34d83b6878e920ad7b3b45f7b7d69188acd"
+      }
+    },
+    {
+      "dari": "1.0.298",
+      "ke": "1.0.299",
+      "arm64": {
+        "file": "patch-1.0.298-1.0.299-arm64.bsdiff",
+        "ukuran": 4164749,
+        "sha256": "04f6278a1c08016e09e4956bb893bc7ff5b199fc2b5c69758a77ee91bfcecf68"
       }
     }
   ]

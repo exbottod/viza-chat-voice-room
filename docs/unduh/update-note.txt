@@ -1,3 +1,3 @@
-• Game dibuka dari VPS lebih dulu, satu domain dengan dompet jadi tanpa CORS.
-• Berkas di dalam APK tetap jadi cadangan bila VPS tidak menjawab.
-• Skrip vps/pasang-game-viza.sh memasang berkas game di VPS sekali jalan.
+• Berkas game diganti paket v4: index.html, game.js, polyfills.js, images, assets.
+• Layar boot dan kotak galat dari paket v4 tampil walau skrip game gagal.
+• Alamat VPS memakai /game/html5-game, cadangan di APK dan internet tetap ada.

@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import kotlinx.coroutines.tasks.await
 
 /**
  * Game Greedy (cocos2d-js) dari CDN pihak ketiga, dimainkan di dalam aplikasi.
@@ -56,111 +57,51 @@ object GreedyFunni {
  */
 object BikiniRush {
     const val NAMA = "Bikini Wild Rush"
-    const val URL_GAME = "https://exbottod.github.io/viza-chat-voice-room/game/bikini/index.html"
-}
 
-@Composable
-fun GreedyFunniScreen(onClose: () -> Unit) {
-    GameWebScreen(GreedyFunni.URL_GAME, GreedyFunni.URL_CADANGAN, onClose)
+    /** Berkas game milik Viza sendiri. */
+    const val GAME = "https://exbottod.github.io/viza-chat-voice-room/game/bikini/index.html"
+
+    /** Dompet Viza di VPS: saldo dan hasil putaran ditentukan server ini. */
+    const val DOMPET = "https://viza.43-156-99-4.sslip.io/bikini"
+
+    /**
+     * Minta token sesi pendek ke dompet Viza, lalu susun alamat game.
+     * Kalau server tidak menjawab, game tetap dibuka dengan koin mainan lokal
+     * supaya tidak ada layar kosong.
+     */
+    suspend fun alamat(): String {
+        return try {
+            val idToken = com.google.firebase.auth.FirebaseAuth.getInstance()
+                .currentUser?.getIdToken(false)?.await()?.token
+            if (idToken.isNullOrBlank()) return GAME
+            val token = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                val c = java.net.URL("$DOMPET/token").openConnection() as java.net.HttpURLConnection
+                c.requestMethod = "POST"
+                c.connectTimeout = 8000
+                c.readTimeout = 8000
+                c.doOutput = true
+                c.setRequestProperty("Authorization", "Bearer $idToken")
+                c.setRequestProperty("Content-Type", "application/json")
+                c.outputStream.use { it.write("{}".toByteArray()) }
+                val isi = c.inputStream.bufferedReader().use { it.readText() }
+                org.json.JSONObject(isi).optString("token")
+            }
+            if (token.isBlank()) GAME else "$GAME?api=$DOMPET/api&token=$token"
+        } catch (e: Exception) {
+            GAME
+        }
+    }
 }
 
 @Composable
 fun BikiniRushScreen(onClose: () -> Unit) {
-    GameWebScreen(BikiniRush.URL_GAME, null, onClose)
-}
-
-@SuppressLint("SetJavaScriptEnabled")
-@Composable
-private fun GameWebScreen(url: String, cadangan: String?, onClose: () -> Unit) {
-    val ctx = LocalContext.current
-    var web by remember { mutableStateOf<WebView?>(null) }
-    var prog by remember { mutableStateOf(0) }
-
-    BackHandler {
-        val w = web
-        if (w != null && w.canGoBack()) w.goBack() else onClose()
-    }
-
-    Box(Modifier.fillMaxSize().background(Color.Black)) {
-        AndroidView(
-            modifier = Modifier.fillMaxSize(),
-            factory = { c ->
-                WebView(c).apply {
-                    setBackgroundColor(android.graphics.Color.BLACK)
-                    settings.apply {
-                        javaScriptEnabled = true
-                        domStorageEnabled = true
-                        databaseEnabled = true
-                        // Suara dan animasi game boleh jalan tanpa disentuh dulu.
-                        mediaPlaybackRequiresUserGesture = false
-                        useWideViewPort = true
-                        loadWithOverviewMode = true
-                        setSupportZoom(false)
-                        builtInZoomControls = false
-                        displayZoomControls = false
-                        allowFileAccess = true
-                        allowContentAccess = true
-                        // Aset game diambil dari beberapa domain.
-                        mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-                        cacheMode = WebSettings.LOAD_DEFAULT
-                    }
-                    webViewClient = object : WebViewClient() {
-                        override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-                            prog = 0
-                        }
-
-                        override fun onPageFinished(view: WebView?, url: String?) {
-                            prog = 100
-                        }
-
-                        // Kalau alamat utama gagal (mis. domain prod sedang gangguan),
-                        // coba sekali ke alamat cadangan supaya layar tidak kosong.
-                        override fun onReceivedError(
-                            view: WebView?,
-                            request: android.webkit.WebResourceRequest?,
-                            error: android.webkit.WebResourceError?,
-                        ) {
-                            if (request?.isForMainFrame != true) return
-                            val v = view ?: return
-                            val lain = cadangan ?: return
-                            if (v.tag == "cadangan") return
-                            v.tag = "cadangan"
-                            v.loadUrl(lain)
-                        }
-                    }
-                    webChromeClient = object : WebChromeClient() {
-                        override fun onProgressChanged(view: WebView?, newProgress: Int) {
-                            prog = newProgress
-                        }
-                    }
-                    loadUrl(url)
-                }
-            },
-            update = { web = it },
-        )
-
-        if (prog in 1..99) {
-            LinearProgressIndicator(
-                progress = { prog / 100f },
-                modifier = Modifier.fillMaxWidth().height(3.dp).align(Alignment.TopCenter),
-                color = Color(0xFFFFC107),
-                trackColor = Color(0x33FFFFFF),
-            )
+    var alamat by remember { mutableStateOf("") }
+    androidx.compose.runtime.LaunchedEffect(Unit) { alamat = BikiniRush.alamat() }
+    if (alamat.isBlank()) {
+        Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
+            Text("Menyiapkan meja...", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
         }
-
-        // Tombol tutup selalu ada di atas game, jadi tidak pernah terjebak.
-        Box(
-            Modifier
-                .align(Alignment.TopEnd)
-                .statusBarsPadding()
-                .padding(8.dp)
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(Color(0x99000000))
-                .clickable { onClose() },
-            contentAlignment = Alignment.Center,
-        ) {
-            Text("✕", color = Color.White, fontSize = 18.sp)
-        }
+    } else {
+        GameWebScreen(alamat, null, onClose)
     }
 }

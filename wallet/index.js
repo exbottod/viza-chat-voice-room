@@ -5005,6 +5005,159 @@ async function slotPlay(req, env, h) {
   return json({ ok: 1, koin, saldo: Math.round((koin / SKALA) * 100) / 100, bet, win });
 }
 
+// ---------- Game Bikini Wild Rush (HTML5 milik Viza) ----------
+// Saldo memakai dompet Viza yang sama (tabel wallets). Satu koin Viza = satu
+// unit game, jadi tidak ada saldo terpisah dan tidak ada pembulatan.
+const BW_WILD = 11;
+const BW_SCATTER = 10;
+const BW_BETS = [25, 50, 100, 200, 500, 1000, 2000, 5000];
+const BW_LINES = [
+  [0, 0, 0, 0, 0], [1, 1, 1, 1, 1], [2, 2, 2, 2, 2], [3, 3, 3, 3, 3],
+  [0, 1, 2, 1, 0], [3, 2, 1, 2, 3], [1, 0, 1, 0, 1], [2, 3, 2, 3, 2],
+  [0, 0, 1, 0, 0], [3, 3, 2, 3, 3], [1, 1, 0, 1, 1], [2, 2, 3, 2, 2],
+  [0, 1, 1, 1, 0], [3, 2, 2, 2, 3], [1, 2, 2, 2, 1], [2, 1, 1, 1, 2],
+  [0, 1, 2, 3, 3], [3, 2, 1, 0, 0], [0, 0, 1, 2, 3], [3, 3, 2, 1, 0],
+  [1, 0, 0, 0, 1], [2, 3, 3, 3, 2], [0, 2, 0, 2, 0], [3, 1, 3, 1, 3],
+  [1, 2, 1, 2, 1],
+];
+// Pembayaran diskalakan supaya RTP di bawah 100 persen: koin Viza tidak
+// bertambah sendiri hanya karena dipakai berputar.
+const BW_FAKTOR = 0.85;
+const BW_PAY = [[4, 12, 40], [4, 12, 40], [3, 10, 30], [3, 10, 30], [3, 8, 25], [12, 40, 120], [10, 30, 100], [8, 25, 80], [6, 20, 60], [5, 15, 50], [0, 0, 0], [20, 80, 200]];
+
+function bwHadiahPutaran(scatter) {
+  return scatter >= 5 ? 20 : scatter === 4 ? 12 : scatter === 3 ? 8 : 0;
+}
+
+function bwNilai(board, bet) {
+  const aktif = board.flatMap((reel, i) => reel.length === 4 && reel.every((s) => s === BW_WILD) ? [i] : []);
+  const kali = aktif.reduce((m, kol) => m * (kol + 1), 1);
+  let menang = 0;
+  for (const jalur of BW_LINES) {
+    const urutan = jalur.map((baris, kol) => board[kol]?.[baris]);
+    let terbaik = 0;
+    for (let simbol = 0; simbol <= BW_WILD; simbol++) {
+      if (simbol === BW_SCATTER) continue;
+      let n = 0;
+      for (const isi of urutan) {
+        if (isi === simbol || isi === BW_WILD) n++;
+        else break;
+      }
+      if (n < 3) continue;
+      const nilai = Math.round((BW_PAY[simbol]?.[n - 3] ?? 0) * bet / 25 * kali);
+      if (nilai > terbaik) terbaik = nilai;
+    }
+    menang += terbaik;
+  }
+  const scatter = board.filter((reel) => reel.includes(BW_SCATTER)).length;
+  return { win: Math.round(menang * BW_FAKTOR), awarded: bwHadiahPutaran(scatter) };
+}
+
+function bwAcak() {
+  const b = new Uint32Array(1);
+  crypto.getRandomValues(b);
+  return (b[0] ?? 0) / 4294967296;
+}
+
+function bwBoard(acak, gratis) {
+  return Array.from({ length: 5 }, () => {
+    const reel = Array.from({ length: 4 }, () => Math.floor(acak() * 10));
+    if (acak() < 0.13) reel[Math.floor(acak() * 4)] = BW_SCATTER;
+    if (acak() < 0.25 && !reel.includes(BW_SCATTER)) {
+      const mulai = Math.floor(acak() * 3);
+      const panjang = 1 + Math.floor(acak() * (4 - mulai));
+      for (let r = gratis ? 0 : mulai; r < (gratis ? 4 : mulai + panjang); r++) reel[r] = BW_WILD;
+    }
+    return reel;
+  });
+}
+
+/** Jalur: /bikini/... */
+async function bikiniPlay(req, env, h) {
+  const { pipe, json, T, I, uidDariToken } = h;
+  if (req.method === "OPTIONS") return new Response(null, { status: 204 });
+  await pipe(env, [
+    { sql: `create table if not exists bikini_tok (
+        token text primary key, uid text not null, exp integer not null, created integer not null default 0)` },
+    { sql: `create table if not exists bikini_wallet (
+        uid text primary key, free_spins integer not null default 0,
+        free_bet integer not null default 0, updated integer not null default 0)` },
+  ]);
+  const url = new URL(req.url);
+  const jalur = url.pathname.toLowerCase();
+  const kepala = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
+
+  // Token pendek untuk alamat game, dibuat dari sesi Firebase pemain.
+  if (jalur.endsWith("/token")) {
+    const uid = kepala && kepala.split(".").length === 3 ? await uidDariToken(kepala) : "";
+    if (!uid) return json({ error: "Sesi tidak sah" }, 401);
+    const token = "bw" + crypto.randomUUID().replace(/-/g, "").slice(0, 30);
+    const exp = Date.now() + 12 * 3600 * 1000;
+    await pipe(env, [
+      { sql: "insert into bikini_tok (token, uid, exp, created) values (?, ?, ?, ?)",
+        args: [T(token), T(uid), T(exp), T(Date.now())] },
+    ]);
+    return json({ token, exp });
+  }
+
+  // Sesi game: token pendek di atas, atau token Firebase langsung.
+  let uid = "";
+  if (kepala) {
+    if (kepala.split(".").length === 3) uid = await uidDariToken(kepala);
+    if (!uid) {
+      const r = await pipe(env, [{ sql: "select uid, exp from bikini_tok where token = ?", args: [T(kepala)] }]);
+      const baris = r[0].rows[0];
+      if (baris && Number(baris.exp) > Date.now()) uid = String(baris.uid);
+    }
+  }
+  if (!uid) return json({ error: "Sesi tidak sah" }, 401);
+
+  await pipe(env, [
+    { sql: "insert or ignore into wallets (uid) values (?)", args: [T(uid)] },
+    { sql: "insert or ignore into bikini_wallet (uid, updated) values (?, ?)", args: [T(uid), T(Date.now())] },
+  ]);
+
+  const baca = async () => {
+    const r = await pipe(env, [
+      { sql: "select coins from wallets where uid = ?", args: [T(uid)] },
+      { sql: "select free_spins, free_bet from bikini_wallet where uid = ?", args: [T(uid)] },
+    ]);
+    return {
+      balance: Math.max(0, Math.trunc(Number(r[0].rows[0]?.coins ?? 0))),
+      freeSpins: Math.max(0, Math.trunc(Number(r[1].rows[0]?.free_spins ?? 0))),
+      freeBet: Math.max(0, Math.trunc(Number(r[1].rows[0]?.free_bet ?? 0))),
+    };
+  };
+
+  if (jalur.endsWith("/balance")) {
+    const w = await baca();
+    return json({ balance: w.balance, freeSpins: w.freeSpins });
+  }
+
+  if (!jalur.endsWith("/spin")) return json({ error: "Tidak ditemukan" }, 404);
+  if (req.method !== "POST") return json({ error: "Gunakan POST" }, 405);
+
+  const isi = await req.json().catch(() => ({}));
+  const bet = Math.trunc(Number(isi?.bet ?? 0));
+  const w = await baca();
+  const gratis = w.freeSpins > 0;
+  const taruhan = gratis ? Math.max(1, w.freeBet) : bet;
+  if (!gratis && !BW_BETS.includes(bet)) return json({ error: "Taruhan tidak dikenal" }, 400);
+  if (!gratis && w.balance < bet) return json({ error: "Koin tidak cukup" }, 402);
+
+  const board = bwBoard(bwAcak, gratis);
+  const hasil = bwNilai(board, taruhan);
+  const saldoBaru = Math.max(0, w.balance - (gratis ? 0 : bet) + hasil.win);
+  const putaranBaru = Math.max(0, w.freeSpins - (gratis ? 1 : 0) + hasil.awarded);
+  const betBaru = hasil.awarded && !gratis ? taruhan : (putaranBaru > 0 ? w.freeBet : 0);
+  await pipe(env, [
+    { sql: "update wallets set coins = ? where uid = ?", args: [I(saldoBaru), T(uid)] },
+    { sql: "update bikini_wallet set free_spins = ?, free_bet = ?, updated = ? where uid = ?",
+      args: [I(putaranBaru), I(betBaru), T(Date.now()), T(uid)] },
+  ]);
+  return json({ board, win: hasil.win, balance: saldoBaru, freeSpins: putaranBaru });
+}
+
 async function waveTokenBaru(env, uid, ttlDetik) {
   await waveTokPastikan(env);
   const tok = "wg" + crypto.randomUUID().replace(/-/g, "").slice(0, 30);
@@ -6633,6 +6786,25 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
       kepala.set("access-control-allow-origin", "*");
       kepala.set("access-control-allow-headers", "authorization, content-type");
       kepala.set("access-control-allow-methods", "GET, POST, OPTIONS");
+      return new Response(jawab.body, { status: jawab.status, headers: kepala });
+    }
+    if (url.pathname.toLowerCase().startsWith("/bikini/")) {
+      const asal = req.headers.get("origin") || "*";
+      if (req.method === "OPTIONS") {
+        return new Response(null, {
+          status: 204,
+          headers: {
+            "access-control-allow-origin": asal,
+            "access-control-allow-headers": "authorization, content-type",
+            "access-control-allow-methods": "GET, POST, OPTIONS",
+            "access-control-max-age": "86400",
+          },
+        });
+      }
+      const jawab = await bikiniPlay(req, env, { pipe, json, gagal, T, I, uidDariToken });
+      const kepala = new Headers(jawab.headers);
+      kepala.set("access-control-allow-origin", asal);
+      kepala.set("vary", "origin");
       return new Response(jawab.body, { status: jawab.status, headers: kepala });
     }
     if (url.pathname.toLowerCase().startsWith("/greedy/")) {

@@ -1,2 +1,1 @@
-• fix(game): ikon Bikini Wild Rush dari gambar zip, layar tidak macet
-• fix(update): kata-kata dialog update mengikuti rilis yang sedang diunduh
+• fix(ui): lencana kembali ke ukuran asli, frame tidak menempel saat room diminimize

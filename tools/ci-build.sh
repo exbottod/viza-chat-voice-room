@@ -140,15 +140,19 @@ if [ -n "${GH_TOKEN:-}" ] && command -v gh > /dev/null 2>&1 && [ -z "${SKIP_RELE
     echo "Perbaikan di versi 1.0.$NOMOR:"
     # Buang baris teknis: penanda skip build, pembaruan halaman unduh, dan catatan rilis.
     bersih() { sed 's/ \[skip ci\]//g' | grep -viE 'halaman unduh|catatan rilis|^ *$' | head -6 || true; }
-    # Ambil judul commit sejak tag terakhir. Kalau rentangnya kosong (mis. tag
-    # sudah menunjuk commit terbaru), pakai commit terakhir supaya catatan di
-    # dialog pembaruan tidak pernah jatuh ke teks umum.
+    # Yang diambil POIN di isi commit (baris berawalan "-"), bukan judul teknis
+    # seperti "fix(ui): ...", supaya kalimat di dialog pembaruan bisa dibaca
+    # pemain dan benar-benar menyebut perubahan versi itu.
     DAFTAR=""
     if [ -n "$TAG_LAMA" ]; then
-      DAFTAR="$(git log --no-merges --pretty=format:"- %s" "$TAG_LAMA"..HEAD | bersih)"
+      DAFTAR="$(git log --no-merges --pretty=format:"%b" "$TAG_LAMA"..HEAD | grep -E '^- ' | bersih | head -5)"
     fi
     if [ -z "$DAFTAR" ]; then
-      DAFTAR="$(git log --no-merges --pretty=format:"- %s" -6 | bersih)"
+      DAFTAR="$(git log --no-merges --pretty=format:"%b" -6 | grep -E '^- ' | bersih | head -5)"
+    fi
+    # Kalau commit memang tidak menulis poin, baru pakai judulnya.
+    if [ -z "$DAFTAR" ]; then
+      DAFTAR="$(git log --no-merges --pretty=format:"- %s" -3 | bersih)"
     fi
     printf '%s\n' "$DAFTAR"
   } > "$CATATAN"

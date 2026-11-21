@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.304",
-  "catatan": "• Ukuran meja dipaksa dalam piksel layar penuh, tidak lagi bergantung satuan layar.\n• Batas ukuran lama dibuang supaya meja tidak mengecil jadi nol.\n• Halaman dimuat ulang sekali bila game dimuat saat ukuran layar belum terbaca.\n• Tulisan diagnosa kini menampilkan ukuran meja dan batas ukurannya.",
-  "ukuran_apk": 59399293,
-  "sha256_apk": "2e8b192d90b08e5057a064deaf20423971d1da5867ace5a0a4a019dca999f8fd",
+  "versi": "1.0.305",
+  "catatan": "• Dialog pengaturan, menu, dan kotak putaran gratis tidak lagi terpotong di bawah.\n• Lebar dialog dibatasi 92 persen layar dengan tinggi paling besar seisi layar.\n• Baris diagnosa di sudut kini menampilkan keadaan dompet: sesi kosong, kode token, atau saldo koin Vi\n• Saldo dompet diperiksa sekali saat meja dibuka supaya sambungan koin Viza langsung ketahuan.",
+  "ukuran_apk": 59400609,
+  "sha256_apk": "f77fbd481fe4448bfec519d82f7221f9b4e9679fd6b9fc5526617a0de4901bee",
   "abis": {
     "arm64": {
-      "ukuran": 59399293,
-      "sha256": "2e8b192d90b08e5057a064deaf20423971d1da5867ace5a0a4a019dca999f8fd"
+      "ukuran": 59400609,
+      "sha256": "f77fbd481fe4448bfec519d82f7221f9b4e9679fd6b9fc5526617a0de4901bee"
     },
     "armv7": {
-      "ukuran": 57550446,
-      "sha256": "45ab09ce4560fb9d25cb6a561d6a35bf478daa90f46953898087bdb2fb5e7d7e"
+      "ukuran": 57551744,
+      "sha256": "1d28794b73fe7619545b00929a828b1d4c384c101a2cf2bfafc0bcc7c36cfd10"
     },
     "universal": {
-      "ukuran": 77815269,
-      "sha256": "c307c24c5fa84e71013a22ba5be6ab10e2d361614aac36c3ef06ca814d0c36ae"
+      "ukuran": 77816585,
+      "sha256": "666396ee435ba120476d5842e4e9b066325efb719e05c5533aedbc8275e48fcd"
     }
   }
 }

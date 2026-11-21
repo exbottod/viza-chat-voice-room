@@ -1,4 +1,4 @@
-• Ukuran meja dipaksa dalam piksel layar penuh, tidak lagi bergantung satuan layar.
-• Batas ukuran lama dibuang supaya meja tidak mengecil jadi nol.
-• Halaman dimuat ulang sekali bila game dimuat saat ukuran layar belum terbaca.
-• Tulisan diagnosa kini menampilkan ukuran meja dan batas ukurannya.
+• Dialog pengaturan, menu, dan kotak putaran gratis tidak lagi terpotong di bawah.
+• Lebar dialog dibatasi 92 persen layar dengan tinggi paling besar seisi layar.
+• Baris diagnosa di sudut kini menampilkan keadaan dompet: sesi kosong, kode token, atau saldo koin Vi
+• Saldo dompet diperiksa sekali saat meja dibuka supaya sambungan koin Viza langsung ketahuan.

@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.300",
-  "catatan": "• Tanpa token dompet, game dibuka dari file:///android_asset/html5-game lebih dulu.\n• Dengan token, appassets lebih dulu, lalu file aset, VPS, dan internet.\n• Aturan ProGuard dari paket v4 disiapkan agar jembatan saldo tidak terhapus.",
-  "ukuran_apk": 59397371,
-  "sha256_apk": "72864418c315811d5e22be37206664b05c31e2a5720b47ec3999a15260a3f383",
+  "versi": "1.0.301",
+  "catatan": "• Berkas game diganti paket v5, termasuk perbaikan scatter dan putaran gratis.\n• Taruhan dan tampilan angka tetap memakai koin Viza, satu koin sama dengan satu unit.\n• Susunan berkas tidak berubah, jadi layar game dan alamat VPS tetap sama.",
+  "ukuran_apk": 59398112,
+  "sha256_apk": "f2ffee80c0324d2809bf745bf34095020e7e4a2d4145788eeec7ca2f2a4c898f",
   "abis": {
     "arm64": {
-      "ukuran": 59397371,
-      "sha256": "72864418c315811d5e22be37206664b05c31e2a5720b47ec3999a15260a3f383"
+      "ukuran": 59398112,
+      "sha256": "f2ffee80c0324d2809bf745bf34095020e7e4a2d4145788eeec7ca2f2a4c898f"
     },
     "armv7": {
-      "ukuran": 57548521,
-      "sha256": "d30b83b60a0a8203aa3aa38d92ea9ebe71bab5ad1cee23c7f38305046ae76815"
+      "ukuran": 57549255,
+      "sha256": "01a5d5d8f0a84e629e2446c68003c50a210a68ad50473b3e782346d8c321a7a1"
     },
     "universal": {
-      "ukuran": 77813356,
-      "sha256": "424b9296ea271b3fc93117e16e87a394a5fdb08997a36d8ea3303f53196daf9a"
+      "ukuran": 77814096,
+      "sha256": "7a5044674c1750c2c11924391aef6da2deecd65849d1e73416530550bea80ead"
     }
   }
 }

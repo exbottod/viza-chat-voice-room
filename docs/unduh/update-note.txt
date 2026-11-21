@@ -1,3 +1,3 @@
-• Tanpa token dompet, game dibuka dari file:///android_asset/html5-game lebih dulu.
-• Dengan token, appassets lebih dulu, lalu file aset, VPS, dan internet.
-• Aturan ProGuard dari paket v4 disiapkan agar jembatan saldo tidak terhapus.
+• Berkas game diganti paket v5, termasuk perbaikan scatter dan putaran gratis.
+• Taruhan dan tampilan angka tetap memakai koin Viza, satu koin sama dengan satu unit.
+• Susunan berkas tidak berubah, jadi layar game dan alamat VPS tetap sama.

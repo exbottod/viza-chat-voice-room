@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.294",
   "catatan": "• fix(game): layar hitam Bikini Wild Rush diberi keterangan dan alamat cadangan",
-  "ukuran_apk": 57144243,
-  "sha256_apk": "2f35d111f38dbfffffa7d832e6d0df74a56f64c709976cefcd4652dea0541994",
+  "ukuran_apk": 57144246,
+  "sha256_apk": "4b032445cf31a8e170109b07df4d6b357a3bc53ac6892da0a149f634553905f8",
   "abis": {
     "arm64": {
-      "ukuran": 57144243,
-      "sha256": "2f35d111f38dbfffffa7d832e6d0df74a56f64c709976cefcd4652dea0541994"
+      "ukuran": 57144246,
+      "sha256": "4b032445cf31a8e170109b07df4d6b357a3bc53ac6892da0a149f634553905f8"
     },
     "armv7": {
-      "ukuran": 55295388,
-      "sha256": "f4d3a4f16a1bd0f56bc0a184e84e192858e055cd5164c2b838e19b8ebb22036f"
+      "ukuran": 55295382,
+      "sha256": "ad30f7f7424d23f96db53b42318f94a1446d030e4d52f16ecb90d9c8e40f108e"
     },
     "universal": {
-      "ukuran": 75560219,
-      "sha256": "51edb6896fdf70166cc6e83b35d4fb3253886aafc3f5102327dda7dbaecb7c77"
+      "ukuran": 75560211,
+      "sha256": "382500146363d44ce04f099012b7af2f0a3fb714b141b2e07524d80c57101105"
     }
   }
 }

@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.299",
-  "catatan": "• Berkas game diganti paket v4: index.html, game.js, polyfills.js, images, assets.\n• Layar boot dan kotak galat dari paket v4 tampil walau skrip game gagal.\n• Alamat VPS memakai /game/html5-game, cadangan di APK dan internet tetap ada.",
-  "ukuran_apk": 59397068,
-  "sha256_apk": "d564eac2d47b464147689ef19ecfa37bf33f133ccfc7f9384b93c178d3ac654f",
+  "versi": "1.0.300",
+  "catatan": "• Tanpa token dompet, game dibuka dari file:///android_asset/html5-game lebih dulu.\n• Dengan token, appassets lebih dulu, lalu file aset, VPS, dan internet.\n• Aturan ProGuard dari paket v4 disiapkan agar jembatan saldo tidak terhapus.",
+  "ukuran_apk": 59397371,
+  "sha256_apk": "72864418c315811d5e22be37206664b05c31e2a5720b47ec3999a15260a3f383",
   "abis": {
     "arm64": {
-      "ukuran": 59397068,
-      "sha256": "d564eac2d47b464147689ef19ecfa37bf33f133ccfc7f9384b93c178d3ac654f"
+      "ukuran": 59397371,
+      "sha256": "72864418c315811d5e22be37206664b05c31e2a5720b47ec3999a15260a3f383"
     },
     "armv7": {
-      "ukuran": 57548214,
-      "sha256": "7720c455552f8d0677b9fbb960cea0919db51f6f974605acfa7a49529eb6d572"
+      "ukuran": 57548521,
+      "sha256": "d30b83b60a0a8203aa3aa38d92ea9ebe71bab5ad1cee23c7f38305046ae76815"
     },
     "universal": {
-      "ukuran": 77813047,
-      "sha256": "dc3236ac2880fedc43cf51fb5a1446b7757ddb7bdd96583ce771a14243bc61a4"
+      "ukuran": 77813356,
+      "sha256": "424b9296ea271b3fc93117e16e87a394a5fdb08997a36d8ea3303f53196daf9a"
     }
   }
 }

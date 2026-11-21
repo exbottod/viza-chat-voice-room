@@ -296,9 +296,10 @@ private fun GameWebScreen(daftar: List<String>, onClose: () -> Unit) {
                             // Kalau halaman dimuat saat ukuran masih 0, muat ulang sekali
                             // supaya game membaca ukuran layar yang benar sejak awal.
                             if (mulaiTanpaUkuran) {
-                                v.postDelayed({
-                                    v.evaluateJavascript(skripUkuran, null)
-                                    v.reload()
+                                val wv = v as WebView
+                                wv.postDelayed({
+                                    wv.evaluateJavascript(skripUkuran, null)
+                                    wv.reload()
                                 }, 300)
                             }
                         }

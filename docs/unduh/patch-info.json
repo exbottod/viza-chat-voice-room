@@ -1,39 +1,12 @@
 {
   "patch": [
     {
-      "dari": "1.0.268",
-      "ke": "1.0.272",
-      "arm64": {
-        "file": "patch-1.0.268-1.0.272-arm64.bsdiff",
-        "ukuran": 4295473,
-        "sha256": "77fc33434b1e8cf86ae09b9928c5b166afc7dd38eca7feb28300368386d447ef"
-      }
-    },
-    {
-      "dari": "1.0.269",
-      "ke": "1.0.272",
-      "arm64": {
-        "file": "patch-1.0.269-1.0.272-arm64.bsdiff",
-        "ukuran": 4260269,
-        "sha256": "cb705d28d384d2368d6f0de560c0718ee310103ed5865b33d745c9909dc45394"
-      }
-    },
-    {
       "dari": "1.0.269",
       "ke": "1.0.273",
       "arm64": {
         "file": "patch-1.0.269-1.0.273-arm64.bsdiff",
         "ukuran": 4269826,
         "sha256": "d3561e28caf2e1c3ad8f160d24f0594bbb42c501cf58a947755e9d3525217a7c"
-      }
-    },
-    {
-      "dari": "1.0.270",
-      "ke": "1.0.272",
-      "arm64": {
-        "file": "patch-1.0.270-1.0.272-arm64.bsdiff",
-        "ukuran": 4234474,
-        "sha256": "735eba4f1050959f585d7f3472d06c87bb3097305bea9a6d2a5d63d25a358def"
       }
     },
     {
@@ -52,15 +25,6 @@
         "file": "patch-1.0.270-1.0.274-arm64.bsdiff",
         "ukuran": 4193081,
         "sha256": "fec02bf0f2b249bbe19f9cd8d24d32cf788fbdd613ea082d4661517cfec862b7"
-      }
-    },
-    {
-      "dari": "1.0.271",
-      "ke": "1.0.272",
-      "arm64": {
-        "file": "patch-1.0.271-1.0.272-arm64.bsdiff",
-        "ukuran": 4242579,
-        "sha256": "d5bc2a835648260f24c9ce61c01eaf2aa06de03913617b70a254693ff40aaa5e"
       }
     },
     {
@@ -1054,6 +1018,15 @@
       }
     },
     {
+      "dari": "1.0.303",
+      "ke": "1.0.307",
+      "arm64": {
+        "file": "patch-1.0.303-1.0.307-arm64.bsdiff",
+        "ukuran": 4300374,
+        "sha256": "c6b6b5113e7ac2a50fc359fa42409f91f4eb4cc412ec0904658a913e78fa053c"
+      }
+    },
+    {
       "dari": "1.0.304",
       "ke": "1.0.305",
       "arm64": {
@@ -1072,12 +1045,39 @@
       }
     },
     {
+      "dari": "1.0.304",
+      "ke": "1.0.307",
+      "arm64": {
+        "file": "patch-1.0.304-1.0.307-arm64.bsdiff",
+        "ukuran": 4292405,
+        "sha256": "e93f12a2fa43a7267fd5a5fbb7fd0ffacfdddf9e17a7451b90e8b305869921b2"
+      }
+    },
+    {
       "dari": "1.0.305",
       "ke": "1.0.306",
       "arm64": {
         "file": "patch-1.0.305-1.0.306-arm64.bsdiff",
         "ukuran": 4131892,
         "sha256": "19dd3649ba3dd47c4d90145a02ca2120f2f43947939fc924184a88c93342957a"
+      }
+    },
+    {
+      "dari": "1.0.305",
+      "ke": "1.0.307",
+      "arm64": {
+        "file": "patch-1.0.305-1.0.307-arm64.bsdiff",
+        "ukuran": 4283071,
+        "sha256": "ed1d0464aa843f2dfd8c23c27f017e899f74ebd4c1f78c843067ca79c61df04b"
+      }
+    },
+    {
+      "dari": "1.0.306",
+      "ke": "1.0.307",
+      "arm64": {
+        "file": "patch-1.0.306-1.0.307-arm64.bsdiff",
+        "ukuran": 4276672,
+        "sha256": "6cdd55251586e5a4114c21e4917f89c7c76be97fc4f4ed574250704a5335bd3f"
       }
     }
   ]

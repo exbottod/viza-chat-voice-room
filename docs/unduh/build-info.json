@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.306",
-  "catatan": "• 25.000 dan 1.000.000 tampil penuh dengan titik ribuan, bukan koma.\n• 999.999.999.999 masih tampil penuh.\n• 1T tampil 10.000M, 10T tampil 100.000M.\n• Ukuran huruf angka menang ikut menyesuaikan panjang angka baru.",
-  "ukuran_apk": 59400633,
-  "sha256_apk": "d49d616ed15997d4cc64a3831a614620576cd06a3348076097f70695be3b2a7a",
+  "versi": "1.0.307",
+  "catatan": "• Build gagal karena anotasi Compose salah tempat, sekarang dibetulkan.\n• Perilaku panel hadiah tidak berubah: tetap membuka gift terakhir yang dikirim.\n• Gift terakhir disimpan di HP, jadi tetap diingat walau aplikasi ditutup.\n• Tab Hadiah atau Cashback ikut terbuka sesuai gift yang terakhir dikirim.",
+  "ukuran_apk": 59401428,
+  "sha256_apk": "787ac8ec71578532635994f0ab220ebee29ffb77d66e05be9cab84467eb14acc",
   "abis": {
     "arm64": {
-      "ukuran": 59400633,
-      "sha256": "d49d616ed15997d4cc64a3831a614620576cd06a3348076097f70695be3b2a7a"
+      "ukuran": 59401428,
+      "sha256": "787ac8ec71578532635994f0ab220ebee29ffb77d66e05be9cab84467eb14acc"
     },
     "armv7": {
-      "ukuran": 57551770,
-      "sha256": "46fc293c602893da5c3d9637ae842da7f74c7a214886482b410486d0eb2a694a"
+      "ukuran": 57552568,
+      "sha256": "3ba1c47b6edc5c424b9c0f97daaa9a2342d817c28a340cfed930c2a880d60656"
     },
     "universal": {
-      "ukuran": 77816603,
-      "sha256": "82da8ae12a1c757e5e8afdffdb88076ae924edd7494807a22e1cc2e117e5b227"
+      "ukuran": 77817417,
+      "sha256": "e4f0b7f2914b8f3d99fea054471f70338b118a6ce9707afa54d8866da0a44823"
     }
   }
 }

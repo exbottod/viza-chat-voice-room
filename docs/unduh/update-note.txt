@@ -1,4 +1,4 @@
-• 25.000 dan 1.000.000 tampil penuh dengan titik ribuan, bukan koma.
-• 999.999.999.999 masih tampil penuh.
-• 1T tampil 10.000M, 10T tampil 100.000M.
-• Ukuran huruf angka menang ikut menyesuaikan panjang angka baru.
+• Build gagal karena anotasi Compose salah tempat, sekarang dibetulkan.
+• Perilaku panel hadiah tidak berubah: tetap membuka gift terakhir yang dikirim.
+• Gift terakhir disimpan di HP, jadi tetap diingat walau aplikasi ditutup.
+• Tab Hadiah atau Cashback ikut terbuka sesuai gift yang terakhir dikirim.

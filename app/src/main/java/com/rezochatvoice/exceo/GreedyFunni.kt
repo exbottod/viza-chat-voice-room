@@ -70,26 +70,31 @@ object BikiniRush {
      * tidak ada layar kosong.
      */
     suspend fun alamat(): String {
-        return try {
-            val idToken = com.google.firebase.auth.FirebaseAuth.getInstance()
-                .currentUser?.getIdToken(false)?.await()?.token
-            if (idToken.isNullOrBlank()) return GAME
-            val token = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                val c = java.net.URL("$DOMPET/token").openConnection() as java.net.HttpURLConnection
-                c.requestMethod = "POST"
-                c.connectTimeout = 8000
-                c.readTimeout = 8000
-                c.doOutput = true
-                c.setRequestProperty("Authorization", "Bearer $idToken")
-                c.setRequestProperty("Content-Type", "application/json")
-                c.outputStream.use { it.write("{}".toByteArray()) }
-                val isi = c.inputStream.bufferedReader().use { it.readText() }
-                org.json.JSONObject(isi).optString("token")
+        // Batas waktu total: apa pun yang macet (token Firebase atau jaringan),
+        // game tetap dibuka dengan koin mainan, jangan sampai layar hitam.
+        val hasil = kotlinx.coroutines.withTimeoutOrNull(6000L) {
+            try {
+                val idToken = com.google.firebase.auth.FirebaseAuth.getInstance()
+                    .currentUser?.getIdToken(false)?.await()?.token
+                if (idToken.isNullOrBlank()) return@withTimeoutOrNull null
+                val token = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    val c = java.net.URL("$DOMPET/token").openConnection() as java.net.HttpURLConnection
+                    c.requestMethod = "POST"
+                    c.connectTimeout = 4000
+                    c.readTimeout = 4000
+                    c.doOutput = true
+                    c.setRequestProperty("Authorization", "Bearer $idToken")
+                    c.setRequestProperty("Content-Type", "application/json")
+                    c.outputStream.use { it.write("{}".toByteArray()) }
+                    val isi = c.inputStream.bufferedReader().use { it.readText() }
+                    org.json.JSONObject(isi).optString("token")
+                }
+                if (token.isBlank()) null else "$GAME?api=$DOMPET/api&token=$token"
+            } catch (e: Exception) {
+                null
             }
-            if (token.isBlank()) GAME else "$GAME?api=$DOMPET/api&token=$token"
-        } catch (e: Exception) {
-            GAME
         }
+        return hasil ?: GAME
     }
 }
 

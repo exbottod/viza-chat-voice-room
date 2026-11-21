@@ -111,7 +111,14 @@ object BikiniRush {
         // Urutan percobaan: berkas di APK, berkas APK tanpa appassets, lalu internet.
         val kueri = hasil?.substringAfter("?", "") ?: ""
         val akhiran = if (kueri.isBlank()) "" else "?$kueri"
-        return listOf("$GAME_VPS$akhiran", "$GAME$akhiran", "$GAME_FILE$akhiran", "$GAME_CADANGAN$akhiran")
+        // Tanpa token dompet, berkas APK langsung (file://) dicoba lebih dulu karena
+        // paling sederhana. Dengan token, appassets didahulukan supaya alamat game
+        // punya asal https dan panggilan dompet tidak ditolak WebView.
+        return if (kueri.isBlank()) {
+            listOf("$GAME_FILE$akhiran", "$GAME$akhiran", "$GAME_VPS$akhiran", "$GAME_CADANGAN$akhiran")
+        } else {
+            listOf("$GAME$akhiran", "$GAME_FILE$akhiran", "$GAME_VPS$akhiran", "$GAME_CADANGAN$akhiran")
+        }
     }
 }
 

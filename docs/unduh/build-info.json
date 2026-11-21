@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.305",
-  "catatan": "• Dialog pengaturan, menu, dan kotak putaran gratis tidak lagi terpotong di bawah.\n• Lebar dialog dibatasi 92 persen layar dengan tinggi paling besar seisi layar.\n• Baris diagnosa di sudut kini menampilkan keadaan dompet: sesi kosong, kode token, atau saldo koin Vi\n• Saldo dompet diperiksa sekali saat meja dibuka supaya sambungan koin Viza langsung ketahuan.",
-  "ukuran_apk": 59400609,
-  "sha256_apk": "f77fbd481fe4448bfec519d82f7221f9b4e9679fd6b9fc5526617a0de4901bee",
+  "versi": "1.0.306",
+  "catatan": "• 25.000 dan 1.000.000 tampil penuh dengan titik ribuan, bukan koma.\n• 999.999.999.999 masih tampil penuh.\n• 1T tampil 10.000M, 10T tampil 100.000M.\n• Ukuran huruf angka menang ikut menyesuaikan panjang angka baru.",
+  "ukuran_apk": 59400633,
+  "sha256_apk": "d49d616ed15997d4cc64a3831a614620576cd06a3348076097f70695be3b2a7a",
   "abis": {
     "arm64": {
-      "ukuran": 59400609,
-      "sha256": "f77fbd481fe4448bfec519d82f7221f9b4e9679fd6b9fc5526617a0de4901bee"
+      "ukuran": 59400633,
+      "sha256": "d49d616ed15997d4cc64a3831a614620576cd06a3348076097f70695be3b2a7a"
     },
     "armv7": {
-      "ukuran": 57551744,
-      "sha256": "1d28794b73fe7619545b00929a828b1d4c384c101a2cf2bfafc0bcc7c36cfd10"
+      "ukuran": 57551770,
+      "sha256": "46fc293c602893da5c3d9637ae842da7f74c7a214886482b410486d0eb2a694a"
     },
     "universal": {
-      "ukuran": 77816585,
-      "sha256": "666396ee435ba120476d5842e4e9b066325efb719e05c5533aedbc8275e48fcd"
+      "ukuran": 77816603,
+      "sha256": "82da8ae12a1c757e5e8afdffdb88076ae924edd7494807a22e1cc2e117e5b227"
     }
   }
 }

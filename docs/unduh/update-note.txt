@@ -1,4 +1,4 @@
-• Dialog pengaturan, menu, dan kotak putaran gratis tidak lagi terpotong di bawah.
-• Lebar dialog dibatasi 92 persen layar dengan tinggi paling besar seisi layar.
-• Baris diagnosa di sudut kini menampilkan keadaan dompet: sesi kosong, kode token, atau saldo koin Vi
-• Saldo dompet diperiksa sekali saat meja dibuka supaya sambungan koin Viza langsung ketahuan.
+• 25.000 dan 1.000.000 tampil penuh dengan titik ribuan, bukan koma.
+• 999.999.999.999 masih tampil penuh.
+• 1T tampil 10.000M, 10T tampil 100.000M.
+• Ukuran huruf angka menang ikut menyesuaikan panjang angka baru.

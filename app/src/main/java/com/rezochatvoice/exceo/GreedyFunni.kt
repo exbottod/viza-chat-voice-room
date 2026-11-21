@@ -55,7 +55,17 @@ private const val skripUkuran = """(function(){
   try{
     var s=document.createElement('style');
     s.textContent='html,body{width:100%;height:100%;margin:0;overflow:hidden}'+
-      '#app{position:fixed;left:0;top:0;right:0;bottom:0;width:100%;height:100%}';
+      '#app{position:fixed;left:0;top:0;right:0;bottom:0;width:100%;height:100%}'+
+      // Dialog pengaturan/menu dibuat selalu muat di layar. Di WebView, satuan vh
+      // bisa lebih besar dari layar yang terlihat sehingga kotaknya terpotong.
+      '.gd-backdrop,.prize-backdrop{position:fixed!important;top:0!important;left:0!important;'+
+      'right:0!important;bottom:0!important;display:flex!important;align-items:center!important;'+
+      'justify-content:center!important;padding:8px!important;box-sizing:border-box!important;'+
+      'overflow:auto!important;z-index:99999!important}'+
+      '.gd-box{width:92%!important;max-width:460px!important;max-height:100%!important;'+
+      'margin:0!important;box-sizing:border-box!important;overflow:auto!important}'+
+      '.gd-scroll{max-height:none!important;overflow:visible!important}'+
+      '.fs-card{max-height:100%!important;overflow:auto!important}';
     document.head.appendChild(s);
   }catch(e){}
   fix();
@@ -115,6 +125,28 @@ object BikiniRush {
      * Kalau server diam, game tetap dibuka dengan koin mainan lokal supaya
      * tidak ada layar kosong.
      */
+    /** Keadaan dompet terakhir, ditampilkan di sudut layar untuk diagnosa. */
+    @Volatile
+    var statusDompet = "dompet: belum dicoba"
+
+    /** Panggil dompet dan kembalikan "kode badan". */
+    private fun panggilDompet(alamat: String, metode: String, bearer: String, isi: String?): String {
+        val c = java.net.URL(alamat).openConnection() as java.net.HttpURLConnection
+        c.requestMethod = metode
+        c.connectTimeout = 5000
+        c.readTimeout = 5000
+        c.setRequestProperty("Authorization", "Bearer $bearer")
+        if (isi != null) {
+            c.doOutput = true
+            c.setRequestProperty("Content-Type", "application/json")
+            c.outputStream.use { it.write(isi.toByteArray()) }
+        }
+        val kode = c.responseCode
+        val badan = (if (kode in 200..299) c.inputStream else c.errorStream)
+            ?.bufferedReader()?.use { it.readText() } ?: ""
+        return "$kode $badan"
+    }
+
     suspend fun alamat(): List<String> {
         // Batas waktu total: apa pun yang macet (token Firebase atau jaringan),
         // game tetap dibuka dengan koin mainan, jangan sampai layar hitam.
@@ -122,21 +154,32 @@ object BikiniRush {
             try {
                 val idToken = com.google.firebase.auth.FirebaseAuth.getInstance()
                     .currentUser?.getIdToken(false)?.await()?.token
-                if (idToken.isNullOrBlank()) return@withTimeoutOrNull null
-                val token = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    val c = java.net.URL("$DOMPET/token").openConnection() as java.net.HttpURLConnection
-                    c.requestMethod = "POST"
-                    c.connectTimeout = 4000
-                    c.readTimeout = 4000
-                    c.doOutput = true
-                    c.setRequestProperty("Authorization", "Bearer $idToken")
-                    c.setRequestProperty("Content-Type", "application/json")
-                    c.outputStream.use { it.write("{}".toByteArray()) }
-                    val isi = c.inputStream.bufferedReader().use { it.readText() }
-                    org.json.JSONObject(isi).optString("token")
+                if (idToken.isNullOrBlank()) {
+                    statusDompet = "dompet: sesi Viza kosong"
+                    return@withTimeoutOrNull null
                 }
-                if (token.isBlank()) null else "$GAME?api=$DOMPET/api&token=$token"
+                val jawabToken = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    panggilDompet("$DOMPET/token", "POST", idToken, "{}")
+                }
+                val token = if (jawabToken.startsWith("2")) {
+                    org.json.JSONObject(jawabToken.substringAfter(' ', "{}")).optString("token")
+                } else ""
+                if (token.isBlank()) {
+                    statusDompet = "dompet: token " + jawabToken.take(60)
+                    null
+                } else {
+                    val saldo = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        panggilDompet("$DOMPET/api/balance", "GET", token, null)
+                    }
+                    statusDompet = if (saldo.startsWith("2")) {
+                        "dompet: saldo " + org.json.JSONObject(saldo.substringAfter(' ', "{}")).optInt("balance", -1)
+                    } else {
+                        "dompet: saldo " + saldo.take(50)
+                    }
+                    "$GAME?api=$DOMPET/api&token=$token"
+                }
             } catch (e: Exception) {
+                statusDompet = "dompet: galat " + (e.message ?: "?").take(50)
                 null
             }
         }
@@ -168,20 +211,20 @@ fun BikiniRushScreen(onClose: () -> Unit) {
             Text("Menyiapkan meja...", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
         }
     } else {
-        GameWebScreen(daftar, onClose)
+        GameWebScreen(daftar, onClose, BikiniRush.statusDompet)
     }
 }
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-private fun GameWebScreen(daftar: List<String>, onClose: () -> Unit) {
+private fun GameWebScreen(daftar: List<String>, onClose: () -> Unit, awal: String = "mulai") {
     var web by remember { mutableStateOf<WebView?>(null) }
     var prog by remember { mutableStateOf(0) }
     var galat by remember { mutableStateOf("") }
     var ulang by remember { mutableStateOf(0) }
     // Tahap ditampilkan terus di sudut, supaya kalau layar kosong tetap ketahuan
     // alamat mana yang dipakai dan sampai mana prosesnya.
-    var tahap by remember { mutableStateOf("mulai") }
+    var tahap by remember { mutableStateOf(awal) }
     var ke by remember { mutableStateOf(0) }
 
     BackHandler {

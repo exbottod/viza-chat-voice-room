@@ -1,5 +1,6 @@
 package com.rezochatvoice.exceo
 
+import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.*
@@ -1365,6 +1366,39 @@ private fun GiftCell(g: Gift, selected: Boolean, modifier: Modifier, onClick: ()
 
 /** Panel hadiah di dalam room: kirim ke semua user di mic (All) atau pilih user tertentu. */
 @Composable
+/**
+ * Ingatan gift terakhir yang dikirim di panel Hadiah. Dipakai supaya saat panel
+ * dibuka lagi, daftar langsung berada di item gift yang terakhir dikirim,
+ * baik gift biasa maupun gift cashback.
+ */
+object GiftPanelMemory {
+    private const val NAMA = "gift_panel"
+    private const val KUNCI_TAB = "tab_terakhir"
+    private const val KUNCI_ID = "gift_terakhir"
+
+    /** Kembalikan tab terakhir dan id gift terakhir. */
+    fun baca(context: Context): Pair<Int, String> {
+        return try {
+            val p = context.getSharedPreferences(NAMA, Context.MODE_PRIVATE)
+            p.getInt(KUNCI_TAB, 0).coerceIn(0, 2) to (p.getString(KUNCI_ID, "") ?: "")
+        } catch (e: Exception) {
+            0 to ""
+        }
+    }
+
+    /** Simpan tab dan gift yang baru saja dikirim. */
+    fun simpan(context: Context, tab: Int, id: String) {
+        if (id.isBlank()) return
+        try {
+            context.getSharedPreferences(NAMA, Context.MODE_PRIVATE).edit()
+                .putInt(KUNCI_TAB, tab.coerceIn(0, 2))
+                .putString(KUNCI_ID, id)
+                .apply()
+        } catch (e: Exception) {
+        }
+    }
+}
+
 fun GiftPanel(
     roomId: String,
     myUid: String,
@@ -1378,7 +1412,10 @@ fun GiftPanel(
     val scope = rememberCoroutineScope()
     val actions = LocalActions.current
     var wallet by remember { mutableStateOf(Wallet()) }
-    var tab by remember { mutableStateOf(0) }
+    val ingatan = remember { GiftPanelMemory.baca(context) }
+    var tab by remember { mutableStateOf(ingatan.first) }
+    // Id gift yang harus dibuka lagi (dikosongkan setelah dipakai sekali).
+    var idIngat by remember { mutableStateOf(ingatan.second) }
     // Jaring pengaman: pastikan katalog gift sudah dimuat saat panel dibuka.
     LaunchedEffect(Unit) { GiftCatalog.start() }
     val gifts = GiftCatalog.list
@@ -1390,7 +1427,9 @@ fun GiftPanel(
     // Jaga selected tetap valid saat daftar gift berubah / masih kosong.
     LaunchedEffect(gifts, tab) {
         val now = if (tab == 2) cbGifts else normalGifts
-        if (now.none { it.id == selected }) selected = now.firstOrNull()?.id ?: ""
+        val idTarget = idIngat.takeIf { id -> now.any { it.id == id } }
+        if (idTarget != null) selected = idTarget
+        else if (now.none { it.id == selected }) selected = now.firstOrNull()?.id ?: ""
     }
     var count by remember { mutableStateOf(1) }
     var countMenu by remember { mutableStateOf(false) }
@@ -1406,6 +1445,15 @@ fun GiftPanel(
     val shown = if (tab == 2) cbGifts else normalGifts
     val pages = remember(shown) { shown.chunked(8) }
     val pager = rememberPagerState(pageCount = { pages.size })
+    // Panel dibuka lagi: langsung ke halaman yang memuat gift terakhir dikirim.
+    LaunchedEffect(pages, selected) {
+        if (idIngat.isBlank() || pages.isEmpty()) return@LaunchedEffect
+        val idx = pages.indexOfFirst { p -> p.any { it.id == idIngat } }
+        if (idx >= 0) {
+            if (pager.currentPage != idx) pager.scrollToPage(idx)
+            idIngat = ""
+        }
+    }
     val teal = Color(0xFF2BD9C4)
 
     DisposableEffect(myUid) {
@@ -1667,6 +1715,9 @@ fun GiftPanel(
                                         sending = false
                                         return@launch
                                     }
+                                    // Ingat gift ini supaya panel langsung membuka item yang
+                                    // sama saat dibuka lagi, termasuk untuk gift cashback.
+                                    GiftPanelMemory.simpan(context, tab, g.id)
                                     // FIX: toast sukses tampil LANGSUNG setelah dompet terpotong,
                                     // jangan menunggu ranking/pesan/fx yang bisa lambat atau gagal.
                                     // Angka diamond diambil dari server (dm). Gift cashback

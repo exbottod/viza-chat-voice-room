@@ -5072,6 +5072,61 @@ function bwBoard(acak, gratis) {
   });
 }
 
+/** Jenis isi berkas game, supaya browser tidak menebak-nebak. */
+const JENIS_BERKAS = {
+  html: "text/html; charset=utf-8",
+  js: "text/javascript; charset=utf-8",
+  css: "text/css; charset=utf-8",
+  json: "application/json; charset=utf-8",
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  webp: "image/webp",
+  svg: "image/svg+xml",
+  ico: "image/x-icon",
+  woff: "font/woff",
+  woff2: "font/woff2",
+  ttf: "font/ttf",
+  mp3: "audio/mpeg",
+  ogg: "audio/ogg",
+  m4a: "audio/mp4",
+  txt: "text/plain; charset=utf-8",
+};
+
+/**
+ * Jalur /game/... menyajikan berkas game Bikini Wild Rush dari folder GAME_DIR
+ * di VPS. Dengan begitu pembaruan game cukup mengganti berkas di VPS, tanpa
+ * membangun APK baru.
+ */
+async function sajikanGame(req, env) {
+  const akar = String(env?.GAME_DIR || "").trim();
+  if (!akar) return null;
+  const url = new URL(req.url);
+  let rel = decodeURIComponent(url.pathname.replace(/^\/game\/?/i, ""));
+  if (!rel || rel.endsWith("/")) rel += "index.html";
+  if (rel.includes("..") || rel.includes("\\")) return new Response("Jalur tidak sah", { status: 400 });
+  try {
+    const fs = await import("node:fs/promises");
+    const path = await import("node:path");
+    const penuh = path.join(akar, rel);
+    if (!path.resolve(penuh).startsWith(path.resolve(akar))) {
+      return new Response("Jalur tidak sah", { status: 400 });
+    }
+    const isi = await fs.readFile(penuh);
+    const ext = (rel.split(".").pop() || "").toLowerCase();
+    return new Response(isi, {
+      status: 200,
+      headers: {
+        "content-type": JENIS_BERKAS[ext] || "application/octet-stream",
+        "cache-control": "public, max-age=120",
+        "access-control-allow-origin": "*",
+      },
+    });
+  } catch (e) {
+    return new Response("Tidak ditemukan", { status: 404 });
+  }
+}
+
 /** Jalur: /bikini/... */
 async function bikiniPlay(req, env, h) {
   const { pipe, json, T, I, uidDariToken } = h;
@@ -6777,6 +6832,12 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
     if (url.pathname === "/unduh" || url.pathname.toLowerCase().startsWith("/unduh/")) {
       const jawab = await unduhApk(url.pathname, env);
       if (jawab) return jawab;
+    }
+
+    // Berkas game Bikini Wild Rush dari folder VPS (kalau GAME_DIR diisi).
+    if (url.pathname.toLowerCase().startsWith("/game/")) {
+      const berkas = await sajikanGame(req, env);
+      if (berkas) return berkas;
     }
 
     // Game slot (Zeus Treasures) memakai saldo dompet yang sama.

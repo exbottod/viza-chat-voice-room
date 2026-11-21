@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.307",
+  "versi": "1.0.308",
   "catatan": "• Build gagal karena anotasi Compose salah tempat, sekarang dibetulkan.\n• Perilaku panel hadiah tidak berubah: tetap membuka gift terakhir yang dikirim.\n• Gift terakhir disimpan di HP, jadi tetap diingat walau aplikasi ditutup.\n• Tab Hadiah atau Cashback ikut terbuka sesuai gift yang terakhir dikirim.",
-  "ukuran_apk": 59401428,
-  "sha256_apk": "787ac8ec71578532635994f0ab220ebee29ffb77d66e05be9cab84467eb14acc",
+  "ukuran_apk": 59401442,
+  "sha256_apk": "3064614f6b8a5fc21ac7c62a996f38f6b2685bfc6020661bd18f2608ed755c51",
   "abis": {
     "arm64": {
-      "ukuran": 59401428,
-      "sha256": "787ac8ec71578532635994f0ab220ebee29ffb77d66e05be9cab84467eb14acc"
+      "ukuran": 59401442,
+      "sha256": "3064614f6b8a5fc21ac7c62a996f38f6b2685bfc6020661bd18f2608ed755c51"
     },
     "armv7": {
-      "ukuran": 57552568,
-      "sha256": "3ba1c47b6edc5c424b9c0f97daaa9a2342d817c28a340cfed930c2a880d60656"
+      "ukuran": 57552576,
+      "sha256": "9a4654b6e1c1a1c84f42f0d9c2747306796a9618f2ddc5faedb18e69628af363"
     },
     "universal": {
-      "ukuran": 77817417,
-      "sha256": "e4f0b7f2914b8f3d99fea054471f70338b118a6ce9707afa54d8866da0a44823"
+      "ukuran": 77817413,
+      "sha256": "01ba0ae1b8b195f679312dea65fbc85396471a50b0a797fe8de000c52a01646c"
     }
   }
 }

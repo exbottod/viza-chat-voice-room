@@ -58,11 +58,15 @@ object GreedyFunni {
 object BikiniRush {
     const val NAMA = "Bikini Wild Rush"
 
-    /** Berkas game milik Viza sendiri, ikut repo di docs/game/bikini. */
-    const val GAME = "https://exbottod.github.io/viza-chat-voice-room/game/bikini/index.html"
+    /**
+     * Berkas game ikut di dalam APK (assets/bikini) dan dibaca lewat appassets,
+     * jadi tidak bergantung internet dan tidak ada halaman kosong karena host
+     * luar tidak terjangkau.
+     */
+    const val GAME = "https://appassets.androidplatform.net/assets/bikini/index.html"
 
-    /** Alamat kedua kalau GitHub Pages tidak terjangkau dari jaringan pemain. */
-    const val GAME_CADANGAN = "https://raw.githack.com/exbottod/viza-chat-voice-room/main/docs/game/bikini/index.html"
+    /** Alamat kedua kalau aset di APK tidak terbaca. */
+    const val GAME_CADANGAN = "https://exbottod.github.io/viza-chat-voice-room/game/bikini/index.html"
 
     /** Dompet Viza di VPS: saldo dan hasil putaran ditentukan server ini. */
     const val DOMPET = "https://viza.43-156-99-4.sslip.io/bikini"
@@ -147,6 +151,9 @@ private fun GameWebScreen(url: String, cadangan: String?, onClose: () -> Unit) {
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
                 factory = { c ->
+                    val pemuatAset = androidx.webkit.WebViewAssetLoader.Builder()
+                        .addPathHandler("/assets/", androidx.webkit.WebViewAssetLoader.AssetsPathHandler(c))
+                        .build()
                     WebView(c).apply {
                         setBackgroundColor(android.graphics.Color.BLACK)
                         WebView.setWebContentsDebuggingEnabled(true)
@@ -166,12 +173,36 @@ private fun GameWebScreen(url: String, cadangan: String?, onClose: () -> Unit) {
                             cacheMode = WebSettings.LOAD_DEFAULT
                         }
                         webViewClient = object : WebViewClient() {
+                            // Berkas game di dalam APK dibaca lewat appassets.
+                            override fun shouldInterceptRequest(
+                                view: WebView,
+                                request: android.webkit.WebResourceRequest,
+                            ): android.webkit.WebResourceResponse? = try {
+                                pemuatAset.shouldInterceptRequest(request.url)
+                            } catch (e: Exception) {
+                                null
+                            }
+
                             override fun onPageStarted(view: WebView?, alamat: String?, favicon: Bitmap?) {
                                 prog = 0
                             }
 
                             override fun onPageFinished(view: WebView?, alamat: String?) {
                                 prog = 100
+                                // Kalau halaman ternyata kosong, sebutkan supaya tidak
+                                // berakhir sebagai layar hitam tanpa keterangan.
+                                view?.postDelayed({
+                                    view.evaluateJavascript(
+                                        "(function(){var a=document.getElementById('app');" +
+                                            "return (a?a.innerHTML.length:-1)+'|'+(document.body?document.body.innerText.length:-1);})()",
+                                    ) { hasil ->
+                                        val angka = (hasil ?: "").replace("\"", "").split("|")
+                                        val isiApp = angka.getOrNull(0)?.toIntOrNull() ?: -1
+                                        if (isiApp == 0 && galat.isBlank()) {
+                                            galat = "Halaman game kosong. Coba lagi atau laporkan ke pengembang."
+                                        }
+                                    }
+                                }, 2500)
                             }
 
                             override fun onReceivedError(

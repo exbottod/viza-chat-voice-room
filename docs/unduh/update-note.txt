@@ -1,4 +1,4 @@
-• Induk game diberi ukuran penuh layar setelah halaman selesai dimuat.
-• Hitung ulang ukuran dipicu beberapa kali agar game tampil di WebView lama.
-• Mode overview WebView dimatikan karena membuat ukuran halaman tidak menentu.
-• Tulisan kecil di sudut kini menampilkan ukuran game untuk memastikan hasilnya.
+• Ukuran meja dipaksa dalam piksel layar penuh, tidak lagi bergantung satuan layar.
+• Batas ukuran lama dibuang supaya meja tidak mengecil jadi nol.
+• Halaman dimuat ulang sekali bila game dimuat saat ukuran layar belum terbaca.
+• Tulisan diagnosa kini menampilkan ukuran meja dan batas ukurannya.

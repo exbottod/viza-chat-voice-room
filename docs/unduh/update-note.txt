@@ -1,3 +1,3 @@
-• Berkas Bikini Wild Rush ikut di dalam APK, jadi game terbuka tanpa internet.
-• Halaman game yang kosong kini memberi keterangan, bukan layar hitam.
-• Alamat internet tetap jadi cadangan bila aset di APK tidak terbaca.
+• Game dicoba dari tiga sumber berurutan: appassets, file aset APK, lalu internet.
+• Tahap pemuatan ditampilkan kecil di sudut layar, termasuk jumlah isi halaman.
+• Tombol Coba lagi mengulang dari sumber pertama.

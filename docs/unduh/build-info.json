@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.296",
-  "catatan": "• Berkas Bikini Wild Rush ikut di dalam APK, jadi game terbuka tanpa internet.\n• Halaman game yang kosong kini memberi keterangan, bukan layar hitam.\n• Alamat internet tetap jadi cadangan bila aset di APK tidak terbaca.",
-  "ukuran_apk": 59304782,
-  "sha256_apk": "3214053c715d89dc1d63b53244da2db5e8bbda02780bc145980bb0b082428ea2",
+  "versi": "1.0.297",
+  "catatan": "• Game dicoba dari tiga sumber berurutan: appassets, file aset APK, lalu internet.\n• Tahap pemuatan ditampilkan kecil di sudut layar, termasuk jumlah isi halaman.\n• Tombol Coba lagi mengulang dari sumber pertama.",
+  "ukuran_apk": 59305827,
+  "sha256_apk": "9160f5a871a4a0e76f7229b5e89a0f9c386b039c363f894de8fbfd8f6df1a083",
   "abis": {
     "arm64": {
-      "ukuran": 59304782,
-      "sha256": "3214053c715d89dc1d63b53244da2db5e8bbda02780bc145980bb0b082428ea2"
+      "ukuran": 59305827,
+      "sha256": "9160f5a871a4a0e76f7229b5e89a0f9c386b039c363f894de8fbfd8f6df1a083"
     },
     "armv7": {
-      "ukuran": 57455929,
-      "sha256": "0e550913a850d691f428fe8b7cfffc840e02252da0e61b20472b16dfd004067d"
+      "ukuran": 57456970,
+      "sha256": "25b984eeae94397760578db5e79133ec1ed45de7fcb1f5b4ff58bdf898bb4a34"
     },
     "universal": {
-      "ukuran": 77720774,
-      "sha256": "ce1dc6e6a1de576c54d49e9023922dca0d9da442b836f2c28bef04349ba7934d"
+      "ukuran": 77721817,
+      "sha256": "e54255483f7bb4230af8ab45eda9a2b245b567c3703a2d59ad81a856c63f6bfb"
     }
   }
 }

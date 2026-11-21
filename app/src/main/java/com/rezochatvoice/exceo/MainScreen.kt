@@ -44,6 +44,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
@@ -666,8 +667,11 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
                     // tidak menutupi layar dan tidak menghalangi sentuhan ke tab di bawahnya.
                     // (Dulu hanya dibuat transparan lalu memblokir semua sentuhan, jadi
                     // halaman Party terlihat tetapi tidak bisa disentuh.)
+                    // clipToBounds: tanpa ini frame/efek yang digambar anak room tetap
+                    // tampak menempel di pojok kiri atas walau induknya 0 piksel.
                     Box(
-                        if (minimized) Modifier.size(0.dp) else Modifier.fillMaxSize(),
+                        (if (minimized) Modifier.size(0.dp) else Modifier.fillMaxSize())
+                            .clipToBounds(),
                     ) {
                         androidx.compose.runtime.CompositionLocalProvider(LocalRoomMinimized provides minimized) {
                             RoomScreen(

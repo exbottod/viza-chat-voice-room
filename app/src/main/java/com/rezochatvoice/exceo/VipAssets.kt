@@ -399,11 +399,15 @@ internal fun isiTersimpan(a: VipAsset): UkuranIsi? = cacheIsi[kunciRasio(a)]
 
 internal suspend fun measureIsi(ctx: android.content.Context, a: VipAsset): UkuranIsi? {
     cacheIsi[kunciRasio(a)]?.let { return it }
+    if (kunciRasio(a) in tanpaPangkas) return null
     val bmp = muatBitmap(ctx, a) ?: return null
     val hasil = runCatching { hitungIsi(bmp) }.getOrNull()
-    if (hasil != null) cacheIsi[kunciRasio(a)] = hasil
+    if (hasil != null) cacheIsi[kunciRasio(a)] = hasil else tanpaPangkas.add(kunciRasio(a))
     return hasil
 }
+
+/** Lencana yang sudah rapat: tidak dipangkas, jangan diukur ulang. */
+private val tanpaPangkas: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
 
 private suspend fun muatBitmap(ctx: android.content.Context, a: VipAsset): Bitmap? {
     if (a.url.isNotBlank()) {
@@ -453,7 +457,13 @@ private fun hitungIsi(bmp: Bitmap): UkuranIsi? {
     val cw = (x1 - x0 + 1).toFloat()
     val ch = (y1 - y0 + 1).toFloat()
     if (ch < 1f) return null
-    return UkuranIsi(cw / ch, (h / ch).coerceIn(1f, 4f))
+    // Hanya pangkas kalau ruang kosongnya memang besar (isi kurang dari 70% tinggi
+    // kanvas), seperti GIF yang diekspor di kanvas persegi. Lencana PNG yang sudah
+    // rapat tidak disentuh: ukurannya sama seperti sebelum perbaikan GIF.
+    val tinggiKanvas = bh.toFloat()
+    val lebarKanvas = bw.toFloat()
+    if (ch >= tinggiKanvas * 0.70f && cw >= lebarKanvas * 0.70f) return null
+    return UkuranIsi(cw / ch, (tinggiKanvas / ch).coerceIn(1f, 2.5f))
 }
 
 internal suspend fun measureAssetRatio(ctx: android.content.Context, a: VipAsset): Float? {

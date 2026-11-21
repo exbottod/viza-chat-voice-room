@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.299",
   "catatan": "• Berkas game diganti paket v4: index.html, game.js, polyfills.js, images, assets.\n• Layar boot dan kotak galat dari paket v4 tampil walau skrip game gagal.\n• Alamat VPS memakai /game/html5-game, cadangan di APK dan internet tetap ada.",
-  "ukuran_apk": 61468607,
-  "sha256_apk": "9ab2ecc5db04095a7079aef870bcd02877ed5d4e4aa6ac6cfb359aaeaf5d9876",
+  "ukuran_apk": 59397068,
+  "sha256_apk": "d564eac2d47b464147689ef19ecfa37bf33f133ccfc7f9384b93c178d3ac654f",
   "abis": {
     "arm64": {
-      "ukuran": 61468607,
-      "sha256": "9ab2ecc5db04095a7079aef870bcd02877ed5d4e4aa6ac6cfb359aaeaf5d9876"
+      "ukuran": 59397068,
+      "sha256": "d564eac2d47b464147689ef19ecfa37bf33f133ccfc7f9384b93c178d3ac654f"
     },
     "armv7": {
-      "ukuran": 59619751,
-      "sha256": "0dfdd6643aa2fe6da50638a24e4473a45b33bd874ef03b193968b65023987e41"
+      "ukuran": 57548214,
+      "sha256": "7720c455552f8d0677b9fbb960cea0919db51f6f974605acfa7a49529eb6d572"
     },
     "universal": {
-      "ukuran": 79884588,
-      "sha256": "15b4cfbd3951861922bb59d3d4db4a8c8698118c139dc2723d86dc28a770875e"
+      "ukuran": 77813047,
+      "sha256": "dc3236ac2880fedc43cf51fb5a1446b7757ddb7bdd96583ce771a14243bc61a4"
     }
   }
 }

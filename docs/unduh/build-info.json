@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.291",
-  "catatan": "Room terasa lebih ringan:\n• Avatar kursi tidak lagi didekode di thread utama, jadi pindah kursi tidak tersendat.\n• Lencana dan medal tidak diunduh ulang setiap kali tampil.\n• Profil orang yang duduk dimuat sekali saja.\n• Judul dialog pembaruan kini berbahasa Indonesia.",
-  "ukuran_apk": 57079233,
-  "sha256_apk": "ec943ca33d00d7f3ece249e98f333a0a23c220b2f07fb5a65d3621a145b33119",
+  "versi": "1.0.292",
+  "catatan": "• fix(game): ikon Bikini Wild Rush dari gambar zip, layar tidak macet\n• fix(update): kata-kata dialog update mengikuti rilis yang sedang diunduh",
+  "ukuran_apk": 57141981,
+  "sha256_apk": "97c92d25c9a970877ccc1a665b4dff8d64d61c9dce6370f74dc6f1171b05b2e3",
   "abis": {
     "arm64": {
-      "ukuran": 57079233,
-      "sha256": "ec943ca33d00d7f3ece249e98f333a0a23c220b2f07fb5a65d3621a145b33119"
+      "ukuran": 57141981,
+      "sha256": "97c92d25c9a970877ccc1a665b4dff8d64d61c9dce6370f74dc6f1171b05b2e3"
     },
     "armv7": {
-      "ukuran": 55230379,
-      "sha256": "c33ba9077200887631c8a53dd6407e0dccd607a4ca15bffc674f308ef4eb4d32"
+      "ukuran": 55293120,
+      "sha256": "e8199975a293030128b3dc3ec78fb420725634d55febec22dc175f8574af8683"
     },
     "universal": {
-      "ukuran": 75495218,
-      "sha256": "d89dce617fea540c60fad41155350d1dde549fff37c1df23aa6be35be9d945e4"
+      "ukuran": 75557957,
+      "sha256": "470b69124cffc4b431b4bc3ee6d89551661b5337802de07310f64b2e4e23f050"
     }
   }
 }

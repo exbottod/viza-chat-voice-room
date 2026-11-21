@@ -64,13 +64,13 @@ object BikiniRush {
      * luar tidak terjangkau.
      */
     /** Disajikan dari VPS sendiri, satu domain dengan dompet, jadi tanpa CORS. */
-    const val GAME_VPS = "https://viza.43-156-99-4.sslip.io/game/bikini/index.html"
+    const val GAME_VPS = "https://viza.43-156-99-4.sslip.io/game/html5-game/index.html"
 
     /** Cadangan: berkas yang ikut di dalam APK. */
-    const val GAME = "https://appassets.androidplatform.net/assets/bikini/index.html"
+    const val GAME = "https://appassets.androidplatform.net/assets/html5-game/index.html"
 
     /** Berkas yang sama dibaca langsung dari folder aset, tanpa lapisan appassets. */
-    const val GAME_FILE = "file:///android_asset/bikini/index.html"
+    const val GAME_FILE = "file:///android_asset/html5-game/index.html"
 
     /** Alamat internet, cadangan terakhir kalau aset di APK bermasalah. */
     const val GAME_CADANGAN = "https://exbottod.github.io/viza-chat-voice-room/game/bikini/index.html"

@@ -1364,8 +1364,6 @@ private fun GiftCell(g: Gift, selected: Boolean, modifier: Modifier, onClick: ()
     }
 }
 
-/** Panel hadiah di dalam room: kirim ke semua user di mic (All) atau pilih user tertentu. */
-@Composable
 /**
  * Ingatan gift terakhir yang dikirim di panel Hadiah. Dipakai supaya saat panel
  * dibuka lagi, daftar langsung berada di item gift yang terakhir dikirim,
@@ -1399,6 +1397,8 @@ object GiftPanelMemory {
     }
 }
 
+/** Panel hadiah di dalam room: kirim ke semua user di mic (All) atau pilih user tertentu. */
+@Composable
 fun GiftPanel(
     roomId: String,
     myUid: String,

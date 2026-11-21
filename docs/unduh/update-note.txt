@@ -1,4 +1,3 @@
-• Catatan dialog update kini memakai kalimat penjelasan, bukan judul teknis commit.
-• Bila commit tidak menulis poin, judul commit dipakai sebagai cadangan.
-• Layar game tidak lagi hitam tanpa pesan, alasan kegagalan ikut ditampilkan.
-• Ada tombol Coba lagi tanpa harus keluar dari game.
+• Berkas Bikini Wild Rush ikut di dalam APK, jadi game terbuka tanpa internet.
+• Halaman game yang kosong kini memberi keterangan, bukan layar hitam.
+• Alamat internet tetap jadi cadangan bila aset di APK tidak terbaca.

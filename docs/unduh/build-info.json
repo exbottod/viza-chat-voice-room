@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.295",
-  "catatan": "• Catatan dialog update kini memakai kalimat penjelasan, bukan judul teknis commit.\n• Bila commit tidak menulis poin, judul commit dipakai sebagai cadangan.\n• Layar game tidak lagi hitam tanpa pesan, alasan kegagalan ikut ditampilkan.\n• Ada tombol Coba lagi tanpa harus keluar dari game.",
-  "ukuran_apk": 57144240,
-  "sha256_apk": "c84c711bd87136953dcb80989bc30fb3049f880e8cd752576acf7ce6aac08680",
+  "versi": "1.0.296",
+  "catatan": "• Berkas Bikini Wild Rush ikut di dalam APK, jadi game terbuka tanpa internet.\n• Halaman game yang kosong kini memberi keterangan, bukan layar hitam.\n• Alamat internet tetap jadi cadangan bila aset di APK tidak terbaca.",
+  "ukuran_apk": 59304782,
+  "sha256_apk": "3214053c715d89dc1d63b53244da2db5e8bbda02780bc145980bb0b082428ea2",
   "abis": {
     "arm64": {
-      "ukuran": 57144240,
-      "sha256": "c84c711bd87136953dcb80989bc30fb3049f880e8cd752576acf7ce6aac08680"
+      "ukuran": 59304782,
+      "sha256": "3214053c715d89dc1d63b53244da2db5e8bbda02780bc145980bb0b082428ea2"
     },
     "armv7": {
-      "ukuran": 55295384,
-      "sha256": "fb9ae842ebc58aef07bc7bcd6860078af4cd4aaea3e37be56bf0e8f020093f03"
+      "ukuran": 57455929,
+      "sha256": "0e550913a850d691f428fe8b7cfffc840e02252da0e61b20472b16dfd004067d"
     },
     "universal": {
-      "ukuran": 75560213,
-      "sha256": "4e213667970e401c7c5d20d47a7b33e14f124d8ac2f735dfb7a87d408895969a"
+      "ukuran": 77720774,
+      "sha256": "ce1dc6e6a1de576c54d49e9023922dca0d9da442b836f2c28bef04349ba7934d"
     }
   }
 }

@@ -1,1 +1,1 @@
-• fix(ui): lencana kembali ke ukuran asli, frame tidak menempel saat room diminimize
+• fix(game): layar hitam Bikini Wild Rush diberi keterangan dan alamat cadangan

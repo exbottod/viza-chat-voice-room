@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.293",
-  "catatan": "• fix(ui): lencana kembali ke ukuran asli, frame tidak menempel saat room diminimize",
-  "ukuran_apk": 57142183,
-  "sha256_apk": "f7c4a1469bbeebac3ee27ef4f56f42fd26de42de5979d1bc01d3fe86dcc153d1",
+  "versi": "1.0.294",
+  "catatan": "• fix(game): layar hitam Bikini Wild Rush diberi keterangan dan alamat cadangan",
+  "ukuran_apk": 57144243,
+  "sha256_apk": "2f35d111f38dbfffffa7d832e6d0df74a56f64c709976cefcd4652dea0541994",
   "abis": {
     "arm64": {
-      "ukuran": 57142183,
-      "sha256": "f7c4a1469bbeebac3ee27ef4f56f42fd26de42de5979d1bc01d3fe86dcc153d1"
+      "ukuran": 57144243,
+      "sha256": "2f35d111f38dbfffffa7d832e6d0df74a56f64c709976cefcd4652dea0541994"
     },
     "armv7": {
-      "ukuran": 55293327,
-      "sha256": "32c4339c9b17dcf6cb8ad54acbcd88f246b6e042eda1716650e0e0b888f7f963"
+      "ukuran": 55295388,
+      "sha256": "f4d3a4f16a1bd0f56bc0a184e84e192858e055cd5164c2b838e19b8ebb22036f"
     },
     "universal": {
-      "ukuran": 75558158,
-      "sha256": "7c268adac919bd093dace87d88405a129d95b2ca71c41ec5433bc86318b4cd91"
+      "ukuran": 75560219,
+      "sha256": "51edb6896fdf70166cc6e83b35d4fb3253886aafc3f5102327dda7dbaecb7c77"
     }
   }
 }

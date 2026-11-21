@@ -1,3 +1,4 @@
-• Berkas game diganti paket v5, termasuk perbaikan scatter dan putaran gratis.
-• Taruhan dan tampilan angka tetap memakai koin Viza, satu koin sama dengan satu unit.
-• Susunan berkas tidak berubah, jadi layar game dan alamat VPS tetap sama.
+• Setelah tiga scatter, putaran berhenti dan scatter bersinar sebelum pengumuman.
+• Pengumuman putaran gratis menunggu tombol MULAI, tidak menutup sendiri.
+• Tombol baru bisa ditekan setelah sekitar satu detik agar tidak ikut tertekan.
+• Putaran gratis selesai menunggu tombol OK, dan kotak WIN tampil lebih dulu.

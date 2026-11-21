@@ -1,0 +1,93 @@
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1368:1 This annotation is not applicable to target 'standalone object'.
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1402:5 Functions which invoke @Composable functions must be marked with the @Composable annotation
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1411:32 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1412:17 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1413:32 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1414:19 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1415:19 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1416:16 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1418:20 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1420:5 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1423:23 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1424:19 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1425:21 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1428:5 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1434:18 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1435:22 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1436:20 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1437:24 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1438:19 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1441:19 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1446:17 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1447:17 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1449:5 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1459:5 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1464:5 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1469:37 @Composable invocations can only happen from the context of a @Composable function
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileReleaseKotlin' (registered by plugin 'org.jetbrains.kotlin.android').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+---- 120 baris terakhir ----
+1) Menyiapkan salinan bersih di /home/runner/work/_temp/kerja
+2) Mengganti paket menjadi com.vizachatvoice.app
+klien dipakai: 1:622104139221:android:294ad10f9eed7350acd95c untuk paket com.vizachatvoice.app
+3) Membersihkan merek Rezo, diganti Viza Chat
+de-brand selesai: 39 berkas, merek 'Viza Chat', slug 'vizachat', kode 'VizaChat'
+3b) Bersih: tidak ada lagi jejak Rezo di sumber
+tanda tangan rilis disiapkan
+3a) Ditandatangani dengan kunci rilis sendiri
+3c) Ikon diganti dengan /home/runner/work/viza-chat-voice-room/viza-chat-voice-room/tools/ikon_viza.png
+3d) Versi dimulai dari 1.0.x
+4) Mengatur nama aplikasi dan alamat database
+5) Membangun APK
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1368:1 This annotation is not applicable to target 'standalone object'.
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1402:5 Functions which invoke @Composable functions must be marked with the @Composable annotation
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1411:32 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1412:17 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1413:32 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1414:19 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1415:19 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1416:16 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1418:20 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1420:5 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1423:23 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1424:19 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1425:21 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1428:5 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1434:18 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1435:22 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1436:20 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1437:24 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1438:19 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1441:19 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1446:17 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1447:17 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1449:5 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1459:5 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1464:5 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/WalletScreens.kt:1469:37 @Composable invocations can only happen from the context of a @Composable function
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileReleaseKotlin' (registered by plugin 'org.jetbrains.kotlin.android').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 2m 57s
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.9.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+36 actionable tasks: 36 executed
+APK tidak terbentuk

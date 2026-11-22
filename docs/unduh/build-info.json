@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.341",
   "catatan": "• Panel React: nama grup menu mengikuti acuan (USER MANAGEMENT, FINANCIAL MANAGEMENT, GAMING) dan pana\n• Panel React: menu samping bergaya Rayzi, topbar lonceng + profil, halaman Emote",
-  "ukuran_apk": 74375515,
-  "sha256_apk": "f52f10f3094d04b18d95133b4a5dd7417f5af35d16defb7f2aa6dbe819176fd4",
+  "ukuran_apk": 74375525,
+  "sha256_apk": "08438921d4caf8f34e1f9fb8ada860ee5e521d4ecc3418f2f7b73e597889c7fe",
   "abis": {
     "arm64": {
-      "ukuran": 74375515,
-      "sha256": "f52f10f3094d04b18d95133b4a5dd7417f5af35d16defb7f2aa6dbe819176fd4"
+      "ukuran": 74375525,
+      "sha256": "08438921d4caf8f34e1f9fb8ada860ee5e521d4ecc3418f2f7b73e597889c7fe"
     },
     "armv7": {
-      "ukuran": 72610036,
-      "sha256": "a30e61675799a81aafaf7b99b54dd20a2f15db7d83d7295d6304939ca22c9ba6"
+      "ukuran": 72610033,
+      "sha256": "820867e0be226ea140dc5a559eae0f75dd8f6ec749edded2691afd40f64ab303"
     },
     "universal": {
-      "ukuran": 122229486,
-      "sha256": "3443a062e98960ff3fe8880e51834512d567c5cee66a02bd24a69bfe5d6d94eb"
+      "ukuran": 122229476,
+      "sha256": "1b560d079bcadfeba78338986eba84a5d564f42b2edb51a0415796054bc171e0"
     }
   }
 }

@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.335",
-  "catatan": "• Level room tidak pernah kembali ke awal",
-  "ukuran_apk": 74372314,
-  "sha256_apk": "14c84804b93471f46ee50e0b52b38792f272179506ce9becde37ddd83051a0c3",
+  "versi": "1.0.336",
+  "catatan": "• Room dijaga tetap hidup saat aplikasi ditinggal\n• Level room tidak pernah kembali ke awal",
+  "ukuran_apk": 74374579,
+  "sha256_apk": "cca01f8796e67c2229712bd85050d5db8aa9fb7029008965b32ed1006b754fa8",
   "abis": {
     "arm64": {
-      "ukuran": 74372314,
-      "sha256": "14c84804b93471f46ee50e0b52b38792f272179506ce9becde37ddd83051a0c3"
+      "ukuran": 74374579,
+      "sha256": "cca01f8796e67c2229712bd85050d5db8aa9fb7029008965b32ed1006b754fa8"
     },
     "armv7": {
-      "ukuran": 72606820,
-      "sha256": "9f09d4ef5cc909fafbf91c644e5d60dc51faad7d131f5b18cb8dd72bca155d96"
+      "ukuran": 72609097,
+      "sha256": "ab6e5408443c5fae583e89b5f8d709b670e211bf200f74a04a90e62ab2984250"
     },
     "universal": {
-      "ukuran": 122226282,
-      "sha256": "c1777a4a1103382e526d0da3323a86cb32a5583bc39d2ddf85360b8167c42022"
+      "ukuran": 122228544,
+      "sha256": "b95b60138976bf24aad1525518dd1bbbdf3eb9cbae66f077e4b0ee650d9ff44b"
     }
   }
 }

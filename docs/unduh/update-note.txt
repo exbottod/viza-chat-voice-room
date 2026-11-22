@@ -1,1 +1,2 @@
+• Room dijaga tetap hidup saat aplikasi ditinggal
 • Level room tidak pernah kembali ke awal

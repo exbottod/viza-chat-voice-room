@@ -50,7 +50,7 @@ object IklanUnity {
         sedangSiap = true
         // Mode uji dari panel: log Unity Ads jadi rinci. Dinyalakan sebelum
         // initialize karena SDK hanya membacanya sekali di awal.
-        if (uji) runCatching { UnityAds.setDebugMode(true) }
+        if (uji) runCatching { UnityAds.debugMode = true }
         UnityAds.initialize(ctx.applicationContext, gameId, false, object : IUnityAdsInitializationListener {
             override fun onInitializationComplete() {
                 sedangSiap = false

@@ -35,6 +35,7 @@ export default function Store() {
   const [hapus, setHapus] = useState(null);
   const [sibuk, setSibuk] = useState(false);
   const [lihat, setLihat] = useState(null);
+  const [cari, setCari] = useState("");
 
   const muat = async () => {
     setDaftar(null);
@@ -89,6 +90,12 @@ export default function Store() {
   };
 
   const nama = JENIS.find((j) => j[0] === jenis)?.[1] || "";
+  // Pencarian: cocokkan nama, nomor ID unik, atau ID aset.
+  const kata = cari.trim().toLowerCase();
+  const daftarTampil = (daftar || []).filter((x) => !kata
+    || String(x.name || "").toLowerCase().includes(kata)
+    || String(x.customId || "").toLowerCase().includes(kata)
+    || String(x.id || "").toLowerCase().includes(kata));
   const unik = jenis === "uid";
 
   return (
@@ -100,8 +107,11 @@ export default function Store() {
             <div key={k} className={"pil" + (jenis === k ? " on" : "")} onClick={() => setJenis(k)}>{n}</div>
           ))}
         </div>
+        <label className="isianForm" style={{ marginBottom: 12 }}><span>Cari {nama.toLowerCase()} (nama atau nomor ID, mis. 1000)</span>
+          <input value={cari} onChange={(e) => setCari(e.target.value)} placeholder="ketik nama atau nomor ID" />
+        </label>
         {daftar === null ? <Rangka baris={5} />
-          : !daftar.length ? <Kosong>Belum ada {nama.toLowerCase()} di Store. Tekan tombol tambah di kanan atas.</Kosong>
+          : !daftarTampil.length ? <Kosong>{cari.trim() ? "Tidak ada " + nama.toLowerCase() + " yang cocok dengan \"" + cari.trim() + "\"." : "Belum ada " + nama.toLowerCase() + " di Store. Tekan tombol tambah di kanan atas."}</Kosong>
           : (
             <Tabel
               kolom={[
@@ -114,7 +124,7 @@ export default function Store() {
                 { kunci: "order", label: "Urut", sel: (b) => b.order },
                 { kunci: "aksi", label: "", sel: (b) => b.aksi },
               ]}
-              baris={daftar.map((x) => ({
+              baris={daftarTampil.map((x) => ({
                 __kunci: x.id,
                 mini: <Thumb url={x.url} kind={x.kind} poster={x.poster} nama={x.name || x.id} onKlik={() => setLihat({ ...x, nama: x.name || x.id })} />,
                 name: x.name || x.id,

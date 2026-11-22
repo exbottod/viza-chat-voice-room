@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { walletAdmin } from "../dompet.js";
 import { unggahBerkas, tulisRtdbServer, kunciVip } from "../unggah.js";
-import { catatLog } from "../data.js";
+import { ambilSemuaMentah, catatLog } from "../data.js";
+import { bacaRtdbServer } from "../unggah.js";
 import { Panel, toast } from "../ui.jsx";
 import { Pratinjau, Thumb, ekstensi, jenisMedia } from "../pratinjau.jsx";
 
@@ -12,7 +13,7 @@ const JENIS = [
 ];
 const KOSONG = {
   uid: "", jenis: "frame", sumber: "berkas", nama: "", item: "",
-  berkas: null, url: "", hari: "30", pakai: true,
+  berkas: null, url: "", hari: "30", pakai: true, nomor: "",
 };
 
 /**
@@ -27,6 +28,9 @@ export default function Kirim() {
   const [hasil, setHasil] = useState(null);
   const [pratinjau, setPratinjau] = useState("");
   const [lihat, setLihat] = useState(false);
+  const [cari, setCari] = useState("");
+  const [katalog, setKatalog] = useState([]);
+  const [memuatKatalog, setMemuatKatalog] = useState(false);
   const alamatPratinjau = useRef("");
 
   const lepas = () => {
@@ -36,6 +40,48 @@ export default function Kirim() {
   useEffect(() => () => lepas(), []);
 
   const ubah = (k, v) => setForm((l) => ({ ...l, [k]: v }));
+
+  /** Katalog Store untuk pencarian: nama, ID aset, dan nomor ID unik (mis. 1000). */
+  const muatKatalog = async () => {
+    setMemuatKatalog(true);
+    const peta = new Map();
+    const simpan = (o, kunci) => {
+      const id = String(o.id || kunci || "");
+      if (!id || o.banner === true || o.store === false) return;
+      peta.set(id, {
+        id, nama: String(o.name || o.title || id),
+        slot: String(o.slot || ""),
+        nomor: String(o.customId || ""),
+        url: typeof o.url === "string" ? o.url : "",
+        kind: String(o.kind || ""),
+      });
+    };
+    try { (await ambilSemuaMentah("vipConfig", 400)).forEach((d) => simpan(d, d.id)); } catch (e) { /* tanpa izin */ }
+    try {
+      const isi = await bacaRtdbServer("vipCfg");
+      if (isi && typeof isi === "object") Object.entries(isi).forEach(([k, v]) => simpan(v || {}, k));
+    } catch (e) { /* abaikan */ }
+    setKatalog([...peta.values()].sort((a, b) => a.nama.localeCompare(b.nama)));
+    setMemuatKatalog(false);
+  };
+  useEffect(() => { muatKatalog(); }, []);
+
+  const kataCari = cari.trim().toLowerCase();
+  const cocok = !kataCari ? [] : katalog.filter((x) => x.nama.toLowerCase().includes(kataCari)
+    || x.id.toLowerCase().includes(kataCari) || (x.nomor && x.nomor.includes(kataCari))).slice(0, 20);
+
+  /** Pakai aset dari katalog: jenis, ID, nama, dan nomornya ikut terisi. */
+  const pakaiAset = (x) => {
+    setForm((l) => ({
+      ...l,
+      jenis: JENIS.some(([k]) => k === x.slot) ? x.slot : l.jenis,
+      sumber: "id",
+      item: x.id,
+      nama: x.nama,
+      url: x.url,
+      nomor: x.nomor || l.nomor,
+    }));
+  };
 
   const pilihBerkas = (e) => {
     const f = e.target.files?.[0] || null;
@@ -72,10 +118,14 @@ export default function Kirim() {
         if (!url) throw new Error("Tempel tautan berkas dulu");
         if (!item) item = idOtomatis();
         const nama = form.nama.trim() || item;
+        const nomor = String(form.nomor || "").trim();
         const data = {
           id: item, slot: form.jenis, name: nama, price: 0, days: 0, order: 0,
           kind: (url.split("?")[0].split(".").pop() || "").toLowerCase(),
           url, hasData: false, updatedAt: Date.now(), chunks: 0, store: false,
+          // Nomor opsional (mis. 1000) supaya aset bisa dicari dan dipakai
+          // sebagai ID unik di profil.
+          ...(nomor ? { customId: nomor } : {}),
         };
         setProgres("menyimpan aset…");
         await walletAdmin({ op: "fs_set", jalur: "vipConfig/" + item, data });
@@ -87,6 +137,7 @@ export default function Kirim() {
       const out = await walletAdmin({
         op: "kirim_item", uid, item, hari,
         pakai: form.pakai ? form.jenis : "",
+        ...(String(form.nomor || "").trim() ? { nomor: String(form.nomor).trim() } : {}),
       }, 30000);
       await catatLog("Kirim " + form.jenis, uid + " · " + item + " · " + hari + " hari");
       setHasil({
@@ -95,6 +146,8 @@ export default function Kirim() {
       });
       toast("Terkirim ke " + uid);
       setProgres("");
+      setCari("");
+      muatKatalog();
     } catch (e) {
       setProgres("");
       toast("Gagal: " + (e.message || e), true);
@@ -127,6 +180,30 @@ export default function Kirim() {
           <button type="button" className={"pil" + (form.sumber === "id" ? " on" : "")} onClick={() => ubah("sumber", "id")}>Aset lama</button>
         </span>
       </div>
+
+      <label className="isianForm"><span>Cari aset dari Store (nama atau nomor ID, mis. 1000)</span>
+        <input value={cari} onChange={(e) => setCari(e.target.value)} placeholder="ketik nama aset atau nomor ID" />
+      </label>
+      {kataCari ? (
+        <div className="catatan" style={{ marginBottom: 10 }}>
+          {memuatKatalog ? "Memuat katalog…"
+            : !cocok.length ? "Tidak ada aset yang cocok."
+            : cocok.map((x) => (
+              <div key={x.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: "1px solid #2b2b3a" }}>
+                <Thumb url={x.url} kind={x.kind} nama={x.nama} lebar={34} onKlik={() => setLihat({ url: x.url, kind: x.kind, nama: x.nama })} />
+                <span style={{ flex: "1 1 auto", minWidth: 0 }}>
+                  <b>{x.nama}</b><br />
+                  <small>{x.id}{x.nomor ? " · nomor " + x.nomor : ""}</small>
+                </span>
+                <button type="button" className="pil" onClick={() => pakaiAset(x)}>Pakai</button>
+              </div>
+            ))}
+        </div>
+      ) : null}
+
+      <label className="isianForm"><span>Nomor ID (opsional, mis. 1000)</span>
+        <input value={form.nomor} onChange={(e) => ubah("nomor", e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="mis. 1000" />
+      </label>
 
       {form.sumber === "berkas" ? (
         <label className="isianForm"><span>Berkas (PNG, GIF, WebP, SVGA, MP4 · maks 8 MB)</span>

@@ -26,6 +26,7 @@ export default function Aset({ awal = "frame" }) {
   const [hapus, setHapus] = useState(null);
   const [sibuk, setSibuk] = useState(false);
   const [lihat, setLihat] = useState(null);
+  const [cari, setCari] = useState("");
 
   /**
    * Daftar aset dibaca dari DUA tempat, sama seperti aplikasi:
@@ -103,6 +104,11 @@ export default function Aset({ awal = "frame" }) {
     finally { setSibuk(false); }
   };
 
+  const kata = cari.trim().toLowerCase();
+  const daftarTampil = (daftar || []).filter((x) => !kata
+    || String(x.name || "").toLowerCase().includes(kata)
+    || String(x.id || "").toLowerCase().includes(kata));
+
   return (
     <>
       <Panel judul="Aset Store" sub="Tambah ke Store untuk aset yang dijual, + Aset VIP untuk aset yang dipakai otomatis oleh tier VIP. Aplikasi membaca daftar ini tanpa build ulang."
@@ -115,8 +121,11 @@ export default function Aset({ awal = "frame" }) {
             <div key={k} className={"pil" + (slot === k ? " on" : "")} onClick={() => setSlot(k)}>{n}</div>
           ))}
         </div>
+        <label className="isianForm" style={{ marginBottom: 12 }}><span>Cari aset (nama atau ID)</span>
+          <input value={cari} onChange={(e) => setCari(e.target.value)} placeholder="ketik nama atau ID aset" />
+        </label>
         {daftar === null ? <Rangka baris={5} />
-          : !daftar.length ? <Kosong>Belum ada {SLOT.find((s) => s[0] === slot)?.[1].toLowerCase()}. Tekan tombol tambah di kanan atas.</Kosong>
+          : !daftarTampil.length ? <Kosong>{cari.trim() ? "Tidak ada aset yang cocok dengan \"" + cari.trim() + "\"." : "Belum ada " + SLOT.find((s) => s[0] === slot)?.[1].toLowerCase() + ". Tekan tombol tambah di kanan atas."}</Kosong>
           : (
             <Tabel
               kolom={[
@@ -129,7 +138,7 @@ export default function Aset({ awal = "frame" }) {
                 { kunci: "order", label: "Urut", sel: (b) => b.order },
                 { kunci: "aksi", label: "", sel: (b) => b.aksi },
               ]}
-              baris={daftar.map((x) => ({
+              baris={daftarTampil.map((x) => ({
                 __kunci: x.id,
                 lihat: <Thumb url={x.url} kind={x.kind} poster={x.poster} nama={x.name || x.id}
                   onKlik={() => setLihat({ ...x, nama: x.name || x.id })} />,

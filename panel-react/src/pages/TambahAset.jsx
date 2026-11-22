@@ -130,8 +130,9 @@ export default function TambahAset({ buka, slot, judul, vip = false, ganti = nul
         </>
       ) : null}
       {slot === "uid" ? (
-        <label className="isianForm"><span>Nomor ID unik (yang tampil di profil)</span>
+        <label className="isianForm"><span>Nomor ID unik (yang tampil di profil, mis. 1000)</span>
           <input value={form.nomor} onChange={(e) => setForm({ ...form, nomor: e.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="mis. 1000" />
+          <span className="catatan">Nomor ini jadi kunci pencarian di Store, Kirim ke user, dan daftar aset. Setelah dibeli, ID hilang dari Store.</span>
         </label>
       ) : null}
       <label className="isianForm"><span>Nama</span>

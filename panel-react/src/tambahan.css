@@ -187,3 +187,15 @@
 }
 .infoBulat:hover { background: #e8538f; color: #fff; }
 .panelIsi code { background: #262635; color: #83d8ae; padding: 1px 6px; border-radius: 3px; font-size: 12px; }
+
+/* Nama menu selalu tampil di samping ikon, termasuk di HP (laci menu) */
+.menu span { font-size: 12.5px; }
+.menu { gap: 10px; }
+@media (max-width: 860px) {
+  .sidebar { width: 232px; padding: 12px 10px; }
+  .sidebar .merek div:not(.logo) { font-size: 11.5px; }
+  .menu span, .menu { font-size: 12.5px; }
+  .menu { justify-content: flex-start; padding: 10px 12px; }
+  .menu i { font-size: 15px; width: 18px; }
+  .grup { font-size: 9.5px; }
+}

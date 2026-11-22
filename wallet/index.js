@@ -4676,6 +4676,19 @@ async function admin(env, body) {
     ]);
     return json({ ok: 1, req: r[0].rows });
   }
+  if (op === "agency_req_batal") {
+    await siapAgency(env);
+    const id = Math.trunc(Number(p.reqId ?? 0));
+    const r = await pipe(env, [{ sql: "select id, status from agency_req where id = ?", args: [I(id)] }]);
+    const row = r[0].rows[0];
+    if (!row) return gagal("Pengajuan tidak ditemukan");
+    if (row.status !== "menunggu") return gagal("Pengajuan sudah diproses");
+    // Saldo komisi tidak dipotong, hanya pengajuannya ditolak.
+    await pipe(env, [
+      { sql: "update agency_req set status = 'tolak', oleh = ? where id = ?", args: [T(String(p.oleh ?? "panel")), I(id)] },
+    ]);
+    return json({ ok: 1, id, status: "tolak" });
+  }
   if (op === "agency_req_done") {
     await siapAgency(env);
     const id = Math.trunc(Number(p.reqId ?? 0));
@@ -4683,6 +4696,16 @@ async function admin(env, body) {
     const row = r[0].rows[0];
     if (!row) return gagal("Pengajuan tidak ditemukan");
     if (row.status !== "menunggu") return gagal("Pengajuan sudah diproses");
+    // Kunci kerugian: pengajuan yang membuat total pencairan bulan ini melewati
+    // batas (persen dari coin topup sah) tidak boleh ditandai dibayar. Untuk
+    // membayarnya, naikkan persen batas di panel atau batalkan pengajuannya.
+    const batas = await batasCairAgensi(env);
+    if (batas.batas <= 0) {
+      return gagal("Belum ada topup coin bulan ini, jadi pencairan rupiah ditutup. Batalkan pengajuan ini atau tunggu ada topup.");
+    }
+    if (batas.dipakai > batas.batas) {
+      return gagal("Total pengajuan bulan ini " + batas.dipakai + " coin melebihi batas " + batas.batas + " coin (" + batas.persen + "% dari topup sah). Naikkan persen batas di panel atau batalkan pengajuan ini.");
+    }
     await pipeTrx(env, [
       { sql: "begin immediate" },
       { sql: "update agency_req set status = 'dibayar', oleh = ? where id = ?", args: [T(String(p.oleh ?? "admin")), I(id)] },

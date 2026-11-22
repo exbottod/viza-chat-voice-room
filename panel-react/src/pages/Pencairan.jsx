@@ -22,6 +22,7 @@ export default function Pencairan() {
   // tidak pernah melebihi uang yang benar-benar masuk.
   const [cair, setCair] = useState(null);
   const [persen, setPersen] = useState("");
+  const [batal, setBatal] = useState(null);
 
   const muat = async () => {
     try {
@@ -46,6 +47,10 @@ export default function Pencairan() {
     at: Number(x.at || 0),
   })), [baris]);
 
+  // Pengajuan lama bisa bernilai jauh di atas batas (coin gratis). Ditandai
+  // merah dan bisa dibatalkan tanpa memotong saldo komisi agensi.
+  const sisaBatas = Number(cair?.sisa ?? 0);
+  const lewat = (x) => Number(cair?.batas ?? 0) > 0 ? x.coins > sisaBatas : false;
   const tampil = saring === "semua" ? data : data.filter((x) => x.status === saring);
   const menunggu = data.filter((x) => x.status === "menunggu");
   const totalMenunggu = menunggu.reduce((a, x) => a + x.coins, 0);
@@ -57,6 +62,20 @@ export default function Pencairan() {
       setCair(out.cair || null);
       if (out.cair) setPersen(String(out.cair.persen));
       toast("Batas pencairan " + (out.cair?.persen ?? persen) + "% dari coin topup sah");
+    } catch (e) { toast("Gagal: " + (e.message || e), true); }
+    finally { setSibuk(false); }
+  };
+
+  const batalkan = async () => {
+    const t = batal;
+    setBatal(null);
+    if (!t || sibuk) return;
+    setSibuk(true);
+    try {
+      await walletAdmin({ op: "agency_req_batal", reqId: t.id, oleh: "panel" });
+      await catatLog("Pengajuan pencairan dibatalkan", t.agensi + " · " + rupiah(t.coins));
+      toast("Pengajuan dibatalkan, saldo komisi agensi tidak dipotong");
+      await muat();
     } catch (e) { toast("Gagal: " + (e.message || e), true); }
     finally { setSibuk(false); }
   };
@@ -101,7 +120,7 @@ export default function Pencairan() {
       </Panel>
 
       <Panel judul="Pencairan agency"
-        sub="Agensi mengajukan pencairan dari aplikasi (menu Agensi > Ajukan pencairan). Kirim uangnya lewat Dana/OVO/bank, lalu tandai dibayar di sini supaya saldo komisi agensi terpotong dan tidak diajukan dua kali.">
+        sub="Agensi mengajukan pencairan dari aplikasi (menu Agensi > Ajukan pencairan). Kirim uangnya lewat Dana/OVO/bank, lalu tandai dibayar di sini supaya saldo komisi agensi terpotong. Pengajuan bertanda lewat batas ditolak server sampai batas dinaikkan atau pengajuannya dibatalkan, jadi uang keluar tidak bisa melebihi porsi dari topup yang benar-benar masuk.">
         {galat ? <div className="kosong">Server dompet belum menjawab: {galat}</div> : null}
         <div className="filter" style={{ gap: 8, paddingBottom: 10 }}>
           <Pil on={saring === "menunggu"} onClick={() => setSaring("menunggu")}>Menunggu</Pil>
@@ -119,19 +138,31 @@ export default function Pencairan() {
             ]}
             baris={tampil.map((x) => ({
               agensi: x.agensi,
-              coins: rupiah(x.coins),
+              coins: (
+                <span title={lewat(x) ? "Melebihi batas pencairan bulan ini" : ""}>
+                  {rupiah(x.coins)}
+                  {x.status === "menunggu" && lewat(x) ? <> <Tag jenis="mati">lewat batas</Tag></> : null}
+                </span>
+              ),
               at: x.at ? waktu(x.at) : "—",
               status: x.status === "dibayar"
                 ? <Tag jenis="aktif">dibayar</Tag>
                 : <Tag jenis="mati">menunggu</Tag>,
               aksi: x.status === "menunggu"
-                ? <a className="tautanPink" onClick={() => setTanya(x)}>Tandai dibayar</a>
-                : <span className="catatan" style={{ padding: 0 }}>selesai</span>,
+                ? <span style={{ display: "flex", gap: 10 }}>
+                    <a className="tautanPink" onClick={() => setTanya(x)}>Tandai dibayar</a>
+                    <a className="tautanPink" onClick={() => setBatal(x)}>Batalkan</a>
+                  </span>
+                : <span className="catatan" style={{ padding: 0 }}>{x.status === "tolak" ? "dibatalkan" : "selesai"}</span>,
             }))}
             kosong={saring === "menunggu" ? "Tidak ada pengajuan pencairan yang menunggu." : "Belum ada data pencairan."}
           />
         )}
       </Panel>
+
+      <Konfirmasi buka={!!batal} judul="Batalkan pengajuan?"
+        pesan={batal ? "Pengajuan " + rupiah(batal.coins) + " coin dari " + batal.agensi + " ditolak. Saldo komisi agensi tidak dipotong, hanya pengajuannya hilang dari daftar menunggu." : ""}
+        tombol="Batalkan" sibuk={sibuk} onYa={batalkan} onTidak={() => setBatal(null)} />
 
       <Konfirmasi buka={!!tanya} judul="Tandai sudah dibayar?"
         pesan={tanya ? "Agensi " + tanya.agensi + " mengajukan " + rupiah(tanya.coins) + " coin. Pastikan uangnya sudah dikirim ke rekening atau e-wallet agensi, karena setelah ditandai saldo komisinya dipotong dan pengajuan tidak bisa dibatalkan." : ""}

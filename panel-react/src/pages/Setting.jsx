@@ -4,7 +4,7 @@ import { catatLog } from "../data.js";
 import { Konfirmasi, Rangka, toast } from "../ui.jsx";
 
 const TAB = [
-  ["umum", "General"], ["agora", "Agora"], ["versi", "Versi & APK"],
+  ["umum", "General"], ["agora", "Agora"], ["versi", "Versi minimum"],
   ["payment", "Payment"], ["firebase", "Firebase"], ["admin", "Admin panel"],
 ];
 
@@ -40,6 +40,7 @@ export default function Setting() {
   const [agoraId, setAgoraId] = useState("");
   const [agoraCert, setAgoraCert] = useState("");
   const [versi, setVersi] = useState({ versiTerbaru: "", versiMin: "", apkUrl: "", apkCatatan: "" });
+  const [aset, setAset] = useState({ assetPackage: "", assetSha256: "" });
   const [bayar, setBayar] = useState({ stripeAktif: false, stripePub: "", stripeSecret: "", paystackAktif: false, paystackPub: "", paystackSecret: "" });
   const [fcm, setFcm] = useState("");
 
@@ -49,6 +50,7 @@ export default function Setting() {
       const c = out.cfg || {};
       setCfg(c);
       setVersi({ versiTerbaru: c.versiTerbaru || "", versiMin: c.versiMin || "", apkUrl: c.apkUrl || "", apkCatatan: c.apkCatatan || "" });
+      setAset({ assetPackage: c.assetPackage || "", assetSha256: c.assetSha256 || "" });
       setBayar((b) => ({
         ...b,
         stripeAktif: c.stripeAktif === "1", stripePub: c.stripePub || "",
@@ -94,13 +96,39 @@ export default function Setting() {
       ) : null}
 
       {tab === "umum" ? (
-        <Kartu judul="General">
-          <div className="barisDetail"><span>Project Firebase</span><b>my-app-e7f8c</b></div>
-          <div className="barisDetail"><span>Suara room</span><b>Agora ({cfg.agoraSumber === "panel" ? "dari panel" : cfg.agoraSumber === "server" ? "dari server" : "belum diatur"})</b></div>
-          <div className="barisDetail"><span>App ID Agora aktif</span><b>{cfg.agoraAppIdAktif || "—"}</b></div>
-          <div className="barisDetail"><span>Versi aplikasi terbaru</span><b>{cfg.versiTerbaru || "ikut feed unduh"}</b></div>
-          <div className="catatan">Pengaturan di sini disimpan di server dompet, jadi berlaku langsung tanpa rilis APK baru.</div>
-        </Kartu>
+        <>
+          <div className="panel">
+            <div className="panelAtas"><h3>App Setting</h3>
+              <span className="infoBulat" title="Versi dan tautan unduh yang dipakai aplikasi Android">i</span>
+            </div>
+            <div className="panelIsi">
+              <Isian label="Android App Version" value={versi.versiTerbaru} onChange={(e) => setVersi({ ...versi, versiTerbaru: e.target.value })} placeholder="mis. 1.0.340" />
+              <Isian label="Android App Link" value={versi.apkUrl} onChange={(e) => setVersi({ ...versi, apkUrl: e.target.value })} placeholder="https://exbottod.github.io/viza-chat-voice-room/unduh/" />
+              <div className="barisAksiForm" style={{ justifyContent: "flex-end" }}>
+                <button className="tombolBaru" disabled={sibuk} onClick={() => simpan({ versiTerbaru: versi.versiTerbaru, apkUrl: versi.apkUrl }, "Versi & link APK")}>Submit</button>
+              </div>
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panelAtas"><h3>Android Asset Link</h3>
+              <span className="infoBulat" title="Menyambungkan domain dengan aplikasi Android lewat assetlinks.json">i</span>
+            </div>
+            <div className="panelIsi">
+              <div className="catatan" style={{ marginTop: 0, marginBottom: 14 }}>Associate your website with the Android app</div>
+              <Isian label="Nama paket Android" value={aset.assetPackage} onChange={(e) => setAset({ ...aset, assetPackage: e.target.value.trim() })} placeholder="mis. com.rezochatvoice.exceo" />
+              <Isian label="SHA-256 sidik sertifikat" value={aset.assetSha256} onChange={(e) => setAset({ ...aset, assetSha256: e.target.value.trim() })} placeholder="AA:BB:CC:… 32 pasang, dipisah titik dua" />
+              <div className="barisAksiForm" style={{ justifyContent: "flex-end" }}>
+                <button className="tombolBaru" disabled={sibuk} onClick={() => simpan(aset, "Android asset link")}>Submit</button>
+              </div>
+              <div className="catatan">
+                Berkasnya langsung disajikan di https://viza.43-156-99-4.sslip.io/.well-known/assetlinks.json
+                {cfg.assetPackage ? " (terpasang: " + cfg.assetPackage + ")" : ""}. Sidik sertifikat bisa dilihat dengan
+                perintah <code>keytool -list -v -keystore viza.keystore</code>.
+              </div>
+            </div>
+          </div>
+        </>
       ) : null}
 
       {tab === "agora" ? (
@@ -131,17 +159,15 @@ export default function Setting() {
       ) : null}
 
       {tab === "versi" ? (
-        <Kartu judul="Versi & link APK Android">
-          <Isian label="Versi terbaru" value={versi.versiTerbaru} onChange={(e) => setVersi({ ...versi, versiTerbaru: e.target.value })} placeholder="mis. 1.0.340" />
+        <Kartu judul="Versi minimum & catatan pembaruan">
           <Isian label="Versi minimum (di bawah ini wajib update)" value={versi.versiMin} onChange={(e) => setVersi({ ...versi, versiMin: e.target.value })} placeholder="mis. 1.0.330" />
-          <Isian label="Link unduh APK Android" value={versi.apkUrl} onChange={(e) => setVersi({ ...versi, apkUrl: e.target.value })} placeholder="https://exbottod.github.io/viza-chat-voice-room/unduh/" />
           <label className="isianForm"><span>Catatan pembaruan</span>
             <textarea rows={4} value={versi.apkCatatan} onChange={(e) => setVersi({ ...versi, apkCatatan: e.target.value })} />
           </label>
           <div className="barisAksiForm" style={{ justifyContent: "flex-end" }}>
-            <button className="tombolBaru" disabled={sibuk} onClick={() => simpan(versi, "Versi & link APK")}>Submit</button>
+            <button className="tombolBaru" disabled={sibuk} onClick={() => simpan({ versiMin: versi.versiMin, apkCatatan: versi.apkCatatan }, "Versi minimum")}>Submit</button>
           </div>
-          <div className="catatan">Disimpan di server. Aplikasi yang membaca pengaturan ini akan memakainya; feed unduh GitHub tetap jadi sumber patch.</div>
+          <div className="catatan">Versi dan link unduh ada di tab General. Nilai di sini dibaca dari https://viza.43-156-99-4.sslip.io/app-cfg.json.</div>
         </Kartu>
       ) : null}
 

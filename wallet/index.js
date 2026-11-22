@@ -3252,6 +3252,7 @@ const CFG_RAHASIA = new Set(["agoraCert", "fcmJson", "stripeSecret", "paystackSe
 const CFG_KUNCI = new Set([
   "agoraAppId", "agoraCert", "fcmJson", "stripeAktif", "stripePub", "stripeSecret",
   "paystackAktif", "paystackPub", "paystackSecret", "versiMin", "versiTerbaru", "apkUrl", "apkCatatan",
+  "assetPackage", "assetSha256",
 ]);
 let cfgCache = { at: 0, v: {} };
 
@@ -4624,6 +4625,12 @@ async function admin(env, body) {
       if (k === "stripeSecret" && !/^(sk|rk)_(test|live)_/.test(v)) return gagal("Stripe Secret Key harus diawali sk_test_ atau sk_live_");
       if (k === "stripePub" && !/^pk_(test|live)_/.test(v)) return gagal("Stripe Publishable Key harus diawali pk_test_ atau pk_live_");
       if (k === "stripeAktif" || k === "paystackAktif") v = (v === "1" || v === "true") ? "1" : "0";
+      if (k === "assetPackage" && v && !/^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z0-9_]+)+$/.test(v)) return gagal("Nama paket Android tidak sah (mis. com.viza.chat)");
+      if (k === "assetSha256" && v) {
+        const rapi = v.replace(/\s/g, "").toUpperCase();
+        if (!/^([0-9A-F]{2}:){31}[0-9A-F]{2}$/.test(rapi)) return gagal("SHA-256 harus 32 pasang heksadesimal dipisah titik dua");
+        v = rapi;
+      }
       tulis.push({
         sql: `insert into app_cfg (kunci, nilai, updated_at) values (?, ?, ?)
               on conflict (kunci) do update set nilai = excluded.nilai, updated_at = excluded.updated_at`,
@@ -7172,6 +7179,35 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           "access-control-allow-origin": "*",
           "cache-control": "no-store",
         },
+      });
+    }
+    // Digital Asset Links: menyambungkan domain ini dengan aplikasi Android,
+    // sehingga tautan viza langsung membuka APK tanpa dialog pemilih.
+    if (url.pathname === "/.well-known/assetlinks.json") {
+      const c = await cfgSemua(env);
+      const paket = String(c.assetPackage || "");
+      const sidik = String(c.assetSha256 || "");
+      const isi = paket && sidik
+        ? [{ relation: ["delegate_permission/common.handle_all_urls"],
+             target: { namespace: "android_app", package_name: paket, sha256_cert_fingerprints: [sidik] } }]
+        : [];
+      return new Response(JSON.stringify(isi, null, 2), {
+        status: 200,
+        headers: { "content-type": "application/json; charset=utf-8", "access-control-allow-origin": "*", "cache-control": "no-store" },
+      });
+    }
+    // Pengaturan aplikasi dari panel (versi & link APK) dibaca tanpa login.
+    if (url.pathname === "/app-cfg.json") {
+      const c = await cfgSemua(env);
+      return new Response(JSON.stringify({
+        versi: String(c.versiTerbaru || ""),
+        versiMin: String(c.versiMin || ""),
+        apkUrl: String(c.apkUrl || ""),
+        catatan: String(c.apkCatatan || ""),
+        assetPackage: String(c.assetPackage || ""),
+      }), {
+        status: 200,
+        headers: { "content-type": "application/json; charset=utf-8", "access-control-allow-origin": "*", "cache-control": "no-store" },
       });
     }
     if (url.pathname === "/health") {

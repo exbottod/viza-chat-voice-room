@@ -177,3 +177,13 @@
 .saklar i { position: absolute; top: 3px; left: 3px; width: 28px; height: 28px; border-radius: 3px; background: #fff; transition: left .15s; }
 .saklar.nyala { background: #83d8ae; }
 .saklar.nyala i { left: 33px; }
+
+/* Tombol info bulat di kanan judul kartu */
+.panelAtas { display: flex; align-items: center; gap: 8px; }
+.infoBulat {
+  margin-left: auto; width: 22px; height: 22px; border-radius: 50%; flex: none;
+  background: #262635; color: #9a9cab; font-size: 13px; font-weight: 600; font-style: italic;
+  display: grid; place-items: center; cursor: help;
+}
+.infoBulat:hover { background: #e8538f; color: #fff; }
+.panelIsi code { background: #262635; color: #83d8ae; padding: 1px 6px; border-radius: 3px; font-size: 12px; }

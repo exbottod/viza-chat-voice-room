@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.339",
-  "catatan": "• Panel React: layar login muncul walau Firebase lambat menjawab\n• Panel React (Vite + React 18) tahap pertama: kerangka, login, dasbor\n• Perbaiki pemilik room terpental saat masuk room",
-  "ukuran_apk": 74375513,
-  "sha256_apk": "32500025db443c7833c6a6edc94d31dbe32b7fa73ecc8ac58098a8b63ded63fd",
+  "versi": "1.0.340",
+  "catatan": "• Panel React: halaman User, Room, dan Gift dengan tampilan alat baru\n• Panel React: layar login muncul walau Firebase lambat menjawab",
+  "ukuran_apk": 74375514,
+  "sha256_apk": "1bc574140bc76215e4a6bfa5d250880004968dbd9543e6acd9dff8a7a4eb4bec",
   "abis": {
     "arm64": {
-      "ukuran": 74375513,
-      "sha256": "32500025db443c7833c6a6edc94d31dbe32b7fa73ecc8ac58098a8b63ded63fd"
+      "ukuran": 74375514,
+      "sha256": "1bc574140bc76215e4a6bfa5d250880004968dbd9543e6acd9dff8a7a4eb4bec"
     },
     "armv7": {
-      "ukuran": 72610026,
-      "sha256": "70154d08af25c4deedf750e0664c073691e1db37c30714d9dbdca9dcb5510b9c"
+      "ukuran": 72610027,
+      "sha256": "fbfda77b670b3e9ead987d6061c270e6a83e5c04dbbfe1772b1c655c4c8f08b1"
     },
     "universal": {
-      "ukuran": 122229484,
-      "sha256": "874410f8a65ac6d80e2dea5bbbc3b9e37fd1765aeecbf866fa3b8b84cecdb1c2"
+      "ukuran": 122229481,
+      "sha256": "48b2ac19179e3028543969a36783aabe9936e6ed4f2c52b83c18ccd6a18f7ece"
     }
   }
 }

@@ -1,3 +1,4 @@
-• Jalur publik /bikini-cfg.json menyajikan daftar bet dan RTP tanpa login.
-• Panel menyimpan lewat aksi bikini_cfg_set di server dompet.
-• Game memuat pengaturan itu saat dibuka, dengan angka bawaan kalau server tidak terjangkau.
+• Suntikan CSS dari aplikasi tidak lagi memaksa lebar 92 persen dan maksimal 460 px; ukuran kotak kemb
+• Latar dialog tanpa jarak tepi dan isinya bisa digulir, jadi tidak terpotong walau kotaknya besar.
+• Dialog kemenangan mengikuti lebar meja game, bukan tinggi layar, sehingga tampil besar seperti di zi
+• Menang dari server dipakai untuk angka dan dialog, jadi big win selalu memunculkan dialog besar.

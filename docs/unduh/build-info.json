@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.314",
-  "catatan": "• Jalur publik /bikini-cfg.json menyajikan daftar bet dan RTP tanpa login.\n• Panel menyimpan lewat aksi bikini_cfg_set di server dompet.\n• Game memuat pengaturan itu saat dibuka, dengan angka bawaan kalau server tidak terjangkau.",
-  "ukuran_apk": 74344228,
-  "sha256_apk": "1cd9291544e0a7b5ca4af4a4ec0445aa7b249518dc073659cf5949e4c71537f7",
+  "versi": "1.0.315",
+  "catatan": "• Suntikan CSS dari aplikasi tidak lagi memaksa lebar 92 persen dan maksimal 460 px; ukuran kotak kemb\n• Latar dialog tanpa jarak tepi dan isinya bisa digulir, jadi tidak terpotong walau kotaknya besar.\n• Dialog kemenangan mengikuti lebar meja game, bukan tinggi layar, sehingga tampil besar seperti di zi\n• Menang dari server dipakai untuk angka dan dialog, jadi big win selalu memunculkan dialog besar.",
+  "ukuran_apk": 74345365,
+  "sha256_apk": "573d5e67e2b4a33acf12f885d8031605c85c9a2190cc0c463e9546603dc3d1be",
   "abis": {
     "arm64": {
-      "ukuran": 74344228,
-      "sha256": "1cd9291544e0a7b5ca4af4a4ec0445aa7b249518dc073659cf5949e4c71537f7"
+      "ukuran": 74345365,
+      "sha256": "573d5e67e2b4a33acf12f885d8031605c85c9a2190cc0c463e9546603dc3d1be"
     },
     "armv7": {
-      "ukuran": 72578745,
-      "sha256": "937e8955f9197ab237bd4896de0554c8ddbb0c1a1ddc70a3aea89853342e7703"
+      "ukuran": 72579880,
+      "sha256": "47bf68155ea27f8e857c290d162568349aba9bb82eb446a161f408d456d91f47"
     },
     "universal": {
-      "ukuran": 122198201,
-      "sha256": "ee5d528ecf5cd687328b361d60ae51e47571c25e90918f51ea4b371eaa85091f"
+      "ukuran": 122199329,
+      "sha256": "478270b1abc3022b6605516d1ed5322f4f63cabd9838123d43b8c566fb09a331"
     }
   }
 }

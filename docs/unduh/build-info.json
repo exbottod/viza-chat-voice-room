@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.340",
-  "catatan": "• Panel React: halaman User, Room, dan Gift dengan tampilan alat baru\n• Panel React: layar login muncul walau Firebase lambat menjawab",
-  "ukuran_apk": 74375514,
-  "sha256_apk": "1bc574140bc76215e4a6bfa5d250880004968dbd9543e6acd9dff8a7a4eb4bec",
+  "versi": "1.0.341",
+  "catatan": "• Panel React: nama grup menu mengikuti acuan (USER MANAGEMENT, FINANCIAL MANAGEMENT, GAMING) dan pana\n• Panel React: menu samping bergaya Rayzi, topbar lonceng + profil, halaman Emote",
+  "ukuran_apk": 74375515,
+  "sha256_apk": "f52f10f3094d04b18d95133b4a5dd7417f5af35d16defb7f2aa6dbe819176fd4",
   "abis": {
     "arm64": {
-      "ukuran": 74375514,
-      "sha256": "1bc574140bc76215e4a6bfa5d250880004968dbd9543e6acd9dff8a7a4eb4bec"
+      "ukuran": 74375515,
+      "sha256": "f52f10f3094d04b18d95133b4a5dd7417f5af35d16defb7f2aa6dbe819176fd4"
     },
     "armv7": {
-      "ukuran": 72610027,
-      "sha256": "fbfda77b670b3e9ead987d6061c270e6a83e5c04dbbfe1772b1c655c4c8f08b1"
+      "ukuran": 72610036,
+      "sha256": "a30e61675799a81aafaf7b99b54dd20a2f15db7d83d7295d6304939ca22c9ba6"
     },
     "universal": {
-      "ukuran": 122229481,
-      "sha256": "48b2ac19179e3028543969a36783aabe9936e6ed4f2c52b83c18ccd6a18f7ece"
+      "ukuran": 122229486,
+      "sha256": "3443a062e98960ff3fe8880e51834512d567c5cee66a02bd24a69bfe5d6d94eb"
     }
   }
 }

@@ -1,2 +1,2 @@
-• Panel React: halaman User, Room, dan Gift dengan tampilan alat baru
-• Panel React: layar login muncul walau Firebase lambat menjawab
+• Panel React: nama grup menu mengikuti acuan (USER MANAGEMENT, FINANCIAL MANAGEMENT, GAMING) dan pana
+• Panel React: menu samping bergaya Rayzi, topbar lonceng + profil, halaman Emote

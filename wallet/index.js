@@ -3745,6 +3745,61 @@ async function asetHapus(env, nama) {
   return true;
 }
 
+/** Info iklan untuk aplikasi (dipakai jalur app maupun panel). */
+async function iklanInfoPengguna(env, uid) {
+  const at = await aturIklan(env);
+  let dipakai = 0;
+  try {
+    await siapIklan(env);
+    const awal = Date.parse(bulanIni() + "-01T00:00:00Z");
+    const r = await pipe(env, [
+      {
+        sql: `select count(*) as n from iklan_klaim where uid = ? and at >= ?`,
+        args: [T(uid), I(Math.max(awal, Date.now() - 86400000))],
+      },
+    ]);
+    dipakai = Number(r[0].rows[0]?.n ?? 0);
+  } catch (e) { dipakai = 0; }
+  return json({
+    ok: 1,
+    aktif: at.aktif ? 1 : 0,
+    coin: at.coin,
+    maxHari: at.maxHari,
+    dipakai,
+    sisa: Math.max(0, at.maxHari - dipakai),
+    jeda: at.jeda,
+    adUnit: at.adUnit,
+    gameId: at.gameId,
+    placement: at.placement,
+    uji: at.uji ? 1 : 0,
+  });
+}
+
+/** Klaim coin setelah iklan selesai. Batas harian dan jeda dicek di server. */
+async function iklanKlaimPengguna(env, uid) {
+  const at = await aturIklan(env);
+  if (!at.aktif) return gagal("Coin gratis lewat iklan belum dibuka");
+  if (at.coin <= 0) return gagal("Hadiah iklan belum diatur");
+  if (at.maxHari <= 0) return gagal("Batas iklan harian masih nol");
+  await siapIklan(env);
+  const sejak = Date.now() - 86400000;
+  const cek = await pipe(env, [
+    { sql: `select count(*) as n, coalesce(max(at), 0) as akhir from iklan_klaim where uid = ? and at >= ?`, args: [T(uid), I(sejak)] },
+  ]);
+  const n = Number(cek[0].rows[0]?.n ?? 0);
+  const akhir = Number(cek[0].rows[0]?.akhir ?? 0);
+  if (n >= at.maxHari) return gagal("Batas iklan hari ini sudah tercapai (" + at.maxHari + " kali)");
+  if (akhir && Date.now() - akhir < at.jeda * 1000) {
+    return gagal("Tunggu sebentar sebelum menonton iklan lagi");
+  }
+  await pipe(env, [
+    { sql: "insert into iklan_klaim (uid, coins, at) values (?, ?, ?)", args: [T(uid), I(at.coin), I(Date.now())] },
+  ]);
+  await beriCoin(env, uid, at.coin, "iklan", null);
+  const w = await pastikan(env, uid);
+  return json({ ok: 1, coins: at.coin, sisa: Math.max(0, at.maxHari - (n + 1)), w });
+}
+
 async function panel(env, body) {
   const sesi = await sesiDariToken(body.t ?? "");
   if (!sesi) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
@@ -3776,58 +3831,8 @@ async function panel(env, body) {
 
   // ---- Agensi: dipakai pemilik agensi dan host dari dalam aplikasi ----
   // ---- Iklan berhadiah: coin gratis setelah iklan selesai ditonton ----
-  if (aksi === "iklan_info") {
-    const at = await aturIklan(env);
-    let dipakai = 0;
-    try {
-      await siapIklan(env);
-      const awal = Date.parse(bulanIni() + "-01T00:00:00Z");
-      const r = await pipe(env, [
-        {
-          sql: `select count(*) as n from iklan_klaim where uid = ? and at >= ?`,
-          args: [T(uid), I(Math.max(awal, Date.now() - 86400000))],
-        },
-      ]);
-      dipakai = Number(r[0].rows[0]?.n ?? 0);
-    } catch (e) { dipakai = 0; }
-    return json({
-      ok: 1,
-      aktif: at.aktif ? 1 : 0,
-      coin: at.coin,
-      maxHari: at.maxHari,
-      dipakai,
-      sisa: Math.max(0, at.maxHari - dipakai),
-      jeda: at.jeda,
-      adUnit: at.adUnit,
-      gameId: at.gameId,
-      placement: at.placement,
-      uji: at.uji ? 1 : 0,
-    });
-  }
-
-  if (aksi === "iklan_klaim") {
-    const at = await aturIklan(env);
-    if (!at.aktif) return gagal("Coin gratis lewat iklan belum dibuka");
-    if (at.coin <= 0) return gagal("Hadiah iklan belum diatur");
-    if (at.maxHari <= 0) return gagal("Batas iklan harian masih nol");
-    await siapIklan(env);
-    const sejak = Date.now() - 86400000;
-    const cek = await pipe(env, [
-      { sql: `select count(*) as n, coalesce(max(at), 0) as akhir from iklan_klaim where uid = ? and at >= ?`, args: [T(uid), I(sejak)] },
-    ]);
-    const n = Number(cek[0].rows[0]?.n ?? 0);
-    const akhir = Number(cek[0].rows[0]?.akhir ?? 0);
-    if (n >= at.maxHari) return gagal("Batas iklan hari ini sudah tercapai (" + at.maxHari + " kali)");
-    if (akhir && Date.now() - akhir < at.jeda * 1000) {
-      return gagal("Tunggu sebentar sebelum menonton iklan lagi");
-    }
-    await pipe(env, [
-      { sql: "insert into iklan_klaim (uid, coins, at) values (?, ?, ?)", args: [T(uid), I(at.coin), I(Date.now())] },
-    ]);
-    await beriCoin(env, uid, at.coin, "iklan", null);
-    const w = await pastikan(env, uid);
-    return json({ ok: 1, coins: at.coin, sisa: Math.max(0, at.maxHari - (n + 1)), w });
-  }
+  if (aksi === "iklan_info") return await iklanInfoPengguna(env, uid);
+  if (aksi === "iklan_klaim") return await iklanKlaimPengguna(env, uid);
 
   if (aksi === "agency_info") {
     await siapAgency(env);
@@ -7652,6 +7657,10 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
         }
         case "migrate":
           return ok(await pastikan(env, uid));
+        case "iklan_info":
+          return await iklanInfoPengguna(env, uid);
+        case "iklan_klaim":
+          return await iklanKlaimPengguna(env, uid);
         case "send_gift":
           return await kirimGift(env, uid, p);
         case "topup":

@@ -392,8 +392,40 @@ fun frameAssetOf(frameId: String?, vip: Int, until: Long): VipAsset? {
 }
 
 @Composable
-fun FrameOverlay(a: VipAsset, size: Dp) {
-    key(a.updatedAt) { VipMedia(a, Modifier.requiredSize(size), loop = true) }
+fun FrameOverlay(a: VipAsset, size: Dp, diam: Boolean = false) {
+    key(a.updatedAt) {
+        if (diam) BingkaiDiam(a, Modifier.requiredSize(size))
+        else VipMedia(a, Modifier.requiredSize(size), loop = true)
+    }
+}
+
+/**
+ * Bingkai versi DIAM untuk kursi mic.
+ *
+ * Contoh room ZEGOCLOUD terasa ringan karena tiap kursi hanya menampilkan satu
+ * foto. Di Viza, bingkai berjenis SVGA/MP4 diputar berulang di tiap kursi, jadi
+ * sepuluh kursi berarti sepuluh pemutar animasi yang jalan terus. Di kursi,
+ * bingkai sekarang hanya gambar diam (poster, atau satu kali putar lalu berhenti),
+ * sedangkan animasi penuh tetap dipakai di layar profil dan pratinjau.
+ */
+@Composable
+fun BingkaiDiam(a: VipAsset, modifier: Modifier) {
+    if (a.poster.isNotBlank()) {
+        coil.compose.AsyncImage(
+            model = a.poster,
+            contentDescription = null,
+            imageLoader = rememberVipLoader(),
+            modifier = modifier,
+            contentScale = ContentScale.Fit,
+        )
+        return
+    }
+    val jenis = kindAset(a.kind, a.url, if (a.hasData) VipAssets.bytesSegera(a) else null)
+    when (jenis) {
+        // Satu kali putar saja, tidak berulang, jadi decoder berhenti sendiri.
+        "mp4", "svga" -> VipMedia(a, modifier, loop = false)
+        else -> VipMediaSafe(a, modifier, loop = false, fallback = {})
+    }
 }
 
 /** Efek masuk untuk satu pesan "masuk kamar": item store yang dipakai dulu, lalu efek VIP. */

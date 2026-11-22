@@ -2152,8 +2152,19 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
     LaunchedEffect(uidKursi) { if (uidKursi != null) ProfilRoom.pastikan(uidKursi) }
     val seatFrame = if (seat != null) frameAssetOf(seatUser?.frame, seatUser?.vip ?: 0, seatUser?.vipUntil ?: 0L) else null
     // Gelombang & gelembung suara: muncul di kursi mic saat orangnya bicara.
-    val bicaraEvent = seat != null && !seat.muted && AgoraVoice.bicara.contains(seat.uid)
-    val lvlMentah = if (seat != null && !seat.muted) (AgoraVoice.levels[seat.uid] ?: 0f) else 0f
+    // Suara dibaca lewat derivedStateOf dan dibulatkan: peta level suara diganti
+    // seluruhnya sekitar sepuluh kali per detik, dan dulu setiap kursi menghitung
+    // ulang tiap kali walau angkanya tidak berubah. Sekarang kursi yang diam
+    // benar-benar tidak dihitung ulang.
+    val suaraKursi by remember(uidKursi, seat?.muted) {
+        androidx.compose.runtime.derivedStateOf {
+            val b = seat != null && !seat.muted && AgoraVoice.bicara.contains(seat.uid)
+            val l = if (seat != null && !seat.muted) (AgoraVoice.levels[seat.uid] ?: 0f) else 0f
+            Pair(b, (l.coerceIn(0f, 1f) * 20f).toInt() / 20f)
+        }
+    }
+    val bicaraEvent = suaraKursi.first
+    val lvlMentah = suaraKursi.second
     // Kalau server suara hanya mengirim daftar pembicara tanpa angka level,
     // pakai nilai dasar supaya gelombang dan gelembung tetap kelihatan.
     val lvlTarget = if (bicaraEvent) kotlin.math.max(lvlMentah.coerceIn(0f, 1f), 0.55f)
@@ -2202,7 +2213,10 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
                     ) { Image(painterResource(R.drawable.ic_mute_mic), null, Modifier.size(12.dp), contentScale = ContentScale.Fit) }
                 }
             }
-            seatFrame?.let { FrameOverlay(it, (size.value * 1.3f).dp) }
+            // Bingkai di kursi dibuat DIAM: sepuluh bingkai SVGA/MP4 yang berputar
+            // terus adalah beban terbesar di room. Animasi penuh tetap ada di
+            // layar profil dan pratinjau.
+            seatFrame?.let { FrameOverlay(it, (size.value * 1.3f).dp, diam = true) }
             // Emote digambar SETELAH bingkai supaya tampil di depan frame,
             // bukan di belakangnya.
             var emoteShow by remember { mutableStateOf(false) }

@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.362",
   "catatan": "• panel: menu Banner (banner tab Party) dan menu Store baru (frame, banner masuk, efek masuk, lencana,",
-  "ukuran_apk": 74378559,
-  "sha256_apk": "e26adfacdc5bcf79d8f33c5d14687b27436a9f0facc4a8771fd9b07e8fac65c9",
+  "ukuran_apk": 74378546,
+  "sha256_apk": "e40d31298b7ea43be79b2785cccf84849ebb941a83e68aa1b39a91aa08fc9250",
   "abis": {
     "arm64": {
-      "ukuran": 74378559,
-      "sha256": "e26adfacdc5bcf79d8f33c5d14687b27436a9f0facc4a8771fd9b07e8fac65c9"
+      "ukuran": 74378546,
+      "sha256": "e40d31298b7ea43be79b2785cccf84849ebb941a83e68aa1b39a91aa08fc9250"
     },
     "armv7": {
-      "ukuran": 72613067,
-      "sha256": "afb08955b5e43843e1c58681a382807cd8b345d3a578f08368aa9468023d1f83"
+      "ukuran": 72613058,
+      "sha256": "5fcad74749574c6229f4c4aed478c927ee0185c6d05bfcbc8af77e91c9d35708"
     },
     "universal": {
-      "ukuran": 122232520,
-      "sha256": "7c2bf2d291123547c6a2fcc50c4f6ceeeb898eeb0af8886485828fa8745b305e"
+      "ukuran": 122232517,
+      "sha256": "840811a672b9b4bde45de49c3005aecb8654867792fdf0209b04c4f98922a304"
     }
   }
 }

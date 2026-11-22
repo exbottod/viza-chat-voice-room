@@ -10,18 +10,21 @@ import Dashboard from "./pages/Dashboard.jsx";
 import User from "./pages/User.jsx";
 import Room from "./pages/Room.jsx";
 import Gift from "./pages/Gift.jsx";
+import Emote from "./pages/Emote.jsx";
 import Belum from "./pages/Belum.jsx";
 import { Toast } from "./ui.jsx";
+import KananTopbar from "./topbar.jsx";
 
 const KETERANGAN = {
   dashboard: "Ringkasan user, room, gift, dan aktivitas admin",
   user: "Cari user, lihat detail, blokir atau buka blokir",
   room: "Pantau room, sematkan, beri tag official, dan tutup room",
   gift: "Katalog gift: cari, saring, dan hapus item",
+  emote: "Emote yang tampil di bar emote semua room",
 };
 
 /** Halaman yang sudah dipindahkan ke React. Sisanya menyusul bertahap. */
-const HALAMAN = { dashboard: Dashboard, user: User, room: Room, gift: Gift };
+const HALAMAN = { dashboard: Dashboard, user: User, room: Room, gift: Gift, emote: Emote };
 
 async function cekAdmin(user) {
   if (!user) return null;
@@ -141,11 +144,11 @@ export default function App() {
           <div><b>Viza Panel</b><span>{admin.email}</span></div>
         </div>
         {MENU.map((g) => (
-          <div key={g.grup}>
-            <div className="grup">{g.grup}</div>
+          <div key={g.grup || "atas"}>
+            {g.grup ? <div className="grup">{g.grup}</div> : null}
             {g.isi.map(([id, ikon, nama]) => (
               <a key={id} className={"menu" + (rute === id ? " aktif" : "")} href={"#" + id}>
-                <i>{ikon}</i>{nama}
+                <i className="material-icons">{ikon}</i><span>{nama}</span>
               </a>
             ))}
           </div>
@@ -166,6 +169,7 @@ export default function App() {
             <div className="crumb">{judul}</div>
             <div className="ket">{KETERANGAN[rute] || ""}</div>
           </div>
+          <KananTopbar admin={admin} />
         </div>
         <div className="isiDalam">
           {pesan && <div className="kosong" style={{ marginBottom: 12 }}>{pesan}</div>}

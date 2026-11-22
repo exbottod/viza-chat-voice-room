@@ -518,8 +518,10 @@ private fun FlyMedia(f: GiftFly) {
     val url = f.mediaUrl
     when {
         url.isBlank() -> Text(f.emoji.ifBlank { "🎁" }, fontSize = 34.sp)
+        // Video (mp4) diputar apa adanya. Dulu hanya emoji yang tampil,
+        // jadi gift mp4 terlihat tidak muncul saat dikirim.
         isVideoMedia(url, f.mediaType) ->
-            Text(f.emoji.ifBlank { "🎁" }, fontSize = 34.sp)
+            GiftVideo(url, Modifier.fillMaxSize(), onEnd = { })
         url.substringBefore('?').lowercase().endsWith(".svga") ||
             f.mediaType.lowercase().startsWith("svga") ->
             GiftSvga(url, f.emoji, Modifier.fillMaxSize(), onEnd = { })

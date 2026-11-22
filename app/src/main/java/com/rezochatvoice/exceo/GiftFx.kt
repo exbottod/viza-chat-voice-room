@@ -322,8 +322,10 @@ object GiftFx {
             RocketRepo.noteAddFail(e.message ?: "error")
         }
         // Efek layar penuh untuk semua orang di room (mp4/gif/svga) atau emoji besar.
-        // Gift cashback dilewati: animasinya sudah terbang ke kursi penerima.
-        if (!(g.cashback || g.cbRate > 0)) Rtdb.ref("giftFx/$roomId").push().setValue(
+        // Gift cashback dilewati karena animasinya sudah terbang ke kursi
+        // penerima, KECUALI gift bervideo (mp4): videonya harus tetap tampil.
+        val videoPenuh = isVideoMedia(g.mediaUrl, g.mediaType)
+        if (!(g.cashback || g.cbRate > 0) || videoPenuh) Rtdb.ref("giftFx/$roomId").push().setValue(
             hashMapOf<String, Any?>(
                 "from" to name,
                 "gift" to g.name,

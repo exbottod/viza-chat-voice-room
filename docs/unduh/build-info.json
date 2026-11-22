@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.313",
-  "catatan": "• Status menyambung dan menyambung ulang tidak ditampilkan lagi.\n• Kalau gagal, keterangan tetap muncul dan bisa diketuk untuk coba lagi.\n• Suara tetap tersambung otomatis di latar belakang.",
-  "ukuran_apk": 74344247,
-  "sha256_apk": "11a6c8d1d16b632f5e76bd327fc372913d884a10fa5f9fbb67c38499980f3767",
+  "versi": "1.0.314",
+  "catatan": "• Jalur publik /bikini-cfg.json menyajikan daftar bet dan RTP tanpa login.\n• Panel menyimpan lewat aksi bikini_cfg_set di server dompet.\n• Game memuat pengaturan itu saat dibuka, dengan angka bawaan kalau server tidak terjangkau.",
+  "ukuran_apk": 74344228,
+  "sha256_apk": "1cd9291544e0a7b5ca4af4a4ec0445aa7b249518dc073659cf5949e4c71537f7",
   "abis": {
     "arm64": {
-      "ukuran": 74344247,
-      "sha256": "11a6c8d1d16b632f5e76bd327fc372913d884a10fa5f9fbb67c38499980f3767"
+      "ukuran": 74344228,
+      "sha256": "1cd9291544e0a7b5ca4af4a4ec0445aa7b249518dc073659cf5949e4c71537f7"
     },
     "armv7": {
-      "ukuran": 72578762,
-      "sha256": "f12f7e513b513fd5a338ac6f3221465f2ff6128ae96515f1597a1a7c0a80a520"
+      "ukuran": 72578745,
+      "sha256": "937e8955f9197ab237bd4896de0554c8ddbb0c1a1ddc70a3aea89853342e7703"
     },
     "universal": {
-      "ukuran": 122198218,
-      "sha256": "edb808a133b8b6e63bd6843a1aaeca4f270dc3f7aae272a6a1e3701ad4a4b4f0"
+      "ukuran": 122198201,
+      "sha256": "ee5d528ecf5cd687328b361d60ae51e47571c25e90918f51ea4b371eaa85091f"
     }
   }
 }

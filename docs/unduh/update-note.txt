@@ -1,2 +1,2 @@
-• panel: halaman Reset user (coin, diamond, VIP, XP/level, foto profil, nama, aset My Item) untuk satu
-• panel: kotak cari aset di Store dan Aset & VIP (nama atau nomor ID) serta pencarian aset di Kirim ke
+• panel: halaman Customer Service untuk menunjuk akun CS lewat pencarian nama/ID/UID dan mencabutnya, 
+• panel: setujui top-up manual coba ulang otomatis saat sambungan ke server dompet putus, cegah klik g

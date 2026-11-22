@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.366",
-  "catatan": "• panel: halaman Reset user (coin, diamond, VIP, XP/level, foto profil, nama, aset My Item) untuk satu\n• panel: kotak cari aset di Store dan Aset & VIP (nama atau nomor ID) serta pencarian aset di Kirim ke",
-  "ukuran_apk": 74378547,
-  "sha256_apk": "7b113b34370dc58ff898b983a21139df47ae72d373a4d5f67ea8fcf881e5a8dd",
+  "versi": "1.0.367",
+  "catatan": "• panel: halaman Customer Service untuk menunjuk akun CS lewat pencarian nama/ID/UID dan mencabutnya, \n• panel: setujui top-up manual coba ulang otomatis saat sambungan ke server dompet putus, cegah klik g",
+  "ukuran_apk": 74378545,
+  "sha256_apk": "097ae68a583215baa176353633859d3546ed545137cdbdc45c7253a28f009e4a",
   "abis": {
     "arm64": {
-      "ukuran": 74378547,
-      "sha256": "7b113b34370dc58ff898b983a21139df47ae72d373a4d5f67ea8fcf881e5a8dd"
+      "ukuran": 74378545,
+      "sha256": "097ae68a583215baa176353633859d3546ed545137cdbdc45c7253a28f009e4a"
     },
     "armv7": {
-      "ukuran": 72613061,
-      "sha256": "c132c3f15ccf8a22b420b391f0fb8a12ee43d57ffe6a673c0a89a60f0f8b699d"
+      "ukuran": 72613057,
+      "sha256": "231ae49392a89b07e9e06293a0a5cca4af5e2160050c79cc3eadfb1b189fa1ba"
     },
     "universal": {
-      "ukuran": 122232518,
-      "sha256": "5c753c883027626b6be4ef780d65dfdc9d2221ddac03eebd98e3cf3c6354e3fb"
+      "ukuran": 122232508,
+      "sha256": "44b395c63f6733ab6e6f200b1e677d62068cdb99efb9b8fd6016164a4207a785"
     }
   }
 }

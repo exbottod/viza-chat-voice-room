@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.319",
   "catatan": "• Script cek sesi dompet Viza (401)\n• Script pasang Caddyfile Viza (viza -> 8080, panel, livekit, vender)",
-  "ukuran_apk": 74348901,
-  "sha256_apk": "84eb5599c342d09f63350fa6a194181200c363287665f3c06f625e6b0528b3a3",
+  "ukuran_apk": 74349361,
+  "sha256_apk": "3b2d80ac48e52a8f5084eef207d62f68bc2038f50e8dd65271345ebb5f2a45b7",
   "abis": {
     "arm64": {
-      "ukuran": 74348901,
-      "sha256": "84eb5599c342d09f63350fa6a194181200c363287665f3c06f625e6b0528b3a3"
+      "ukuran": 74349361,
+      "sha256": "3b2d80ac48e52a8f5084eef207d62f68bc2038f50e8dd65271345ebb5f2a45b7"
     },
     "armv7": {
-      "ukuran": 72583406,
-      "sha256": "4f55d81da70c88a1f77974a92ba2a363d25bc9a92d77908964731bc2cee35ef2"
+      "ukuran": 72583863,
+      "sha256": "877994395911ddfd444c7fb53d3657ed0130aaa7610655ce92fae2ce263a4198"
     },
     "universal": {
-      "ukuran": 122202859,
-      "sha256": "59af62c91fd8e3cb5bcd8f57ac8978887484fc75f5b2ca62e667ab3257e7208e"
+      "ukuran": 122203316,
+      "sha256": "cf21aff4403dfa9f56029b2387ac1a0c452bf847209ec942e3c080379487e8ff"
     }
   }
 }

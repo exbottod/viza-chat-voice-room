@@ -3,6 +3,7 @@ import { walletAdmin } from "../dompet.js";
 import { unggahBerkas, tulisRtdbServer, kunciVip } from "../unggah.js";
 import { catatLog } from "../data.js";
 import { Laci, toast } from "../ui.jsx";
+import { Pratinjau, Thumb, ekstensi, jenisMedia } from "../pratinjau.jsx";
 
 const KOSONG = { nama: "", urut: "0", harga: "0", hari: "0", mode: "berkas", url: "", berkas: null, tier: "1", nomor: "" };
 const TIER = [1, 2, 3, 4, 5, 6, 7, 8, 9];
@@ -20,6 +21,7 @@ export default function TambahAset({ buka, slot, judul, vip = false, ganti = nul
   // Pratinjau berkas yang baru dipilih: langsung tampil di formulir, lalu
   // tinggal dikonfirmasi dengan tombol Simpan.
   const [pratinjau, setPratinjau] = useState("");
+  const [lihat, setLihat] = useState(false);
   const alamatPratinjau = useRef("");
 
   const lepasPratinjau = () => {
@@ -47,6 +49,7 @@ export default function TambahAset({ buka, slot, judul, vip = false, ganti = nul
     setForm(KOSONG);
   }, [buka, ganti]);
   useEffect(() => () => { if (alamatPratinjau.current) URL.revokeObjectURL(alamatPratinjau.current); }, []);
+  useEffect(() => { if (!buka) setLihat(false); }, [buka]);
 
   /** Berkas dipilih: tampilkan pratinjau saat itu juga. */
   const pilihBerkas = (e) => {
@@ -59,6 +62,10 @@ export default function TambahAset({ buka, slot, judul, vip = false, ganti = nul
       setPratinjau(alamat);
     }
   };
+
+  // Berkas yang sedang dipilih (belum disimpan) atau tautan yang diketik.
+  const sumberLihat = pratinjau || (form.mode === "tautan" ? form.url.trim() : "");
+  const jenisLihat = form.berkas?.name || sumberLihat;
 
   const simpan = async () => {
     setSibuk(true);
@@ -105,9 +112,12 @@ export default function TambahAset({ buka, slot, judul, vip = false, ganti = nul
 
   return (
     <Laci buka={buka} judul={(ganti ? "Ganti " : "Tambah ") + (judul || slot) + (vip ? " VIP" : "")} onTutup={onTutup}
-      kaki={<button className="tombolBaru" onClick={simpan} disabled={sibuk}>
-        {sibuk ? (progres || "Menyimpan…") : "Simpan"}
-      </button>}>
+      kaki={<span style={{ display: "flex", gap: 8, width: "100%", justifyContent: "flex-end" }}>
+        {sumberLihat ? <button type="button" className="pil" onClick={() => setLihat(true)}>Pratinjau</button> : null}
+        <button className="tombolBaru" onClick={simpan} disabled={sibuk}>
+          {sibuk ? (progres || "Menyimpan…") : "Simpan"}
+        </button>
+      </span>}>
       {vip ? (
         <>
           <div className="barisSaklar"><b>Tier VIP</b></div>
@@ -146,21 +156,23 @@ export default function TambahAset({ buka, slot, judul, vip = false, ganti = nul
         <div className="kotakPratinjau">
           <div className="judulPratinjau">Pratinjau</div>
           <div className="isiPratinjau">
-            {/\.(png|jpe?g|gif|webp)$/i.test(form.berkas.name) ? (
+            {jenisMedia(form.berkas.name, form.berkas.name) === "gambar" ? (
               <img src={pratinjau} alt={form.berkas.name} />
-            ) : /\.mp4$/i.test(form.berkas.name) ? (
+            ) : jenisMedia(form.berkas.name, form.berkas.name) === "video" ? (
               <video src={pratinjau} muted loop playsInline autoPlay />
             ) : (
+              // SVGA: bingkai pertamanya digambar supaya jenis berkasnya terlihat.
               <div className="ikonPratinjau">
-                <span className="material-icons">animation</span>
+                <Thumb url={pratinjau} kind={ekstensi(form.berkas.name)} nama={form.berkas.name} lebar={84} />
                 <b>{(form.berkas.name.split(".").pop() || "").toUpperCase()}</b>
-                <i>Pratinjau bergerak muncul di aplikasi</i>
+                <i>Ketuk Pratinjau untuk memutar animasinya</i>
               </div>
             )}
             <div className="ketPratinjau">
               <b>{form.berkas.name}</b>
               <span>{Math.max(1, Math.round(form.berkas.size / 1024))} KB</span>
             </div>
+            <button type="button" className="pil" onClick={() => setLihat(true)}>Pratinjau</button>
             <button type="button" className="pil" onClick={() => { lepasPratinjau(); setForm({ ...form, berkas: null }); }}>Ganti berkas</button>
           </div>
           <div className="catatan">Sudah sesuai? Tekan Simpan untuk mengunggah dan menyimpannya.</div>
@@ -181,6 +193,9 @@ export default function TambahAset({ buka, slot, judul, vip = false, ganti = nul
         </>
       )}
       {progres ? <div className="catatan">{progres}</div> : null}
+
+      <Pratinjau aset={lihat && sumberLihat ? { url: sumberLihat, kind: ekstensi(jenisLihat), nama: form.nama || form.berkas?.name || "Pratinjau" } : null}
+        onTutup={() => setLihat(false)} />
     </Laci>
   );
 }

@@ -3,6 +3,7 @@ import { walletAdmin } from "../dompet.js";
 import { unggahBerkas, tulisRtdbServer, kunciVip } from "../unggah.js";
 import { catatLog } from "../data.js";
 import { Panel, toast } from "../ui.jsx";
+import { Pratinjau, Thumb, ekstensi, jenisMedia } from "../pratinjau.jsx";
 
 const JENIS = [
   ["frame", "Bingkai"], ["badge", "Lencana"], ["medal", "Medali"],
@@ -25,6 +26,7 @@ export default function Kirim() {
   const [progres, setProgres] = useState("");
   const [hasil, setHasil] = useState(null);
   const [pratinjau, setPratinjau] = useState("");
+  const [lihat, setLihat] = useState(false);
   const alamatPratinjau = useRef("");
 
   const lepas = () => {
@@ -152,21 +154,22 @@ export default function Kirim() {
         <div className="kotakPratinjau">
           <div className="judulPratinjau">Pratinjau</div>
           <div className="isiPratinjau">
-            {/\.(png|jpe?g|gif|webp)$/i.test(form.berkas.name) ? (
+            {jenisMedia(form.berkas.name, form.berkas.name) === "gambar" ? (
               <img src={pratinjau} alt={form.berkas.name} />
-            ) : /\.mp4$/i.test(form.berkas.name) ? (
+            ) : jenisMedia(form.berkas.name, form.berkas.name) === "video" ? (
               <video src={pratinjau} muted loop playsInline autoPlay />
             ) : (
               <div className="ikonPratinjau">
-                <span className="material-icons">animation</span>
+                <Thumb url={pratinjau} kind={ekstensi(form.berkas.name)} nama={form.berkas.name} lebar={84} />
                 <b>{(form.berkas.name.split(".").pop() || "").toUpperCase()}</b>
-                <i>Pratinjau bergerak muncul di aplikasi</i>
+                <i>Ketuk Pratinjau untuk memutar animasinya</i>
               </div>
             )}
             <div className="ketPratinjau">
               <b>{form.berkas.name}</b>
               <span>{Math.max(1, Math.round(form.berkas.size / 1024))} KB</span>
             </div>
+            <button type="button" className="pil" onClick={() => setLihat(true)}>Pratinjau</button>
           </div>
         </div>
       ) : null}
@@ -188,6 +191,9 @@ export default function Kirim() {
           {hasil.idUnik ? " · ID unik " + hasil.idUnik : ""}
         </div>
       ) : null}
+      <Pratinjau aset={lihat && (pratinjau || form.url.trim()) ? { url: pratinjau || form.url.trim(), kind: ekstensi(form.berkas?.name || form.url), nama: form.nama || form.berkas?.name || "Pratinjau" } : null}
+        onTutup={() => setLihat(false)} />
+
     </Panel>
   );
 }

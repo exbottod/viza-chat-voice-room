@@ -5,6 +5,7 @@ import { walletAdmin } from "../dompet.js";
 import { ambilSemuaMentah, catatLog } from "../data.js";
 import { bacaRtdbServer, tulisRtdbServer, hapusRtdbServer, kunciVip, unggahBerkas } from "../unggah.js";
 import { Konfirmasi, Kosong, Laci, Panel, Rangka, Tabel, Tag, toast } from "../ui.jsx";
+import { Pratinjau } from "../pratinjau.jsx";
 
 const KOSONG = { judul: "", sub: "", link: "", urut: "0", aktif: true, mode: "berkas", url: "", berkas: null };
 const teks = (v) => (typeof v === "string" || typeof v === "number" ? String(v) : "");
@@ -23,6 +24,7 @@ export default function Banner() {
   const [pratinjau, setPratinjau] = useState("");
   const alamat = useRef("");
   const [hapus, setHapus] = useState(null);
+  const [lihat, setLihat] = useState(false);
 
   const lepas = () => {
     if (alamat.current) { URL.revokeObjectURL(alamat.current); alamat.current = ""; }
@@ -163,7 +165,10 @@ export default function Banner() {
       </Panel>
 
       <Laci buka={buka} judul={ganti ? "Ubah banner" : "Tambah banner"} onTutup={() => setBuka(false)}
-        kaki={<button className="tombolBaru" onClick={simpan} disabled={sibuk}>{sibuk ? (progres || "Menyimpan…") : "Simpan"}</button>}>
+        kaki={<span style={{ display: "flex", gap: 8, width: "100%", justifyContent: "flex-end" }}>
+        {gambarForm ? <button type="button" className="pil" onClick={() => setLihat(true)}>Pratinjau</button> : null}
+        <button className="tombolBaru" onClick={simpan} disabled={sibuk}>{sibuk ? (progres || "Menyimpan…") : "Simpan"}</button>
+      </span>}>
         <div className="barisSaklar"><b>Sumber gambar</b>
           <span style={{ display: "flex", gap: 8 }}>
             <button type="button" className={"pil" + (form.mode === "berkas" ? " on" : "")} onClick={() => setForm({ ...form, mode: "berkas" })}>Unggah</button>
@@ -190,6 +195,7 @@ export default function Banner() {
                   <span>{Math.max(1, Math.round(form.berkas.size / 1024))} KB</span>
                 </div>
               ) : null}
+              <button type="button" className="pil" onClick={() => setLihat(true)}>Pratinjau</button>
               {form.berkas && form.mode === "berkas"
                 ? <button type="button" className="pil" onClick={() => { lepas(); setForm({ ...form, berkas: null }); }}>Ganti berkas</button> : null}
             </div>
@@ -212,6 +218,9 @@ export default function Banner() {
         </div>
         {progres ? <div className="catatan">{progres}</div> : null}
       </Laci>
+
+      <Pratinjau aset={lihat && gambarForm ? { url: gambarForm, kind: (gambarForm.split("?")[0].split(".").pop() || ""), nama: form.judul || "Banner" } : null}
+        onTutup={() => setLihat(false)} />
 
       <Konfirmasi buka={!!hapus} judul="Hapus banner?" pesan={(teks(hapus?.title) || hapus?.id || "") + " tidak akan tampil lagi di tab Party."}
         tombol="Hapus" sibuk={sibuk} onYa={jalanHapus} onTidak={() => setHapus(null)} />

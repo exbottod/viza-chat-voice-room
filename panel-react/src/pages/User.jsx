@@ -1,11 +1,24 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { walletAdmin } from "../dompet.js";
 import { useKoleksi, rupiah, waktu, catatLog, hapusDokumen, tulisDokumen, ambilDokumen, teks } from "../data.js";
 import { Kartu, Panel, Pil, Tag, Kosong, Cari, Laci, Konfirmasi, Tabel, Rangka, toast, pakaiUrut } from "../ui.jsx";
 import { auth } from "../firebase.js";
 
 export default function User() {
-  const users = useKoleksi("userIds", 500);
+  // Dua koleksi dibaca sekaligus:
+  //  - users/{uid}   : profil asli (nama, photoUrl, email, userId, createdAt)
+  //  - userIds/{id}  : nomor ID angka user adalah ID dokumennya, plus vip/exp
+  // Halaman lama hanya membaca userIds, yang tidak menyimpan foto dan tidak
+  // punya nomor angka di dalam isinya, karena itu foto kosong dan kolom UID
+  // menampilkan UID panjang.
+  const users = useKoleksi("users", 500);
+  const ids = useKoleksi("userIds", 500);
   const banned = useKoleksi("banned", 300);
+  const [dompet, setDompet] = useState({});
+  // Salinan dari server (akun layanan) dipakai bila aturan Firestore menolak
+  // pembacaan langsung dari browser, mis. saat panel dibuka admin non-developer.
+  const [serverProfil, setServerProfil] = useState({});
+  const [serverNomor, setServerNomor] = useState({});
   const [kata, setKata] = useState("");
   const [saring, setSaring] = useState("semua");
   const [laci, setLaci] = useState(null);
@@ -15,30 +28,106 @@ export default function User() {
 
   const diblokir = useMemo(() => new Set(banned.isi.map((b) => b.id)), [banned.isi]);
 
+  // Koin dibaca lewat server (akun layanan) supaya tetap terbaca walau aturan
+  // Firestore membatasi koleksi wallets untuk email developer saja.
+  useEffect(() => {
+    let hidup = true;
+    walletAdmin({ op: "fs_list", koleksi: "wallets", batas: 500 })
+      .then((r) => {
+        if (!hidup) return;
+        const peta = {};
+        (r?.items || []).forEach((d) => { peta[String(d.id || "")] = d; });
+        setDompet(peta);
+      })
+      .catch(() => {});
+    return () => { hidup = false; };
+  }, []);
+
+  useEffect(() => {
+    let hidup = true;
+    Promise.all([
+      walletAdmin({ op: "fs_list", koleksi: "users", batas: 500 }).catch(() => null),
+      walletAdmin({ op: "fs_list", koleksi: "userIds", batas: 500 }).catch(() => null),
+    ]).then(([rUsers, rIds]) => {
+      if (!hidup) return;
+      const p = {};
+      (rUsers?.items || []).forEach((d) => { p[String(d.id || "")] = d; });
+      setServerProfil(p);
+      const n = {};
+      (rIds?.items || []).forEach((d) => {
+        const uid = String(d.uid || "");
+        if (!uid) return;
+        n[uid] = { nomor: /^\d{3,}$/.test(String(d.id || "")) ? String(d.id) : "", vip: Number(d.vip || 0), dok: d };
+      });
+      setServerNomor(n);
+    });
+    return () => { hidup = false; };
+  }, []);
+
+  /** uid -> { nomor (ID angka), vip, ... } dari dokumen userIds/{nomor}. */
+  const petaNomor = useMemo(() => {
+    const peta = {};
+    ids.isi.forEach((d) => {
+      const uid = String(d.uid || "");
+      if (!uid) return;
+      const nomor = /^\d{3,}$/.test(String(d.id || "")) ? String(d.id) : "";
+      peta[uid] = { nomor, vip: Number(d.vip || 0), dok: d };
+    });
+    Object.entries(serverNomor).forEach(([uid, v]) => {
+      if (!peta[uid] || (!peta[uid].nomor && v.nomor)) peta[uid] = { ...(peta[uid] || {}), ...v };
+    });
+    return peta;
+  }, [ids.isi, serverNomor]);
+
+  /** uid -> dokumen profil users/{uid}. */
+  const petaProfil = useMemo(() => {
+    const peta = {};
+    users.isi.forEach((d) => { peta[String(d.id || "")] = d; });
+    Object.entries(serverProfil).forEach(([uid, d]) => {
+      if (!peta[uid]) peta[uid] = d;
+      else {
+        // Lengkapi medan yang kosong dari salinan server (mis. photoUrl).
+        peta[uid] = {
+          ...d, ...peta[uid],
+          photoUrl: teks(peta[uid].photoUrl) || teks(d.photoUrl),
+          name: teks(peta[uid].name) || teks(d.name),
+          userId: teks(peta[uid].userId) || teks(d.userId),
+        };
+      }
+    });
+    return peta;
+  }, [users.isi, serverProfil]);
+
   const baris = useMemo(() => {
     const k = kata.trim().toLowerCase();
-    return users.isi
-      .map((u) => {
-        const uid = u.uid || u.id;
+    const semuaUid = new Set([...Object.keys(petaProfil), ...Object.keys(petaNomor)]);
+    return [...semuaUid]
+      .filter(Boolean)
+      .map((uid) => {
+        const profil = petaProfil[uid] || {};
+        const unik = petaNomor[uid] || {};
+        const dom = dompet[uid] || {};
+        const nomor = String(unik.nomor || profil.userId || "");
         return {
           __kunci: uid,
-          uid: String(uid ?? ""),
-          nama: teks(u.name) || teks(u.nama) || "(tanpa nama)",
-          foto: u.avatar || u.photo || "",
-          vip: Number(u.vip || 0),
-          koin: Number(u.coins ?? u.coin ?? 0),
-          dibuat: Number(u.createdAt || u.dibuat || 0),
-          blok: diblokir.has(u.id) || diblokir.has(uid),
+          uid,
+          nomor,
+          nama: teks(profil.nickname) || teks(profil.name) || teks(unik.dok?.name) || "(tanpa nama)",
+          foto: teks(profil.photoUrl) || teks(profil.photo) || teks(profil.avatar) || "",
+          vip: Number(unik.vip || profil.vip || 0),
+          koin: Number(dom.coins ?? unik.dok?.coins ?? profil.coins ?? 0),
+          dibuat: Number(profil.createdAt || profil.dibuat || unik.dok?.createdAt || 0),
+          blok: diblokir.has(uid),
         };
       })
       .filter((u) => {
-        if (k && !u.nama.toLowerCase().includes(k) && !u.uid.toLowerCase().includes(k)) return false;
+        if (k && !u.nama.toLowerCase().includes(k) && !u.uid.toLowerCase().includes(k) && !u.nomor.includes(k)) return false;
         if (saring === "aktif") return !u.blok;
         if (saring === "blokir") return u.blok;
         if (saring === "vip") return u.vip > 0;
         return true;
       });
-  }, [users.isi, diblokir, kata, saring]);
+  }, [petaProfil, petaNomor, dompet, diblokir, kata, saring]);
 
   const [urutBaris, urut, klikUrut] = pakaiUrut(baris, ["nama", 1]);
 
@@ -96,7 +185,13 @@ export default function User() {
         </div>
       ),
     },
-    { kunci: "uid", label: "UID", sel: (u) => <span title={u.uid}>{u.uid.slice(0, 14)}…</span> },
+    {
+      kunci: "nomor", label: "ID", urut: true,
+      sel: (u) => (u.nomor
+        ? <b style={{ color: "#83d8ae" }}>{u.nomor}</b>
+        : <span className="catatan" style={{ padding: 0 }}>belum ada</span>),
+    },
+    { kunci: "uid", label: "UID", sel: (u) => <span title={u.uid} style={{ fontFamily: "monospace", fontSize: 11 }}>{u.uid.slice(0, 10)}…</span> },
     { kunci: "koin", label: "KOIN", urut: true, sel: (u) => rupiah(u.koin) },
     { kunci: "dibuat", label: "TERDAFTAR", urut: true, sel: (u) => (u.dibuat ? waktu(u.dibuat) : "—") },
     { kunci: "blok", label: "STATUS", sel: (u) => (u.blok ? <Tag jenis="blokir">diblokir</Tag> : <Tag>aktif</Tag>) },
@@ -114,16 +209,16 @@ export default function User() {
   return (
     <>
       <Kartu isi={[
-        [rupiah(users.isi.length), "User terdaftar"],
-        [rupiah(users.isi.length - baris.filter((b) => b.blok).length), "Tidak diblokir"],
+        [rupiah(baris.length), "User terdaftar"],
+        [rupiah(baris.filter((b) => !b.blok).length), "Tidak diblokir"],
         [rupiah(diblokir.size), "Diblokir"],
-        [rupiah(users.isi.filter((u) => Number(u.vip || 0) > 0).length), "User VIP"],
+        [rupiah(baris.filter((u) => u.vip > 0).length), "User VIP"],
       ]} />
 
       <Panel
         judul="Daftar user"
-        aksi={<Cari nilai={kata} onUbah={setKata} placeholder="Cari nama atau UID…" />}
-        kaki={`${baris.length} user ditampilkan dari ${users.isi.length} terdaftar`}
+        aksi={<Cari nilai={kata} onUbah={setKata} placeholder="Cari nama, ID angka, atau UID…" />}
+        kaki={`${baris.length} user ditampilkan`}
       >
         <div className="filter" style={{ padding: "0 14px 10px" }}>
           {[["semua", "Semua"], ["aktif", "Aktif"], ["vip", "VIP"], ["blokir", "Diblokir"]].map(([id, nama]) => (
@@ -153,7 +248,8 @@ export default function User() {
               <div className="kotakMini"><b>{detail.ban ? "Diblokir" : "Aktif"}</b><span>Status</span></div>
               <div className="kotakMini"><b>{detail.profil?.level ?? "—"}</b><span>Level</span></div>
             </div>
-            <div className="barisDetail"><span>UID</span><b>{laci.uid}</b></div>
+            <div className="barisDetail"><span>ID angka</span><b>{laci.nomor || "belum ada"}</b></div>
+            <div className="barisDetail"><span>UID</span><b style={{ wordBreak: "break-all", fontSize: 11 }}>{laci.uid}</b></div>
             <div className="barisDetail"><span>Nama</span><b>{detail.profil?.name || laci.nama}</b></div>
             <div className="barisDetail"><span>Email</span><b>{detail.profil?.email || "—"}</b></div>
             <div className="barisDetail"><span>Vip sampai</span><b>{detail.profil?.vipUntil ? waktu(detail.profil.vipUntil) : "—"}</b></div>

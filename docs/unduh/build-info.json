@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.324",
   "catatan": "• Kotak .fs-card tidak dibatasi tinggi dan tidak digulir, jadi judul tidak\n• Latar kartu diberi ruang 64 piksel di atas untuk ikon scatter.\n• Kartu hanya dikecilkan (skala) bila benar-benar tidak muat di layar.\n• Keterangan tahap di bawah game hanya tampil saat memuat atau ada galat.",
-  "ukuran_apk": 74349805,
-  "sha256_apk": "c8b01d4c4d143391db6e330c9405cf46e47fc7209fedd5d9addfe22e5afc705a",
+  "ukuran_apk": 74349465,
+  "sha256_apk": "4b0c000c5807ba140943344c0bd17b35cdec460cb14c9d9298d1092de55773ec",
   "abis": {
     "arm64": {
-      "ukuran": 74349805,
-      "sha256": "c8b01d4c4d143391db6e330c9405cf46e47fc7209fedd5d9addfe22e5afc705a"
+      "ukuran": 74349465,
+      "sha256": "4b0c000c5807ba140943344c0bd17b35cdec460cb14c9d9298d1092de55773ec"
     },
     "armv7": {
-      "ukuran": 72584320,
-      "sha256": "d0c4b19981e1ee4ce314311a290d123dc41751574a6e7ffd0e64f8c7d60f0894"
+      "ukuran": 72583977,
+      "sha256": "56f2cc79074daa967d27d31d75437ee7966a1aae3a3b2bf1a1a6124a160c1a63"
     },
     "universal": {
-      "ukuran": 122203779,
-      "sha256": "222a318956435e91b07cf892b9115efd301ca1fa3890a3bc7d7f3db29744cf70"
+      "ukuran": 122203424,
+      "sha256": "7354f0a88d15fe465f082be3d09cbbcc8c26332337e668e1029dbaf3f481866f"
     }
   }
 }

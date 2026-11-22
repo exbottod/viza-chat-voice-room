@@ -21,19 +21,31 @@ export const jenisMedia = (url, kind) => {
 };
 
 let janjiSvga = null;
-/** Muat pustaka SVGA sekali saja; kembalikan null bila gagal (offline dsb). */
+
+/**
+ * Muat pustaka SVGA sekali saja. Berkas svga.min.js disalin ke folder public
+ * dan dimuat sebagai skrip biasa, karena pustaka ini berbentuk UMD dan gagal
+ * bila dipaksa lewat bundel ESM (pemutar tidak pernah terdaftar). Bila berkas
+ * lokal tidak ada, dipakai CDN sebagai cadangan.
+ */
 function muatSvga() {
   if (typeof window === "undefined") return Promise.resolve(null);
   if (window.SVGA) return Promise.resolve(window.SVGA);
   if (!janjiSvga) {
-    // Paket SVGA berbentuk UMD: di sebagian pemuat ia menempel di window,
-    // di bundel lain ia jadi ekspor modul. Keduanya dicoba.
-    janjiSvga = import("svgaplayerweb")
-      .then((m) => {
-        const calon = [window.SVGA, m?.default?.default, m?.default, m?.s?.default, m?.s, m]
-          .find((x) => x && typeof x === "object" && x.Player);
-        return calon || null;
-      })
+    const alamat = [
+      new URL("svga.min.js", document.baseURI).href,
+      "https://cdn.jsdelivr.net/npm/svgaplayerweb@2.3.2/build/svga.min.js",
+    ];
+    const pasang = (url) => new Promise((ok, tolak) => {
+      const t = document.createElement("script");
+      t.src = url;
+      t.async = true;
+      t.onload = () => (window.SVGA && window.SVGA.Player ? ok(window.SVGA) : tolak(new Error("SVGA kosong")));
+      t.onerror = () => tolak(new Error("gagal muat " + url));
+      document.head.appendChild(t);
+    });
+    janjiSvga = pasang(alamat[0])
+      .catch(() => pasang(alamat[1]))
       .catch(() => null);
   }
   return janjiSvga;

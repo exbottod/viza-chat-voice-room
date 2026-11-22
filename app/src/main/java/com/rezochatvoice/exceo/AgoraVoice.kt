@@ -4,8 +4,8 @@ import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
-import android.media.AudioManager
 import android.content.pm.PackageManager
+import android.media.AudioManager
 import android.media.MediaPlayer
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -20,10 +20,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth
-import io.livekit.android.LiveKit
-import io.livekit.android.events.RoomEvent
-import io.livekit.android.room.Room
-import io.livekit.android.room.track.RemoteAudioTrack
+import io.agora.rtc2.ChannelMediaOptions
+import io.agora.rtc2.Constants
+import io.agora.rtc2.IRtcEngineEventHandler
+import io.agora.rtc2.RtcEngine
+import io.agora.rtc2.RtcEngineConfig
+import io.agora.rtc2.UserInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -38,130 +40,55 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /**
- * Suara room lewat LiveKit di VPS sendiri (tanpa Agora, tanpa kuota menit).
- * Nama objek dipertahankan (AgoraVoice) supaya layar yang memakainya tidak berubah.
- * Satu room = satu room LiveKit (nama = roomId). Token dari VPS, diverifikasi dengan login Firebase.
+ * Suara room lewat Agora (bukan VPS sendiri), jadi beban server Viza hanya untuk
+ * dompet, gift, dan berkas aset.
+ *
+ * Nama objek tetap AgoraVoice supaya layar yang memakainya tidak perlu diubah.
+ * Satu room = satu channel Agora (nama channel = roomId). App ID dan token
+ * diambil dari server dompet (/agora-token); App Certificate tidak pernah ada
+ * di HP, dan ganti akun Agora cukup ganti isian di server tanpa rilis APK.
  */
 object AgoraVoice {
-    private const val TAG = "LiveKitVoice"
-    private const val TOKEN_URL = "https://viza.43-156-99-4.sslip.io/lktoken"
+    private const val TAG = "AgoraVoice"
+    private const val TOKEN_URL = "https://viza.43-156-99-4.sslip.io/agora-token"
 
-    /**
-     * Penyetelan suara: peredam derau (noise suppression) dan filter nada
-     * rendah dimatikan, karena keduanya memotong musik yang diputar user di
-     * room sehingga terdengar gepeng dan tidak jelas. Peredam gema tetap
-     * hidup supaya tidak terjadi lengkingan.
-     */
-    private val ROOM_OPSI = io.livekit.android.RoomOptions(
-        adaptiveStream = true,
-        dynacast = true,
-        audioTrackCaptureDefaults = io.livekit.android.room.track.LocalAudioTrackOptions(
-            echoCancellation = true,
-            noiseSuppression = false,
-            autoGainControl = true,
-            highPassFilter = false,
-            typingNoiseDetection = false,
-        ),
-    )
+    var onProblem: ((String) -> Unit)? = null
+
+    var lastStatus by androidx.compose.runtime.mutableStateOf("")
+
+    /** Tingkat suara tiap peserta (uid Firebase -> 0..1) untuk gelombang di kursi mic. */
+    var levels by androidx.compose.runtime.mutableStateOf<Map<String, Float>>(emptyMap())
+        private set
+
+    /** UID yang benar-benar sedang bersuara menurut Agora. */
+    var bicara by androidx.compose.runtime.mutableStateOf<Set<String>>(emptySet())
+        private set
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mainScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-    private var room: Room? = null
-    private var appCtx: Context? = null
-    private var joinJob: Job? = null
-    private var pantauSambung: Job? = null
-    private var eventJob: Job? = null
-    private val joinLock = Mutex()
-
+    @Volatile private var engine: RtcEngine? = null
+    @Volatile private var appCtx: Context? = null
     @Volatile private var roomId: String? = null
     @Volatile private var joined = false
     @Volatile private var wantSpeaking = false
     @Volatile private var muteRemote = false
     @Volatile private var sengajaKeluar = false
+    @Volatile private var akunSaya = ""
     @Volatile private var percobaan = 0
-    @Volatile private var konekSejak = 0L
-    // Berapa kali sambungan putus dalam hitungan detik setelah tersambung. Kalau
-    // media tidak bisa terbangun (UDP/TCP media tertutup, jaringan seluler aneh),
-    // LiveKit akan connect lalu putus berulang. Dulu aplikasi menyambung ulang
-    // tanpa batas sehingga status "menyambung ulang" tidak pernah berhenti dan
-    // aplikasi jadi berat.
-    @Volatile private var gagalCepat = 0
-    private var pantauReconnect: Job? = null
 
-    var lastStatus by androidx.compose.runtime.mutableStateOf("")
+    // Agora memberi uid angka; peta ini mengembalikannya ke uid Firebase.
+    private val uidAkun = HashMap<Int, String>()
 
-    /**
-     * Tingkat suara tiap peserta (uid -> 0..1), dipakai untuk gelombang suara
-     * di belakang kursi mic supaya terlihat siapa yang sedang bicara.
-     */
-    var levels by androidx.compose.runtime.mutableStateOf<Map<String, Float>>(emptyMap())
-        private set
+    private var joinJob: Job? = null
+    private val joinLock = Mutex()
 
-    /**
-     * UID yang benar-benar sedang bersuara menurut LiveKit. Dipakai untuk
-     * gelembung/gelombang di kursi mic, karena level suara peserta lain
-     * tidak selalu dikirim lewat angka.
-     */
-    var bicara by androidx.compose.runtime.mutableStateOf<Set<String>>(emptySet())
-        private set
-
-    private var levelJob: Job? = null
-
-    private fun mulaiPantauLevel() {
-        levelJob?.cancel()
-        levelJob = mainScope.launch {
-            while (joined) {
-                val r = room
-                if (r == null) { delay(300); continue }
-                val m = HashMap<String, Float>()
-                val deteksi = HashSet<String>()
-                try {
-                    val uidSaya = r.localParticipant.identity?.value
-                    if (uidSaya != null) {
-                        val lvSaya = r.localParticipant.audioLevel
-                        m[uidSaya] = lvSaya
-                        if (lvSaya > 0.02f) deteksi.add(uidSaya)
-                    }
-                    // Peserta lain: ambil dari daftar pembicara aktif LiveKit,
-                    // angkanya punya nilai bawaan supaya gelombang tetap muncul.
-                    val aktif = bicara
-                    for ((_, p) in r.remoteParticipants) {
-                        val id = p.identity?.value ?: continue
-                        val lv = p.audioLevel
-                        if (lv > 0.02f) deteksi.add(id)
-                        m[id] = if (lv > 0.01f) lv else if (aktif.contains(id)) 0.55f else 0f
-                    }
-                } catch (e: Exception) { }
-                levels = m
-                // Kalau event pembicara dari server tidak datang (sering terjadi
-                // di jaringan lambat), pakai hasil deteksi level suara sendiri.
-                if (bicara.isEmpty() && deteksi.isNotEmpty()) bicara = deteksi
-                delay(130)
-            }
-            levels = emptyMap()
-        }
-    }
-
-    private fun hentikanPantauLevel() {
-        levelJob?.cancel(); levelJob = null
-        levels = emptyMap()
-        bicara = emptySet()
-    }
-
-    @Volatile var onProblem: ((String) -> Unit)? = null
-
-    // ===== Volume & rute suara =====
-    // Sebelumnya app tidak pernah memberi tahu Android stream mana yang dipakai,
-    // jadi tombol volume malah mengatur "Nada dering" dan suara room tetap pelan.
-    // Sekarang selama di room, tombol volume mengatur volume panggilan (suara room).
+    // ---------- audio route (volume panggilan, bukan volume notifikasi) ----------
     private var audioMgr: AudioManager? = null
     private var prevVolumeStream: Int? = null
     private var prevSpeaker: Boolean? = null
     private var prevMode: Int? = null
     @Volatile private var routed = false
-    // Activity yang sedang dipakai. Dulu tuneAudioRoute hanya menerima application
-    // context, dan dari situ Activity tidak pernah ketemu, sehingga tombol volume
-    // tetap mengatur volume notifikasi, bukan volume suara room.
     @Volatile private var actAktif: Activity? = null
     @Volatile private var streamTerpasang = false
 
@@ -185,7 +112,6 @@ object AgoraVoice {
                 val act = actAktif ?: findActivity(ctx)
                 actAktif = act
                 act?.let {
-                    // Jangan timpa nilai asli kalau sudah dipasang saat masuk room.
                     if (!streamTerpasang) {
                         prevVolumeStream = it.volumeControlStream
                         streamTerpasang = true
@@ -194,7 +120,6 @@ object AgoraVoice {
                 }
                 val max = try { mgr.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL) } catch (e: Exception) { 0 }
                 val cur = try { mgr.getStreamVolume(AudioManager.STREAM_VOICE_CALL) } catch (e: Exception) { 0 }
-                // Suara room tidak boleh mulai dari keadaan nyaris bisu.
                 if (max > 0 && cur < (max * 0.7f).toInt()) {
                     try { mgr.setStreamVolume(AudioManager.STREAM_VOICE_CALL, (max * 0.8f).toInt(), 0) } catch (e: Exception) { }
                 }
@@ -202,16 +127,13 @@ object AgoraVoice {
             }
             try { mgr.mode = AudioManager.MODE_IN_COMMUNICATION } catch (e: Exception) { }
             try { mgr.isSpeakerphoneOn = true } catch (e: Exception) { }
+            try { engine?.setEnableSpeakerphone(true) } catch (e: Exception) { }
         } catch (e: Exception) {
             Log.e(TAG, "tuneAudioRoute: ${e.message}")
         }
     }
 
-    /**
-     * Arahkan tombol volume ke volume panggilan (suara room) sejak user masuk room.
-     * Tanpa ini tombol volume mengatur volume notifikasi karena tidak ada stream
-     * media yang aktif, dan pengguna merasa tidak punya akses volume.
-     */
+    /** Arahkan tombol volume ke volume panggilan sejak user masuk room. */
     fun pasangVolumeStream(ctx: Context) {
         try {
             findActivity(ctx)?.let { actAktif = it }
@@ -254,18 +176,15 @@ object AgoraVoice {
         try { onProblem?.invoke(msg) } catch (e: Exception) { }
     }
 
-    // Token disiapkan LEBIH DULU (saat masuk room), bukan saat menekan mic.
-    // Endpoint token di VPS pernah butuh 10-18 detik, dan karena dulu token
-    // selalu diambil tepat saat mau nyambung, suara terasa menunggu lama.
+    // ---------- token ----------
+    private data class Tok(val appId: String, val token: String, val channel: String, val account: String)
+
     private var tokSimpan: Tok? = null
     private var tokRoom: String? = null
     private var tokWaktu = 0L
-    private const val TOK_UMUR = 10 * 60_000L
-
-    // Satu permintaan token saja walau pemanasan dan tombol mic berjalan bersamaan.
+    private const val TOK_UMUR = 30 * 60_000L
     private val kunciToken = Mutex()
 
-    /** Ambil token siap pakai: dari simpanan kalau masih segar, kalau tidak ambil baru. */
     private suspend fun tokenUntuk(id: String, diam: Boolean = false): Tok? = kunciToken.withLock {
         val t = tokSimpan
         if (t != null && tokRoom == id && System.currentTimeMillis() - tokWaktu < TOK_UMUR) return@withLock t
@@ -289,50 +208,140 @@ object AgoraVoice {
         }
     }
 
-    private data class Tok(val token: String, val url: String)
-
     private suspend fun fetchToken(channel: String, diam: Boolean = false): Tok? {
-        var lastErr = ""
-        for (attempt in 1..5) {
+        for (attempt in 1..4) {
             try {
                 val idToken = FirebaseAuth.getInstance().currentUser
                     ?.getIdToken(attempt > 1)?.await()?.token
                 if (idToken == null) { if (!diam) problem("Suara mati: belum login"); return null }
                 val c = (URL(TOKEN_URL).openConnection() as HttpURLConnection).apply {
                     requestMethod = "POST"
-                    connectTimeout = 12_000
-                    readTimeout = 25_000
+                    connectTimeout = 10_000
+                    readTimeout = 15_000
                     doOutput = true
                     setRequestProperty("Authorization", "Bearer $idToken")
                     setRequestProperty("Content-Type", "application/json")
                 }
-                // Server membaca "room" (versi baru) dan "channel" (versi lama).
-                // Dikirim dua-duanya supaya room tidak pernah jatuh ke room umum.
                 c.outputStream.use {
-                    it.write(
-                        JSONObject().put("room", channel).put("channel", channel).toString().toByteArray(),
-                    )
+                    it.write(JSONObject().put("room", channel).put("channel", channel).toString().toByteArray())
                 }
                 if (c.responseCode == 200) {
                     val o = JSONObject(c.inputStream.bufferedReader().readText())
-                    return Tok(o.getString("token"), o.getString("url"))
+                    val appId = o.optString("appId")
+                    val token = o.optString("token")
+                    val ch = o.optString("channel").ifBlank { channel }
+                    val akun = o.optString("account")
+                    if (appId.isNotBlank() && token.isNotBlank() && akun.isNotBlank()) {
+                        return Tok(appId, token, ch, akun)
+                    }
+                    if (!diam) problem("Suara: token tidak lengkap dari server")
+                    return null
                 }
-                val body = c.errorStream?.bufferedReader()?.readText().orEmpty()
-                lastErr = "token gagal ${c.responseCode} $body"
-                if (c.responseCode in 400..499 && c.responseCode != 408 && c.responseCode != 429) break
+                if (c.responseCode in 400..499 && c.responseCode != 408 && c.responseCode != 429) {
+                    if (!diam) problem("Suara: server menolak sesi (${c.responseCode})")
+                    return null
+                }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                lastErr = "token error ${e.message}"
+                Log.e(TAG, "token: ${e.message}")
             }
-            // 502/503/timeout biasanya sesaat (VPS tersendat). Jeda dinaikkan dan
-            // percobaan ditambah supaya suara tidak mati hanya karena satu kedipan.
             lastStatus = "Suara: menyambung…"
-            delay(1200L * attempt)
+            delay(900L * attempt)
         }
-        // Tanpa toast: status tenang yang bisa diketuk untuk mencoba lagi.
         if (!diam) lastStatus = "Suara: belum tersambung, ketuk untuk coba"
         return null
+    }
+
+    // ---------- event handler ----------
+    private val handler = object : IRtcEngineEventHandler() {
+        override fun onJoinChannelSuccess(channel: String?, uid: Int, elapsed: Int) {
+            joined = true
+            percobaan = 0
+            akunSaya = akunSaya.ifBlank { FirebaseAuth.getInstance().currentUser?.uid ?: "" }
+            uidAkun[uid] = akunSaya
+            lastStatus = "OK tersambung"
+            appCtx?.let { c -> mainScope.launch { tuneAudioRoute(c) } }
+            applyMute()
+            applyRole()
+        }
+
+        override fun onUserJoined(uid: Int, elapsed: Int) {
+            try {
+                val info = engine?.getUserInfoByUid(uid)
+                val akun = info?.userAccount ?: ""
+                if (akun.isNotBlank()) uidAkun[uid] = akun
+            } catch (e: Exception) {
+                Log.e(TAG, "userInfo: ${e.message}")
+            }
+        }
+
+        override fun onUserOffline(uid: Int, reason: Int) {
+            val akun = uidAkun.remove(uid) ?: return
+            levels = levels - akun
+            bicara = bicara - akun
+        }
+
+        override fun onUserInfoUpdated(uid: Int, info: UserInfo?) {
+            val akun = info?.userAccount ?: return
+            if (akun.isNotBlank()) uidAkun[uid] = akun
+        }
+
+        override fun onAudioVolumeIndication(
+            speakers: Array<out IRtcEngineEventHandler.AudioVolumeInfo>?,
+            totalVolume: Int,
+        ) {
+            if (speakers == null) return
+            val m = HashMap<String, Float>()
+            val aktif = HashSet<String>()
+            for (sp in speakers) {
+                val akun = if (sp.uid == 0) akunSaya else (uidAkun[sp.uid] ?: "")
+                if (akun.isBlank()) continue
+                val lv = (sp.volume / 255f).coerceIn(0f, 1f)
+                if (lv > 0.01f) m[akun] = lv
+                if (lv > 0.12f) aktif.add(akun)
+            }
+            levels = m
+            bicara = aktif
+        }
+
+        override fun onConnectionStateChanged(state: Int, reason: Int) {
+            when (state) {
+                Constants.CONNECTION_STATE_RECONNECTING -> lastStatus = "Suara: menyambung ulang…"
+                Constants.CONNECTION_STATE_CONNECTED -> { joined = true; lastStatus = "OK tersambung" }
+                Constants.CONNECTION_STATE_FAILED -> {
+                    joined = false
+                    lastStatus = "Suara: belum tersambung, ketuk untuk coba"
+                }
+            }
+        }
+
+        override fun onError(err: Int) {
+            Log.e(TAG, "onError: $err")
+            if (err == Constants.ERR_JOIN_CHANNEL_REJECTED || err == Constants.ERR_INVALID_TOKEN) {
+                tokSimpan = null
+                lastStatus = "Suara: token kadaluarsa, ketuk untuk coba"
+            }
+        }
+    }
+
+    private fun buatEngine(app: Context, appId: String): RtcEngine {
+        val cfg = RtcEngineConfig().apply {
+            mContext = app
+            mAppId = appId
+            mEventHandler = handler
+            mChannelProfile = Constants.CHANNEL_PROFILE_LIVE_BROADCASTING
+            mAudioScenario = Constants.AUDIO_SCENARIO_CHATROOM
+        }
+        val e = RtcEngine.create(cfg)
+        try { e.setChannelProfile(Constants.CHANNEL_PROFILE_LIVE_BROADCASTING) } catch (x: Exception) { }
+        // Profil musik supaya suara DJ tidak gepeng, seperti penyetelan LiveKit sebelumnya.
+        try { e.setAudioProfile(Constants.AUDIO_PROFILE_MUSIC_STANDARD, Constants.AUDIO_SCENARIO_CHATROOM) } catch (x: Exception) { }
+        try { e.setClientRole(if (wantSpeaking) Constants.CLIENT_ROLE_BROADCASTER else Constants.CLIENT_ROLE_AUDIENCE) } catch (x: Exception) { }
+        try { e.enableAudioVolumeIndication(300, 3, true) } catch (x: Exception) { }
+        try { e.setEnableSpeakerphone(true) } catch (x: Exception) { }
+        try { e.muteAllRemoteAudioStreams(muteRemote) } catch (x: Exception) { }
+        return e
     }
 
     /** Masuk room (awalnya hanya mendengar; mic dibuka lewat setSpeaking). */
@@ -349,190 +358,74 @@ object AgoraVoice {
                 val t = tokenUntuk(id) ?: return@withLock
                 if (roomId != id) return@withLock
                 try {
-                    closeRoom()
+                    tutupEngine()
                     lastStatus = "Suara: menyambung…"
-                    // Penghitung detik: dulu status hanya "menyambung…" tanpa
-                    // batas waktu sehingga tidak jelas apakah sambungan macet.
-                    // Tanpa hitungan detik: status cukup satu baris tenang, dan
-                    // kalau macet pengguna bisa mengetuknya untuk mencoba lagi.
-                    pantauSambung?.cancel()
-                    pantauSambung = mainScope.launch {
-                        // Negosiasi ICE di seluler/wifi lambat bisa lebih dari 10 detik.
-                        // Dulu status menyerah di detik ke-10 padahal masih berjalan
-                        // wajar, lalu room dibongkar dan dibangun ulang (makin lambat).
-                        delay(25_000L)
-                        if (!joined && roomId == id && !sengajaKeluar) {
-                            lastStatus = "Suara: belum tersambung, ketuk untuk coba"
-                        }
+                    akunSaya = t.account
+                    val e = buatEngine(app, t.appId)
+                    engine = e
+                    val opt = ChannelMediaOptions().apply {
+                        channelProfile = Constants.CHANNEL_PROFILE_LIVE_BROADCASTING
+                        clientRoleType = if (wantSpeaking) Constants.CLIENT_ROLE_BROADCASTER else Constants.CLIENT_ROLE_AUDIENCE
+                        autoSubscribeAudio = true
+                        publishMicrophoneTrack = wantSpeaking
                     }
-                    val r = LiveKit.create(app, ROOM_OPSI)
-                    room = r
-                    eventJob = mainScope.launch {
-                        r.events.events.collect { ev ->
-                            when (ev) {
-                                is RoomEvent.Connected -> {
-                                    joined = true
-                                    // Dulu penghitung langsung direset di sini, jadi
-                                    // sambungan yang nyambung-putus berulang terus
-                                    // membuat room LiveKit baru: aplikasi jadi berat.
-                                    // Sekarang direset hanya kalau sudah stabil 60 detik.
-                                    konekSejak = System.currentTimeMillis()
-                                    mainScope.launch {
-                                        delay(60_000L)
-                                        if (joined) { percobaan = 0; gagalCepat = 0 }
-                                    }
-                                    lastStatus = "OK tersambung"
-                                    mulaiPantauLevel()
-                                    appCtx?.let { c -> mainScope.launch { tuneAudioRoute(c) } }
-                                }
-                                is RoomEvent.Reconnecting -> {
-                                    lastStatus = "Suara: menyambung ulang…"
-                                    // Beri tenggang: kalau LiveKit tidak berhasil
-                                    // menyambung lagi dalam 8 detik, tutup room lama
-                                    // dan coba sekali dengan room baru. Tanpa ini
-                                    // LiveKit bisa berputar sendiri terus.
-                                    pantauReconnect?.cancel()
-                                    pantauReconnect = mainScope.launch {
-                                        delay(20_000L)
-                                        if (!joined && !sengajaKeluar && roomId == id) {
-                                            lastStatus = "Suara: menyambung ulang…"
-                                            cobaSambungUlang(id, "media lambat")
-                                        }
-                                    }
-                                }
-                                is RoomEvent.Reconnected -> {
-                                    joined = true
-                                    konekSejak = System.currentTimeMillis()
-                                    lastStatus = "OK tersambung"
-                                    mulaiPantauLevel()
-                                    appCtx?.let { c -> mainScope.launch { tuneAudioRoute(c) } }
-                                }
-                                is RoomEvent.Disconnected -> {
-                                    joined = false
-                                    pantauReconnect?.cancel(); pantauReconnect = null
-                                    // Sambungan yang putus beberapa detik setelah
-                                    // tersambung hampir selalu berarti media tidak
-                                    // terbangun, bukan jaringan goyang sebentar.
-                                    if (konekSejak > 0L &&
-                                        System.currentTimeMillis() - konekSejak < 6_000L
-                                    ) gagalCepat += 1
-                                    cobaSambungUlang(id, ev.error?.message)
-                                }
-                                is RoomEvent.FailedToConnect -> {
-                                    // Jangan munculkan toast tiap gagal: cukup status
-                                    // tenang yang bisa diketuk untuk mencoba lagi.
-                                    lastStatus = "Suara: belum tersambung, ketuk untuk coba"
-                                }
-                                is RoomEvent.ActiveSpeakersChanged -> {
-                                    val ids = HashSet<String>()
-                                    for (p in ev.speakers) p.identity?.value?.let { ids.add(it) }
-                                    bicara = ids
-                                }
-                                is RoomEvent.TrackSubscribed -> applyMute()
-                                else -> {}
-                            }
-                        }
-                    }
-                    // Server suara kadang tidak menjawab sama sekali, dan dulu
-                    // connect() menunggu tanpa batas sehingga status tertahan di
-                    // "Suara: menyambung…". Sekarang dibatasi 15 detik lalu coba lagi.
-                    val selesai = kotlinx.coroutines.withTimeoutOrNull(25_000L) {
-                        r.connect(t.url, t.token)
-                        true
-                    }
-                    pantauSambung?.cancel(); pantauSambung = null
-                    if (selesai == null) {
-                        joined = false
-                        // closeRoom() memanggil release(). Dulu cabang ini hanya
-                        // disconnect lalu lupa release(), jadi PeerConnection dan
-                        // audio device tetap hidup di tiap percobaan gagal dan
-                        // aplikasi makin berat serta lambat memuat.
-                        closeRoom()
-                        cobaSambungUlang(id, "server tidak menjawab")
+                    val kode = e.joinChannelWithUserAccount(t.token, t.channel, t.account, opt)
+                    if (kode != 0) {
+                        tutupEngine()
+                        problem("Suara: gagal masuk room ($kode)")
                         return@withLock
                     }
-                    pantauSambung?.cancel(); pantauSambung = null
-                    joined = true
-                    try { tuneAudioRoute(app) } catch (e: Exception) { }
+                    val selesai = kotlinx.coroutines.withTimeoutOrNull(20_000L) {
+                        while (!joined && !sengajaKeluar) delay(200)
+                        joined
+                    }
+                    if (selesai != true) {
+                        tutupEngine()
+                        lastStatus = "Suara: belum tersambung, ketuk untuk coba"
+                        return@withLock
+                    }
+                    try { tuneAudioRoute(app) } catch (x: Exception) { }
                     lastStatus = "OK tersambung"
                     applyMute()
                     applyRole()
                 } catch (e: kotlinx.coroutines.CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    pantauSambung?.cancel(); pantauSambung = null
-                    joined = false
-                    // Tanpa toast berulang: cukup status tenang yang bisa diketuk,
-                    // dan sambung ulang tetap dibatasi.
-                    try { closeRoom() } catch (x: Exception) { }
-                    cobaSambungUlang(id, e.message)
+                    tutupEngine()
+                    problem("Suara: gagal (${(e.message ?: "?").take(60)})")
                 }
             }
         }
     }
 
-    /**
-     * Sambung ulang dengan batas tegas.
-     *
-     * Sambungan yang putus berkali-kali dalam hitungan detik berarti media tidak
-     * bisa terbangun. Menyambung ulang terus hanya membuat aplikasi berat dan
-     * status berputar di "menyambung ulang". Setelah dua kali gagal cepat,
-     * berhenti dan biarkan pengguna mengetuk status untuk mencoba lagi.
-     */
-    private fun cobaSambungUlang(id: String, alasan: String?) {
-        if (sengajaKeluar || roomId != id) return
-        val terlaluSering = gagalCepat >= 2
-        val habis = percobaan >= 4
-        if (terlaluSering || habis) {
-            lastStatus = if (terlaluSering) {
-                "Suara: media tidak tersambung, ketuk untuk coba"
-            } else {
-                "Suara: belum tersambung, ketuk untuk coba"
-            }
-            percobaan = 0
-            gagalCepat = 0
-            // Room lama ditutup supaya PeerConnection dan audio tidak menumpuk.
-            mainScope.launch { closeRoom() }
-            return
-        }
-        percobaan += 1
-        lastStatus = "Suara: menyambung ulang (${percobaan}/4)…"
-        mainScope.launch {
-            delay(1500L * percobaan)
-            val c = appCtx
-            if (!sengajaKeluar && roomId == id && c != null) join(c, id)
-        }
-    }
-
-    private suspend fun closeRoom() {
-        eventJob?.cancel(); eventJob = null
-        hentikanPantauLevel()
-        val r = room ?: return
-        room = null
-        try { r.disconnect() } catch (e: Exception) { }
-        try { r.release() } catch (e: Exception) { }
+    private fun tutupEngine() {
+        joined = false
+        val e = engine ?: return
+        engine = null
+        uidAkun.clear()
+        levels = emptyMap()
+        bicara = emptySet()
+        try { e.leaveChannel() } catch (x: Exception) { }
+        try { RtcEngine.destroy() } catch (x: Exception) { }
     }
 
     private fun applyMute() {
-        val r = room ?: return
-        try {
-            for ((_, p) in r.remoteParticipants) {
-                for (pub in p.audioTrackPublications) {
-                    (pub.second as? RemoteAudioTrack)?.setVolume(if (muteRemote) 0.0 else 1.0)
-                }
-            }
-        } catch (e: Exception) {
+        try { engine?.muteAllRemoteAudioStreams(muteRemote) } catch (e: Exception) {
             Log.e(TAG, "applyMute: ${e.message}")
         }
     }
 
     private fun applyRole() {
-        val r = room ?: return
+        val e = engine ?: return
         val on = wantSpeaking
         mainScope.launch {
-            try { r.localParticipant.setMicrophoneEnabled(on) } catch (e: Exception) {
-                Log.e(TAG, "mic: ${e.message}")
-                if (on) problem("Mic gagal: ${e.message}".take(100))
+            try {
+                e.setClientRole(if (on) Constants.CLIENT_ROLE_BROADCASTER else Constants.CLIENT_ROLE_AUDIENCE)
+                e.enableLocalAudio(on)
+                e.muteLocalAudioStream(!on)
+            } catch (x: Exception) {
+                Log.e(TAG, "mic: ${x.message}")
+                if (on) problem("Mic gagal: ${(x.message ?: "?").take(80)}")
             }
         }
     }
@@ -550,21 +443,15 @@ object AgoraVoice {
 
     /** Coba sambung ulang manual saat pengguna mengetuk status suara. */
     fun sambungUlang(ctx: Context, id: String) {
-        // Ketukan pengguna selalu memulai dari nol. Dulu hitungan gagal cepat tidak
-        // ikut direset, jadi setelah dua kali gagal setiap ketukan langsung
-        // menyerah lagi tanpa benar-benar mencoba menyambung.
         percobaan = 0
-        gagalCepat = 0
-        konekSejak = 0L
         sengajaKeluar = false
         joined = false
-        pantauReconnect?.cancel(); pantauReconnect = null
+        tokSimpan = null
         join(ctx, id)
     }
 
     fun leave() {
         sengajaKeluar = true
-        pantauReconnect?.cancel(); pantauReconnect = null
         percobaan = 0
         try { restoreAudioRoute() } catch (e: Exception) { }
         joinJob?.cancel()
@@ -573,7 +460,7 @@ object AgoraVoice {
         wantSpeaking = false
         muteRemote = false
         stopMusic()
-        scope.launch { joinLock.withLock { closeRoom() } }
+        scope.launch { joinLock.withLock { tutupEngine() } }
     }
 
     // ---------- Musik room ----------
@@ -586,7 +473,6 @@ object AgoraVoice {
         return try {
             stopMusic()
             val mp = MediaPlayer()
-            // Sifat audio musik supaya jelas dan tidak ikut jalur suara panggilan.
             mp.setAudioAttributes(
                 android.media.AudioAttributes.Builder()
                     .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
@@ -639,15 +525,10 @@ fun AgoraRoomBridge(roomId: String, myUid: String) {
         val main = android.os.Handler(android.os.Looper.getMainLooper())
         AgoraVoice.onProblem = { m -> main.post { android.widget.Toast.makeText(ctx, m, android.widget.Toast.LENGTH_LONG).show() } }
         AgoraVoice.siapkanToken(ctx, roomId)
-        // Tombol volume langsung mengatur suara room sejak layar room terbuka,
-        // bukan volume notifikasi.
         AgoraVoice.pasangVolumeStream(ctx)
         AgoraVoice.join(ctx, roomId)
         val a = RoomRepo.observeMembers(roomId) { members = it }
         val b = RoomRepo.observeSeats(roomId) { seats ->
-            // Pindah kursi kini satu tulisan atomik, jadi tidak ada kursi ganda.
-            // Pembersihan otomatis di sini dihapus: dulu ia bisa membuang kursi
-            // yang baru dinaiki sehingga user turun sendiri.
             mySeat = seats.values.firstOrNull { it.uid == myUid }
         }
         onDispose {
@@ -658,9 +539,6 @@ fun AgoraRoomBridge(roomId: String, myUid: String) {
         }
     }
 
-    // Mic ditentukan oleh KURSI saja. Sebelumnya juga butuh myUid di members, padahal
-    // user dengan "Invisible in rooms" (SVIP7) / join gagal tidak masuk members,
-    // sehingga suaranya tidak pernah terkirim.
     val onSeat = mySeat != null
     LaunchedEffect(onSeat) { if (onSeat && !granted) launcher.launch(Manifest.permission.RECORD_AUDIO) }
     LaunchedEffect(onSeat, mySeat?.muted, granted) {

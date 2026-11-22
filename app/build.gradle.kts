@@ -128,7 +128,9 @@ android {
 }
 
 dependencies {
-    implementation("io.livekit:livekit-android:2.30.0")
+    // Suara room memakai Agora (voice-sdk: audio saja, lebih kecil dari full-sdk).
+    // LiveKit dihapus karena suara tidak lagi di VPS sendiri.
+    implementation("io.agora.rtc:voice-sdk:4.3.2")
 
     val composeBom = platform("androidx.compose:compose-bom:2024.10.01")
     implementation(composeBom)

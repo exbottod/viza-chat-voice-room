@@ -31,6 +31,7 @@ export const MENU = [
       ["wallet", "account_balance_wallet", "Currency (coin & reset)"],
       ["cashback", "savings", "Cashback gift"],
       ["pencairan", "payments", "Pencairan agency"],
+      ["iklan", "ads_click", "Iklan & coin gratis"],
     ],
   },
   {

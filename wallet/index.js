@@ -1084,6 +1084,32 @@ async function batasCairAgensi(env, bulan = bulanIni()) {
   return { bulan, persen, topup, batas, dipakai, sisa: Math.max(0, batas - dipakai) };
 }
 
+/**
+ * Iklan berhadiah (rewarded ads) untuk coin gratis. Hadiah, batas harian, dan
+ * ID unit iklan diatur dari panel supaya bisa diubah tanpa build APK.
+ * Server tidak bisa memastikan iklan benar-benar ditonton, jadi pengamanannya:
+ * batas per hari, jeda antar klaim, dan catatan tiap klaim.
+ */
+async function siapIklan(env) {
+  await pipe(env, [
+    { sql: `create table if not exists iklan_klaim (
+        id integer primary key autoincrement,
+        uid text not null,
+        coins integer not null default 0,
+        at integer not null default (unixepoch() * 1000))` },
+    { sql: `create index if not exists iklan_klaim_uid on iklan_klaim(uid, at)` },
+  ]);
+}
+
+async function aturIklan(env) {
+  const c = await cfgSemua(env, true);
+  const aktif = String(c.iklanAktif ?? "0") === "1" || c.iklanAktif === true;
+  const coin = Math.max(0, Math.trunc(Number(c.iklanCoin ?? 0) || 0));
+  const maxHari = Math.max(0, Math.min(100, Math.trunc(Number(c.iklanMaxHari ?? 10) || 0)));
+  const jeda = Math.max(10, Math.trunc(Number(c.iklanCooldown ?? 20) || 20));
+  return { aktif, coin, maxHari, jeda, adUnit: String(c.iklanAdUnit || "") };
+}
+
 /** Kode undangan agensi: 6 huruf/angka besar, mudah dibaca ulang. */
 function kodeAgensi() {
   const abjad = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -3392,6 +3418,8 @@ const CFG_KUNCI = new Set([
   "agoraAppId", "agoraCert", "fcmJson", "stripeAktif", "stripePub", "stripeSecret",
   "paystackAktif", "paystackPub", "paystackSecret", "versiMin", "versiTerbaru", "apkUrl", "apkCatatan",
   "assetPackage", "assetSha256",
+  // Iklan berhadiah untuk coin gratis: diatur dari panel, dibaca aplikasi.
+  "iklanAktif", "iklanCoin", "iklanMaxHari", "iklanAdUnit", "iklanCooldown",
 ]);
 let cfgCache = { at: 0, v: {} };
 
@@ -3733,6 +3761,56 @@ async function panel(env, body) {
   }
 
   // ---- Agensi: dipakai pemilik agensi dan host dari dalam aplikasi ----
+  // ---- Iklan berhadiah: coin gratis setelah iklan selesai ditonton ----
+  if (aksi === "iklan_info") {
+    const at = await aturIklan(env);
+    let dipakai = 0;
+    try {
+      await siapIklan(env);
+      const awal = Date.parse(bulanIni() + "-01T00:00:00Z");
+      const r = await pipe(env, [
+        {
+          sql: `select count(*) as n from iklan_klaim where uid = ? and at >= ?`,
+          args: [T(uid), I(Math.max(awal, Date.now() - 86400000))],
+        },
+      ]);
+      dipakai = Number(r[0].rows[0]?.n ?? 0);
+    } catch (e) { dipakai = 0; }
+    return json({
+      ok: 1,
+      aktif: at.aktif ? 1 : 0,
+      coin: at.coin,
+      maxHari: at.maxHari,
+      dipakai,
+      sisa: Math.max(0, at.maxHari - dipakai),
+      adUnit: at.adUnit,
+    });
+  }
+
+  if (aksi === "iklan_klaim") {
+    const at = await aturIklan(env);
+    if (!at.aktif) return gagal("Coin gratis lewat iklan belum dibuka");
+    if (at.coin <= 0) return gagal("Hadiah iklan belum diatur");
+    if (at.maxHari <= 0) return gagal("Batas iklan harian masih nol");
+    await siapIklan(env);
+    const sejak = Date.now() - 86400000;
+    const cek = await pipe(env, [
+      { sql: `select count(*) as n, coalesce(max(at), 0) as akhir from iklan_klaim where uid = ? and at >= ?`, args: [T(uid), I(sejak)] },
+    ]);
+    const n = Number(cek[0].rows[0]?.n ?? 0);
+    const akhir = Number(cek[0].rows[0]?.akhir ?? 0);
+    if (n >= at.maxHari) return gagal("Batas iklan hari ini sudah tercapai (" + at.maxHari + " kali)");
+    if (akhir && Date.now() - akhir < at.jeda * 1000) {
+      return gagal("Tunggu sebentar sebelum menonton iklan lagi");
+    }
+    await pipe(env, [
+      { sql: "insert into iklan_klaim (uid, coins, at) values (?, ?, ?)", args: [T(uid), I(at.coin), I(Date.now())] },
+    ]);
+    await beriCoin(env, uid, at.coin, "iklan", null);
+    const w = await pastikan(env, uid);
+    return json({ ok: 1, coins: at.coin, sisa: Math.max(0, at.maxHari - (n + 1)), w });
+  }
+
   if (aksi === "agency_info") {
     await siapAgency(env);
     const bulan = bulanIni();
@@ -4647,6 +4725,19 @@ async function admin(env, body) {
       },
     ]);
     return json({ ok: 1, uid: who, agency: id });
+  }
+  if (op === "iklan_stat") {
+    await siapIklan(env);
+    const at = await aturIklan(env);
+    const r = await pipe(env, [
+      {
+        sql: `select count(*) as n, coalesce(sum(coins), 0) as coins, count(distinct uid) as orang
+              from iklan_klaim where at >= ?`,
+        args: [I(Date.now() - 86400000)],
+      },
+    ]);
+    const total = await pipe(env, [{ sql: "select count(*) as n, coalesce(sum(coins),0) as coins from iklan_klaim" }]);
+    return json({ ok: 1, atur: at, hari: r[0].rows[0], total: total[0].rows[0] });
   }
   if (op === "agency_cair_info") {
     await siapAgency(env);

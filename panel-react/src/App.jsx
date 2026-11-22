@@ -21,6 +21,7 @@ import Setting from "./pages/Setting.jsx";
 import Alat from "./pages/Alat.jsx";
 import Wallet from "./pages/Wallet.jsx";
 import Pencairan from "./pages/Pencairan.jsx";
+import Iklan from "./pages/Iklan.jsx";
 import Seller from "./pages/Seller.jsx";
 import StafApp, { StafAppShell } from "./pages/StafApp.jsx";
 import Staf from "./pages/Staf.jsx";
@@ -98,6 +99,7 @@ const HALAMAN = {
   adminapp: () => <StafAppShell awal="admin" />,
   wallet: Wallet,
   pencairan: Pencairan,
+  iklan: Iklan,
   gift: Gift,
   giftdaftar: GiftDaftar,
   emote: Emote,

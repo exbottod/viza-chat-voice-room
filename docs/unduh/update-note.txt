@@ -1,1 +1,3 @@
-• Game: kotak pengaturan tidak lagi mengempis jadi garis
+• Perbaiki kompilasi: launch butuh receiver CoroutineScope
+• Panel: ubah energi (EXP) tiap roket
+• Foto di dalam room dikecilkan sesuai ukuran tampil

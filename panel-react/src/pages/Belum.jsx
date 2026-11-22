@@ -1,7 +1,6 @@
 /**
  * Halaman yang belum dipindahkan ke React.
- * Panel lama tetap bisa dipakai untuk halaman ini lewat tautan di bawah,
- * jadi tidak ada fitur yang hilang selama pemindahan bertahap.
+ * Tidak ada tautan ke panel lama lagi: semua alat ada di panel React ini.
  */
 export default function Belum({ nama, judul }) {
   return (
@@ -10,7 +9,7 @@ export default function Belum({ nama, judul }) {
       <div className="kosong">
         Halaman <b>{judul}</b> belum dipindahkan ke React.
         <br /><br />
-        Sementara ini bisa dibuka di panel lama: <a href={"../panel/admin/#" + nama}>panel lama #{nama}</a>
+        Halaman ini sedang disiapkan di panel React: <b>#{nama}</b>
       </div>
     </div>
   );

@@ -19,6 +19,7 @@ import Seller from "./pages/Seller.jsx";
 import Staf from "./pages/Staf.jsx";
 import Daftar from "./pages/Daftar.jsx";
 import Kirim from "./pages/Kirim.jsx";
+import Aset from "./pages/Aset.jsx";
 import { ALAT } from "./alat.js";
 import Belum from "./pages/Belum.jsx";
 import { Toast } from "./ui.jsx";
@@ -77,8 +78,8 @@ const HALAMAN = {
   cs: daftar("Customer Service", "customerService", "Pesan dan keluhan yang masuk dari aplikasi."),
   laporan: daftar("Laporan user", "reports", "Laporan dari pengguna: saring isinya, hapus bila sudah selesai."),
   cekin: daftar("Plan history (cek in)", "checkIn", "Catatan cek in harian pengguna VIP."),
-  frame: daftar("Frame & banner", "frames", "Bingkai profil dan banner yang bisa dipakai user."),
-  aset: daftar("Aset & VIP", "vipAssets", "Aset yang dijual atau diberikan ke akun VIP."),
+  frame: () => <Aset awal="frame" />,
+  aset: () => <Aset awal="frame" />,
   asetvps: daftar("Aset di VPS", "vpsAssets", "Berkas aset yang tersimpan di server."),
   latar: daftar("Background tab", "tabBackgrounds", "Gambar latar tab room yang dipakai aplikasi."),
   katalog: daftar("Katalog game", "games", "Daftar game yang tampil di aplikasi."),

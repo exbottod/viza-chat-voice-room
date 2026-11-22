@@ -192,7 +192,7 @@ export default function Setting() {
             </div>
           </Kartu>
           <div className="catatan" style={{ padding: "0 4px" }}>
-            Kunci tersimpan di server. Top-up manual (DANA, GoPay, QRIS) tetap diatur di panel lama, menu Coin &amp; reset.
+            Kunci tersimpan di server. Tujuan top-up manual (DANA, GoPay, QRIS) diatur di menu Currency.
             Saklar dan kunci ini baru berpengaruh setelah jalur bayar kartu di aplikasi dihubungkan.
           </div>
         </>
@@ -215,9 +215,9 @@ export default function Setting() {
 
       {tab === "admin" ? (
         <Kartu judul="Admin panel">
-          <div className="catatan">Daftar admin dan manager panel dikelola di panel lama sampai halamannya dipindahkan.</div>
+          <div className="catatan">Daftar admin dan manager panel dikelola di menu Host & Agency dan Staf panel.</div>
           <div style={{ marginTop: 12 }}>
-            <a className="tombolBaru" href="../panel/admin/#pengaturan">Buka pengaturan admin</a>
+            <a className="tombolBaru" href="#staf">Buka Staf panel</a>
           </div>
         </Kartu>
       ) : null}

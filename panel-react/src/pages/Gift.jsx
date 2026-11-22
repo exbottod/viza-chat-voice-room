@@ -110,9 +110,9 @@ export default function Gift() {
         </div>
         {gifts.memuat && !gifts.isi.length
           ? <Rangka />
-          : <Tabel kolom={kolom} baris={urutBaris} urut={urut} onUrut={klikUrut} kosong="Belum ada gift. Tambah lewat panel lama dulu." />}
+          : <Tabel kolom={kolom} baris={urutBaris} urut={urut} onUrut={klikUrut} kosong="Belum ada gift di katalog." />}
         <div className="catatan" style={{ padding: "0 14px 14px" }}>
-          Menambah dan mengubah berkas gift masih di panel lama (#gift). Di sini sudah bisa mencari, menyaring, dan menghapus.
+          Di sini gift bisa dicari, disaring, dibuka berkasnya, dan dihapus. Untuk gift baru, unggah berkasnya lewat menu Aset & VIP supaya ikon dan berkasnya tersimpan di server.
         </div>
       </Panel>
 

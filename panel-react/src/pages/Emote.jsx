@@ -5,6 +5,7 @@ import { rtdb, db } from "../firebase.js";
 import { ref, get, remove } from "firebase/database";
 import { collection, deleteDoc, doc, getDocs, limit, query } from "firebase/firestore";
 import { catatLog } from "../data.js";
+import TambahAset from "./TambahAset.jsx";
 
 const kunciVip = (id) => String(id).replace(/[.#$\[\]/]/g, "_");
 
@@ -51,6 +52,7 @@ export default function Emote() {
   const [daftar, setDaftar] = useState(null);
   const [hapus, setHapus] = useState(null);
   const [sibuk, setSibuk] = useState(false);
+  const [tambah, setTambah] = useState(false);
 
   const muat = () => muatEmote().then(setDaftar).catch(() => setDaftar([]));
   useEffect(() => { muat(); }, []);
@@ -69,12 +71,12 @@ export default function Emote() {
 
   return (
     <>
-      <a className="tombolBaru" href="../panel/admin/#emote">
-        <span className="material-icons" style={{ fontSize: 20 }}>add</span> New
-      </a>
+      <button className="tombolBaru" onClick={() => setTambah(true)}>
+        <span className="material-icons" style={{ fontSize: 20 }}>add</span> Tambah emote
+      </button>
 
       {daftar === null ? <Rangka baris={4} />
-        : !daftar.length ? <Kosong>Belum ada emote. Tekan New untuk menambah.</Kosong>
+        : !daftar.length ? <Kosong>Belum ada emote. Tekan "Tambah emote" di kanan atas.</Kosong>
         : (
           <div className="petakReaksi">
             {daftar.map((x) => (
@@ -98,6 +100,7 @@ export default function Emote() {
         onYa={jalan}
         onTidak={() => setHapus(null)}
       />
+      <TambahAset buka={tambah} slot="emote" judul="Emote" onTutup={() => setTambah(false)} onSelesai={muat} />
     </>
   );
 }

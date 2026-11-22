@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.329",
-  "catatan": "• Suara: hilangkan gema antar peserta\n• Betulkan kompilasi dan kecilkan foto kursi lama",
-  "ukuran_apk": 74357143,
-  "sha256_apk": "480ee19888957b1f599c9e5ba0dc5d6eb178eef65698c8ca825b833a874f4c2d",
+  "versi": "1.0.330",
+  "catatan": "• Room ringan seperti aplikasi pembanding\n• Suara: hilangkan gema antar peserta",
+  "ukuran_apk": 74360263,
+  "sha256_apk": "1e1b070561d0e8995f4f080f995af9fb4a9be60f96a2b1d85d68236381e9a5b9",
   "abis": {
     "arm64": {
-      "ukuran": 74357143,
-      "sha256": "480ee19888957b1f599c9e5ba0dc5d6eb178eef65698c8ca825b833a874f4c2d"
+      "ukuran": 74360263,
+      "sha256": "1e1b070561d0e8995f4f080f995af9fb4a9be60f96a2b1d85d68236381e9a5b9"
     },
     "armv7": {
-      "ukuran": 72591653,
-      "sha256": "fa73e042c90c2dcc4ca33dc363b4c7fb03b1a16de80ad3c3ac834850d8b45f5b"
+      "ukuran": 72594778,
+      "sha256": "35b3e1c17fedf884a6210d0df0f888833b12000b6a2319b96407a3dcd7baff71"
     },
     "universal": {
-      "ukuran": 122211110,
-      "sha256": "1823f9e1a23c49d4b858fbd3fdbcc57c3d2aa24c3cc6557b845e2845ec903bfb"
+      "ukuran": 122214232,
+      "sha256": "1029f8a386d7fc8e532b15a22e339398739c8f736f3f926daa7201c20630fde3"
     }
   }
 }

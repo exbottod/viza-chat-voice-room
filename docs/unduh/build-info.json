@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.368",
   "catatan": "• panel reset: nomor ID angka (mis. 1000) diterjemahkan ke UID lewat userIds/users sebelum reset, rese\n• panel: halaman Customer Service untuk menunjuk akun CS lewat pencarian nama/ID/UID dan mencabutnya, ",
-  "ukuran_apk": 74378549,
-  "sha256_apk": "8fbe0f699d4be452b12944f9179c19a41d6a4f51054585566e5453377a0c45a8",
+  "ukuran_apk": 74378555,
+  "sha256_apk": "a5a42a2451e438d0a2c1050e19ad27c0a352ad9b6a0f0fe16a9a54d0d8c8de6e",
   "abis": {
     "arm64": {
-      "ukuran": 74378549,
-      "sha256": "8fbe0f699d4be452b12944f9179c19a41d6a4f51054585566e5453377a0c45a8"
+      "ukuran": 74378555,
+      "sha256": "a5a42a2451e438d0a2c1050e19ad27c0a352ad9b6a0f0fe16a9a54d0d8c8de6e"
     },
     "armv7": {
-      "ukuran": 72613068,
-      "sha256": "43e3a2f50a48f64d9e7edf75625f6dc8439476b0710fc4255ee930619e922b20"
+      "ukuran": 72613052,
+      "sha256": "f8601d454e5d9e0ee10c1ab3497a1a018aa6fe38cc2fd00910d5e63f9bb076c5"
     },
     "universal": {
-      "ukuran": 122232511,
-      "sha256": "113839b47611256a394417c32127ff8594fd944e11efa9c7e57fa80861266725"
+      "ukuran": 122232512,
+      "sha256": "e5f4a012bcaf7e720f87ae94aca75ab1f6cb142c3c385f694efd46818f32a813"
     }
   }
 }

@@ -7,7 +7,7 @@ import { Panel, toast } from "../ui.jsx";
 import { Pratinjau, Thumb, ekstensi, jenisMedia } from "../pratinjau.jsx";
 
 const JENIS = [
-  ["frame", "Bingkai"], ["badge", "Lencana"], ["medal", "Medali"],
+  ["frame", "Bingkai"], ["uid", "ID unik"], ["badge", "Lencana"], ["medal", "Medali"],
   ["cardbg", "Kartu profil"], ["title", "Gelar VIP"],
   ["bubble", "Gelembung"], ["entry", "Efek masuk"], ["banner", "Banner"],
 ];
@@ -106,6 +106,15 @@ export default function Kirim() {
       if (!/^[A-Za-z0-9_-]{4,80}$/.test(uid)) throw new Error("UID penerima belum benar");
       const hari = Math.max(1, Math.min(3650, Number(form.hari) || 30));
       let item = form.item.trim().replace(/[^A-Za-z0-9_-]/g, "");
+      const nomorUnik = String(form.nomor || "").replace(/[^0-9]/g, "");
+      // ID unik tanpa nomor tidak bisa dicari di aplikasi. Aset lama dari Store
+      // sudah membawa nomornya sendiri, jadi hanya aset baru yang diwajibkan.
+      if (form.jenis === "uid" && form.sumber !== "id" && !nomorUnik) {
+        throw new Error("ID unik wajib punya nomor (3-12 digit, mis. 1000)");
+      }
+      if (form.jenis === "uid" && nomorUnik && (nomorUnik.length < 3 || nomorUnik.length > 12)) {
+        throw new Error("Nomor ID unik harus 3-12 digit");
+      }
 
       // Aset baru: unggah berkas atau pakai tautan, lalu catat ke Store.
       if (form.sumber !== "id") {
@@ -118,7 +127,7 @@ export default function Kirim() {
         if (!url) throw new Error("Tempel tautan berkas dulu");
         if (!item) item = idOtomatis();
         const nama = form.nama.trim() || item;
-        const nomor = String(form.nomor || "").trim();
+        const nomor = String(form.nomor || "").replace(/[^0-9]/g, "");
         const data = {
           id: item, slot: form.jenis, name: nama, price: 0, days: 0, order: 0,
           kind: (url.split("?")[0].split(".").pop() || "").toLowerCase(),
@@ -159,7 +168,7 @@ export default function Kirim() {
   );
 
   return (
-    <Panel judul="Kirim ke user" sub="Kirim bingkai, lencana, medali, gelembung, efek masuk, atau banner ke satu akun. Aset bisa diunggah dari HP atau ditempel sebagai tautan."
+    <Panel judul="Kirim ke user" sub="Kirim bingkai, ID unik, lencana, medali, gelembung, efek masuk, atau banner ke satu akun. Aset bisa diunggah dari HP atau ditempel sebagai tautan."
       aksi={<button className="tombolBaru" onClick={kirim} disabled={sibuk || !siapKirim}>{sibuk ? (progres || "Mengirim…") : "Kirim"}</button>}>
 
       <label className="isianForm"><span>UID penerima</span>
@@ -201,7 +210,7 @@ export default function Kirim() {
         </div>
       ) : null}
 
-      <label className="isianForm"><span>Nomor ID (opsional, mis. 1000)</span>
+      <label className="isianForm"><span>{form.jenis === "uid" ? "Nomor ID unik (wajib, 3-12 digit, mis. 1000)" : "Nomor ID (opsional, mis. 1000)"}</span>
         <input value={form.nomor} onChange={(e) => ubah("nomor", e.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="mis. 1000" />
       </label>
 

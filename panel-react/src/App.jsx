@@ -8,6 +8,7 @@ import { auth, db, PEMILIK } from "./firebase.js";
 import { MENU, JUDUL } from "./menu.js";
 import Dashboard from "./pages/Dashboard.jsx";
 import User from "./pages/User.jsx";
+import Reset from "./pages/Reset.jsx";
 import Room from "./pages/Room.jsx";
 import Gift from "./pages/Gift.jsx";
 import GiftDaftar from "./pages/GiftDaftar.jsx";
@@ -35,6 +36,7 @@ import KananTopbar from "./topbar.jsx";
 const KETERANGAN = {
   dashboard: "Ringkasan user, room, gift, dan aktivitas admin",
   user: "Cari user, lihat detail, blokir atau buka blokir",
+  reset: "Reset coin, diamond, VIP, XP, nama, foto, dan aset satu user atau semua user",
   room: "Pantau room, sematkan, beri tag official, dan tutup room",
   gift: "Kategori gift: gift biasa, cashback, video MP4, dan SVGA",
   giftdaftar: "Semua gift per kategori: tambah, edit, dan hapus",
@@ -66,6 +68,7 @@ const daftar = (judul, koleksi, ket) => () => <Daftar judul={judul} koleksi={kol
 const HALAMAN = {
   dashboard: Dashboard,
   user: User,
+  reset: Reset,
   room: Room,
   staf: Staf,
   seller: Seller,

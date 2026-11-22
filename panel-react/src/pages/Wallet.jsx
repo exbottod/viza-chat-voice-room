@@ -62,7 +62,10 @@ export default function Wallet() {
   return (
     <>
       <Panel judul="Paket coin (harga top-up)" sub="Daftar ini yang tampil di halaman top-up aplikasi."
-        aksi={<button className="tombolBaru" onClick={simpanPaket} disabled={sibuk}>Simpan paket</button>}>
+        aksi={<span style={{ display: "flex", gap: 8 }}>
+          <a className="pil" href="#reset">Reset user</a>
+          <button className="tombolBaru" onClick={simpanPaket} disabled={sibuk}>Simpan paket</button>
+        </span>}>
         <div className="tabelGulir">
           <table className="tabel">
             <thead><tr><th>Coin</th><th>Harga (Rp)</th><th>Rupiah terbaca</th><th>Aktif</th><th /></tr></thead>

@@ -7,6 +7,7 @@ export const MENU = [
     grup: "USER MANAGEMENT",
     isi: [
       ["user", "person", "User"],
+      ["reset", "restart_alt", "Reset user"],
       ["room", "mic", "Room"],
       ["staf", "badge", "Host & Agency"],
       ["cs", "support_agent", "Customer Service"],

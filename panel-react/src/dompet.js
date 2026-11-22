@@ -36,3 +36,36 @@ export async function walletAdmin(p, batasMs = 15000) {
     clearTimeout(jam);
   }
 }
+
+
+/**
+ * Aksi panel yang tinggal di jalur /panel (bukan /admin), misalnya reset nama
+ * dan reset foto profil. Server menulis ke Realtime Database memakai akun
+ * layanan, jadi aturan RTDB tidak menghalangi.
+ */
+export async function panelAksi(a, p = {}, batasMs = 20000) {
+  const u = auth.currentUser;
+  if (!u) throw new Error("Belum login");
+  const t = await u.getIdToken();
+  const kendali = new AbortController();
+  const jam = setTimeout(() => kendali.abort(), batasMs);
+  try {
+    const res = await fetch(ALAMAT.replace(/\/admin$/, "/panel"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: KUNCI },
+      body: JSON.stringify({ a, t, p }),
+      signal: kendali.signal,
+    });
+    const teks = await res.text();
+    if (!res.ok) throw new Error(teks.slice(0, 160) || "HTTP " + res.status);
+    const out = teks ? JSON.parse(teks) : {};
+    if (out && out.ok === 0) throw new Error(out.e || "Gagal");
+    return out;
+  } catch (e) {
+    if (e && e.name === "AbortError") throw new Error("Server tidak menjawab dalam " + Math.round(batasMs / 1000) + " detik");
+    if (e instanceof TypeError) throw new Error("Tidak bisa menghubungi server dompet");
+    throw e;
+  } finally {
+    clearTimeout(jam);
+  }
+}

@@ -103,6 +103,10 @@ object GreedyFunni {
 object BikiniRush {
     const val NAMA = "Bikini Wild Rush"
 
+    /** true kalau token dompet gagal diambil saat game dibuka. */
+    @Volatile
+    var dompetGagal: Boolean = false
+
     /**
      * Berkas game ikut di dalam APK (assets/bikini) dan dibaca lewat appassets,
      * jadi tidak bergantung internet dan tidak ada halaman kosong karena host
@@ -157,8 +161,7 @@ object BikiniRush {
         for (percobaan in 1..3) {
             hasil = kotlinx.coroutines.withTimeoutOrNull(7000L) {
                 try {
-                    val idToken = com.google.firebase.auth.FirebaseAuth.getInstance()
-                        .currentUser?.getIdToken(percobaan > 1)?.await()?.token
+                    val idToken = SesiToken.ambil(paksa = percobaan > 1)
                     if (idToken.isNullOrBlank()) return@withTimeoutOrNull null
                     val token = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                         val c = java.net.URL("$DOMPET/token").openConnection() as java.net.HttpURLConnection
@@ -181,9 +184,13 @@ object BikiniRush {
             if (hasil != null) break
             kotlinx.coroutines.delay(600L * percobaan)
         }
-        // Gagal tersambung: kembalikan daftar kosong supaya layar menampilkan pesan
-        // dan tombol coba lagi, BUKAN membuka game dengan koin mainan.
-        if (hasil == null) return emptyList()
+        // Gagal tersambung: game tetap dibuka supaya user tidak tertahan di layar
+        // pesan. Tanpa token, game memakai koin 0 dan tidak bisa bertaruh.
+        if (hasil == null) {
+            dompetGagal = true
+            return listOf("$GAME_FILE", "$GAME", "$GAME_VPS", "$GAME_CADANGAN")
+        }
+        dompetGagal = false
         // Urutan percobaan: berkas di APK, berkas APK tanpa appassets, lalu internet.
         val kueri = hasil?.substringAfter("?", "") ?: ""
         val akhiran = if (kueri.isBlank()) "" else "?$kueri"
@@ -205,33 +212,21 @@ fun GreedyFunniScreen(onClose: () -> Unit) {
 
 @Composable
 fun BikiniRushScreen(onClose: () -> Unit) {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
     var daftar by remember { mutableStateOf<List<String>>(emptyList()) }
-    var selesai by remember { mutableStateOf(false) }
-    var ulangDompet by remember { mutableStateOf(0) }
-    androidx.compose.runtime.LaunchedEffect(ulangDompet) {
-        selesai = false
+    androidx.compose.runtime.LaunchedEffect(Unit) {
         daftar = BikiniRush.alamat()
-        selesai = true
+        if (BikiniRush.dompetGagal) {
+            android.widget.Toast.makeText(
+                ctx,
+                "Koin Viza belum tersambung, buka ulang game sebentar lagi",
+                android.widget.Toast.LENGTH_LONG,
+            ).show()
+        }
     }
     if (daftar.isEmpty()) {
         Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
-            if (!selesai) {
-                Text("Menghubungkan ke dompet Viza...", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
-            } else {
-                androidx.compose.foundation.layout.Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(14.dp),
-                    modifier = Modifier.padding(horizontal = 28.dp),
-                ) {
-                    Text(
-                        "Dompet Viza belum tersambung, koin game harus memakai koin Viza kamu.",
-                        color = Color.White.copy(alpha = 0.9f),
-                        fontSize = 14.sp,
-                    )
-                    androidx.compose.material3.Button(onClick = { ulangDompet += 1 }) { Text("Coba lagi") }
-                    androidx.compose.material3.TextButton(onClick = onClose) { Text("Tutup") }
-                }
-            }
+            Text("Membuka game...", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
         }
     } else {
         GameWebScreen(daftar, onClose, BikiniRush.statusDompet)

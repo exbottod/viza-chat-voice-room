@@ -1,1 +1,2 @@
+• vps: jangan kosongkan swap bila RAM kurang (Caddy ikut terbunuh), pastikan caddy hidup
 • vps: skrip ringankan VPS (batasi memori, restart malam, kosongkan swap)

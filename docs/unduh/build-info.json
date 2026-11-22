@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.355",
-  "catatan": "• vps: skrip ringankan VPS (batasi memori, restart malam, kosongkan swap)",
-  "ukuran_apk": 74378557,
-  "sha256_apk": "03034dd174cb94aa636da8b1cf1d098fc6ba957ce1a38032e85e18bbc372b6be",
+  "versi": "1.0.356",
+  "catatan": "• vps: jangan kosongkan swap bila RAM kurang (Caddy ikut terbunuh), pastikan caddy hidup\n• vps: skrip ringankan VPS (batasi memori, restart malam, kosongkan swap)",
+  "ukuran_apk": 74378562,
+  "sha256_apk": "52f7a51e26d2a85c52e9d3c9b4869f690d66f510f81732221d626c602193e67e",
   "abis": {
     "arm64": {
-      "ukuran": 74378557,
-      "sha256": "03034dd174cb94aa636da8b1cf1d098fc6ba957ce1a38032e85e18bbc372b6be"
+      "ukuran": 74378562,
+      "sha256": "52f7a51e26d2a85c52e9d3c9b4869f690d66f510f81732221d626c602193e67e"
     },
     "armv7": {
-      "ukuran": 72613068,
-      "sha256": "e0bbfe48f2afd8852453f5ed2b2f09de61e14a138f2e26737a23fc08e92ce390"
+      "ukuran": 72613071,
+      "sha256": "9750243fe666a9aff25b686b44ca46be41080b96f08d4635832e8f84d61fd106"
     },
     "universal": {
-      "ukuran": 122232522,
-      "sha256": "043c79740e9f60ac078bd7b6974e672921294ff4da724f3a4d9b1df36c0a8e45"
+      "ukuran": 122232518,
+      "sha256": "bcdef717b948bc7c13f4e244d65a2cb6d032495a764afda611f61174d713ce1e"
     }
   }
 }

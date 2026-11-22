@@ -40,7 +40,7 @@ object IklanUnity {
 
     private fun siapkan(ctx: Context, gameId: String, lanjut: () -> Unit) {
         if (gameId.isBlank()) return
-        if (UnityAds.isInitialized() && gameIdTerpasang == gameId) {
+        if (UnityAds.isInitialized && gameIdTerpasang == gameId) {
             lanjut()
             return
         }
@@ -73,7 +73,7 @@ object IklanUnity {
     }
 
     private fun muat(ctx: Context, placement: String) {
-        if (!UnityAds.isInitialized() || siapMuat.contains(placement)) return
+        if (!UnityAds.isInitialized || siapMuat.contains(placement)) return
         siapMuat.add(placement)
         UnityAds.load(placement, object : IUnityAdsLoadListener {
             override fun onUnityAdsAdLoaded(p: String) {
@@ -99,7 +99,7 @@ object IklanUnity {
             return
         }
         siapkan(activity, gameId) {
-            if (!UnityAds.isInitialized()) {
+            if (!UnityAds.isInitialized) {
                 onGagal("Iklan belum siap, coba lagi sebentar")
                 return@siapkan
             }

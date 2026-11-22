@@ -698,10 +698,6 @@ fun WalletScreen(
     val scope = rememberCoroutineScope()
     // Muat daftar harga topup terbaru dari Panel Developer setiap Dompet dibuka.
     LaunchedEffect(Unit) { TopupPacks.refresh(force = true) }
-    LaunchedEffect(Unit) {
-        iklan = SupaRepo.iklanInfo()
-        iklan?.let { IklanUnity.siapkanAwal(context, it.gameId, it.placement) }
-    }
     var tab by remember { mutableStateOf(0) }
     var busy by remember { mutableStateOf(false) }
     var showPacks by remember { mutableStateOf(false) }
@@ -709,6 +705,11 @@ fun WalletScreen(
     // hadiah, batas harian) dibaca dari server supaya bisa diubah tanpa APK.
     var iklan by remember { mutableStateOf<SupaRepo.IklanInfo?>(null) }
     var iklanSibuk by remember { mutableStateOf(false) }
+    // Dimuat setelah variabelnya ada, supaya tidak ada rujukan ke variabel yang belum dideklarasikan.
+    LaunchedEffect(Unit) {
+        iklan = SupaRepo.iklanInfo()
+        iklan?.let { IklanUnity.siapkanAwal(context, it.gameId, it.placement) }
+    }
     var payOrder by remember { mutableStateOf<String?>(null) }
     var manualCoins by remember { mutableStateOf<Long?>(null) }
     var manualPayer by remember { mutableStateOf("") }

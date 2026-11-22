@@ -1,2 +1,1 @@
-• Panel: pemilik bisa menambah admin dengan nama, email, dan sandi
-• Panel: pemilik bisa membuat sandi login sendiri
+• Panel: unggah aset dan emot memakai XHR, ada persentase nyata dan batas waktu

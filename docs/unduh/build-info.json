@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.348",
-  "catatan": "• Panel: pemilik bisa menambah admin dengan nama, email, dan sandi\n• Panel: pemilik bisa membuat sandi login sendiri",
-  "ukuran_apk": 74377104,
-  "sha256_apk": "ddef9cd03212f46f6cf31461ecbf4df580db01ce0d9e2e03c22e8419481af692",
+  "versi": "1.0.349",
+  "catatan": "• Panel: unggah aset dan emot memakai XHR, ada persentase nyata dan batas waktu",
+  "ukuran_apk": 74377089,
+  "sha256_apk": "c40407efb447da967c2945d4bafa2df5849b5956082c30157809020e6a139d14",
   "abis": {
     "arm64": {
-      "ukuran": 74377104,
-      "sha256": "ddef9cd03212f46f6cf31461ecbf4df580db01ce0d9e2e03c22e8419481af692"
+      "ukuran": 74377089,
+      "sha256": "c40407efb447da967c2945d4bafa2df5849b5956082c30157809020e6a139d14"
     },
     "armv7": {
-      "ukuran": 72611613,
-      "sha256": "e17f5cf1c09f9f22cae43ba5bbb102121d5532dc4c69edc417cea4b2e3aaa2b8"
+      "ukuran": 72611609,
+      "sha256": "7340d9bb16fa1457ec6c8710f143bc9c2e18d8b9a79c530b66a92932c812fed8"
     },
     "universal": {
-      "ukuran": 122231064,
-      "sha256": "ba85c5594271edc453c54a025360a3d1079e2e310cd520d69b84be38a840f4c8"
+      "ukuran": 122231067,
+      "sha256": "9d975bf6a125372316dec939f3a1b110c9da6ec65470bf392009e35f3d06b3cc"
     }
   }
 }

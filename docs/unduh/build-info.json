@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.344",
   "catatan": "• Panel: React jadi panel utama, semua menu dipindah ke React",
-  "ukuran_apk": 74376979,
-  "sha256_apk": "612443e678be00a476cf8e52a3e139094d21a3ba96663fa4b17591baff7fac3d",
+  "ukuran_apk": 74376990,
+  "sha256_apk": "eb5e94337e3f570b832b841d9618db2299e568f1a873e809ce66dc20ab391f2d",
   "abis": {
     "arm64": {
-      "ukuran": 74376979,
-      "sha256": "612443e678be00a476cf8e52a3e139094d21a3ba96663fa4b17591baff7fac3d"
+      "ukuran": 74376990,
+      "sha256": "eb5e94337e3f570b832b841d9618db2299e568f1a873e809ce66dc20ab391f2d"
     },
     "armv7": {
-      "ukuran": 72611500,
-      "sha256": "a93f5af70049d0dc1a273ecc0d56a3caae1300f0efbea0656f74ac1680736e95"
+      "ukuran": 72611505,
+      "sha256": "45aec903f92fc3fb8ff8e16248ff75cc0d39260aa3191b9ce4b71afcf9b29e92"
     },
     "universal": {
-      "ukuran": 122230953,
-      "sha256": "9240d9540fcd1eb5dad0bfbcd3b2011f21107ea27f4984c2ed637cbb3d0c46b1"
+      "ukuran": 122230958,
+      "sha256": "22bfdfb6707288d3727c9e9a165a4b5af6e84f62ab8442ff3757bfb19fe75f62"
     }
   }
 }

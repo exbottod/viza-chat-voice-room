@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.312",
-  "catatan": "• Skenario audio diganti ke game streaming supaya tidak masuk mode panggilan.\n• MODE_IN_COMMUNICATION tidak dipaksa lagi, itu penyebab label Memanggil muncul.\n• Kunci volume diarahkan ke jalur media dan volume media dinaikkan kalau terlalu kecil.",
-  "ukuran_apk": 74343926,
-  "sha256_apk": "841b6808d4f1b898225573c6ee492d393f368f3d585d84a8ec3bf0394cb868bf",
+  "versi": "1.0.313",
+  "catatan": "• Status menyambung dan menyambung ulang tidak ditampilkan lagi.\n• Kalau gagal, keterangan tetap muncul dan bisa diketuk untuk coba lagi.\n• Suara tetap tersambung otomatis di latar belakang.",
+  "ukuran_apk": 74343749,
+  "sha256_apk": "877df734b8753edeedba1238e79d8b522c2ec21a75948c38c988cb4d8dfa23e7",
   "abis": {
     "arm64": {
-      "ukuran": 74343926,
-      "sha256": "841b6808d4f1b898225573c6ee492d393f368f3d585d84a8ec3bf0394cb868bf"
+      "ukuran": 74343749,
+      "sha256": "877df734b8753edeedba1238e79d8b522c2ec21a75948c38c988cb4d8dfa23e7"
     },
     "armv7": {
-      "ukuran": 72578439,
-      "sha256": "1af5c8e4ea1386cd066a2d001c50f79a19d312b30ec528b309eba4bdb53bbc63"
+      "ukuran": 72578257,
+      "sha256": "8ac6d07ebbd39f7ee8e427e3dd3e2fc8ada2ac1b0e5c3bd06862eb10d9769307"
     },
     "universal": {
-      "ukuran": 122197889,
-      "sha256": "ad7822ff2c6f72aa0452a16c3e2acd1df9ba93d07945eba9d7359dfbf712f10b"
+      "ukuran": 122197717,
+      "sha256": "93334e914b56f568df22f00a266dda5e8078671f50527fb9edae124c1a799bf2"
     }
   }
 }

@@ -1,3 +1,3 @@
-• Skenario audio diganti ke game streaming supaya tidak masuk mode panggilan.
-• MODE_IN_COMMUNICATION tidak dipaksa lagi, itu penyebab label Memanggil muncul.
-• Kunci volume diarahkan ke jalur media dan volume media dinaikkan kalau terlalu kecil.
+• Status menyambung dan menyambung ulang tidak ditampilkan lagi.
+• Kalau gagal, keterangan tetap muncul dan bisa diketuk untuk coba lagi.
+• Suara tetap tersambung otomatis di latar belakang.

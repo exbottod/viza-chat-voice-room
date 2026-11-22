@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  EmailAuthProvider, reauthenticateWithCredential, updatePassword, updateProfile,
+  EmailAuthProvider, linkWithCredential, reauthenticateWithCredential, updatePassword, updateProfile,
 } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db, PEMILIK } from "../firebase.js";
@@ -22,6 +22,10 @@ export default function Profile({ admin }) {
   const [baru, setBaru] = useState("");
   const [ulang, setUlang] = useState("");
   const [sibuk, setSibuk] = useState(false);
+  // Akun yang masuk lewat Google belum punya sandi. Satu sandi dibuat di sini
+  // supaya nanti bisa masuk dengan email + sandi, bukan hanya lewat Google.
+  const [sandiPertama, setSandiPertama] = useState("");
+  const [buatSandi, setBuatSandi] = useState(false);
   const user = auth.currentUser;
   const lewatEmail = (user?.providerData || []).some((p) => p.providerId === "password");
 
@@ -42,7 +46,7 @@ export default function Profile({ admin }) {
   };
 
   const kirimSandi = async () => {
-    if (!lewatEmail) return toast("Akun ini masuk lewat Google, jadi password diatur di akun Google.", true);
+    if (!lewatEmail) return toast("Akun ini masuk lewat Google. Pakai Buat sandi dulu di bawah.", true);
     if (baru.length < 6) return toast("Password baru minimal 6 karakter", true);
     if (baru !== ulang) return toast("Ulangi password baru dengan sama persis", true);
     setSibuk(true);
@@ -56,6 +60,31 @@ export default function Profile({ admin }) {
       const k = e.code || "";
       toast(k.includes("wrong-password") || k.includes("invalid-credential")
         ? "Password lama salah" : "Gagal: " + (k || e.message), true);
+    } finally { setSibuk(false); }
+  };
+
+  /** Pasang sandi pada akun yang selama ini masuk lewat Google. */
+  const pasangSandi = async () => {
+    if (sandiPertama.length < 6) return toast("Sandi minimal 6 karakter", true);
+    setSibuk(true);
+    try {
+      const kredensial = EmailAuthProvider.credential(user.email, sandiPertama);
+      await linkWithCredential(user, kredensial);
+      await catatLog("Buat sandi login", user.email);
+      toast("Sandi tersimpan. Sekarang bisa masuk dengan email dan sandi.");
+      setSandiPertama("");
+      setBuatSandi(false);
+    } catch (e) {
+      const k = e.code || "";
+      if (k.includes("requires-recent-login")) {
+        toast("Keluarlah dulu, masuk lagi dengan Google, lalu ulangi. Sistem minta login ulang sebelum mengubah sandi.", true);
+      } else if (k.includes("email-already-in-use") || k.includes("credential-already-in-use")) {
+        toast("Email ini sudah punya sandi. Pakai Ubah password.", true);
+      } else if (k.includes("provider-already-linked")) {
+        toast("Akun ini sudah punya sandi. Pakai Ubah password.", true);
+      } else {
+        toast("Gagal: " + (k || e.message), true);
+      }
     } finally { setSibuk(false); }
   };
 
@@ -75,6 +104,30 @@ export default function Profile({ admin }) {
             </button>
           </div>
           <div className="catatan">Peran: <b>{admin.peran}</b>. Email dipakai untuk masuk dan tidak bisa diubah dari sini.</div>
+
+          {!lewatEmail ? (
+            <div style={{ marginTop: 14, borderTop: "1px solid #2a2a38", paddingTop: 12 }}>
+              <div className="catatan" style={{ marginBottom: 8 }}>
+                Akun ini masuk lewat Google, jadi belum punya sandi. Buat sandi sekali di sini
+                agar nanti bisa masuk dengan email dan sandi dari perangkat mana pun.
+              </div>
+              {!buatSandi ? (
+                <a className="tautanPink" onClick={() => setBuatSandi(true)}>Buat sandi login</a>
+              ) : (
+                <>
+                  <Isian label="Sandi baru" type="password" value={sandiPertama}
+                    onChange={(e) => setSandiPertama(e.target.value)} placeholder="minimal 6 huruf"
+                    autoComplete="new-password" />
+                  <div className="barisAksiForm">
+                    <a className="tautanPink" onClick={() => { setBuatSandi(false); setSandiPertama(""); }}>Batal</a>
+                    <button className="tombolBaru" onClick={pasangSandi} disabled={sibuk}>
+                      {sibuk ? "Menyimpan…" : "Simpan sandi"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : null}
         </div>
       </div>
 

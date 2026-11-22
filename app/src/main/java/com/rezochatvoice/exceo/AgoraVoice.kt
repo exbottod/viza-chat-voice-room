@@ -268,8 +268,8 @@ object AgoraVoice {
 
         override fun onUserJoined(uid: Int, elapsed: Int) {
             try {
-                val info = engine?.getUserInfoByUid(uid)
-                val akun = info?.userAccount ?: ""
+                val info = UserInfo()
+                val akun = if (engine?.getUserInfoByUid(uid, info) == 0) (info.userAccount ?: "") else ""
                 if (akun.isNotBlank()) uidAkun[uid] = akun
             } catch (e: Exception) {
                 Log.e(TAG, "userInfo: ${e.message}")

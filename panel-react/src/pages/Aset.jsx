@@ -3,7 +3,7 @@ import { get, ref } from "firebase/database";
 import { rtdb } from "../firebase.js";
 import { walletAdmin } from "../dompet.js";
 import { ambilSemuaMentah, catatLog, rupiah } from "../data.js";
-import { kunciVip, hapusRtdbServer } from "../unggah.js";
+import { bacaRtdbServer, kunciVip, hapusRtdbServer } from "../unggah.js";
 import { Konfirmasi, Kosong, Panel, Rangka, Tabel, Tag, toast } from "../ui.jsx";
 import TambahAset from "./TambahAset.jsx";
 
@@ -35,10 +35,22 @@ export default function Aset({ awal = "frame" }) {
       peta.set(id, { ...(peta.get(id) || {}), ...o, id });
     };
     try { (await ambilSemuaMentah("vipConfig", 400)).forEach((d) => simpan(d, d.id)); } catch (e) { /* tanpa izin baca */ }
+    // Katalog aplikasi ada di RTDB. Aturan RTDB menolak bacaan dari browser,
+    // jadi dicoba lewat akun layanan server dulu, baru baca langsung.
+    let dapatRtdb = false;
     try {
-      const sn = await get(ref(rtdb, "vipCfg"));
-      if (sn.exists()) sn.forEach((c) => simpan(c.val() || {}, c.key));
-    } catch (e) { /* tetap pakai Firestore */ }
+      const isi = await bacaRtdbServer("vipCfg");
+      if (isi && typeof isi === "object") {
+        Object.entries(isi).forEach(([k, v]) => simpan(v || {}, k));
+        dapatRtdb = true;
+      }
+    } catch (e) { /* coba cara kedua */ }
+    if (!dapatRtdb) {
+      try {
+        const sn = await get(ref(rtdb, "vipCfg"));
+        if (sn.exists()) sn.forEach((c) => simpan(c.val() || {}, c.key));
+      } catch (e) { /* tetap pakai Firestore */ }
+    }
     const semua = [...peta.values()];
     setDaftar(semua
       .filter((x) => String(x.slot || "") === slot)

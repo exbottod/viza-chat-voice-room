@@ -80,3 +80,29 @@ export async function tulisRtdbServer(jalur, data) {
 
 /** Hapus satu cabang RTDB. */
 export const hapusRtdbServer = (jalur) => tulisRtdbServer(jalur, null);
+
+/** Baca satu cabang RTDB lewat akun layanan server.
+ *  Aturan RTDB menolak pembacaan dari browser, jadi katalog aset dibaca di sini
+ *  supaya daftar frame/medali/gift tidak tampil kosong. */
+export async function bacaRtdbServer(jalur) {
+  const u = auth.currentUser;
+  if (!u) throw new Error("Belum login");
+  const t = await u.getIdToken();
+  const kendali = new AbortController();
+  const jam = setTimeout(() => kendali.abort(), 20000);
+  try {
+    const res = await fetch(DOMPET + "/panel-rtdb", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ t, path: jalur, baca: true }),
+      signal: kendali.signal,
+    });
+    const teks = await res.text();
+    let j = {};
+    try { j = teks ? JSON.parse(teks) : {}; } catch (e) { j = {}; }
+    if (!res.ok || j.ok === 0) throw new Error(j.e || "RTDB " + res.status);
+    return j.data || null;
+  } finally {
+    clearTimeout(jam);
+  }
+}

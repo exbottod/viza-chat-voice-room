@@ -1845,6 +1845,20 @@ async function tulisRtdbSa(env, path, nilai) {
   return true;
 }
 
+/** Baca satu cabang RTDB memakai akun layanan.
+ *  Aturan RTDB menolak pembacaan dari browser (Permission denied), jadi panel
+ *  membaca katalog aset lewat jalur ini agar daftar frame/medali selalu tampil. */
+async function bacaRtdbSa(env, path) {
+  const token = await tokenLayanan(env);
+  if (!token) throw new Error("akun layanan belum siap");
+  const bersih = String(path || "").replace(/^\/+|\/+$/g, "");
+  if (!bersih || bersih.includes("..")) throw new Error("path tidak sah");
+  const alamat = `${RTDB}/${bersih}.json?access_token=${encodeURIComponent(token)}`;
+  const r = await fetch(alamat);
+  if (!r.ok) throw new Error("RTDB " + r.status + " " + (await r.text()).slice(0, 120));
+  return await r.json();
+}
+
 /** Tandai user diblokir di Firestore (dokumen banned/{uid}) memakai akun
  *  layanan, supaya aplikasi benar-benar menolak login walaupun aturan Firestore
  *  tidak mengizinkan panel menulis langsung. */
@@ -6483,6 +6497,19 @@ export default {
         return json({ ok: 0, e: "Hanya admin" }, 403);
       }
       const jalur = String(b.path || "");
+      // Mode baca: panel perlu melihat katalog aset (vipCfg/giftCfg) yang
+      // ditolak aturan RTDB untuk browser.
+      if (b.baca) {
+        if (!/^(vipCfg|giftCfg|banners|betCfg|signinCfg|cashbackCfg|rewardRoom|_owner)(\/|$)/.test(jalur)) {
+          return json({ ok: 0, e: "Path tidak diizinkan" }, 400);
+        }
+        try {
+          return json({ ok: 1, data: await bacaRtdbSa(env, jalur) });
+        } catch (e) {
+          await logGalat(env, sesiP.uid, "panel-rtdb-baca", jalur + " " + String(e?.message ?? e).slice(0, 140));
+          return json({ ok: 0, e: String(e?.message ?? e) }, 502);
+        }
+      }
       // Batasi: panel hanya boleh menulis cabang pengaturan, bukan data user.
       if (!/^(vipCfg|banners|pengumuman|giftCfg|betCfg|signinCfg|cashbackCfg|_owner)\//.test(jalur)) {
         return json({ ok: 0, e: "Path tidak diizinkan" }, 400);

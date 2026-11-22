@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { get, ref } from "firebase/database";
 import { rtdb } from "../firebase.js";
 import { walletAdmin } from "../dompet.js";
-import { unggahBerkas, tulisRtdbServer, kunciVip, hapusRtdbServer } from "../unggah.js";
+import { unggahBerkas, tulisRtdbServer, kunciVip, hapusRtdbServer, bacaRtdbServer } from "../unggah.js";
 import { ambilSemuaMentah, catatLog, rupiah } from "../data.js";
 import { Konfirmasi, Panel, Tag, toast } from "../ui.jsx";
 
@@ -34,10 +34,20 @@ export default function Vip() {
       peta[n] = { ...(peta[n] || {}), ...o, id: String(o.id || kunci || "svm_" + n), n };
     };
     try { (await ambilSemuaMentah("vipConfig", 400)).forEach((d) => simpan(d, d.id)); } catch (e) { /* tanpa izin baca */ }
+    let dapatRtdb = false;
     try {
-      const sn = await get(ref(rtdb, "vipCfg"));
-      if (sn.exists()) sn.forEach((c) => simpan(c.val() || {}, c.key));
-    } catch (e) { /* tetap pakai Firestore */ }
+      const isi = await bacaRtdbServer("vipCfg");
+      if (isi && typeof isi === "object") {
+        Object.entries(isi).forEach(([k, v]) => simpan(v || {}, k));
+        dapatRtdb = true;
+      }
+    } catch (e) { /* coba cara kedua */ }
+    if (!dapatRtdb) {
+      try {
+        const sn = await get(ref(rtdb, "vipCfg"));
+        if (sn.exists()) sn.forEach((c) => simpan(c.val() || {}, c.key));
+      } catch (e) { /* tetap pakai Firestore */ }
+    }
     setMedali(peta);
   };
 

@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.313",
   "catatan": "• Status menyambung dan menyambung ulang tidak ditampilkan lagi.\n• Kalau gagal, keterangan tetap muncul dan bisa diketuk untuk coba lagi.\n• Suara tetap tersambung otomatis di latar belakang.",
-  "ukuran_apk": 74343749,
-  "sha256_apk": "877df734b8753edeedba1238e79d8b522c2ec21a75948c38c988cb4d8dfa23e7",
+  "ukuran_apk": 74344247,
+  "sha256_apk": "11a6c8d1d16b632f5e76bd327fc372913d884a10fa5f9fbb67c38499980f3767",
   "abis": {
     "arm64": {
-      "ukuran": 74343749,
-      "sha256": "877df734b8753edeedba1238e79d8b522c2ec21a75948c38c988cb4d8dfa23e7"
+      "ukuran": 74344247,
+      "sha256": "11a6c8d1d16b632f5e76bd327fc372913d884a10fa5f9fbb67c38499980f3767"
     },
     "armv7": {
-      "ukuran": 72578257,
-      "sha256": "8ac6d07ebbd39f7ee8e427e3dd3e2fc8ada2ac1b0e5c3bd06862eb10d9769307"
+      "ukuran": 72578762,
+      "sha256": "f12f7e513b513fd5a338ac6f3221465f2ff6128ae96515f1597a1a7c0a80a520"
     },
     "universal": {
-      "ukuran": 122197717,
-      "sha256": "93334e914b56f568df22f00a266dda5e8078671f50527fb9edae124c1a799bf2"
+      "ukuran": 122198218,
+      "sha256": "edb808a133b8b6e63bd6843a1aaeca4f270dc3f7aae272a6a1e3701ad4a4b4f0"
     }
   }
 }

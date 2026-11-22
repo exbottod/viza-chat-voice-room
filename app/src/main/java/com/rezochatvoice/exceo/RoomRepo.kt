@@ -667,6 +667,51 @@ object RoomRepo {
     }
 
     /** Apakah user di-kick (daftar hitam) dari room ini. */
+    /**
+     * Keanggotaan room ditegaskan lagi setelah aplikasi kembali dari latar
+     * belakang. Saat HP masuk latar, sambungan Realtime Database putus dan
+     * server menjalankan onDisconnect: keanggotaan kita dihapus, kursi kita
+     * tidak lagi dihitung, dan penanda LIVE hilang. Tanpa penegasan ini room
+     * tampak macet setelah kembali dari WhatsApp atau APK lain.
+     */
+    suspend fun klaimKembali(roomId: String, uid: String, seat: Int?, name: String = "") {
+        try {
+            if (roomId.isBlank() || uid.isBlank()) return
+            val me = Rtdb.ref("members/$roomId/$uid")
+            val live = Rtdb.ref("live/$uid")
+            me.onDisconnect().removeValue()
+            live.onDisconnect().removeValue()
+            // Ditulis hanya kalau memang hilang, supaya orang lain di room tidak
+            // melihat kursi/anggota berkedip setiap kita kembali ke aplikasi.
+            kotlinx.coroutines.coroutineScope {
+                val a = async {
+                    val ada = try { me.get().await().exists() } catch (e: Exception) { false }
+                    if (!ada) me.setValue(true).await()
+                }
+                val b = async {
+                    val ada = try { live.get().await().exists() } catch (e: Exception) { false }
+                    if (!ada) live.setValue(roomId).await()
+                }
+                a.await(); b.await()
+            }
+            // Kursi dipegang lagi kalau memang tadi kita duduk di situ.
+            if (seat != null) {
+                val kursi = Rtdb.ref("seats/$roomId/$seat")
+                val isi = kursi.get().await()
+                val pemilik = isi.child("uid").getValue(String::class.java)
+                if (pemilik.isNullOrBlank() || pemilik == uid) {
+                    val data = HashMap<String, Any?>()
+                    data["uid"] = uid
+                    if (name.isNotBlank()) data["name"] = name
+                    kursi.updateChildren(data).await()
+                }
+            }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+        }
+    }
+
     suspend fun isBanned(roomId: String, uid: String): Boolean = banOf(roomId, uid) != null
 
     /**

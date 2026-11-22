@@ -434,6 +434,22 @@ object AgoraVoice {
     }
 
     /** Masuk room (awalnya hanya mendengar; mic dibuka lewat setSpeaking). */
+    /**
+     * Dipanggil saat aplikasi kembali ke depan (dari WhatsApp atau APK lain).
+     * Sambungan suara bisa sudah mati di latar belakang; kalau begitu disambung
+     * ulang tanpa tulisan apa pun di layar.
+     */
+    @Volatile private var cobaSambungTerakhir = 0L
+    fun sambungUlangJikaPerlu(id: String) {
+        if (id.isBlank() || sengajaKeluar) return
+        if (joined && engine != null) return
+        val sekarang = System.currentTimeMillis()
+        if (sekarang - cobaSambungTerakhir < 4000L) return
+        cobaSambungTerakhir = sekarang
+        val ctx = appCtx ?: return
+        join(ctx, id)
+    }
+
     fun join(ctx: Context, id: String) {
         sengajaKeluar = false
         findActivity(ctx)?.let { actAktif = it }

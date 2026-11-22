@@ -246,6 +246,45 @@ fun RoomScreen(
             if (kursiCepat == k) kursiCepat = null
         }
     }
+    // ---- Kembali dari latar belakang (WhatsApp / APK lain) ----
+    // Saat HP masuk latar, sambungan database putus dan server menghapus
+    // keanggotaan serta penanda LIVE kita. Begitu aplikasi kembali ke depan,
+    // semuanya ditegaskan lagi dan suara disambung ulang, tanpa memuat ulang
+    // layar. Tanpa ini room terasa macet setelah pindah aplikasi.
+    val pemilikSiklus = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    androidx.compose.runtime.DisposableEffect(pemilikSiklus, roomId) {
+        val pengamat = androidx.lifecycle.LifecycleEventObserver { _, e ->
+            if (e == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                scope.launch {
+                    val kursi = rawSeats.values.firstOrNull { it.uid == myUid }?.index
+                    RoomRepo.klaimKembali(roomId, myUid, kursi, myName)
+                }
+                AgoraVoice.sambungUlangJikaPerlu(roomId)
+            }
+        }
+        pemilikSiklus.lifecycle.addObserver(pengamat)
+        onDispose { pemilikSiklus.lifecycle.removeObserver(pengamat) }
+    }
+    // Sambungan database tersambung lagi (jaringan naik-turun): tegaskan ulang
+    // keanggotaan tanpa menunggu pengguna menyentuh layar.
+    androidx.compose.runtime.DisposableEffect(roomId) {
+        val rujukan = com.google.firebase.database.FirebaseDatabase.getInstance().getReference(".info/connected")
+        val pendengar = object : com.google.firebase.database.ValueEventListener {
+            override fun onDataChange(snap: com.google.firebase.database.DataSnapshot) {
+                if (snap.getValue(Boolean::class.java) == true) {
+                    scope.launch {
+                        val kursi = rawSeats.values.firstOrNull { it.uid == myUid }?.index
+                        RoomRepo.klaimKembali(roomId, myUid, kursi, myName)
+                    }
+                    AgoraVoice.sambungUlangJikaPerlu(roomId)
+                }
+            }
+            override fun onCancelled(error: com.google.firebase.database.DatabaseError) {}
+        }
+        rujukan.addValueEventListener(pendengar)
+        onDispose { rujukan.removeEventListener(pendengar) }
+    }
+
     val seats = rawSeats.filterValues { it.uid in members }.let { asli ->
         val k = kursiCepat
         if (k == null || asli[k]?.uid == myUid) asli

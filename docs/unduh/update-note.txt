@@ -1,2 +1,2 @@
-• Panel React: nama grup menu mengikuti acuan (USER MANAGEMENT, FINANCIAL MANAGEMENT, GAMING) dan pana
-• Panel React: menu samping bergaya Rayzi, topbar lonceng + profil, halaman Emote
+• Setting: tab General berisi App Setting (Android App Version + Android App Link) dan Android Asset L
+• Panel React: menu profil (Profile/Setting/Logout), halaman Profile dan Setting; server: cfg_get/cfg_

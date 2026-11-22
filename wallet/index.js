@@ -1709,10 +1709,12 @@ const ADMIN_EMAIL = "bangexx01@gmail.com";
 // Akun panel internal (@vizapanel.app) ikut diakui, karena panel admin Viza
 // memakai akun sendiri, bukan email pribadi pemilik.
 const ADMIN_SEMUA = [ADMIN_EMAIL, "boypanel@vizapanel.app"];
+// Panel dan seluruh alat developer hanya untuk email pemilik. Daftar staf dan
+// domain @vizapanel.app tidak lagi memberi akses, sesuai permintaan pemilik.
 const adalahAdmin = (s) => {
   const e = String(s?.email || "").toLowerCase();
   if (!e) return false;
-  return ADMIN_SEMUA.includes(e) || e.endsWith("@vizapanel.app");
+  return e === String(ADMIN_EMAIL).toLowerCase();
 };
 // Staf panel (manager/admin) boleh memakai fitur panel. Hanya pengelolaan staf
 // dan penghapusan akun yang tetap khusus developer.
@@ -1784,9 +1786,8 @@ async function peranPanelWeb(env, sesi) {
 
 async function bolehPanel(env, sesi) {
   if (!sesi) return false;
-  if (adalahAdmin(sesi)) return true;
-  try { if ((await peranStaf(env, sesi.uid)).length > 0) return true; } catch { /* lanjut */ }
-  return !!(await peranPanelWeb(env, sesi));
+  // Hanya pemilik. Staf panel dan panelAdmins tidak lagi diakui.
+  return adalahAdmin(sesi);
 }
 const cache = new Map();
 

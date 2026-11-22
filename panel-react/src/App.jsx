@@ -92,17 +92,10 @@ const HALAMAN = {
 async function cekAdmin(user) {
   if (!user) return null;
   const email = (user.email || "").toLowerCase();
-  const dasar = { email, nama: user.displayName || email.split("@")[0], peran: email === PEMILIK ? "owner" : "-", aktif: true };
-  if (email === PEMILIK) return dasar;
-  try {
-    const d = await getDoc(doc(db, "panelAdmins", email));
-    if (d.exists() && d.data().aktif !== false) {
-      return { ...dasar, peran: d.data().peran || "admin", nama: d.data().nama || dasar.nama };
-    }
-  } catch (e) {
-    console.warn("panelAdmins tidak terbaca:", e.code);
-  }
-  return null;
+  // Panel ini hanya untuk pemilik. Daftar staf di Firestore tidak dipakai lagi
+  // supaya tidak ada email lain yang bisa membuka panel.
+  if (email !== PEMILIK) return null;
+  return { email, nama: user.displayName || email.split("@")[0], peran: "owner", aktif: true };
 }
 
 function pakaiHash() {
@@ -172,7 +165,7 @@ function Login({ onPesan }) {
     setSibuk(true);
     try {
       await createUserWithEmailAndPassword(auth, email.trim(), sandi);
-      onPesan("Akun dibuat. Kalau email ini belum punya akses panel, minta pemilik menambahkannya.");
+      onPesan("Akun dibuat. Kalau ini bukan email pemilik, panel tetap menolak.");
     } catch (err) {
       onPesan(pesanGalat(err.code));
     } finally {
@@ -232,8 +225,8 @@ function Login({ onPesan }) {
 
         <div className="kakiLogin">
           {buatBaru
-            ? "Akun baru dibuat di Firebase. Setelah itu pemilik menambahkan emailnya di menu Staf panel agar bisa masuk."
-            : "Hanya akun yang terdaftar yang bisa membuka panel ini."}
+            ? "Daftar hanya berguna untuk email pemilik. Email lain tetap ditolak."
+            : "Hanya email pemilik yang bisa membuka panel ini."}
         </div>
       </form>
     </div>
@@ -255,7 +248,7 @@ export default function App() {
       if (!user) { setAdmin(null); return; }
       const a = await cekAdmin(user);
       if (!a) {
-        setPesan(`Akun ${user.email} belum terdaftar sebagai admin panel.`);
+        setPesan(`Email ${user.email} tidak punya akses. Panel ini hanya untuk ${PEMILIK}.`);
         await signOut(auth);
         setAdmin(null);
         return;

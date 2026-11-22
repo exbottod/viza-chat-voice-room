@@ -1,4 +1,4 @@
+• Animasi gift terbang (giftFly) memutar video mp4, bukan hanya emoji,
+• Gift bervideo tetap memunculkan efek layar penuh walau ditandai
 • Kotak .fs-card tidak dibatasi tinggi dan tidak digulir, jadi judul tidak
 • Latar kartu diberi ruang 64 piksel di atas untuk ikon scatter.
-• Kartu hanya dikecilkan (skala) bila benar-benar tidak muat di layar.
-• Keterangan tahap di bawah game hanya tampil saat memuat atau ada galat.

@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.324",
-  "catatan": "• Kotak .fs-card tidak dibatasi tinggi dan tidak digulir, jadi judul tidak\n• Latar kartu diberi ruang 64 piksel di atas untuk ikon scatter.\n• Kartu hanya dikecilkan (skala) bila benar-benar tidak muat di layar.\n• Keterangan tahap di bawah game hanya tampil saat memuat atau ada galat.",
-  "ukuran_apk": 74349465,
-  "sha256_apk": "4b0c000c5807ba140943344c0bd17b35cdec460cb14c9d9298d1092de55773ec",
+  "versi": "1.0.325",
+  "catatan": "• Animasi gift terbang (giftFly) memutar video mp4, bukan hanya emoji,\n• Gift bervideo tetap memunculkan efek layar penuh walau ditandai\n• Kotak .fs-card tidak dibatasi tinggi dan tidak digulir, jadi judul tidak\n• Latar kartu diberi ruang 64 piksel di atas untuk ikon scatter.",
+  "ukuran_apk": 74349457,
+  "sha256_apk": "12a2b59521cb5a20a7744a4442ccedd3abd4591f745a85793ed54bf4440ef39a",
   "abis": {
     "arm64": {
-      "ukuran": 74349465,
-      "sha256": "4b0c000c5807ba140943344c0bd17b35cdec460cb14c9d9298d1092de55773ec"
+      "ukuran": 74349457,
+      "sha256": "12a2b59521cb5a20a7744a4442ccedd3abd4591f745a85793ed54bf4440ef39a"
     },
     "armv7": {
-      "ukuran": 72583977,
-      "sha256": "56f2cc79074daa967d27d31d75437ee7966a1aae3a3b2bf1a1a6124a160c1a63"
+      "ukuran": 72583970,
+      "sha256": "4c445ec689bda604e9bc17f58b08a5a4e21bd924a45f6f1dc0ef2a8eb25bc498"
     },
     "universal": {
-      "ukuran": 122203424,
-      "sha256": "7354f0a88d15fe465f082be3d09cbbcc8c26332337e668e1029dbaf3f481866f"
+      "ukuran": 122203417,
+      "sha256": "93c658cfff7c9f88b48c133344d7d68016b073a7c55245180536a5faedefbf49"
     }
   }
 }

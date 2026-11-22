@@ -1,3 +1,2 @@
-• iklan: perbaiki kompilasi (isInitialized properti, pemuat iklan setelah state dompet)
-• iklan: UnityAds.isInitialized() dipanggil sebagai fungsi (perbaikan kompilasi)
-• iklan: SDK Unity Ads (Game ID 800448611, placement BP_Rewarded_Android), tombol Coin gratis di dompe
+• iklan: mode uji memakai properti UnityAds.debugMode
+• iklan: saklar Mode uji di panel (UnityAds.setDebugMode + kode galat tampil di layar)

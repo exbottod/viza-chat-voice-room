@@ -15,7 +15,39 @@ import org.json.JSONObject
  */
 object RoomCache {
     private const val NAMA = "room_cache"
+
+    /**
+     * SharedPreferences memuat SELURUH isinya ke memori saat aplikasi mulai.
+     * Foto room, latar, dan foto kursi dalam base64 bisa berukuran ratusan KB
+     * sampai jutaan karakter; menyimpannya di sini membuat memori penuh dan
+     * proses mati saat membuka room. Jadi hanya foto kecil yang disimpan, yang
+     * besar dibaca ulang dari jaringan (cache memori sudah menanganinya).
+     */
+    private const val BATAS_FOTO = 6_000
+    private const val BATAS_KURSI_TOTAL = 60_000
+    private fun kecil(b64: String?): String =
+        if (b64 != null && b64.length <= BATAS_FOTO) b64 else ""
     private fun sp(c: Context) = c.applicationContext.getSharedPreferences(NAMA, Context.MODE_PRIVATE)
+
+    /**
+     * Pembersih sekali jalan untuk simpanan versi lama yang membengkak oleh foto
+     * base64 besar. Dipanggil sebelum simpanan dibaca; data yang terlalu besar
+     * dibuang (room dimuat dari jaringan), poin level tetap dipertahankan.
+     */
+    fun rapikanSimpananLama(c: Context) {
+        try {
+            val p = sp(c)
+            if (p.getBoolean("rapi_v2", false)) return
+            val buang = p.all.filter { (k, v) ->
+                (k.startsWith("info_") || k.startsWith("kursi_")) && v is String && v.length > 90_000
+            }.keys
+            val e = p.edit()
+            for (k in buang) e.remove(k)
+            if (buang.isNotEmpty()) e.remove("terakhir")
+            e.putBoolean("rapi_v2", true).apply()
+        } catch (e: Throwable) {
+        }
+    }
 
     fun simpanInfo(c: Context, r: RoomInfo) {
         try {
@@ -25,8 +57,8 @@ object RoomCache {
             o.put("name", r.name)
             o.put("ownerUid", r.ownerUid)
             o.put("ownerName", r.ownerName)
-            o.put("photoB64", r.photoB64 ?: "")
-            o.put("backgroundB64", r.backgroundB64 ?: "")
+            o.put("photoB64", kecil(r.photoB64))
+            o.put("backgroundB64", "")
             o.put("announcement", r.announcement)
             o.put("micCount", r.micCount)
             o.put("lockHash", r.lockHash)
@@ -41,6 +73,7 @@ object RoomCache {
     }
 
     fun info(c: Context, id: String): RoomInfo? = try {
+        rapikanSimpananLama(c)
         val teks = sp(c).getString("info_" + id, null) ?: return null
         val o = JSONObject(teks)
         fun daftarAngka(k: String): List<Int> {
@@ -68,7 +101,7 @@ object RoomCache {
             pinnedAt = o.optLong("pinnedAt"),
             admins = daftarTeks("admins"),
         )
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         null
     }
 
@@ -95,6 +128,7 @@ object RoomCache {
 
     /** Id room terakhir, dipakai supaya aplikasi kembali ke room yang sama. */
     fun idTerakhir(c: Context): String? = try {
+        rapikanSimpananLama(c)
         sp(c).getString("terakhir", null)?.takeIf { it.isNotBlank() }
     } catch (e: Exception) {
         null
@@ -114,12 +148,16 @@ object RoomCache {
     fun simpanKursi(c: Context, roomId: String, seats: Map<Int, Seat>) {
         try {
             val a = JSONArray()
+            var total = 0
             for (s in seats.values) {
                 val o = JSONObject()
                 o.put("i", s.index)
                 o.put("u", s.uid)
-                o.put("n", s.name)
-                o.put("a", s.avatarB64 ?: "")
+                o.put("n", s.name.take(40))
+                var foto = kecil(s.avatarB64)
+                if (total + foto.length > BATAS_KURSI_TOTAL) foto = ""
+                total += foto.length
+                o.put("a", foto)
                 o.put("m", s.muted)
                 a.put(o)
             }

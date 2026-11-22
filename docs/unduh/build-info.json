@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.322",
-  "catatan": "• server.js murni ESM (require dibuang) + script betulkan layanan dompet Viza di VPS\n• Script benahi viza-dompet: type=module, cek sintaks, restart, lapor port",
-  "ukuran_apk": 74349134,
-  "sha256_apk": "a1a997c4f51a77b7b1e578ff7dc4a35b46cba2aeddc6b17502beb5559b474124",
+  "versi": "1.0.323",
+  "catatan": "• Blok viza: root * untuk panel (perbaiki galat caddy) + skrip pasang blok viza ke 8092",
+  "ukuran_apk": 74349123,
+  "sha256_apk": "585242d47a5bad87fd6d93ac36b366777db9f4266fa475eb8468e4b096ef0aa8",
   "abis": {
     "arm64": {
-      "ukuran": 74349134,
-      "sha256": "a1a997c4f51a77b7b1e578ff7dc4a35b46cba2aeddc6b17502beb5559b474124"
+      "ukuran": 74349123,
+      "sha256": "585242d47a5bad87fd6d93ac36b366777db9f4266fa475eb8468e4b096ef0aa8"
     },
     "armv7": {
-      "ukuran": 72583647,
-      "sha256": "90dece895c6cec3ad48bff644094851119a9a3b2a155fca19532cf981cb27ecd"
+      "ukuran": 72583632,
+      "sha256": "5f6d9136049ce4c994f53d9b1411019ae367f8240fe522fe8ea4276ac7f1cff6"
     },
     "universal": {
-      "ukuran": 122203106,
-      "sha256": "58a1bfbc7281cd8b46047717795ca7d988d4cef4b5f24eaf8b4ffe6bf712bd0e"
+      "ukuran": 122203094,
+      "sha256": "a9124cdcd19706c6b12aa5d1e687e9d9eabb9d3f8bd93580b1fe6836181dade7"
     }
   }
 }

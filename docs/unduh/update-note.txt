@@ -1,2 +1,1 @@
-• server.js murni ESM (require dibuang) + script betulkan layanan dompet Viza di VPS
-• Script benahi viza-dompet: type=module, cek sintaks, restart, lapor port
+• Blok viza: root * untuk panel (perbaiki galat caddy) + skrip pasang blok viza ke 8092

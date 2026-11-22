@@ -87,7 +87,7 @@ object AgoraVoice {
 
     /** Rincian untuk dialog: dipakai saat status suara ditekan lama. */
     fun diagnostikTeks(): String = buildString {
-        append("Room: ").append(roomId.ifBlank { "-" })
+        append("Room: ").append(roomId ?: "-")
         append("\nAkun Agora: ").append(akunSaya.ifBlank { "-" })
         append("\nToken: ").append(if (tokSimpan != null) "ada" else "belum ada")
         append("\nKode server: ").append(if (kodeServerTerakhir != 0) kodeServerTerakhir.toString() else "200")

@@ -143,8 +143,10 @@ private const val P_BICARA = 12
 
 private val Teal = Color(0xFF2BD9C4)
 
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@OptIn(
+    androidx.compose.foundation.layout.ExperimentalLayoutApi::class,
+    androidx.compose.foundation.ExperimentalFoundationApi::class,
+)
 @Composable
 fun RoomScreen(
     roomId: String,
@@ -512,10 +514,9 @@ fun RoomScreen(
     val r = room?.copy(online = members.size, lockedSeats = locks.toList())
 
     // Foto kursi dari versi lama masih menyimpan gambar ukuran asli (ratusan KB
-    // per orang), dan itulah beban terbesar saat masuk room. Foto besar dibuang
-    // sekali di sini: pemilik/admin room boleh membersihkan semua kursi, pengguna
-    // biasa hanya kursinya sendiri. Kursi tetap berfoto karena gambar diambil dari
-    // profil (versi kecil) saat kursi digambar.
+    // per orang), dan itulah beban terbesar saat masuk room. Foto besar diganti
+    // versi kecil (128 px) sekali di sini: pemilik/admin room untuk semua kursi,
+    // pengguna biasa kursinya sendiri. Fotonya tetap ada, cuma jadi ringan.
     LaunchedEffect(
         rawSeats.values.map { it.uid + ":" + (it.avatarB64?.length ?: 0) }.sorted(),
         r?.ownerUid,
@@ -527,7 +528,11 @@ fun RoomScreen(
             if (a.length <= 20_000) return@forEach
             if (!bolehSemua && st.uid != myUid) return@forEach
             try {
-                Rtdb.ref("seats/$roomId/${st.index}/avatarB64").setValue(null)
+                val kecil = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    ProfileRepo.avatarKecil(a, 128)
+                } ?: return@forEach
+                if (kecil.isBlank() || kecil.length >= a.length) return@forEach
+                Rtdb.ref("seats/$roomId/${st.index}/avatarB64").setValue(kecil)
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) { }

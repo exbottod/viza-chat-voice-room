@@ -1,1 +1,1 @@
-• Panel React: nama menu tampil di samping ikon, termasuk di HP
+• Panel: React jadi panel utama, semua menu dipindah ke React

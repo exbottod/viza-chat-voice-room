@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.362",
-  "catatan": "• panel: menu Banner (banner tab Party) dan menu Store baru (frame, banner masuk, efek masuk, lencana,",
-  "ukuran_apk": 74378546,
-  "sha256_apk": "e40d31298b7ea43be79b2785cccf84849ebb941a83e68aa1b39a91aa08fc9250",
+  "versi": "1.0.363",
+  "catatan": "• panel: pratinjau aset di semua daftar (Aset & VIP, Store, VIP & Medali) dengan pemutar SVGA, WebP/GI",
+  "ukuran_apk": 74378547,
+  "sha256_apk": "89e56574ae8803e36cbd55968412c08a3a2e87ec93b987745632c5cbc2b4198c",
   "abis": {
     "arm64": {
-      "ukuran": 74378546,
-      "sha256": "e40d31298b7ea43be79b2785cccf84849ebb941a83e68aa1b39a91aa08fc9250"
+      "ukuran": 74378547,
+      "sha256": "89e56574ae8803e36cbd55968412c08a3a2e87ec93b987745632c5cbc2b4198c"
     },
     "armv7": {
-      "ukuran": 72613058,
-      "sha256": "5fcad74749574c6229f4c4aed478c927ee0185c6d05bfcbc8af77e91c9d35708"
+      "ukuran": 72613060,
+      "sha256": "cf0b3f7e031f4c8b510d6ac96dbe7aef1afe70b084034494bbeb19d09e10e074"
     },
     "universal": {
-      "ukuran": 122232517,
-      "sha256": "840811a672b9b4bde45de49c3005aecb8654867792fdf0209b04c4f98922a304"
+      "ukuran": 122232505,
+      "sha256": "ab56eafce9e35566fe28e7cc859eddb496415db50e0052ac9ffe8af05063413e"
     }
   }
 }

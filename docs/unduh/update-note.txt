@@ -1,1 +1,1 @@
-• panel: menu Banner (banner tab Party) dan menu Store baru (frame, banner masuk, efek masuk, lencana,
+• panel: pratinjau aset di semua daftar (Aset & VIP, Store, VIP & Medali) dengan pemutar SVGA, WebP/GI

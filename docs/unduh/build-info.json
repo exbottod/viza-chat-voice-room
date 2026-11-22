@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.357",
-  "catatan": "• panel: aset baca Firestore+RTDB (aset panel lama ikut tampil), tab Banner tampil semua, menu VIP & M",
-  "ukuran_apk": 74378543,
-  "sha256_apk": "9620bc61731b08d36b3de3a4bebdbea28c7969ff3f80ef9b6bee7bca7e803460",
+  "versi": "1.0.358",
+  "catatan": "• panel: katalog aset dibaca lewat akun layanan server (aturan RTDB menolak browser); server: /panel-r\n• panel: aset baca Firestore+RTDB (aset panel lama ikut tampil), tab Banner tampil semua, menu VIP & M",
+  "ukuran_apk": 74378549,
+  "sha256_apk": "ae638eeaca294ade93e3da033bfd2b27d85133c0747c316c7d14f2a937375b55",
   "abis": {
     "arm64": {
-      "ukuran": 74378543,
-      "sha256": "9620bc61731b08d36b3de3a4bebdbea28c7969ff3f80ef9b6bee7bca7e803460"
+      "ukuran": 74378549,
+      "sha256": "ae638eeaca294ade93e3da033bfd2b27d85133c0747c316c7d14f2a937375b55"
     },
     "armv7": {
       "ukuran": 72613059,
-      "sha256": "b6b78c9961531cfe35b5c372f954f8e6dd88198d3f6e847359c980d74c1ddd15"
+      "sha256": "db6be991d5160913e131fcd14114c6c35eed43bc98aa6f06f60f4cce21633988"
     },
     "universal": {
-      "ukuran": 122232504,
-      "sha256": "3b16446b562f0ff5ff39a6246c50a543cfddbc09de64c0ae74559239660eebca"
+      "ukuran": 122232520,
+      "sha256": "9bfdaba4a1a24cea41e14ebbb972379e53ebd8ad17b95c4f62ea0bed9634054e"
     }
   }
 }

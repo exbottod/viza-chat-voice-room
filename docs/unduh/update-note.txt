@@ -1,1 +1,2 @@
+• panel: katalog aset dibaca lewat akun layanan server (aturan RTDB menolak browser); server: /panel-r
 • panel: aset baca Firestore+RTDB (aset panel lama ikut tampil), tab Banner tampil semua, menu VIP & M

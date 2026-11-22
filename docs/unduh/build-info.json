@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.332",
-  "catatan": "• Room tidak macet setelah pindah aplikasi\n• Room ringan, masuk room paralel, dan gift mp4 tampil",
-  "ukuran_apk": 74365535,
-  "sha256_apk": "f4fe78b6e933fbf9a8a30d0945efe7851862855d23b3683326e5f2298d234137",
+  "versi": "1.0.333",
+  "catatan": "• Room tidak memuat ulang setelah keluar dari game",
+  "ukuran_apk": 74367519,
+  "sha256_apk": "d194e06ce51ff2757231db3064cdd33e6da917b5f1aa6c06123df86b822bc461",
   "abis": {
     "arm64": {
-      "ukuran": 74365535,
-      "sha256": "f4fe78b6e933fbf9a8a30d0945efe7851862855d23b3683326e5f2298d234137"
+      "ukuran": 74367519,
+      "sha256": "d194e06ce51ff2757231db3064cdd33e6da917b5f1aa6c06123df86b822bc461"
     },
     "armv7": {
-      "ukuran": 72600058,
-      "sha256": "5b5764dd8f9c4c32ca3b9afce49220fd8d6260821d4cb1a8d9fb1a590bf136ea"
+      "ukuran": 72602025,
+      "sha256": "98af7f3934fd8a092077799606b2c9fd3f0c8e99a3579f7f9b68da65edd0c218"
     },
     "universal": {
-      "ukuran": 122219506,
-      "sha256": "6442362778994c2b956838f7a6a8990ea02ca22dd20867057ffa807971a89627"
+      "ukuran": 122221483,
+      "sha256": "a92aa8bcaa95df3b70134bd99880d8c24f84f1aa8a0850439e05f78587cc1a11"
     }
   }
 }

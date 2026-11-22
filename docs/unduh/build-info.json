@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.367",
-  "catatan": "• panel: halaman Customer Service untuk menunjuk akun CS lewat pencarian nama/ID/UID dan mencabutnya, \n• panel: setujui top-up manual coba ulang otomatis saat sambungan ke server dompet putus, cegah klik g",
-  "ukuran_apk": 74378545,
-  "sha256_apk": "097ae68a583215baa176353633859d3546ed545137cdbdc45c7253a28f009e4a",
+  "versi": "1.0.368",
+  "catatan": "• panel reset: nomor ID angka (mis. 1000) diterjemahkan ke UID lewat userIds/users sebelum reset, rese\n• panel: halaman Customer Service untuk menunjuk akun CS lewat pencarian nama/ID/UID dan mencabutnya, ",
+  "ukuran_apk": 74378549,
+  "sha256_apk": "8fbe0f699d4be452b12944f9179c19a41d6a4f51054585566e5453377a0c45a8",
   "abis": {
     "arm64": {
-      "ukuran": 74378545,
-      "sha256": "097ae68a583215baa176353633859d3546ed545137cdbdc45c7253a28f009e4a"
+      "ukuran": 74378549,
+      "sha256": "8fbe0f699d4be452b12944f9179c19a41d6a4f51054585566e5453377a0c45a8"
     },
     "armv7": {
-      "ukuran": 72613057,
-      "sha256": "231ae49392a89b07e9e06293a0a5cca4af5e2160050c79cc3eadfb1b189fa1ba"
+      "ukuran": 72613068,
+      "sha256": "43e3a2f50a48f64d9e7edf75625f6dc8439476b0710fc4255ee930619e922b20"
     },
     "universal": {
-      "ukuran": 122232508,
-      "sha256": "44b395c63f6733ab6e6f200b1e677d62068cdb99efb9b8fd6016164a4207a785"
+      "ukuran": 122232511,
+      "sha256": "113839b47611256a394417c32127ff8594fd944e11efa9c7e57fa80861266725"
     }
   }
 }

@@ -1,2 +1,2 @@
+• panel reset: nomor ID angka (mis. 1000) diterjemahkan ke UID lewat userIds/users sebelum reset, rese
 • panel: halaman Customer Service untuk menunjuk akun CS lewat pencarian nama/ID/UID dan mencabutnya, 
-• panel: setujui top-up manual coba ulang otomatis saat sambungan ke server dompet putus, cegah klik g

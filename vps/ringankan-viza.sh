@@ -77,12 +77,29 @@ if ! grep -q '^vm.swappiness' /etc/sysctl.conf 2>/dev/null; then
 fi
 
 echo
-echo "== 5. Bersihkan swap lama lalu nyalakan ulang =="
-swapoff -a 2>/dev/null && swapon -a 2>/dev/null && echo "Swap dikosongkan" || echo "Swap tidak bisa dikosongkan (dilewati)"
+echo "== 5. Kosongkan swap hanya bila RAM cukup =="
+# PENTING: swapoff memaksa SEMUA isi swap kembali ke RAM sekaligus. Bila RAM
+# belum cukup, kernel membunuh proses siapa saja, dan dulu Caddy ikut mati
+# sehingga seluruh domain balas "connection reset". Jadi ukur dulu.
+RAM_KOSONG=$(awk '/MemAvailable/ {print int($2/1024)}' /proc/meminfo 2>/dev/null)
+SWAP_ISI=$(awk '/SwapTotal/ {t=$2} /SwapFree/ {f=$2} END {print int((t-f)/1024)}' /proc/meminfo 2>/dev/null)
+echo "RAM tersedia ${RAM_KOSONG:-0} MB, swap terpakai ${SWAP_ISI:-0} MB"
+if [ "${RAM_KOSONG:-0}" -gt $(( ${SWAP_ISI:-0} + 500 )) ]; then
+  swapoff -a 2>/dev/null && swapon -a 2>/dev/null && echo "Swap dikosongkan" || echo "Swap gagal dikosongkan (dilewati)"
+else
+  echo "Dilewati: RAM belum cukup untuk menarik isi swap. Swap akan menyusut sendiri."
+fi
 systemctl daemon-reload
 systemctl restart "$LAYANAN" 2>&1 || echo "restart gagal"
 sleep 5
-echo "Status: $(systemctl is-active "$LAYANAN" 2>/dev/null)"
+echo "Status dompet: $(systemctl is-active "$LAYANAN" 2>/dev/null)"
+# Caddy bisa ikut terbunuh bila memori sempat habis; pastikan hidup lagi.
+if ! systemctl is-active --quiet caddy 2>/dev/null; then
+  echo "Caddy mati, menyalakan ulang"
+  systemctl restart caddy 2>/dev/null || echo "Caddy gagal dinyalakan"
+  sleep 3
+fi
+echo "Status Caddy: $(systemctl is-active caddy 2>/dev/null)"
 
 echo
 echo "== 6. Cek /health dari dalam =="
@@ -99,5 +116,11 @@ echo
 echo "== 7. Keadaan sesudah =="
 free -h 2>/dev/null | sed -n '1,3p'
 echo "Koneksi established: $(ss -tan state established 2>/dev/null | tail -n +2 | wc -l)"
+echo
+echo "== 8. Cek domain dari dalam =="
+for u in "http://127.0.0.1:${PORT}/health" "https://viza.43-156-99-4.sslip.io/health"; do
+  printf "  %-46s -> " "$u"
+  curl -s -o /dev/null -m 8 -w "%{http_code} %{time_total}s\n" "$u" 2>/dev/null || echo "GAGAL"
+done
 echo
 echo "Selesai. Target: swap turun jauh di bawah 100%, /health di bawah 1 detik."

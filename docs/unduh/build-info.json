@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.372",
-  "catatan": "• Perbaikan dan peningkatan aplikasi",
-  "ukuran_apk": 74378546,
-  "sha256_apk": "083b013eba97edfa4149d77d662115576ba45d907d66b0c1ce3504d70ff3deba",
+  "versi": "1.0.373",
+  "catatan": "• iklan: perbaiki kompilasi (isInitialized properti, pemuat iklan setelah state dompet)\n• iklan: UnityAds.isInitialized() dipanggil sebagai fungsi (perbaikan kompilasi)\n• iklan: SDK Unity Ads (Game ID 800448611, placement BP_Rewarded_Android), tombol Coin gratis di dompe",
+  "ukuran_apk": 75738408,
+  "sha256_apk": "fda98ee17a61e7015fc9e98dc8b6aac04c2897c907a12691195a00e2452604c5",
   "abis": {
     "arm64": {
-      "ukuran": 74378546,
-      "sha256": "083b013eba97edfa4149d77d662115576ba45d907d66b0c1ce3504d70ff3deba"
+      "ukuran": 75738408,
+      "sha256": "fda98ee17a61e7015fc9e98dc8b6aac04c2897c907a12691195a00e2452604c5"
     },
     "armv7": {
-      "ukuran": 72613061,
-      "sha256": "20a8c539ea68672bc386b45a633c2f9f7dda5875b51e5cc07b64292d8f7bf8d5"
+      "ukuran": 73972929,
+      "sha256": "d7f3195fb34c0231f8180fc8ac301a55e5d9555c2d5bb6cf7775a030d7776be8"
     },
     "universal": {
-      "ukuran": 122232524,
-      "sha256": "a411ca2cd27130c4d42c98c5b14c3278f151df11c7aa989873e34c280dee2315"
+      "ukuran": 123592414,
+      "sha256": "618e48d03db8905c7850ddd7ad1d24330a5c7131c0b03d77d9b1d264f0ab1c9a"
     }
   }
 }

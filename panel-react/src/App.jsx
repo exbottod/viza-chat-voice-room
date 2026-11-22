@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard.jsx";
 import User from "./pages/User.jsx";
 import Room from "./pages/Room.jsx";
 import Gift from "./pages/Gift.jsx";
+import GiftDaftar from "./pages/GiftDaftar.jsx";
 import Emote from "./pages/Emote.jsx";
 import Profile from "./pages/Profile.jsx";
 import Setting from "./pages/Setting.jsx";
@@ -29,7 +30,8 @@ const KETERANGAN = {
   dashboard: "Ringkasan user, room, gift, dan aktivitas admin",
   user: "Cari user, lihat detail, blokir atau buka blokir",
   room: "Pantau room, sematkan, beri tag official, dan tutup room",
-  gift: "Katalog gift: cari, saring, dan hapus item",
+  gift: "Kategori gift: gift biasa, cashback, video MP4, dan SVGA",
+  giftdaftar: "Semua gift per kategori: tambah, edit, dan hapus",
   emote: "Emote yang tampil di bar emote semua room",
   profile: "Ubah nama dan password akun developer",
   setting: "Agora, versi & link APK, payment, dan Firebase",
@@ -62,6 +64,7 @@ const HALAMAN = {
   seller: Seller,
   wallet: Wallet,
   gift: Gift,
+  giftdaftar: GiftDaftar,
   emote: Emote,
   profile: Profile,
   setting: Setting,
@@ -247,6 +250,7 @@ export default function App() {
   const [admin, setAdmin] = useState(undefined);
   const [pesan, setPesan] = useState("");
   const [menuBuka, setMenuBuka] = useState(false);
+  const [bukaGrup, setBukaGrup] = useState({});
   const rute = pakaiHash();
 
   useEffect(() => {
@@ -289,11 +293,32 @@ export default function App() {
         {MENU.map((g) => (
           <div key={g.grup || "atas"}>
             {g.grup ? <div className="grup">{g.grup}</div> : null}
-            {g.isi.map(([id, ikon, nama]) => (
-              <a key={id} className={"menu" + (rute === id ? " aktif" : "")} href={"#" + id}>
-                <i className="material-icons">{ikon}</i><span>{nama}</span>
-              </a>
-            ))}
+            {g.isi.map(([id, ikon, nama, anak]) => {
+              if (!anak) {
+                return (
+                  <a key={id} className={"menu" + (rute === id ? " aktif" : "")} href={"#" + id}>
+                    <i className="material-icons">{ikon}</i><span>{nama}</span>
+                  </a>
+                );
+              }
+              // Menu berjenjang: induk bisa dibuka ke bawah, isinya sub menu.
+              const aktifAnak = anak.some(([cid]) => cid === rute);
+              const terbuka = bukaGrup[id] ?? aktifAnak;
+              return (
+                <div key={id}>
+                  <a className={"menu induk" + (aktifAnak ? " aktif" : "")}
+                    onClick={() => setBukaGrup({ ...bukaGrup, [id]: !terbuka })}>
+                    <i className="material-icons">{ikon}</i><span>{nama}</span>
+                    <i className="material-icons panahInduk">{terbuka ? "expand_more" : "chevron_right"}</i>
+                  </a>
+                  {terbuka ? anak.map(([cid, cnama]) => (
+                    <a key={cid} className={"menu anak" + (rute === cid ? " aktif" : "")} href={"#" + cid}>
+                      <span className="titikAnak" /><span>{cnama}</span>
+                    </a>
+                  )) : null}
+                </div>
+              );
+            })}
           </div>
         ))}
         <div className="bawah">

@@ -21,7 +21,6 @@ export const MENU = [
       ["vipharga", "workspace_premium", "Plan (harga VIP)"],
       ["cekin", "event_available", "Plan history (cek in)"],
       ["wallet", "account_balance_wallet", "Currency (coin & reset)"],
-      ["gift", "redeem", "Gift"],
       ["cashback", "savings", "Cashback gift"],
     ],
   },
@@ -40,6 +39,8 @@ export const MENU = [
   {
     grup: "ENGAGEMENT",
     isi: [
+      // Gift punya sub menu: Category (daftar kategori) dan Gift (semua gift).
+      ["gift", "redeem", "Gift", [["gift", "Category"], ["giftdaftar", "Gift"]]],
       ["emote", "mood", "Reaction (emote)"],
       ["kirim", "send", "Kirim ke user"],
       ["pengumuman", "campaign", "Broadcast & pengumuman"],
@@ -64,4 +65,8 @@ export const MENU = [
   { grup: "CONFIG", isi: [["pengaturan", "settings", "Pengaturan"]] },
 ];
 
-export const JUDUL = MENU.flatMap((g) => g.isi).reduce((a, [id, , nama]) => ({ ...a, [id]: nama }), {});
+export const JUDUL = MENU.flatMap((g) => g.isi).reduce((a, [id, , nama, anak]) => {
+  const b = { ...a, [id]: nama };
+  (anak || []).forEach(([cid, cnama]) => { b[cid] = nama + " / " + cnama; });
+  return b;
+}, {});

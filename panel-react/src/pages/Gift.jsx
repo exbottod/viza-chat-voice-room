@@ -83,7 +83,15 @@ export default function Gift() {
         </>
       ),
     },
-    { kunci: "aksi", label: "AKSI", sel: (g) => <button className="aksi" onClick={() => hapus(g)}>Hapus</button> },
+    {
+      kunci: "aksi", label: "AKSI",
+      sel: (g) => (
+        <span style={{ display: "flex", gap: 8 }}>
+          <a className="bulatAksi edit" title="Edit gift" href="#giftdaftar"><span className="material-icons">edit</span></a>
+          <button className="bulatAksi hapus" title="Hapus gift" onClick={() => hapus(g)}><span className="material-icons">delete</span></button>
+        </span>
+      ),
+    },
   ];
 
   const video = gifts.isi.filter((g) => /mp4|video/i.test(g.mediaType || "") || /\.mp4$/i.test(g.mediaUrl || "")).length;
@@ -112,7 +120,7 @@ export default function Gift() {
           ? <Rangka />
           : <Tabel kolom={kolom} baris={urutBaris} urut={urut} onUrut={klikUrut} kosong="Belum ada gift di katalog." />}
         <div className="catatan" style={{ padding: "0 14px 14px" }}>
-          Di sini gift bisa dicari, disaring, dibuka berkasnya, dan dihapus. Untuk gift baru, unggah berkasnya lewat menu Aset & VIP supaya ikon dan berkasnya tersimpan di server.
+          Di sini gift bisa dicari, disaring, dan dihapus. Untuk mengedit atau menambah gift (biasa atau cashback), buka sub menu Gift lalu tekan ikon pensil.
         </div>
       </Panel>
 

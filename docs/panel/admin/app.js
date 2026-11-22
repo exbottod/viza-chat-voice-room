@@ -282,7 +282,16 @@ async function ambilSemuaVip(batas = 400) {
   return [...peta.values()];
 }
 
-async function ambilSemua(nama, batas = 500) {
+/*
+ * Simpanan data bergaya React.
+ * Halaman yang sudah pernah dibuka langsung tampil dari simpanan (tanpa jeda),
+ * lalu datanya disegarkan di latar belakang. Jadi pindah menu terasa seketika
+ * seperti panel berbasis React, tanpa memuat ulang halaman.
+ */
+const UMUR_SIMPANAN = 45000;
+const simpananData = new Map();
+
+async function ambilSemuaMentah(nama, batas) {
   try {
     const snap = await getDocs(query(kumpulan(nama), limit(batas)));
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -292,6 +301,39 @@ async function ambilSemua(nama, batas = 500) {
     const out = await fsServer("fs_list", { koleksi: nama, batas });
     return out.items || [];
   }
+}
+
+function segarkanSimpanan(nama, batas, kunci) {
+  const janji = ambilSemuaMentah(nama, batas)
+    .then((isi) => { simpananData.set(kunci, { isi, waktu: Date.now(), janji: null }); return isi; })
+    .catch(() => { const ada = simpananData.get(kunci); if (ada) ada.janji = null; return ada ? ada.isi : []; });
+  const ada = simpananData.get(kunci);
+  if (ada) ada.janji = janji; else simpananData.set(kunci, { isi: [], waktu: 0, janji });
+  return janji;
+}
+
+async function ambilSemua(nama, batas = 500) {
+  const kunci = nama + "|" + batas;
+  const ada = simpananData.get(kunci);
+  if (ada) {
+    if (ada.janji) { try { return await ada.janji; } catch (e) { return ada.isi; } }
+    if (Date.now() - ada.waktu < UMUR_SIMPANAN) return ada.isi;
+    // Basi: pakai yang ada sekarang, segarkan di latar belakang.
+    segarkanSimpanan(nama, batas, kunci);
+    return ada.isi;
+  }
+  return segarkanSimpanan(nama, batas, kunci);
+}
+
+/** Buang simpanan supaya satu koleksi dibaca ulang dari server. */
+function lupakanSimpanan(nama) {
+  [...simpananData.keys()].filter((k) => k.startsWith(nama + "|")).forEach((k) => simpananData.delete(k));
+}
+
+/** Panaskan simpanan setelah login agar halaman pertama langsung tampil. */
+function panaskanData() {
+  ["userIds", "rooms", "gifts", "banned", "userReports", "adminLogs", "games", "frames", "banners", "vipConfig"]
+    .forEach((nama) => ambilSemua(nama, nama === "userIds" || nama === "rooms" ? 500 : 200).catch(() => []));
 }
 
 async function catatLog(aksi, rincian = "") {
@@ -752,6 +794,7 @@ onAuthStateChanged(auth, async (user) => {
   $("namaSaya").textContent = adminSaya.nama;
   $("peranSaya").textContent = adminSaya.peran;
   $("avaSaya").textContent = (adminSaya.nama || "A")[0].toUpperCase();
+  panaskanData();
   bukaRute();
 });
 
@@ -1325,8 +1368,16 @@ function bukaRute() {
   const ket = document.getElementById("ketHal");
   if (ket) ket.textContent = keteranganHal[nama] || "";
   $("aksiTopbar").innerHTML = "";
-  $("isiHal").innerHTML = '<div class="kosong">Memuat…</div>';
-  Promise.resolve(hal.gambar()).catch((e) => {
+  // Isi lama dibiarkan tampil sampai data baru siap (tidak ada layar kosong),
+  // hanya garis tipis di atas yang menandakan sedang memuat.
+  const isiLama = $("isiHal");
+  if (!isiLama.children.length) isiLama.innerHTML = '<div class="kosong">Memuat…</div>';
+  const garis = document.getElementById("garisMuat");
+  if (garis) garis.classList.add("jalan");
+  Promise.resolve(hal.gambar()).then(() => {
+    const g = document.getElementById("garisMuat");
+    if (g) g.classList.remove("jalan");
+  }).catch((e) => {
     console.error(e);
     $("isiHal").innerHTML = `<div class="kosong">Gagal memuat data.<br><b>${aman(e.code || e.message)}</b><br><br>${
       String(e.code || "").includes("permission-denied")

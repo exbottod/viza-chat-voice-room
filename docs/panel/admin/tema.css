@@ -198,3 +198,11 @@ tbody tr:hover, table tr:hover { background: #262635; }
 
 #kotakGrafik { padding: 6px 4px 0; }
 #kotakGrafik svg { display: block; }
+
+/* ---------- garis muat tipis di atas (pindah menu tanpa layar kosong) ---------- */
+.garisMuat {
+  position: fixed; top: 0; left: 0; height: 2px; width: 0;
+  background: linear-gradient(90deg, #e8538f, #83d8ae);
+  z-index: 9999; opacity: 0; transition: width .2s ease, opacity .2s ease;
+}
+.garisMuat.jalan { width: 72%; opacity: 1; }

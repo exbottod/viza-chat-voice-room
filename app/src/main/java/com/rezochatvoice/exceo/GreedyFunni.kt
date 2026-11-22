@@ -72,6 +72,36 @@ private const val skripUkuran = """(function(){
       }
     }
   }
+  // Kotak dialog diukur dari isinya sendiri lalu dipasangkan ke layar.
+  // Dipakai untuk semua dialog .gd-box (pengaturan, menu, aturan, riwayat).
+  function pasDialog(){
+    var b=document.querySelector('.gd-box');
+    if(!b) return;
+    var wv=window.visualViewport;
+    var vh=Math.min(window.innerHeight||1e9,(wv?wv.height:1e9));
+    if(vh<50) return;
+    var cs=getComputedStyle(b);
+    var pad=(parseFloat(cs.paddingTop)||0)+(parseFloat(cs.paddingBottom)||0);
+    var isi=0, anak=b.children;
+    for(var i=0;i<anak.length;i++){
+      var r=anak[i].getBoundingClientRect();
+      var ka=getComputedStyle(anak[i]);
+      isi+=r.height+(parseFloat(ka.marginTop)||0)+(parseFloat(ka.marginBottom)||0);
+    }
+    if(!isi) isi=b.scrollHeight||0;
+    if(!isi) return;
+    var total=Math.ceil(isi+pad);
+    var batas=Math.max(220,Math.round(vh-24));
+    b.style.setProperty('box-sizing','border-box','important');
+    b.style.setProperty('max-height','none','important');
+    if(total>batas){
+      b.style.setProperty('height',batas+'px','important');
+      b.style.setProperty('overflow','auto','important');
+    } else {
+      b.style.setProperty('height',Math.max(total,90)+'px','important');
+      b.style.setProperty('overflow','visible','important');
+    }
+  }
   function fix(){
     var d=document.documentElement;
     var st=document.querySelector('.bw-stage');
@@ -98,9 +128,13 @@ private const val skripUkuran = """(function(){
       // (sama seperti saat dibuka dari zip), jadi tidak terlihat kecil.
       '.gd-backdrop,.prize-backdrop{position:fixed!important;top:0!important;left:0!important;'+
       'right:0!important;bottom:0!important;display:flex!important;align-items:center!important;'+
-      'justify-content:center!important;padding:0!important;box-sizing:border-box!important;'+
-      'overflow:hidden!important;z-index:99999!important}'+
-      '.gd-box{max-height:94vh!important;overflow:auto!important}'+
+      'justify-content:center!important;padding:8px!important;box-sizing:border-box!important;'+
+      'overflow:auto!important;z-index:99999!important}'+
+      // Kotak dialog (pengaturan, menu, riwayat) tidak boleh bergantung pada
+      // satuan vh WebView: di sebagian HP nilainya kecil sehingga kotaknya
+      // mengempis jadi garis dan isinya terpotong. Tingginya dihitung dari
+      // isi sebenarnya oleh pasDialog().
+      '.gd-box{max-height:none!important;height:auto!important;min-height:120px!important;box-sizing:border-box!important}'+
       '.gd-scroll{max-height:none!important;overflow:visible!important}'+
       '.prize-art{max-width:none!important;max-height:none!important}'+
       // Kartu "PUTARAN GRATIS" (scatter) tidak boleh dibatasi tingginya:
@@ -114,16 +148,17 @@ private const val skripUkuran = """(function(){
   }catch(e){}
   fix();
   pasKartu();
-  [200,600,1200,2000,3000,4500,6000].forEach(function(t){setTimeout(function(){fix();pasKartu();},t);});
+  pasDialog();
+  [200,600,1200,2000,3000,4500,6000].forEach(function(t){setTimeout(function(){fix();pasKartu();pasDialog();},t);});
   // Dialog bisa muncul kapan saja (scatter, big win), jadi setiap kali
   // isi halaman berubah, kartu dipaskan lagi.
   try{
-    new MutationObserver(function(){pasKartu();}).observe(document.body,{childList:true,subtree:true});
+    new MutationObserver(function(){pasKartu();pasDialog();}).observe(document.body,{childList:true,subtree:true});
   }catch(e){}
   var n=0;
-  var iv=setInterval(function(){fix();n++;if(n>40){clearInterval(iv);}},500);
-  window.addEventListener('resize',function(){fix();pasKartu();});
-  window.addEventListener('orientationchange',function(){fix();pasKartu();});
+  var iv=setInterval(function(){fix();pasDialog();n++;if(n>40){clearInterval(iv);}},500);
+  window.addEventListener('resize',function(){fix();pasKartu();pasDialog();});
+  window.addEventListener('orientationchange',function(){fix();pasKartu();pasDialog();});
 })();"""
 
 /**

@@ -7,16 +7,21 @@ import { doc, getDoc } from "firebase/firestore";
 import { auth, db, PEMILIK } from "./firebase.js";
 import { MENU, JUDUL } from "./menu.js";
 import Dashboard from "./pages/Dashboard.jsx";
+import User from "./pages/User.jsx";
+import Room from "./pages/Room.jsx";
+import Gift from "./pages/Gift.jsx";
 import Belum from "./pages/Belum.jsx";
+import { Toast } from "./ui.jsx";
 
 const KETERANGAN = {
   dashboard: "Ringkasan user, room, gift, dan aktivitas admin",
-  user: "Kelola akun, koin, dan blokir user",
-  room: "Pantau room aktif, level, dan poin",
+  user: "Cari user, lihat detail, blokir atau buka blokir",
+  room: "Pantau room, sematkan, beri tag official, dan tutup room",
+  gift: "Katalog gift: cari, saring, dan hapus item",
 };
 
 /** Halaman yang sudah dipindahkan ke React. Sisanya menyusul bertahap. */
-const HALAMAN = { dashboard: Dashboard };
+const HALAMAN = { dashboard: Dashboard, user: User, room: Room, gift: Gift };
 
 async function cekAdmin(user) {
   if (!user) return null;
@@ -167,6 +172,7 @@ export default function App() {
           <Halaman nama={rute} judul={judul} />
         </div>
       </main>
+      <Toast />
     </div>
   );
 }

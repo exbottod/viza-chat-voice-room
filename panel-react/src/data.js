@@ -63,3 +63,43 @@ export const waktu = (ts) => {
   const d = ts.toDate ? ts.toDate() : new Date(ts);
   return isNaN(d) ? "—" : d.toLocaleString("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 };
+
+/** Catat aksi admin ke koleksi adminLogs (gagal mencatat tidak membatalkan aksi). */
+export async function catatLog(aksi, rincian = "") {
+  try {
+    const { addDoc, serverTimestamp } = await import("firebase/firestore");
+    const { auth } = await import("./firebase.js");
+    await addDoc(collection(db, "adminLogs"), {
+      admin: auth.currentUser?.email || "?",
+      aksi, rincian, waktu: serverTimestamp(),
+    });
+  } catch (e) { /* diabaikan */ }
+}
+
+export async function ambilDokumen(nama, id) {
+  const d = await getDoc(doc(db, nama, id)).catch(() => null);
+  return d?.exists() ? d.data() : null;
+}
+
+export async function hapusDokumen(nama, id) {
+  const { deleteDoc } = await import("firebase/firestore");
+  await deleteDoc(doc(db, nama, id));
+}
+
+export async function tulisDokumen(nama, id, isi) {
+  const { setDoc } = await import("firebase/firestore");
+  await setDoc(doc(db, nama, id), isi);
+}
+
+export async function ambilRtdb(jalur) {
+  const { getDatabase, ref, get } = await import("firebase/database");
+  const { app } = await import("./firebase.js");
+  const s = await get(ref(getDatabase(app), jalur));
+  return s.exists() ? s.val() : null;
+}
+
+export async function tulisRtdb(jalur, nilai) {
+  const { getDatabase, ref, set } = await import("firebase/database");
+  const { app } = await import("./firebase.js");
+  await set(ref(getDatabase(app), jalur), nilai);
+}

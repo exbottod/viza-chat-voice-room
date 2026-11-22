@@ -1,4 +1,4 @@
-• Suntikan CSS dari aplikasi tidak lagi memaksa lebar 92 persen dan maksimal 460 px; ukuran kotak kemb
-• Latar dialog tanpa jarak tepi dan isinya bisa digulir, jadi tidak terpotong walau kotaknya besar.
-• Dialog kemenangan mengikuti lebar meja game, bukan tinggi layar, sehingga tampil besar seperti di zi
-• Menang dari server dipakai untuk angka dan dialog, jadi big win selalu memunculkan dialog besar.
+• Profil orang lain: satu ketukan pada foto membuka foto penuh 1:1.
+• Tombol kirim gift langsung aktif setelah dompet terpotong.
+• Pesan gift, undian cashback, poin mic, dan ranking dicatat di belakang.
+• Skor PK dan poin kamar tidak lagi menahan tombol kirim.

@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.315",
-  "catatan": "• Suntikan CSS dari aplikasi tidak lagi memaksa lebar 92 persen dan maksimal 460 px; ukuran kotak kemb\n• Latar dialog tanpa jarak tepi dan isinya bisa digulir, jadi tidak terpotong walau kotaknya besar.\n• Dialog kemenangan mengikuti lebar meja game, bukan tinggi layar, sehingga tampil besar seperti di zi\n• Menang dari server dipakai untuk angka dan dialog, jadi big win selalu memunculkan dialog besar.",
-  "ukuran_apk": 74345365,
-  "sha256_apk": "573d5e67e2b4a33acf12f885d8031605c85c9a2190cc0c463e9546603dc3d1be",
+  "versi": "1.0.316",
+  "catatan": "• Profil orang lain: satu ketukan pada foto membuka foto penuh 1:1.\n• Tombol kirim gift langsung aktif setelah dompet terpotong.\n• Pesan gift, undian cashback, poin mic, dan ranking dicatat di belakang.\n• Skor PK dan poin kamar tidak lagi menahan tombol kirim.",
+  "ukuran_apk": 74348884,
+  "sha256_apk": "c5061f4fd00bd8da494dbc79cd651d95b5af0a7514b5520f5189190303605164",
   "abis": {
     "arm64": {
-      "ukuran": 74345365,
-      "sha256": "573d5e67e2b4a33acf12f885d8031605c85c9a2190cc0c463e9546603dc3d1be"
+      "ukuran": 74348884,
+      "sha256": "c5061f4fd00bd8da494dbc79cd651d95b5af0a7514b5520f5189190303605164"
     },
     "armv7": {
-      "ukuran": 72579880,
-      "sha256": "47bf68155ea27f8e857c290d162568349aba9bb82eb446a161f408d456d91f47"
+      "ukuran": 72583401,
+      "sha256": "9eb442eda586d9a221a35426ad8583260c4484b6d6e18b6bb0bff25ff50cdd5d"
     },
     "universal": {
-      "ukuran": 122199329,
-      "sha256": "478270b1abc3022b6605516d1ed5322f4f63cabd9838123d43b8c566fb09a331"
+      "ukuran": 122202850,
+      "sha256": "1f8689013d4444b28353b9c72c7ab1e80ff8cc61a9265984280277ea48273f4c"
     }
   }
 }

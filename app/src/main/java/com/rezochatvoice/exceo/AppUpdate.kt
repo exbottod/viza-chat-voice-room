@@ -72,6 +72,14 @@ object UpdateMinta {
 
 object AppUpdate {
     private const val INFO_URL = "https://exbottod.github.io/viza-chat-voice-room/unduh/build-info.json"
+    /**
+     * Pengaturan dari panel developer (menu Setting > General > App Setting):
+     * versi terbaru, link unduh APK, versi minimum, dan catatan. Dibaca lebih
+     * dulu daripada feed GitHub, jadi versi dan link bisa diganti dari panel
+     * tanpa membangun APK baru. Kalau server tidak menjawab, feed GitHub yang
+     * dipakai seperti biasa.
+     */
+    private const val PANEL_CFG_URL = "https://viza.43-156-99-4.sslip.io/app-cfg.json"
     private const val NOTE_URL = "https://exbottod.github.io/viza-chat-voice-room/unduh/update-note.txt"
     private const val REL = "https://exbottod.github.io/viza-chat-voice-room/unduh/patch/"
     /**
@@ -104,7 +112,14 @@ object AppUpdate {
     } catch (e: Exception) { false }
     private const val PATCH_URL = "https://exbottod.github.io/viza-chat-voice-room/unduh/patch-info.json"
 
-    class Info(val version: String, val notes: String, val url: String, val patch: Patch? = null)
+    class Info(
+        val version: String,
+        val notes: String,
+        val url: String,
+        val patch: Patch? = null,
+        /** Benar kalau versi terpasang di bawah versi minimum: "Nanti" disembunyikan. */
+        val wajib: Boolean = false,
+    )
 
     /**
      * File selisih untuk update kecil. Hanya dipakai kalau versi yang
@@ -240,17 +255,46 @@ object AppUpdate {
         }
     }
 
+    /** Pengaturan panel: null kalau server belum bisa dihubungi atau isinya kosong. */
+    private class CfgPanel(val versi: String, val versiMin: String, val apkUrl: String, val catatan: String)
+
+    private fun cfgPanel(): CfgPanel? = try {
+        val c = URL(PANEL_CFG_URL + "?t=" + System.currentTimeMillis()).openConnection() as HttpURLConnection
+        c.connectTimeout = 5000
+        c.readTimeout = 5000
+        c.setRequestProperty("Cache-Control", "no-cache")
+        val body = c.inputStream.bufferedReader().use { it.readText() }
+        val j = JSONObject(body)
+        val hasil = CfgPanel(
+            versi = j.optString("versi").trim(),
+            versiMin = j.optString("versiMin").trim(),
+            apkUrl = j.optString("apkUrl").trim(),
+            catatan = j.optString("catatan").trim(),
+        )
+        if (hasil.versi.isBlank()) null else hasil
+    } catch (e: Exception) { null }
+
     suspend fun check(ctx: Context): Info? = withContext(Dispatchers.IO) {
         try {
-            val c = URL(INFO_URL + "?t=" + System.currentTimeMillis()).openConnection() as HttpURLConnection
-            c.connectTimeout = 8000
-            c.readTimeout = 8000
-            c.setRequestProperty("Cache-Control", "no-cache")
-            val body = c.inputStream.bufferedReader().use { it.readText() }
-            val j = JSONObject(body)
-            val latest = j.optString("versi")
-            if (latest.isBlank() || j.optString("status") != "ok") return@withContext null
+            // Pengaturan panel didahulukan: versi dan link APK yang diisi owner
+            // di menu Setting berlaku walau feed GitHub belum bergerak.
+            val cfg = cfgPanel()
+            // Feed GitHub dibaca terpisah supaya pengaturan panel tetap jalan
+            // kalau halaman unduh sedang tidak bisa dihubungi.
+            val j = try {
+                val c = URL(INFO_URL + "?t=" + System.currentTimeMillis()).openConnection() as HttpURLConnection
+                c.connectTimeout = 8000
+                c.readTimeout = 8000
+                c.setRequestProperty("Cache-Control", "no-cache")
+                JSONObject(c.inputStream.bufferedReader().use { it.readText() })
+            } catch (e: Exception) { JSONObject() }
+            val latest = (cfg?.versi ?: "").ifBlank { j.optString("versi") }
+            if (latest.isBlank()) return@withContext null
+            if (cfg == null && j.optString("status") != "ok") return@withContext null
             if (build(latest) <= build(installedVersion(ctx))) return@withContext null
+            // Versi minimum dari panel: kalau terpasang di bawahnya, pembaruan wajib.
+            val wajib = cfg != null && cfg.versiMin.isNotBlank() &&
+                build(installedVersion(ctx)) < build(cfg.versiMin)
             // Catatan rilis: ambil dari daftar "fitur" bila ada.
             val notes = try {
                 val arr = j.optJSONArray("fitur")
@@ -303,13 +347,16 @@ object AppUpdate {
                 c2.setRequestProperty("Cache-Control", "no-cache")
                 c2.inputStream.bufferedReader().use { it.readText() }.trim()
             } catch (e: Exception) { "" }
-            val akhir = panelNote.ifBlank {
+            val akhir = (cfg?.catatan ?: "").ifBlank { panelNote.ifBlank {
                 catatanFile.ifBlank {
                     catatanBuild.ifBlank { notes.ifBlank { "Perbaikan dan peningkatan untuk REZO." } }
                 }
-            }
+            } }
             val terpasang = installedVersion(ctx)
-            Info(latest, akhir, apkBase(), patchInfo(latest, terpasang))
+            // Link APK dari panel dipakai apa adanya (sudah lengkap dengan
+            // berkas arm64), selain itu pakai alamat bawaan sesuai jenis HP.
+            val alamat = (cfg?.apkUrl ?: "").ifBlank { apkBase() }
+            Info(latest, akhir, alamat, patchInfo(latest, terpasang), wajib)
         } catch (e: Exception) { null }
     }
 
@@ -474,7 +521,7 @@ fun UpdateGate() {
                 // "Nanti" hanya menunda untuk versi yang sama selama 6 jam.
                 val skipV = prefs.getString("skip_v", "") ?: ""
                 val skipAt = prefs.getLong("skip_at", 0L)
-                if (skipV == found.version && System.currentTimeMillis() - skipAt < 6 * 3600_000L) return@LaunchedEffect
+                if (!found.wajib && skipV == found.version && System.currentTimeMillis() - skipAt < 6 * 3600_000L) return@LaunchedEffect
                 info = found
                 return@LaunchedEffect
             }
@@ -486,7 +533,8 @@ fun UpdateGate() {
     val i = info ?: return
     if (dismissed) return
 
-    Dialog(onDismissRequest = { if (progress < 0) dismissed = true }) {
+    // Pembaruan wajib tidak bisa ditutup dengan mengetuk di luar kotak.
+    Dialog(onDismissRequest = { if (progress < 0 && !i.wajib) dismissed = true }) {
         Column(
             Modifier
                 .fillMaxWidth()
@@ -546,7 +594,7 @@ fun UpdateGate() {
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (progress < 0 || apk != null) {
+                if ((progress < 0 || apk != null) && !i.wajib) {
                     Text(
                         tr("Nanti"),
                         color = Color(0xFFBDBDBD),

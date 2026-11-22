@@ -24,6 +24,14 @@ export async function walletAdmin(p, batasMs = 15000) {
     const teks = await res.text();
     if (!res.ok) throw new Error(teks.slice(0, 160) || "HTTP " + res.status);
     return teks ? JSON.parse(teks) : {};
+  } catch (e) {
+    if (e && e.name === "AbortError") {
+      throw new Error("Server dompet tidak menjawab dalam " + Math.round(batasMs / 1000) + " detik. Coba lagi sebentar lagi.");
+    }
+    if (e instanceof TypeError) {
+      throw new Error("Tidak bisa menghubungi server dompet. Cek koneksi atau layanan viza-dompet di VPS.");
+    }
+    throw e;
   } finally {
     clearTimeout(jam);
   }

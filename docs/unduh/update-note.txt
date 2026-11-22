@@ -1,4 +1,2 @@
-• Endpoint /agora-token menandatangani token room selama 6 jam.
-• uid angka dihitung tetap dari uid login supaya tidak bentrok.
-• App ID dan Certificate dibaca dari lingkungan layanan, jadi ganti akun tidak perlu APK baru.
-• Skrip pasang-agora-viza.sh memasang pustaka token dan mengisi kunci.
+• Nama akun peserta diambil lewat UserInfo keluaran, gelombang suara kembali tampil.
+• Jalur suara Agora lainnya tidak berubah.

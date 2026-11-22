@@ -4510,6 +4510,7 @@ async function admin(env, body) {
     const rate = Math.max(0, Math.min(100, Math.trunc(Number(p.rate ?? 10))));
     const aktif = p.aktif === undefined ? 1 : (Number(p.aktif) ? 1 : 0);
     if (!nama) return gagal("Nama agensi wajib diisi");
+    if (owner && /^[0-9]+$/.test(owner)) return gagal("Pemilik harus UID akun, bukan ID angka. Pilih akunnya lewat kotak cari di panel.");
     if (owner && !/^[A-Za-z0-9_-]{6,64}$/.test(owner)) return gagal("UID pemilik tidak valid");
     const id = String(p.id ?? "").trim() || ("ag-" + Date.now().toString(36));
     const ada = await pipe(env, [{ sql: "select id, kode from agency where id = ?", args: [T(id)] }]);
@@ -4523,6 +4524,13 @@ async function admin(env, body) {
         args: [T(id), T(nama), T(owner), T(kode), I(rate), I(aktif)],
       },
     ]);
+    // Satu akun hanya memiliki satu agensi: agensi lain dengan pemilik yang sama
+    // dikosongkan pemiliknya, supaya agency_info di aplikasi tidak memilih yang salah.
+    if (owner) {
+      await pipe(env, [
+        { sql: "update agency set owner_uid = '' where owner_uid = ? and id <> ?", args: [T(owner), T(id)] },
+      ]);
+    }
     const r = await pipe(env, [
       { sql: "select id, nama, owner_uid, kode, rate, aktif, saldo from agency where id = ?", args: [T(id)] },
     ]);

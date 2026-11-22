@@ -1,2 +1,1 @@
-• panel: menu Game satu tab (bet, RTP, banner, kategori, roket, reward); server dompet izinkan panel m
-• panel Kirim ke user: jenis ID unik (slot uid) dengan nomor wajib 3-12 digit
+• panel User: tampilkan ID angka (id dokumen userIds) dan foto profil dari users/{uid}.photoUrl, koin 

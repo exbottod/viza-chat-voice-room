@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.370",
-  "catatan": "• panel: menu Game satu tab (bet, RTP, banner, kategori, roket, reward); server dompet izinkan panel m\n• panel Kirim ke user: jenis ID unik (slot uid) dengan nomor wajib 3-12 digit",
-  "ukuran_apk": 74378557,
-  "sha256_apk": "7b469aa6bfd0eabb1a834d1fb768123c62c98cdbb87c683b782bd4104f68aed5",
+  "versi": "1.0.371",
+  "catatan": "• panel User: tampilkan ID angka (id dokumen userIds) dan foto profil dari users/{uid}.photoUrl, koin ",
+  "ukuran_apk": 74378550,
+  "sha256_apk": "dc08d65eb03387894a27e6fc0de5c164871897850f2d8428fa638b75d507745a",
   "abis": {
     "arm64": {
-      "ukuran": 74378557,
-      "sha256": "7b469aa6bfd0eabb1a834d1fb768123c62c98cdbb87c683b782bd4104f68aed5"
+      "ukuran": 74378550,
+      "sha256": "dc08d65eb03387894a27e6fc0de5c164871897850f2d8428fa638b75d507745a"
     },
     "armv7": {
-      "ukuran": 72613067,
-      "sha256": "9648aa181f0472085b4442ee4bc09c81a14953734f4c334751bd5bc80bd0e54c"
+      "ukuran": 72613055,
+      "sha256": "f2eac71bc4fb1885d5a755b391781f0c19475f670a5ef82056dfeb4fd8060bed"
     },
     "universal": {
-      "ukuran": 122232522,
-      "sha256": "a8983e67e905ddcca9190dcba2bd89e2d4ea1522da23c64a6ac0f8ea2b8347d0"
+      "ukuran": 122232515,
+      "sha256": "f5e55ef41cda8498c0a988914151ffe0e65c46bac42c907c209435967f08dd6a"
     }
   }
 }

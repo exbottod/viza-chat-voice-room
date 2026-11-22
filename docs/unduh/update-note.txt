@@ -1,2 +1,2 @@
+• panel: halaman Reset user (coin, diamond, VIP, XP/level, foto profil, nama, aset My Item) untuk satu
 • panel: kotak cari aset di Store dan Aset & VIP (nama atau nomor ID) serta pencarian aset di Kirim ke
-• panel: tombol Pratinjau di formulir unggah (Frame/Store/Aset VIP/Banner/Kirim ke user) membuka kartu

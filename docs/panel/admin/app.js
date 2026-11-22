@@ -3557,10 +3557,8 @@ async function gambarBet() {
   ]);
   // Pengaturan Game Bikini (bet dan RTP) dibaca dari RTDB bikiniCfg.
   let bw = { bets: [25, 50, 100, 200, 500, 1000, 2000, 5000], rtp: 85 };
-  try {
-    const snap = await dGet(dRef(rtdb, "bikiniCfg"));
-    if (snap && snap.exists()) bw = Object.assign(bw, snap.val() || {});
-  } catch (e) { /* belum ada pengaturan */ }
+  try { bw = Object.assign(bw, await walletAdmin({ op: "bikini_cfg_get" })); }
+  catch (e) { /* pengaturan bawaan */ }
   const betsBw = Array.isArray(bw.bets) && bw.bets.length ? bw.bets : bw.bets;
   const rtpBw = Number(bw.rtp) || 85;
   $("isiHal").innerHTML = `
@@ -3637,7 +3635,7 @@ async function gambarBet() {
     if (bets.length < 2) return toast("Isi minimal dua nilai bet", true);
     const rtp = Number($("bwRtp").value) || 85;
     try {
-      await dSet(dRef(rtdb, "bikiniCfg"), { bets, rtp, diperbarui: Date.now() });
+      await walletAdmin({ op: "bikini_cfg_set", bets, rtp });
       catatLog("Atur bet & RTP Bikini", bets.join(", ") + " | RTP " + rtp + "%");
       toast("Pengaturan Bikini disimpan");
     } catch (e) { toast("Gagal: " + (e.message || e), true); }

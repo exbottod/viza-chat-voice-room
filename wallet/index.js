@@ -781,6 +781,37 @@ async function famCfgSimpan(a) {
   await fsp.writeFile(FAM_FILE, JSON.stringify(baru), "utf8");
   return baru;
 }
+// ---- Pengaturan game Bikini (bet & RTP) dari panel developer ----
+// Disimpan sebagai berkas JSON supaya game bisa membacanya tanpa login.
+const BIKINI_FILE = "/opt/viza-api/data/bikini.json";
+let BIKINI_CFG = { bets: [25, 50, 100, 200, 500, 1000, 2000, 5000], rtp: 85 };
+async function bikiniCfgKini() {
+  try {
+    const fsp = await import("node:fs/promises");
+    const a = JSON.parse(await fsp.readFile(BIKINI_FILE, "utf8"));
+    if (a && typeof a === "object") {
+      const bets = Array.isArray(a.bets) ? a.bets.map(Number).filter((x) => x > 0) : [];
+      BIKINI_CFG = {
+        bets: bets.length > 1 ? bets : BIKINI_CFG.bets,
+        rtp: Number.isFinite(Number(a.rtp)) && Number(a.rtp) > 0 ? Number(a.rtp) : BIKINI_CFG.rtp,
+      };
+    }
+  } catch (e) { /* berkas belum ada: pakai bawaan */ }
+  return BIKINI_CFG;
+}
+async function bikiniCfgSimpan(a) {
+  const bets = (Array.isArray(a.bets) ? a.bets.map(Number) : []).filter((x) => Number.isFinite(x) && x > 0);
+  const rtp = Number(a.rtp);
+  if (bets.length < 2) throw new Error("Isi minimal dua nilai bet");
+  if (!Number.isFinite(rtp) || rtp <= 0 || rtp > 200) throw new Error("RTP tidak sah");
+  const baru = { bets: bets.map((x) => Math.round(x)), rtp: Math.round(rtp), diperbarui: Date.now() };
+  BIKINI_CFG = baru;
+  const fsp = await import("node:fs/promises");
+  await fsp.mkdir("/opt/viza-api/data", { recursive: true });
+  await fsp.writeFile(BIKINI_FILE, JSON.stringify(baru), "utf8");
+  return baru;
+}
+
 let siapFam = false;
 async function siapFamily(env) {
   if (siapFam) return;
@@ -3998,6 +4029,15 @@ async function admin(env, body) {
     return json({ ok: 1, harga: HARGA_VIP.slice(1) });
   }
 
+  // ---- Game Bikini: daftar bet & RTP (diubah dari panel developer) ----
+  if (op === "bikini_cfg_get") {
+    return json({ ok: 1, ...(await bikiniCfgKini()) });
+  }
+  if (op === "bikini_cfg_set") {
+    try { return json({ ok: 1, ...(await bikiniCfgSimpan({ bets: p.bets, rtp: p.rtp })) }); }
+    catch (err) { return gagal("Gagal menyimpan: " + String(err?.message ?? err)); }
+  }
+
   // ---- Family: harga buat family & rasio exp->coin (diubah dari panel developer) ----
   if (op === "fam_cfg_get") {
     return json({ ok: 1, ...(await famCfgKini()) });
@@ -6983,6 +7023,19 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
       } catch (e) { return json({ ok: 0, e: "Token suara gagal dibuat" }, 500); }
       if (!tokenAg) return json({ ok: 0, e: "App ID atau App Certificate tidak sah" }, 500);
       return json({ ok: 1, appId: appIdAg, token: tokenAg, channel: roomAg, account: akunAg, exp: Math.floor(Date.now() / 1000) + 21600 });
+    }
+    // Pengaturan game Bikini (bet & RTP). Dibaca game tanpa login, jadi
+    // boleh diakses publik dan disajikan dengan izin lintas asal.
+    if (url.pathname.toLowerCase() === "/bikini-cfg" || url.pathname.toLowerCase() === "/bikini-cfg.json") {
+      const cfgBw = await bikiniCfgKini();
+      return new Response(JSON.stringify(cfgBw), {
+        status: 200,
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "access-control-allow-origin": "*",
+          "cache-control": "no-store",
+        },
+      });
     }
     if (url.pathname === "/health") {
       // Sekaligus buktikan database masih bisa dibaca.

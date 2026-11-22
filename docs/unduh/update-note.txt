@@ -1,2 +1,1 @@
-• panel: tab Coin Seller diganti STAF APP dengan sheet Coin seller/Manager/Admin; halaman Manager & Ad
-• panel User: tampilkan ID angka (id dokumen userIds) dan foto profil dari users/{uid}.photoUrl, koin 
+• Perbaikan dan peningkatan aplikasi

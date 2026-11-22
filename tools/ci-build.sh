@@ -139,7 +139,7 @@ if [ -n "${GH_TOKEN:-}" ] && command -v gh > /dev/null 2>&1 && [ -z "${SKIP_RELE
   {
     echo "Perbaikan di versi 1.0.$NOMOR:"
     # Buang baris teknis: penanda skip build, pembaruan halaman unduh, dan catatan rilis.
-    bersih() { sed 's/ \[skip ci\]//g' | grep -viE 'halaman unduh|catatan rilis|^ *$' | head -6 || true; }
+    bersih() { sed 's/ \[skip ci\]//g' | grep -viE 'halaman unduh|catatan rilis|^ *$|^[- •]*(panel|vps|server dompet|ci|workflow)\b' | head -6 || true; }
     # Yang diambil POIN di isi commit (baris berawalan "-"), bukan judul teknis
     # seperti "fix(ui): ...", supaya kalimat di dialog pembaruan bisa dibaca
     # pemain dan benar-benar menyebut perubahan versi itu.

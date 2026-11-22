@@ -443,6 +443,11 @@ object AgoraVoice {
     fun sambungUlangJikaPerlu(id: String) {
         if (id.isBlank() || sengajaKeluar) return
         if (joined && engine != null) return
+        // Percobaan sambung yang masih berjalan tidak boleh ditimpa percobaan
+        // baru: dulu kembali dari WhatsApp memicu dua sambungan sekaligus
+        // (penanda siklus layar + penanda database tersambung), engine Agora
+        // dibongkar-pasang dua kali, dan suara room terasa berat beberapa detik.
+        if (joinJob?.isActive == true) return
         val sekarang = System.currentTimeMillis()
         if (sekarang - cobaSambungTerakhir < 4000L) return
         cobaSambungTerakhir = sekarang

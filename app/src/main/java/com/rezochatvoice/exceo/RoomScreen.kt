@@ -275,15 +275,22 @@ fun RoomScreen(
     // semuanya ditegaskan lagi dan suara disambung ulang, tanpa memuat ulang
     // layar. Tanpa ini room terasa macet setelah pindah aplikasi.
     val pemilikSiklus = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    // Penjaga agar kembali ke depan hanya mengerjakan satu kali: penanda siklus
+    // layar dan penanda database tersambung sering berbunyi hampir bersamaan.
+    val segarTerakhir = remember { longArrayOf(0L) }
+    fun segarkanSekali() {
+        val sekarang = System.currentTimeMillis()
+        if (sekarang - segarTerakhir[0] < 2500L) return
+        segarTerakhir[0] = sekarang
+        scope.launch {
+            val kursi = rawSeats.values.firstOrNull { it.uid == myUid }?.index
+            RoomRepo.klaimKembali(roomId, myUid, kursi, myName)
+        }
+        AgoraVoice.sambungUlangJikaPerlu(roomId)
+    }
     androidx.compose.runtime.DisposableEffect(pemilikSiklus, roomId) {
         val pengamat = androidx.lifecycle.LifecycleEventObserver { _, e ->
-            if (e == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
-                scope.launch {
-                    val kursi = rawSeats.values.firstOrNull { it.uid == myUid }?.index
-                    RoomRepo.klaimKembali(roomId, myUid, kursi, myName)
-                }
-                AgoraVoice.sambungUlangJikaPerlu(roomId)
-            }
+            if (e == androidx.lifecycle.Lifecycle.Event.ON_RESUME) segarkanSekali()
         }
         pemilikSiklus.lifecycle.addObserver(pengamat)
         onDispose { pemilikSiklus.lifecycle.removeObserver(pengamat) }
@@ -294,13 +301,7 @@ fun RoomScreen(
         val rujukan = com.google.firebase.database.FirebaseDatabase.getInstance().getReference(".info/connected")
         val pendengar = object : com.google.firebase.database.ValueEventListener {
             override fun onDataChange(snap: com.google.firebase.database.DataSnapshot) {
-                if (snap.getValue(Boolean::class.java) == true) {
-                    scope.launch {
-                        val kursi = rawSeats.values.firstOrNull { it.uid == myUid }?.index
-                        RoomRepo.klaimKembali(roomId, myUid, kursi, myName)
-                    }
-                    AgoraVoice.sambungUlangJikaPerlu(roomId)
-                }
+                if (snap.getValue(Boolean::class.java) == true) segarkanSekali()
             }
             override fun onCancelled(error: com.google.firebase.database.DatabaseError) {}
         }

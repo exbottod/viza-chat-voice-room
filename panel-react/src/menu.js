@@ -30,6 +30,7 @@ export const MENU = [
       ["cekin", "event_available", "Plan history (cek in)"],
       ["wallet", "account_balance_wallet", "Currency (coin & reset)"],
       ["cashback", "savings", "Cashback gift"],
+      ["pencairan", "payments", "Pencairan agency"],
     ],
   },
   {

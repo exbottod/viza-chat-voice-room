@@ -1353,19 +1353,47 @@ document.querySelectorAll(".menu").forEach((m) => m.addEventListener("click", tu
 
 /* ================= dashboard ================= */
 async function gambarDashboard() {
-  const [users, rooms, gifts, banned, logs] = await Promise.all([
+  const [users, rooms, gifts, banned, logs, laporan] = await Promise.all([
     ambilSemua("userIds", 500), ambilSemua("rooms", 500), ambilSemua("gifts", 100),
-    ambilSemua("banned", 200).catch(() => []), ambilSemua("adminLogs", 50).catch(() => [])
+    ambilSemua("banned", 200).catch(() => []), ambilSemua("adminLogs", 400).catch(() => []),
+    ambilSemua("userReports", 300).catch(() => [])
   ]);
   const versi = await getDoc(doc(db, "settings", "versi")).then((d) => (d.exists() ? d.data().versi : "—")).catch(() => "—");
 
+  const vip = users.filter((u) => Number(u.vip || 0) > 0).length;
+  const diblokir = new Set(banned.map((b) => b.id || b.uid));
+  const terkunci = rooms.filter((r) => r.locked).length;
+
+  // Kartu ringkasan: susunannya mengikuti panel acuan (angka besar + ikon + label).
+  const kartu = [
+    ["people_alt", rupiah(users.length), "Total user"],
+    ["workspace_premium", rupiah(vip), "Total user VIP"],
+    ["group_off", rupiah(diblokir.size), "User diblokir"],
+    ["mic", rupiah(rooms.length), "Total room"],
+    ["lock", rupiah(terkunci), "Room terkunci"],
+    ["flag", rupiah(laporan.length), "Laporan user"],
+    ["redeem", rupiah(gifts.length), "Gift aktif"],
+    ["system_update", aman(versi), "Versi APK"],
+  ];
+
+  $("aksiTopbar").innerHTML = `<div class="filter"><div class="pil on" data-hari="7">7 hari</div><div class="pil" data-hari="30">30 hari</div></div>
+    <button class="tombolAtas" id="segarkanDasbor">Segarkan</button>`;
+  $("segarkanDasbor").onclick = () => gambarDashboard();
+
   $("isiHal").innerHTML = `
     <div class="kartu">
-      <div class="stat"><b>${rupiah(users.length)}</b><span>User terdaftar</span></div>
-      <div class="stat"><b>${rupiah(rooms.length)}</b><span>Room</span></div>
-      <div class="stat"><b>${rupiah(gifts.length)}</b><span>Gift aktif</span></div>
-      <div class="stat"><b>${rupiah(banned.length)}</b><span>User diblokir</span></div>
-      <div class="stat"><b>${aman(versi)}</b><span>Versi APK tercatat</span></div>
+      <div class="dasborKartu">
+        ${kartu.map(([ikon, angka, label]) => `
+          <div class="kartuAngka">
+            <div class="ikonKartu">${ikon}</div>
+            <div><b>${angka}</b><span>${label}</span></div>
+          </div>`).join("")}
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panelAtas"><h3 id="judulGrafik">Aktivitas admin 7 hari terakhir</h3>
+        <div class="filter"><div class="pil on" id="ketGrafik">—</div></div></div>
+      <div id="kotakGrafik"></div>
     </div>
     <div class="panel">
       <div class="panelAtas"><h3>Aktivitas admin terakhir</h3><div class="filter"><div class="pil on">${logs.length} catatan</div></div></div>
@@ -1381,6 +1409,64 @@ async function gambarDashboard() {
         <td>${r.locked ? '<span class="tag blokir">terkunci</span>' : '<span class="tag aktif">terbuka</span>'}</td></tr>`).join("")}
         </table>` : '<div class="kosong">Belum ada room.</div>'}
     </div>`;
+
+  let hari = 7;
+  const lukis = () => {
+    // Grafik memakai aktivitas admin kalau ada, karena waktu catatannya pasti
+    // tersimpan. Kalau belum ada catatan, dipakai tanggal pendaftaran user.
+    const dariLog = logs.map((l) => Number(l.waktu?.seconds || 0) * 1000).filter((t) => t > 0);
+    const dariUser = users.map((u) => Number(u.createdAt || u.dibuat || 0)).filter((t) => t > 0);
+    const pakaiLog = dariLog.length >= dariUser.length;
+    const sumber = pakaiLog ? dariLog : dariUser;
+    $("judulGrafik").textContent = (pakaiLog ? "Aktivitas admin " : "Pendaftaran user ") + hari + " hari terakhir";
+    lukisGrafik(sumber, hari, pakaiLog ? "catatan" : "user");
+  };
+  $("aksiTopbar").querySelectorAll("[data-hari]").forEach((p) => {
+    p.onclick = () => {
+      hari = Number(p.dataset.hari);
+      $("aksiTopbar").querySelectorAll("[data-hari]").forEach((x) => x.classList.toggle("on", x === p));
+      lukis();
+    };
+  });
+  lukis();
+}
+
+/** Grafik batang sederhana tanpa pustaka luar, warna mengikuti panel acuan. */
+function lukisGrafik(sumber, hari, satuan) {
+  const kotak = $("kotakGrafik");
+  if (!kotak) return;
+  const hariIni = new Date(); hariIni.setHours(0, 0, 0, 0);
+  const kolom = [];
+  for (let i = hari - 1; i >= 0; i--) {
+    const t = new Date(hariIni.getTime() - i * 86400000);
+    const besok = new Date(t.getTime() + 86400000);
+    const n = sumber.filter((ms) => ms >= t.getTime() && ms < besok.getTime()).length;
+    kolom.push({ label: t.getDate() + "/" + (t.getMonth() + 1), n });
+  }
+  const maks = Math.max(1, ...kolom.map((k) => k.n));
+  const total = kolom.reduce((a, k) => a + k.n, 0);
+  const ket = $("ketGrafik");
+  if (ket) ket.textContent = total + " " + satuan + " · puncak " + maks;
+
+  if (!total) {
+    kotak.innerHTML = '<div class="kosong">Belum ada data untuk rentang ini.</div>';
+    return;
+  }
+  const tinggi = 200, lebar = 100 / kolom.length;
+  const batang = kolom.map((k, i) => {
+    const h = Math.max(2, Math.round((k.n / maks) * tinggi));
+    const x = i * lebar + lebar * 0.18;
+    const w = lebar * 0.64;
+    return `<rect x="${x}%" y="${tinggi - h}" width="${w}%" height="${h}" rx="2" fill="url(#gradBatang)"></rect>
+      <text x="${(i + 0.5) * lebar}%" y="${tinggi + 16}" fill="#9a9cab" font-size="10" text-anchor="middle">${k.label}</text>
+      ${k.n ? `<text x="${(i + 0.5) * lebar}%" y="${tinggi - h - 6}" fill="#d1d3e0" font-size="10" text-anchor="middle">${k.n}</text>` : ""}`;
+  }).join("");
+  kotak.innerHTML = `<svg viewBox="0 0 100 ${tinggi + 28}" preserveAspectRatio="none" style="width:100%;height:240px">
+    <defs><linearGradient id="gradBatang" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e8538f"></stop><stop offset="100%" stop-color="#83d8ae"></stop>
+    </linearGradient></defs>
+    ${batang}
+  </svg>`;
 }
 
 /* ================= user ================= */

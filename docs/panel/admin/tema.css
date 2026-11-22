@@ -170,3 +170,31 @@ tbody tr:hover, table tr:hover { background: #262635; }
 .merah, .gagal { color: #e8538f; }
 .kuning { color: #fad292; }
 .biru { color: #86c1ed; }
+
+/* ---------- dasbor: kartu angka bergaya panel acuan ---------- */
+.dasborKartu {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px;
+}
+.kartuAngka {
+  display: flex; align-items: center; gap: 14px;
+  background: #262635; border-radius: 5px; padding: 18px 16px;
+}
+.kartuAngka .ikonKartu {
+  width: 42px; height: 42px; border-radius: 5px; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  background: #1f1f2b; color: #83d8ae;
+  font-family: 'Material Icons'; font-size: 22px; font-style: normal;
+}
+.kartuAngka b {
+  display: block; color: #fff; font-size: 22px; line-height: 1.2; font-weight: 600;
+}
+.kartuAngka span { display: block; color: #9a9cab; font-size: 11.5px; margin-top: 2px; }
+.kartuAngka:nth-child(2n) .ikonKartu { color: #e8538f; }
+.kartuAngka:nth-child(3n) .ikonKartu { color: #ada6f2; }
+.kartuAngka:nth-child(4n) .ikonKartu { color: #86c1ed; }
+.kartuAngka:nth-child(5n) .ikonKartu { color: #fad292; }
+
+#kotakGrafik { padding: 6px 4px 0; }
+#kotakGrafik svg { display: block; }

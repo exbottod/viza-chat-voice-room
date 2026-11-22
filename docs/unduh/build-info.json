@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.345",
   "catatan": "• Panel React: tambah emote dan aset langsung di panel, tanpa lompat ke panel lama",
-  "ukuran_apk": 74377003,
-  "sha256_apk": "dbc555a0f29d490e90ee404f374fde40ce5390b9836333b1604cf9dc580c3517",
+  "ukuran_apk": 74377422,
+  "sha256_apk": "2d057c56ecabba23e8e8d0b1dc16af0e41d1259ad3b69253c743db588880a056",
   "abis": {
     "arm64": {
-      "ukuran": 74377003,
-      "sha256": "dbc555a0f29d490e90ee404f374fde40ce5390b9836333b1604cf9dc580c3517"
+      "ukuran": 74377422,
+      "sha256": "2d057c56ecabba23e8e8d0b1dc16af0e41d1259ad3b69253c743db588880a056"
     },
     "armv7": {
-      "ukuran": 72611511,
-      "sha256": "e0b1cb0532f133486762b2a177ec252954c567f2fa8091ad00a7572ab85f7f0a"
+      "ukuran": 72611920,
+      "sha256": "b5ce1de1ebba5dc45e42b6a2560ecc28f6c2df91e23083caaf05a17af7ce2e8b"
     },
     "universal": {
-      "ukuran": 122230966,
-      "sha256": "1705d9fab5663f3ac0976ad989c0bf834273afc315cdf0e2a77c347e4dead181"
+      "ukuran": 122231380,
+      "sha256": "81ff8aca6c0b893f7292e2742597360bcad4d09918ca0aaa379659a8a11e1b07"
     }
   }
 }

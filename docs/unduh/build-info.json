@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.326",
   "catatan": "• Game: kotak pengaturan tidak lagi mengempis jadi garis",
-  "ukuran_apk": 74349842,
-  "sha256_apk": "eb78d98ffc23dd30d2ef3e2f525b95266822fd6b68283ca0b977fcf1d04729ee",
+  "ukuran_apk": 74349846,
+  "sha256_apk": "65aefe48be32bda9c72cba0eb71804e66eff83aa4cfcab9fc01ba6c999969180",
   "abis": {
     "arm64": {
-      "ukuran": 74349842,
-      "sha256": "eb78d98ffc23dd30d2ef3e2f525b95266822fd6b68283ca0b977fcf1d04729ee"
+      "ukuran": 74349846,
+      "sha256": "65aefe48be32bda9c72cba0eb71804e66eff83aa4cfcab9fc01ba6c999969180"
     },
     "armv7": {
-      "ukuran": 72584357,
-      "sha256": "b5cfc78021ca6df42cf8ceff25114cfcabe946ad318ac33e69a7e9542a22d65d"
+      "ukuran": 72584366,
+      "sha256": "a9e4ce77b502a503bc7102ad760bf0dea9c0839c4354961c14fcf850691a2187"
     },
     "universal": {
-      "ukuran": 122203815,
-      "sha256": "edcfa478d312ef620aa9f8dcd1fd641fee1311f32fa2c5b4141aca5e6e376fa1"
+      "ukuran": 122203814,
+      "sha256": "680b63f4f4616798ee051857e7d07a693fa0d32c089006598a1947fadbed6bac"
     }
   }
 }

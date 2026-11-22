@@ -90,7 +90,7 @@ export default function Banner() {
       if (!url) throw new Error("Isi tautan atau pilih gambar");
       const id = ganti && !ganti.lama ? String(ganti.id) : "banner_" + Date.now().toString(36);
       const data = {
-        id, banner: true, slot: "banner", meta: true, store: false,
+        id, banner: true, slot: "partybanner", meta: true, store: false,
         title: form.judul.trim(), subtitle: form.sub.trim(), link: form.link.trim(),
         imageUrl: url, order: Number(form.urut) || 0, active: !!form.aktif,
         name: form.judul.trim() || id, updatedAt: Date.now(),
@@ -115,7 +115,7 @@ export default function Banner() {
       if (hapus.lama) {
         // Banner Firestore lama: tandai tersembunyi lewat catatan RTDB baru.
         const id = "sembunyi_" + hapus.id;
-        await tulisRtdbServer("vipCfg/" + kunciVip(id), { id, banner: true, slot: "banner", meta: true, store: false, active: false, hiddenFs: String(hapus.id), updatedAt: Date.now() });
+        await tulisRtdbServer("vipCfg/" + kunciVip(id), { id, banner: true, slot: "partybanner", meta: true, store: false, active: false, hiddenFs: String(hapus.id), updatedAt: Date.now() });
         await walletAdmin({ op: "fs_del", koleksi: "banners", id: hapus.id }).catch(() => {});
       } else {
         await hapusRtdbServer("vipCfg/" + (hapus._kunci || kunciVip(hapus.id)));

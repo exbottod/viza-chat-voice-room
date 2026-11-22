@@ -8,12 +8,14 @@ import { Konfirmasi, Kosong, Panel, Rangka, Tabel, Tag, toast } from "../ui.jsx"
 import TambahAset from "./TambahAset.jsx";
 
 // Isi Store Viza: semua jenis item yang dijual di aplikasi.
+// Urutan dan nama sama dengan tab Store di aplikasi.
 const JENIS = [
   ["frame", "Frame"],
-  ["entry", "Banner masuk"],
-  ["bubble", "Gelembung"],
-  ["badge", "Lencana"],
   ["uid", "ID unik"],
+  ["entry", "Efek masuk"],
+  ["banner", "Banner masuk"],
+  ["badge", "Lencana"],
+  ["bubble", "Gelembung"],
   ["medal", "Medali"],
 ];
 

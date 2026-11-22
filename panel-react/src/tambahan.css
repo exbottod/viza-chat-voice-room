@@ -213,3 +213,9 @@
   .topbar { padding-right: 10px; }
   .topbar > .kananTopbar { gap: 8px; }
 }
+
+/* Isian kecil di dalam tabel dan kotak pilih */
+.isianMini { width: 110px; background: #1f1f2b; border: 1px solid #2d2d3f; border-radius: 3px; color: #e7e8ef; font: inherit; font-size: 13px; padding: 7px 9px; }
+.isianForm select { width: 100%; background: #1f1f2b; border: 1px solid #2d2d3f; border-radius: 3px; color: #e7e8ef; font: inherit; font-size: 14px; padding: 13px 14px; }
+.barisAksiForm .isianForm { margin: 0; }
+.barisAksiForm .cari { flex: none; }

@@ -13,6 +13,13 @@ import Gift from "./pages/Gift.jsx";
 import Emote from "./pages/Emote.jsx";
 import Profile from "./pages/Profile.jsx";
 import Setting from "./pages/Setting.jsx";
+import Alat from "./pages/Alat.jsx";
+import Wallet from "./pages/Wallet.jsx";
+import Seller from "./pages/Seller.jsx";
+import Staf from "./pages/Staf.jsx";
+import Daftar from "./pages/Daftar.jsx";
+import Kirim from "./pages/Kirim.jsx";
+import { ALAT } from "./alat.js";
 import Belum from "./pages/Belum.jsx";
 import { Toast } from "./ui.jsx";
 import KananTopbar from "./topbar.jsx";
@@ -26,10 +33,60 @@ const KETERANGAN = {
   profile: "Ubah nama dan password akun developer",
   setting: "Agora, versi & link APK, payment, dan Firebase",
   pengaturan: "Agora, versi & link APK, payment, dan Firebase",
+  staf: "Staf panel dan agensi host",
+  seller: "Coin seller, stok, dan status toko",
+  wallet: "Paket coin, tujuan top-up, dan top-up manual",
+  kirim: "Kirim frame, efek, atau medal ke satu akun",
+  bet: "Chip bet dan RTP game Bikini Wild Rush",
+  greedy: "Chip bet dan RTP Greedy King",
+  fruit: "Chip bet dan RTP Crazy Fruit",
+  roket: "Energi tiap level roket dan hadiah peringkat",
+  family: "Harga membuat family dan rasio exp",
+  vipharga: "Harga VIP level 1 sampai 9",
+  cashback: "Tingkatan cashback gift",
+  reward: "Banner kemenangan room",
 };
 
 /** Halaman yang sudah dipindahkan ke React. Sisanya menyusul bertahap. */
-const HALAMAN = { dashboard: Dashboard, user: User, room: Room, gift: Gift, emote: Emote, profile: Profile, setting: Setting, pengaturan: Setting };
+// Halaman pengaturan memakai satu komponen (Alat) dengan spesifikasi berbeda.
+const alat = (id) => (p) => <Alat spec={ALAT[id]} {...p} />;
+// Halaman berisi daftar Firestore memakai satu penampil (Daftar).
+const daftar = (judul, koleksi, ket) => () => <Daftar judul={judul} koleksi={koleksi} ket={ket} />;
+
+const HALAMAN = {
+  dashboard: Dashboard,
+  user: User,
+  room: Room,
+  staf: Staf,
+  seller: Seller,
+  wallet: Wallet,
+  gift: Gift,
+  emote: Emote,
+  profile: Profile,
+  setting: Setting,
+  pengaturan: Setting,
+  kirim: Kirim,
+  bet: alat("bet"),
+  greedy: alat("greedy"),
+  fruit: alat("fruit"),
+  roket: alat("roket"),
+  family: alat("family"),
+  vipharga: alat("vipharga"),
+  cashback: alat("cashback"),
+  reward: alat("reward"),
+  cs: daftar("Customer Service", "customerService", "Pesan dan keluhan yang masuk dari aplikasi."),
+  laporan: daftar("Laporan user", "reports", "Laporan dari pengguna: saring isinya, hapus bila sudah selesai."),
+  cekin: daftar("Plan history (cek in)", "checkIn", "Catatan cek in harian pengguna VIP."),
+  frame: daftar("Frame & banner", "frames", "Bingkai profil dan banner yang bisa dipakai user."),
+  aset: daftar("Aset & VIP", "vipAssets", "Aset yang dijual atau diberikan ke akun VIP."),
+  asetvps: daftar("Aset di VPS", "vpsAssets", "Berkas aset yang tersimpan di server."),
+  latar: daftar("Background tab", "tabBackgrounds", "Gambar latar tab room yang dipakai aplikasi."),
+  katalog: daftar("Katalog game", "games", "Daftar game yang tampil di aplikasi."),
+  pasang: daftar("Pasang game", "games", "Game yang terpasang beserta alamat berkasnya."),
+  database: daftar("Database", "users", "Penampil koleksi Firestore. Ganti nama koleksi untuk melihat data lain."),
+  log: daftar("Log admin", "adminLog", "Riwayat tindakan admin panel."),
+  pengumuman: daftar("Broadcast & pengumuman", "broadcast", "Pesan yang dikirim ke semua pengguna."),
+};
 
 async function cekAdmin(user) {
   if (!user) return null;

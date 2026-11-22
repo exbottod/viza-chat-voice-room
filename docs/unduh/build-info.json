@@ -1,7 +1,7 @@
 {
   "status": "ok",
   "versi": "1.0.372",
-  "catatan": "• panel: tab Coin Seller diganti STAF APP dengan sheet Coin seller/Manager/Admin; halaman Manager & Ad\n• panel User: tampilkan ID angka (id dokumen userIds) dan foto profil dari users/{uid}.photoUrl, koin ",
+  "catatan": "• Perbaikan dan peningkatan aplikasi",
   "ukuran_apk": 74378546,
   "sha256_apk": "083b013eba97edfa4149d77d662115576ba45d907d66b0c1ce3504d70ff3deba",
   "abis": {

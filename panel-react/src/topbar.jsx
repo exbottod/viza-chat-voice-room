@@ -82,11 +82,14 @@ function Profil({ admin }) {
               <em>{admin.peran}</em>
             </div>
           </div>
-          <a className="menuTurunItem" href="#pengaturan" onClick={() => setBuka(false)}>
-            <span className="material-icons">settings</span> Pengaturan
+          <a className="menuTurunItem" href="#profile" onClick={() => setBuka(false)}>
+            <span className="material-icons">person_outline</span> Profile
+          </a>
+          <a className="menuTurunItem" href="#setting" onClick={() => setBuka(false)}>
+            <span className="material-icons">settings</span> Setting
           </a>
           <button className="menuTurunItem" onClick={() => signOut(auth)}>
-            <span className="material-icons">logout</span> Keluar
+            <span className="material-icons">logout</span> Logout
           </button>
         </div>
       ) : null}

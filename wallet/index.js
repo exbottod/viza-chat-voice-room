@@ -543,6 +543,8 @@ async function siapTabel(env) {
     { sql: "create table if not exists panel_ban (uid text primary key, oleh text, manager text, reason text, at integer)" },
     { sql: "create table if not exists panel_log (id text primary key, oleh text, aksi text, target text, jumlah integer, at integer)" },
     { sql: "create table if not exists pay_info (id integer primary key, dana text, nama text, gopay text, qris text, updated_at integer)" },
+    // Pengaturan dari panel developer (Agora, Firebase push, Stripe/Paystack, versi aplikasi).
+    { sql: "create table if not exists app_cfg (kunci text primary key, nilai text, updated_at integer)" },
     { sql: "create table if not exists topup_manual (id text primary key, uid text, coins integer, amount integer, payer text, method text, status text, created_at integer)" },
     // Harga paket coin diatur dari panel developer, bukan ditulis mati di kode.
     { sql: "create table if not exists coin_paket (coins integer primary key, harga integer, aktif integer, updated_at integer)" },
@@ -3244,6 +3246,43 @@ async function hadiahUndangan(env, uid) {
 }
 
 // ---------- Topup manual DANA ----------
+
+// ---- Konfigurasi dari panel developer (disimpan di tabel app_cfg) ----
+const CFG_RAHASIA = new Set(["agoraCert", "fcmJson", "stripeSecret", "paystackSecret"]);
+const CFG_KUNCI = new Set([
+  "agoraAppId", "agoraCert", "fcmJson", "stripeAktif", "stripePub", "stripeSecret",
+  "paystackAktif", "paystackPub", "paystackSecret", "versiMin", "versiTerbaru", "apkUrl", "apkCatatan",
+]);
+let cfgCache = { at: 0, v: {} };
+
+async function cfgSemua(env, paksa = false) {
+  if (!paksa && Date.now() - cfgCache.at < 15000) return cfgCache.v;
+  const o = {};
+  try {
+    const r = await pipe(env, [{ sql: "select kunci, nilai from app_cfg" }]);
+    for (const x of r[0].rows) o[x.kunci] = String(x.nilai ?? "");
+  } catch { /* tabel belum ada: pakai env */ }
+  cfgCache = { at: Date.now(), v: o };
+  return o;
+}
+
+/** Ambil App ID dan Certificate Agora: panel lebih dulu, lingkungan server sebagai cadangan. */
+async function agoraKredensial(env) {
+  const c = await cfgSemua(env);
+  return {
+    appId: String(c.agoraAppId || env.AGORA_APP_ID || ""),
+    cert: String(c.agoraCert || env.AGORA_APP_CERTIFICATE || ""),
+  };
+}
+
+/** Versi tersamar untuk tampilan: rahasia tidak pernah dikirim utuh ke browser. */
+function samarkan(v) {
+  const t = String(v || "");
+  if (!t) return "";
+  if (t.length <= 8) return "••••";
+  return t.slice(0, 4) + "••••••••" + t.slice(-4);
+}
+
 async function infoBayar(env) {
   const r = await pipe(env, [{ sql: "select dana, nama, gopay, qris from pay_info where id = 1" }]);
   const d = r[0].rows[0] ?? {};
@@ -4549,6 +4588,66 @@ async function admin(env, body) {
       })),
     ]);
     return json({ ok: 1, paket: await daftarPaket(env) });
+  }
+  // ---- Pengaturan aplikasi dari panel (khusus developer) ----
+  if (op === "cfg_get") {
+    if (!devPanel) return json({ ok: 0, e: "Hanya developer" }, 403);
+    const c = await cfgSemua(env, true);
+    const keluar = {};
+    for (const k of CFG_KUNCI) {
+      const nilai = c[k] ?? "";
+      keluar[k] = CFG_RAHASIA.has(k) ? { ada: nilai ? 1 : 0, samar: samarkan(nilai) } : nilai;
+    }
+    const ag = await agoraKredensial(env);
+    keluar.agoraSumber = c.agoraAppId ? "panel" : (env.AGORA_APP_ID ? "server" : "kosong");
+    keluar.agoraAppIdAktif = ag.appId;
+    return json({ ok: 1, cfg: keluar });
+  }
+  if (op === "cfg_set") {
+    if (!devPanel) return json({ ok: 0, e: "Hanya developer" }, 403);
+    const isi = (p.nilai && typeof p.nilai === "object") ? p.nilai : {};
+    const tulis = [];
+    for (const k of Object.keys(isi)) {
+      if (!CFG_KUNCI.has(k)) return gagal("Kunci tidak dikenal: " + k);
+      let v = String(isi[k] ?? "").trim();
+      // Rahasia yang dikosongkan di formulir berarti "jangan diubah".
+      if (CFG_RAHASIA.has(k) && v === "") continue;
+      if (v.length > 12000) return gagal("Isian " + k + " terlalu panjang");
+      if (k === "agoraAppId" && !/^[0-9a-f]{32}$/i.test(v)) return gagal("App ID Agora harus 32 karakter heksadesimal");
+      if (k === "agoraCert" && !/^[0-9a-f]{32}$/i.test(v)) return gagal("App Certificate Agora harus 32 karakter heksadesimal");
+      if (k === "fcmJson") {
+        try {
+          const j = JSON.parse(v);
+          if (j.type !== "service_account" || !j.private_key || !j.client_email) return gagal("JSON bukan kunci akun layanan Firebase");
+        } catch { return gagal("JSON Firebase tidak bisa dibaca"); }
+      }
+      if (k === "stripeSecret" && !/^(sk|rk)_(test|live)_/.test(v)) return gagal("Stripe Secret Key harus diawali sk_test_ atau sk_live_");
+      if (k === "stripePub" && !/^pk_(test|live)_/.test(v)) return gagal("Stripe Publishable Key harus diawali pk_test_ atau pk_live_");
+      if (k === "stripeAktif" || k === "paystackAktif") v = (v === "1" || v === "true") ? "1" : "0";
+      tulis.push({
+        sql: `insert into app_cfg (kunci, nilai, updated_at) values (?, ?, ?)
+              on conflict (kunci) do update set nilai = excluded.nilai, updated_at = excluded.updated_at`,
+        args: [T(k), T(v), I(Date.now())],
+      });
+    }
+    // App ID dan Certificate harus diganti berpasangan agar suara tidak rusak.
+    const baruId = isi.agoraAppId !== undefined && String(isi.agoraAppId).trim() !== "";
+    const baruCert = isi.agoraCert !== undefined && String(isi.agoraCert).trim() !== "";
+    if (baruId !== baruCert) return gagal("Isi App ID dan App Certificate Agora sekaligus");
+    if (tulis.length) await pipe(env, tulis);
+    cfgCache = { at: 0, v: {} };
+    // Uji langsung: bila Agora diganti, buat satu token percobaan agar ketahuan sah atau tidak.
+    let ujiAgora = null;
+    if (baruId && baruCert) {
+      try {
+        const m = await import("agora-token");
+        const pk = m.default ?? m;
+        const tk = pk.RtcTokenBuilder.buildTokenWithUserAccount(
+          String(isi.agoraAppId).trim(), String(isi.agoraCert).trim(), "uji", "uji", pk.RtcRole.PUBLISHER, 600, 600);
+        ujiAgora = tk ? 1 : 0;
+      } catch { ujiAgora = 0; }
+    }
+    return json({ ok: 1, disimpan: tulis.length, ujiAgora });
   }
   if (op === "pay_get") return json({ ok: 1, pay: await infoBayar(env) });
   if (op === "pay_set") {
@@ -7037,8 +7136,9 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
       const idAg = kepalaAg.toLowerCase().startsWith("bearer ") ? kepalaAg.slice(7).trim() : "";
       const uidAg = idAg ? await uidDariToken(idAg) : null;
       if (!uidAg) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
-      const appIdAg = String(env.AGORA_APP_ID || "");
-      const certAg = String(env.AGORA_APP_CERTIFICATE || "");
+      const kredAg = await agoraKredensial(env);
+      const appIdAg = kredAg.appId;
+      const certAg = kredAg.cert;
       if (!appIdAg || !certAg) return json({ ok: 0, e: "Agora belum diatur di server" }, 503);
       let isiAg = {};
       try { isiAg = await req.json(); } catch { isiAg = {}; }
@@ -7090,7 +7190,7 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           stafAktif = Number(r[0].rows[0]?.a ?? 0);
           peran = r[1].rows.map((x) => String(x.role) + ":" + Number(x.n));
         } catch (e) { /* tabel belum ada */ }
-        return json({ ok: 1, v: "viza-2026-11-16-cek-tautan", rondeMs: CF_RONDE_MS, db: 1, proj: PROJ_SAH, agora: (env.AGORA_APP_ID && env.AGORA_APP_CERTIFICATE) ? 1 : 0, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
+        return json({ ok: 1, v: "viza-2026-11-16-cek-tautan", rondeMs: CF_RONDE_MS, db: 1, proj: PROJ_SAH, agora: ((await agoraKredensial(env)).appId && (await agoraKredensial(env)).cert) ? 1 : 0, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
       } catch (e) {
         return json({ ok: 0, v: "viza-2026-11-13-mandiri", db: String(e?.message ?? e) }, 500);
       }

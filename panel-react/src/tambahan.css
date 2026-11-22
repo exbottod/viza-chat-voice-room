@@ -140,3 +140,40 @@
 .sidebar .menu.aktif::before { color: #e8538f; }
 /* Judul grup pertama tidak perlu jarak atas */
 .sidebar .grup:first-of-type { margin-top: 6px; }
+
+/* ===== Formulir, tab, dan saklar (Profile & Setting) ===== */
+.panelIsi { padding: 18px; }
+.isianForm { display: block; margin-bottom: 16px; }
+.isianForm > span { display: block; color: #9a9cab; font-size: 14px; margin-bottom: 8px; }
+.isianForm input, .isianForm textarea {
+  width: 100%; background: #1f1f2b; border: 1px solid #2d2d3f; border-radius: 3px;
+  color: #e7e8ef; font: inherit; font-size: 14px; padding: 13px 14px; outline: 0; resize: vertical;
+}
+.isianForm input:focus, .isianForm textarea:focus { border-color: #e8538f; }
+.isianForm input[readonly] { opacity: .65; }
+.isianForm small { display: block; color: #6d7688; font-size: 12px; margin-top: 6px; }
+.barisAksiForm { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 6px 0 12px; }
+.tautanPink { color: #e8538f; cursor: pointer; font-size: 14px; }
+.tautanPink:hover { text-decoration: underline; }
+.tombolBaru:disabled { opacity: .5; cursor: not-allowed; }
+.fotoProfilBesar {
+  width: 150px; height: 150px; margin: 6px auto 14px; border-radius: 50%; overflow: hidden;
+  background: #cfcfcf; color: #fff; display: grid; place-items: center; font-size: 64px; font-weight: 600;
+}
+.fotoProfilBesar img { width: 100%; height: 100%; object-fit: cover; }
+.deretTab { display: flex; flex-wrap: wrap; gap: 14px 12px; margin: 4px 0 18px; }
+.tabSet {
+  background: #262635; color: #9a9cab; border: 0; border-radius: 3px; padding: 15px 28px;
+  font: inherit; font-size: 15px; cursor: pointer; transition: background .15s, color .15s;
+}
+.tabSet:hover { color: #fff; }
+.tabSet.on { background: #e8538f; color: #fff; box-shadow: 0 4px 14px rgba(232,83,143,.35); }
+.barisSaklar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 16px; }
+.barisSaklar b { color: #fff; font-weight: 500; font-size: 16px; }
+.saklar {
+  position: relative; width: 64px; height: 34px; border: 0; border-radius: 4px; cursor: pointer;
+  background: #31313f; transition: background .15s; padding: 0; flex: none;
+}
+.saklar i { position: absolute; top: 3px; left: 3px; width: 28px; height: 28px; border-radius: 3px; background: #fff; transition: left .15s; }
+.saklar.nyala { background: #83d8ae; }
+.saklar.nyala i { left: 33px; }

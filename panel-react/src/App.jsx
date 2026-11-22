@@ -11,6 +11,8 @@ import User from "./pages/User.jsx";
 import Room from "./pages/Room.jsx";
 import Gift from "./pages/Gift.jsx";
 import Emote from "./pages/Emote.jsx";
+import Profile from "./pages/Profile.jsx";
+import Setting from "./pages/Setting.jsx";
 import Belum from "./pages/Belum.jsx";
 import { Toast } from "./ui.jsx";
 import KananTopbar from "./topbar.jsx";
@@ -21,10 +23,13 @@ const KETERANGAN = {
   room: "Pantau room, sematkan, beri tag official, dan tutup room",
   gift: "Katalog gift: cari, saring, dan hapus item",
   emote: "Emote yang tampil di bar emote semua room",
+  profile: "Ubah nama dan password akun developer",
+  setting: "Agora, versi & link APK, payment, dan Firebase",
+  pengaturan: "Agora, versi & link APK, payment, dan Firebase",
 };
 
 /** Halaman yang sudah dipindahkan ke React. Sisanya menyusul bertahap. */
-const HALAMAN = { dashboard: Dashboard, user: User, room: Room, gift: Gift, emote: Emote };
+const HALAMAN = { dashboard: Dashboard, user: User, room: Room, gift: Gift, emote: Emote, profile: Profile, setting: Setting, pengaturan: Setting };
 
 async function cekAdmin(user) {
   if (!user) return null;
@@ -173,7 +178,7 @@ export default function App() {
         </div>
         <div className="isiDalam">
           {pesan && <div className="kosong" style={{ marginBottom: 12 }}>{pesan}</div>}
-          <Halaman nama={rute} judul={judul} />
+          <Halaman nama={rute} judul={judul} admin={admin} />
         </div>
       </main>
       <Toast />

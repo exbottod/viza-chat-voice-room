@@ -5,7 +5,7 @@ import { auth } from "./firebase.js";
 const ALAMAT = "https://viza.43-156-99-4.sslip.io/admin";
 const KUNCI = "sb_publishable_4PxD2LedOsBgIJyHLkM47A_bImSQI2W";
 const TANPA_UID = ["coin_all", "reset_all", "reset_gem_all", "reset_all_assets", "delete_users",
-  "manual_pending", "manual_all", "pay_get", "pay_set"];
+  "manual_pending", "manual_all", "pay_get", "pay_set", "cfg_get", "cfg_set"];
 
 export async function walletAdmin(p, batasMs = 15000) {
   const u = auth.currentUser;

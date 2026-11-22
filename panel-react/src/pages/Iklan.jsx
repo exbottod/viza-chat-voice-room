@@ -4,10 +4,10 @@ import { catatLog, rupiah } from "../data.js";
 import { Kartu, Panel, Rangka, toast } from "../ui.jsx";
 
 /**
- * Iklan berhadiah untuk coin gratis. Aplikasi menampilkan iklan Google AdMob,
- * lalu memanggil server (op iklan_klaim) untuk menambah coin. Hadiah, batas
- * harian, jeda, dan ID unit iklan diatur di sini supaya bisa diubah tanpa
- * build APK.
+ * Iklan berhadiah untuk coin gratis. Aplikasi menampilkan iklan Unity Ads
+ * (format Rewarded), lalu memanggil server (op iklan_klaim) untuk menambah
+ * coin setelah iklan selesai ditonton. Hadiah, batas harian, jeda, Game ID,
+ * dan Placement ID diatur di sini supaya bisa diubah tanpa build APK.
  *
  * Catatan penghasilan: pendapatan iklan dihitung dari eCPM per 1.000 tayangan.
  * Hadiah coin harus lebih kecil dari pendapatan per tayangan, kalau tidak
@@ -29,6 +29,8 @@ export default function Iklan() {
         maxHari: String(out.atur?.maxHari ?? 10),
         jeda: String(out.atur?.jeda ?? 20),
         adUnit: String(out.atur?.adUnit || ""),
+        gameId: String(out.atur?.gameId || ""),
+        placement: String(out.atur?.placement || ""),
       });
       setGalat("");
     } catch (e) { setStat(null); setGalat(e.message || String(e)); }
@@ -44,6 +46,8 @@ export default function Iklan() {
         iklanMaxHari: String(Math.max(0, Math.trunc(Number(form.maxHari) || 0))),
         iklanCooldown: String(Math.max(10, Math.trunc(Number(form.jeda) || 20))),
         iklanAdUnit: String(form.adUnit || "").trim(),
+        iklanGameId: String(form.gameId || "").trim(),
+        iklanPlacement: String(form.placement || "").trim(),
       } });
       await catatLog("Atur iklan coin gratis", (form.aktif ? "aktif" : "mati") + " · " + form.coin + " coin/iklan · " + form.maxHari + "x/hari");
       toast("Pengaturan iklan disimpan");
@@ -62,7 +66,7 @@ export default function Iklan() {
       ]} />
 
       <Panel judul="Iklan & coin gratis"
-        sub="Coin gratis diberikan setelah user selesai menonton iklan berhadiah (Google AdMob). Server membatasi jumlah klaim per hari dan memberi jeda antar klaim, jadi coin tidak bisa diambil berulang tanpa menonton. Isi ID unit iklan berhadiah dari akun AdMob Bapak supaya aplikasi bisa memuatnya.">
+        sub="Coin gratis diberikan setelah user selesai menonton iklan berhadiah (Unity Ads, format Rewarded). Server membatasi jumlah klaim per hari dan memberi jeda antar klaim, jadi coin tidak bisa diambil berulang tanpa menonton. Game ID dan Placement ID di bawah dibaca aplikasi dari server, jadi bisa diganti kapan saja tanpa build APK baru.">
         {galat ? <div className="kosong">Server dompet belum menjawab: {galat}</div> : null}
         {!form ? <Rangka baris={4} /> : (
           <>
@@ -76,9 +80,17 @@ export default function Iklan() {
               <input value={form.maxHari} onChange={(e) => setForm({ ...form, maxHari: e.target.value })} inputMode="numeric" /></label>
             <label className="isianForm"><span>Jeda antar iklan (detik)</span>
               <input value={form.jeda} onChange={(e) => setForm({ ...form, jeda: e.target.value })} inputMode="numeric" /></label>
-            <label className="isianForm"><span>ID unit iklan berhadiah (AdMob, Android)</span>
-              <input value={form.adUnit} placeholder="ca-app-pub-xxxxxxxx/yyyyyyyyyy"
-                onChange={(e) => setForm({ ...form, adUnit: e.target.value })} /></label>
+            <label className="isianForm"><span>Unity Game ID (Android)</span>
+              <input value={form.gameId} placeholder="800448611" inputMode="numeric"
+                onChange={(e) => setForm({ ...form, gameId: e.target.value })} /></label>
+            <label className="isianForm"><span>Placement ID Rewarded</span>
+              <input value={form.placement} placeholder="BP_Rewarded_Android"
+                onChange={(e) => setForm({ ...form, placement: e.target.value })} /></label>
+            <div className="catatan">
+              Kedua nilai ini ada di dashboard Unity: menu Monetization, buka app Viza Chat,
+              lalu bagian app key (Game ID) dan daftar Placements (Placement ID Rewarded).
+              Selama kolom dibiarkan kosong, aplikasi memakai nilai bawaan di server.
+            </div>
             <div className="catatan">
               Hadiah 100 coin dengan 10 tonton per hari berarti maksimal 1.000 coin gratis per user per hari.
               Bandingkan dengan harga paket coin: hadiah per iklan sebaiknya di bawah pendapatan iklan per tayangan,

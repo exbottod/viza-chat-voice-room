@@ -698,9 +698,17 @@ fun WalletScreen(
     val scope = rememberCoroutineScope()
     // Muat daftar harga topup terbaru dari Panel Developer setiap Dompet dibuka.
     LaunchedEffect(Unit) { TopupPacks.refresh(force = true) }
+    LaunchedEffect(Unit) {
+        iklan = SupaRepo.iklanInfo()
+        iklan?.let { IklanUnity.siapkanAwal(context, it.gameId, it.placement) }
+    }
     var tab by remember { mutableStateOf(0) }
     var busy by remember { mutableStateOf(false) }
     var showPacks by remember { mutableStateOf(false) }
+    // Coin gratis lewat iklan berhadiah Unity. Pengaturan (Game ID, Placement,
+    // hadiah, batas harian) dibaca dari server supaya bisa diubah tanpa APK.
+    var iklan by remember { mutableStateOf<SupaRepo.IklanInfo?>(null) }
+    var iklanSibuk by remember { mutableStateOf(false) }
     var payOrder by remember { mutableStateOf<String?>(null) }
     var manualCoins by remember { mutableStateOf<Long?>(null) }
     var manualPayer by remember { mutableStateOf("") }
@@ -828,6 +836,47 @@ fun WalletScreen(
                         Spacer(Modifier.height(8.dp))
 
                         if (!showPacks) {
+                            val ik = iklan
+                            if (ik != null && ik.aktif && ik.sisa > 0) {
+                                TopupMethodRow(
+                                    title = "Coin gratis",
+                                    sub = "Tonton iklan · +" + ik.coin + " coin",
+                                    badge = "Sisa " + ik.sisa + "x hari ini",
+                                    icon = { PayDot("AD", Color(0xFF7B5CFF)) },
+                                ) {
+                                    val act = IklanUnity.findActivity(context)
+                                    if (iklanSibuk) {
+                                        toast(tr("Tunggu, iklan sedang dimuat"))
+                                    } else if (act == null) {
+                                        toast(tr("Iklan belum bisa dibuka"))
+                                    } else {
+                                        iklanSibuk = true
+                                        IklanUnity.tampil(
+                                            act, ik.gameId, ik.placement,
+                                            onHadiah = {
+                                                scope.launch {
+                                                    val out = SupaRepo.iklanKlaim()
+                                                    iklanSibuk = false
+                                                    if (out == null) {
+                                                        toast(tr("Server belum menjawab, coba lagi"))
+                                                    } else if (out.optInt("ok") == 1) {
+                                                        toast("+" + out.optLong("coins") + " coin")
+                                                        onRefresh()
+                                                    } else {
+                                                        toast(out.optString("e").ifBlank { "Klaim gagal" })
+                                                    }
+                                                    iklan = SupaRepo.iklanInfo()
+                                                }
+                                            },
+                                            onGagal = { m ->
+                                                iklanSibuk = false
+                                                toast(m)
+                                            },
+                                        )
+                                    }
+                                }
+                                Spacer(Modifier.height(6.dp))
+                            }
                             TopupMethodRow(
                                 title = "Rezo Star",
                                 sub = "Agen Resmi",

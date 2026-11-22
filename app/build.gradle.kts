@@ -132,6 +132,9 @@ dependencies {
     // LiveKit dihapus karena suara tidak lagi di VPS sendiri.
     implementation("io.agora.rtc:voice-sdk:4.3.2")
 
+    // Iklan berhadiah (coin gratis). Game ID + Placement Rewarded dibaca dari panel.
+    implementation("com.unity3d.ads:unity-ads:4.16.6")
+
     val composeBom = platform("androidx.compose:compose-bom:2024.10.01")
     implementation(composeBom)
     implementation("androidx.compose.material3:material3")

@@ -1107,7 +1107,17 @@ async function aturIklan(env) {
   const coin = Math.max(0, Math.trunc(Number(c.iklanCoin ?? 0) || 0));
   const maxHari = Math.max(0, Math.min(100, Math.trunc(Number(c.iklanMaxHari ?? 10) || 0)));
   const jeda = Math.max(10, Math.trunc(Number(c.iklanCooldown ?? 20) || 20));
-  return { aktif, coin, maxHari, jeda, adUnit: String(c.iklanAdUnit || "") };
+  // Unity Ads: Game ID dan Placement Rewarded dipakai APK untuk memuat iklan.
+  // Nilai cadangan dipakai bila panel belum diisi, supaya iklan tetap jalan.
+  return {
+    aktif,
+    coin,
+    maxHari,
+    jeda,
+    adUnit: String(c.iklanAdUnit || ""),
+    gameId: String(c.iklanGameId || "800448611").trim(),
+    placement: String(c.iklanPlacement || "BP_Rewarded_Android").trim(),
+  };
 }
 
 /** Kode undangan agensi: 6 huruf/angka besar, mudah dibaca ulang. */
@@ -3783,7 +3793,10 @@ async function panel(env, body) {
       maxHari: at.maxHari,
       dipakai,
       sisa: Math.max(0, at.maxHari - dipakai),
+      jeda: at.jeda,
       adUnit: at.adUnit,
+      gameId: at.gameId,
+      placement: at.placement,
     });
   }
 

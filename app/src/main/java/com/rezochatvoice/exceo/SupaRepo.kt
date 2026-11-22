@@ -529,6 +529,37 @@ object SupaRepo {
 
     suspend fun topUp(uid: String, coins: Long) = call("topup", uidJson(uid).put("coins", coins))
 
+    // ---------------- Iklan berhadiah (coin gratis) ----------------
+
+    class IklanInfo(
+        val aktif: Boolean,
+        val coin: Long,
+        val maxHari: Int,
+        val dipakai: Int,
+        val sisa: Int,
+        val jeda: Int,
+        val gameId: String,
+        val placement: String,
+    )
+
+    /** Pengaturan iklan + sisa jatah hari ini. Null bila server belum menjawab. */
+    suspend fun iklanInfo(): IklanInfo? {
+        val o = postRaw("iklan_info", org.json.JSONObject()) ?: return null
+        return IklanInfo(
+            aktif = o.optInt("aktif") == 1,
+            coin = o.optLong("coin"),
+            maxHari = o.optInt("maxHari"),
+            dipakai = o.optInt("dipakai"),
+            sisa = o.optInt("sisa"),
+            jeda = o.optInt("jeda", 20),
+            gameId = o.optString("gameId"),
+            placement = o.optString("placement"),
+        )
+    }
+
+    /** Klaim coin setelah iklan selesai ditonton. Server tetap memeriksa batas dan jeda. */
+    suspend fun iklanKlaim(): org.json.JSONObject? = postRaw("iklan_klaim", org.json.JSONObject())
+
     /**
      * Hadiah cek in harian masuk ke dompet Turso. Sebelumnya coin cek in masih
      * dikirim ke server game yang lama, jadi tidak pernah menambah saldo.

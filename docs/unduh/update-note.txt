@@ -1,1 +1,1 @@
-• Panel: React jadi panel utama, semua menu dipindah ke React
+• Panel React: tambah emote dan aset langsung di panel, tanpa lompat ke panel lama

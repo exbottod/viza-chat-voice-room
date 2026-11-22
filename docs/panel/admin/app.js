@@ -3555,7 +3555,31 @@ async function gambarBet() {
     ambilSemua("gameConfig", 100).catch(() => []),
     ambilSemua("games", 200).catch(() => [])
   ]);
+  // Pengaturan Game Bikini (bet dan RTP) dibaca dari RTDB bikiniCfg.
+  let bw = { bets: [25, 50, 100, 200, 500, 1000, 2000, 5000], rtp: 85 };
+  try {
+    const snap = await dGet(dRef(rtdb, "bikiniCfg"));
+    if (snap && snap.exists()) bw = Object.assign(bw, snap.val() || {});
+  } catch (e) { /* belum ada pengaturan */ }
+  const betsBw = Array.isArray(bw.bets) && bw.bets.length ? bw.bets : bw.bets;
+  const rtpBw = Number(bw.rtp) || 85;
   $("isiHal").innerHTML = `
+    <div class="panel">
+      <div class="panelAtas"><h3>Game Bikini: bet &amp; RTP</h3><div class="sub">langsung dipakai game, tanpa build ulang</div></div>
+      <div class="panelIsi">
+        <div class="isian"><label>Pilihan bet (pisahkan dengan koma)</label><input id="bwBet" value="${aman((betsBw || []).join(", "))}"></div>
+        <div class="grid2" style="margin-top:10px">
+          <div class="isian"><label>RTP</label><select id="bwRtp">
+            <option value="85" ${rtpBw < 95 ? "selected" : ""}>85% — standar biasa</option>
+            <option value="95" ${rtpBw >= 95 && rtpBw < 100 ? "selected" : ""}>95% — scater 4 lebih sering</option>
+            <option value="100" ${rtpBw >= 100 ? "selected" : ""}>100% — scater 5 sering turun</option>
+          </select></div>
+          <div class="isian"><label>Peluang scater per gulungan</label><input id="bwScatter" readonly></div>
+        </div>
+        <button class="tombol" id="bwSimpan" style="margin-top:14px">Simpan bet &amp; RTP Bikini</button>
+        <div class="catatan">85% memakai peluang standar 13% per gulungan, 95% menaikkan scater 4, 100% membuat scater 5 paling sering turun. Game membaca pengaturan ini setiap kali dibuka, jadi tidak perlu build ulang.</div>
+      </div>
+    </div>
     <div class="panel" style="max-width:620px">
       <div class="panelAtas"><h3>Atur nilai bet</h3><div class="sub">berlaku untuk game dompet</div></div>
       <div class="panelIsi">
@@ -3597,6 +3621,27 @@ async function gambarBet() {
     await deleteDoc(doc(db, "gameConfig", b.dataset.hapusbet)).then(() => { toast("Dihapus"); gambarBet(); })
       .catch((e) => toast("Gagal: " + (e.code || e.message), true));
   }));
+
+  // --- Game Bikini: peluang scater mengikuti RTP ---
+  const hitungScater = (rtp) => (rtp >= 100 ? 0.42 : rtp >= 95 ? 0.28 : 0.13);
+  const tampilScater = () => {
+    const rtp = Number($("bwRtp").value) || 85;
+    $("bwScatter").value = Math.round(hitungScater(rtp) * 100) + "% per gulungan";
+  };
+  if ($("bwRtp")) {
+    tampilScater();
+    $("bwRtp").onchange = tampilScater;
+  }
+  if ($("bwSimpan")) $("bwSimpan").onclick = async () => {
+    const bets = $("bwBet").value.split(",").map((x) => Number(x.trim())).filter((x) => x > 0);
+    if (bets.length < 2) return toast("Isi minimal dua nilai bet", true);
+    const rtp = Number($("bwRtp").value) || 85;
+    try {
+      await dSet(dRef(rtdb, "bikiniCfg"), { bets, rtp, diperbarui: Date.now() });
+      catatLog("Atur bet & RTP Bikini", bets.join(", ") + " | RTP " + rtp + "%");
+      toast("Pengaturan Bikini disimpan");
+    } catch (e) { toast("Gagal: " + (e.message || e), true); }
+  };
 }
 
 /* ================= database ================= */

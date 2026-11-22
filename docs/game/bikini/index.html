@@ -5,6 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#0a2d40" />
     <title>Bikini Wild Rush</title>
+    <script>
+      // Pengaturan dari Panel Developer: daftar bet dan RTP.
+      // Dibaca sebelum game.js jalan, jadi tombol bet dan peluang scater
+      // langsung memakai nilai terbaru tanpa build ulang APK.
+      (function () {
+        var URL_CFG = "https://my-app-e7f8c-default-rtdb.asia-southeast1.firebasedatabase.app/bikiniCfg.json";
+        try {
+          var x = new XMLHttpRequest();
+          x.open("GET", URL_CFG, false);
+          x.send(null);
+          if (x.status !== 200 || !x.responseText) return;
+          var c = JSON.parse(x.responseText) || {};
+          var bet = (c.bets || []).map(Number).filter(function (n) { return n > 0; });
+          if (bet.length >= 2) window.__bwBets = bet;
+          var rtp = Number(c.rtp) || 0;
+          if (rtp > 0) {
+            // 100% = scater 5 sering turun, 95% = scater 4, 85% = standar biasa.
+            window.__bwScatter = rtp >= 100 ? 0.42 : (rtp >= 95 ? 0.28 : 0.13);
+            window.__bwRtp = rtp;
+          }
+        } catch (e) {}
+      })();
+    </script>
     <link rel="icon" type="image/png" href="./favicon.png" />
     <!-- Boot screen: plain CSS so something is visible even before (or without) game.js. -->
     <style>html,body{background:#000d17;height:100%;margin:0;padding:0}#bw-boot{color:#fcf8ed;text-align:center;flex-direction:column;justify-content:center;align-items:center;padding:0 24px;font:600 15px/1.4 sans-serif;display:flex;position:fixed;top:0;bottom:0;left:0;right:0}#bw-boot i{border:4px solid rgba(255,255,255,.2);border-top-color:#f7d66b;border-radius:50%;width:38px;height:38px;margin-bottom:14px;animation:.8s linear infinite bw-spin;display:block}@-webkit-keyframes bw-spin{to{-webkit-transform:rotate(360deg)}}@keyframes bw-spin{to{transform:rotate(360deg)}}#bw-error{z-index:2147483647;color:#fff;white-space:pre-wrap;word-wrap:break-word;background:#4a0d18;border-radius:8px;max-height:60%;padding:10px 12px;font:12px/1.45 monospace;display:none;position:fixed;bottom:8px;left:8px;right:8px;overflow:auto}</style>

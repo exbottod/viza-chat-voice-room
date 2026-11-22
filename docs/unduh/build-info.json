@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.323",
   "catatan": "• Blok viza: root * untuk panel (perbaiki galat caddy) + skrip pasang blok viza ke 8092",
-  "ukuran_apk": 74349123,
-  "sha256_apk": "585242d47a5bad87fd6d93ac36b366777db9f4266fa475eb8468e4b096ef0aa8",
+  "ukuran_apk": 74349134,
+  "sha256_apk": "027a569fa6592b144ad1b47a3e69e062cd9f0cfe7209507b28ef4bd1a5ab075d",
   "abis": {
     "arm64": {
-      "ukuran": 74349123,
-      "sha256": "585242d47a5bad87fd6d93ac36b366777db9f4266fa475eb8468e4b096ef0aa8"
+      "ukuran": 74349134,
+      "sha256": "027a569fa6592b144ad1b47a3e69e062cd9f0cfe7209507b28ef4bd1a5ab075d"
     },
     "armv7": {
-      "ukuran": 72583632,
-      "sha256": "5f6d9136049ce4c994f53d9b1411019ae367f8240fe522fe8ea4276ac7f1cff6"
+      "ukuran": 72583646,
+      "sha256": "afecc6c5670f01344abbd7e2d803c6ea61d63f5d89357a3df3806fcb0518bdee"
     },
     "universal": {
-      "ukuran": 122203094,
-      "sha256": "a9124cdcd19706c6b12aa5d1e687e9d9eabb9d3f8bd93580b1fe6836181dade7"
+      "ukuran": 122203118,
+      "sha256": "ab15ecc3ea26b8e9ea1bc39faf7c95e8791715b78059f239734bad49061ef640"
     }
   }
 }

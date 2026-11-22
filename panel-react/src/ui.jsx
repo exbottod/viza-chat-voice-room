@@ -107,8 +107,17 @@ export const Rangka = ({ baris = 6 }) => (
 );
 
 /** Tabel dengan kepala melekat saat digulir dan pengurutan lewat klik judul. */
-export function Tabel({ kolom, baris, urut, onUrut, kosong = "Tidak ada data." }) {
+export function Tabel({ kolom: kolomMentah, baris, urut, onUrut, kosong = "Tidak ada data." }) {
   const [kunci, arah] = urut || [null, 1];
+  // Dua bentuk kolom diterima: {kunci, label, sel} dan bentuk ringkas {k, t}
+  // (isi diambil dari baris[k]). Dulu bentuk ringkas membuat React error dan
+  // seluruh panel menjadi layar hitam.
+  const kolom = (kolomMentah || []).map((c) => (c && c.kunci !== undefined ? c : {
+    ...c,
+    kunci: c.k,
+    label: c.t,
+    sel: c.sel || ((b) => { const v = b[c.k]; return v === undefined || v === null ? "" : v; }),
+  }));
   const panah = (k) => (kunci === k ? (arah === 1 ? " ▲" : " ▼") : "");
   if (!baris.length) return <Kosong>{kosong}</Kosong>;
   return (

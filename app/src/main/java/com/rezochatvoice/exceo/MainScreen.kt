@@ -238,10 +238,18 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
             } else null
 
             val ban = banJob.await()
-            if (ban != null) {
+            // Owner dan admin room tidak pernah terpental dari room sendiri.
+            // Kalau daftar hitam masih memuat mereka (mis. sisa uji coba kick),
+            // catatannya dibersihkan supaya tidak mengunci selamanya.
+            val bolehTerpental = room.ownerUid != uid && !room.isAdminRoom(uid)
+            if (ban != null && bolehTerpental) {
                 if (activeRoom?.id == room.id) activeRoom = null
+                RoomCache.lupakan(context)
                 kickNote = ban
                 return@launch
+            }
+            if (ban != null) {
+                scope.launch { runCatching { RoomRepo.unbanFromRoom(room.id, uid) } }
             }
             dompetJob?.await()?.let { w = it; wallet = it }
             if (activeRoom?.id != room.id) return@launch
@@ -874,8 +882,9 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
                     title = { Text(tr("Anda telah di kick dari room ⚠️"), color = Color(0xFFFF7043), fontWeight = FontWeight.Bold) },
                     text = {
                         Text(
-                            if (b.until <= 0L) tr("Kick permanen. Owner bisa membuka kick lewat Daftar hitam.")
-                            else tr("Kick sementara, ") + b.sisa() + ". " + tr("Owner bisa membuka kick lebih awal lewat Daftar hitam."),
+                            (if (b.until <= 0L) tr("Kick permanen. Owner bisa membuka kick lewat Daftar hitam.")
+                            else tr("Kick sementara, ") + b.sisa() + ". " + tr("Owner bisa membuka kick lebih awal lewat Daftar hitam."))
+                                + "\n\n" + tr("Room: ") + (b.name.ifBlank { tr("room ini") }),
                             color = Color(0xFFD8D3C6), fontSize = 13.sp,
                         )
                     },

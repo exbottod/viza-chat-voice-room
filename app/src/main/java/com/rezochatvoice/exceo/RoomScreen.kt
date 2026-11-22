@@ -567,7 +567,11 @@ fun RoomScreen(
         val f = RoomRepo.observeBans(roomId) { list ->
             bans = list
             // Owner tidak pernah bisa ter-kick dari room miliknya sendiri.
-            if (list.any { it.uid == myUid } && !kickedOut && room?.let { it.ownerUid != myUid && !it.isAdminRoom(myUid) } != false) kickedOut = true
+            // Hanya terpental kalau info room sudah termuat DAN kita bukan owner/admin.
+            // Sebelumnya info room yang belum termuat (null) dianggap bukan owner,
+            // jadi pemilik room bisa ikut terpental saat masuk room.
+            val bolehTerpental = room?.let { it.ownerUid != myUid && !it.isAdminRoom(myUid) } ?: false
+            if (list.any { it.uid == myUid } && !kickedOut && bolehTerpental) kickedOut = true
         }
         onDispose {
             resetDrafts()

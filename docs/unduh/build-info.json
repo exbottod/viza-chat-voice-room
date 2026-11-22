@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.347",
-  "catatan": "• Panel dan alat developer hanya bisa diakses email pemilik\n• Panel: layar login punya tab Daftar, Lupa sandi, dan pesan galat yang jelas\n• Perbaiki aplikasi macet/terpental saat masuk room: layanan penjaga room bukan tipe microphone",
-  "ukuran_apk": 74377093,
-  "sha256_apk": "0213bea65903ac8b592bab9764b70bc503074fc8c210942765af435c3ca88337",
+  "versi": "1.0.348",
+  "catatan": "• Panel: pemilik bisa menambah admin dengan nama, email, dan sandi\n• Panel: pemilik bisa membuat sandi login sendiri",
+  "ukuran_apk": 74377104,
+  "sha256_apk": "ddef9cd03212f46f6cf31461ecbf4df580db01ce0d9e2e03c22e8419481af692",
   "abis": {
     "arm64": {
-      "ukuran": 74377093,
-      "sha256": "0213bea65903ac8b592bab9764b70bc503074fc8c210942765af435c3ca88337"
+      "ukuran": 74377104,
+      "sha256": "ddef9cd03212f46f6cf31461ecbf4df580db01ce0d9e2e03c22e8419481af692"
     },
     "armv7": {
-      "ukuran": 72611608,
-      "sha256": "d13e88ab55ab5ab4317953ecfd38ea9301a479d19e2ed1aa1822a1df41724898"
+      "ukuran": 72611613,
+      "sha256": "e17f5cf1c09f9f22cae43ba5bbb102121d5532dc4c69edc417cea4b2e3aaa2b8"
     },
     "universal": {
-      "ukuran": 122231063,
-      "sha256": "df8bbf1a110f6fe52497c90f6c6f983b61a34ba9f5a73d15ef5013b92b6b0871"
+      "ukuran": 122231064,
+      "sha256": "ba85c5594271edc453c54a025360a3d1079e2e310cd520d69b84be38a840f4c8"
     }
   }
 }

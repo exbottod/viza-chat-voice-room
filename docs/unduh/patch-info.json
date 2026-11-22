@@ -932,8 +932,8 @@
       "ke": "1.0.321",
       "arm64": {
         "file": "patch-1.0.320-1.0.321-arm64.bsdiff",
-        "ukuran": 4126481,
-        "sha256": "410573ffa7a6d299e8790ffcd3512e38903eb72636d5da4cdebc16f447e9765d"
+        "ukuran": 4237002,
+        "sha256": "cef827e21736a904dd53af11f1bdeb6b566e6d1f4a40ad0a7db387c1802c254a"
       }
     }
   ]

@@ -373,13 +373,19 @@ object AgoraVoice {
             mAppId = appId
             mEventHandler = handler
             mChannelProfile = Constants.CHANNEL_PROFILE_LIVE_BROADCASTING
-            mAudioScenario = Constants.AUDIO_SCENARIO_GAME_STREAMING
+            // Skenario CHATROOM menyalakan peredam gema (AEC), penekan bising, dan
+            // penguat suara. Skenario GAME_STREAMING dulu mematikan ketiganya, jadi
+            // suara peserta memantul kembali ke peserta lain (gema).
+            mAudioScenario = Constants.AUDIO_SCENARIO_CHATROOM
         }
         val e = RtcEngine.create(cfg)
         try { e.setChannelProfile(Constants.CHANNEL_PROFILE_LIVE_BROADCASTING) } catch (x: Exception) { }
-        // Profil musik supaya suara DJ tidak gepeng. Skenario GAME_STREAMING dipakai
-        // supaya suara room keluar lewat jalur media (volume media, bukan volume telepon).
-        try { e.setAudioProfile(Constants.AUDIO_PROFILE_MUSIC_STANDARD, Constants.AUDIO_SCENARIO_GAME_STREAMING) } catch (x: Exception) { }
+        // Profil musik supaya suara DJ tidak gepeng, tetap dengan skenario CHATROOM
+        // agar gema tidak muncul saat semua orang memakai speaker.
+        try { e.setAudioProfile(Constants.AUDIO_PROFILE_MUSIC_STANDARD, Constants.AUDIO_SCENARIO_CHATROOM) } catch (x: Exception) { }
+        try { e.setParameters("{\"che.audio.enable.aec\":true}") } catch (x: Exception) { }
+        try { e.setParameters("{\"che.audio.enable.agc\":true}") } catch (x: Exception) { }
+        try { e.setParameters("{\"che.audio.enable.ns\":true}") } catch (x: Exception) { }
         try { e.setClientRole(if (wantSpeaking) Constants.CLIENT_ROLE_BROADCASTER else Constants.CLIENT_ROLE_AUDIENCE) } catch (x: Exception) { }
         try { e.enableAudioVolumeIndication(300, 3, true) } catch (x: Exception) { }
         try { e.setEnableSpeakerphone(true) } catch (x: Exception) { }

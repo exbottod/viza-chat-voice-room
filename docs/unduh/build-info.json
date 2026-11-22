@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.328",
-  "catatan": "• Betulkan kompilasi dan kecilkan foto kursi lama\n• Room: buang foto kursi ukuran asli + rincian suara\n• Panel: halaman Bet game tidak lagi menggantung di Loading",
-  "ukuran_apk": 74357195,
-  "sha256_apk": "c84605f857acbf181b5b15edca52630e41f7b63f90a684111dce00f374907fba",
+  "versi": "1.0.329",
+  "catatan": "• Suara: hilangkan gema antar peserta\n• Betulkan kompilasi dan kecilkan foto kursi lama",
+  "ukuran_apk": 74357143,
+  "sha256_apk": "480ee19888957b1f599c9e5ba0dc5d6eb178eef65698c8ca825b833a874f4c2d",
   "abis": {
     "arm64": {
-      "ukuran": 74357195,
-      "sha256": "c84605f857acbf181b5b15edca52630e41f7b63f90a684111dce00f374907fba"
+      "ukuran": 74357143,
+      "sha256": "480ee19888957b1f599c9e5ba0dc5d6eb178eef65698c8ca825b833a874f4c2d"
     },
     "armv7": {
-      "ukuran": 72591709,
-      "sha256": "db8268cf2aa40bb7030a056515be0bd6ed69dd1c8ef5d52489f7b35912725d83"
+      "ukuran": 72591653,
+      "sha256": "fa73e042c90c2dcc4ca33dc363b4c7fb03b1a16de80ad3c3ac834850d8b45f5b"
     },
     "universal": {
-      "ukuran": 122211166,
-      "sha256": "441aac2578c3ed0f7e9b2161693395817bd49ddc2f7aea436a00c572857e601d"
+      "ukuran": 122211110,
+      "sha256": "1823f9e1a23c49d4b858fbd3fdbcc57c3d2aa24c3cc6557b845e2845ec903bfb"
     }
   }
 }

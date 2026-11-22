@@ -859,8 +859,14 @@ fun RoomScreen(
                             Box(
                                 Modifier.weight(1f).onGloballyPositioned {
                                     // Titik tengah avatar kursi: tujuan gift terbang.
+                                    // Ditulis hanya kalau posisinya benar-benar berubah: menulis
+                                    // nilai sama tiap layout memicu komposisi ulang berantai.
                                     val p = it.positionInRoot()
-                                    seatPoints[i] = Offset(p.x + it.size.width / 2f, p.y + it.size.height / 2f)
+                                    val titik = Offset(p.x + it.size.width / 2f, p.y + it.size.height / 2f)
+                                    val lamaTitik = seatPoints[i]
+                                    if (lamaTitik == null || kotlin.math.abs(lamaTitik.x - titik.x) > 1f || kotlin.math.abs(lamaTitik.y - titik.y) > 1f) {
+                                        seatPoints[i] = titik
+                                    }
                                 },
                                 contentAlignment = Alignment.Center,
                             ) {
@@ -887,7 +893,7 @@ fun RoomScreen(
 
             // Bar PK diletakkan di bawah kursi mic supaya kursi tidak tertutup.
             pk?.takeIf { it.aktif && !it.selesai }?.let { p ->
-                if (!waveOpen && !pkBarTutup) {
+                if (!pkBarTutup) {
                     Row(
                         Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -1377,9 +1383,9 @@ fun RoomScreen(
                 )
             }
         }
-        if (fxBannerOn && !waveOpen && !LocalRoomMinimized.current) GiftBanner(r.id)
+        if (fxBannerOn && !LocalRoomMinimized.current) Box(Modifier.fillMaxSize().alpha(if (waveOpen) 0f else 1f)) { GiftBanner(r.id) }
         // Banner cashback terpisah: hanya saat JP 10.000 ke atas.
-        if (fxBannerOn && !waveOpen && !LocalRoomMinimized.current) CashbackBanner(r.id)
+        if (fxBannerOn && !LocalRoomMinimized.current) Box(Modifier.fillMaxSize().alpha(if (waveOpen) 0f else 1f)) { CashbackBanner(r.id) }
         // Penanda status suara: kalau suara gagal, alasannya tampil di sini
         // (bukan hanya toast yang cepat hilang), jadi mudah dilaporkan.
         run {
@@ -1429,13 +1435,13 @@ fun RoomScreen(
         if (!siapRoom) VizaLoadingLayar()
         // Saat halaman game terbuka, efek room tidak boleh menutupi game.
         val roomTersembunyi = LocalRoomMinimized.current
-        if (fxEntryOn && !waveOpen && !roomTersembunyi) VipEntryEffect(r.id)
-        if (fxGiftOn && !waveOpen) GiftFxOverlay(r.id)
+        if (fxEntryOn && !roomTersembunyi) Box(Modifier.fillMaxSize().alpha(if (waveOpen) 0f else 1f)) { VipEntryEffect(r.id) }
+        if (fxGiftOn) Box(Modifier.fillMaxSize().alpha(if (waveOpen) 0f else 1f)) { GiftFxOverlay(r.id) }
         // Gift terbang ke avatar penerima lalu pecahan cashback muncul di titik itu.
-        if (fxGiftOn && !waveOpen) GiftFlyOverlay(r.id, seatPoints)
+        if (fxGiftOn) Box(Modifier.fillMaxSize().alpha(if (waveOpen) 0f else 1f)) { GiftFlyOverlay(r.id, seatPoints) }
         // Peluncuran roket 1..5 berurutan, dengan dialog hadiah bertombol Okey.
         // Build uji: dimatikan sementara untuk mencari penyebab aplikasi macet di room.
-        if (ROCKET_ROOM_UI && fxRocketOn && !waveOpen) RocketLaunchOverlay(r.id, myUid)
+        if (ROCKET_ROOM_UI && fxRocketOn) Box(Modifier.fillMaxSize().alpha(if (waveOpen) 0f else 1f)) { RocketLaunchOverlay(r.id, myUid) }
 
         // Tombol power: keluar / minimalkan
         if (showRank) {

@@ -251,7 +251,15 @@ object ProfileRepo {
      * mendekode base64 lagi di thread UI, jadi pindah kursi terasa tersendat.
      * Sekarang hasil decode disimpan dan dipakai ulang.
      */
-    private val avatarCache = object : android.util.LruCache<String, ImageBitmap>(24) {}
+    // Batas memakai ukuran memori nyata (KB), bukan jumlah foto. Satu perempat dari
+    // memori aplikasi dipakai untuk foto, jadi foto kursi dan chat tidak digusur
+    // saat game dibuka lalu ditutup, dan room tidak perlu mendekode ulang.
+    private val kuotaFotoKb: Int =
+        (Runtime.getRuntime().maxMemory() / 1024L / 4L).coerceIn(16_384L, 96_000L).toInt()
+    private val avatarCache = object : android.util.LruCache<String, ImageBitmap>(kuotaFotoKb / 2) {
+        override fun sizeOf(key: String, value: ImageBitmap): Int =
+            ((value.width.toLong() * value.height.toLong() * 4L) / 1024L).toInt().coerceAtLeast(1)
+    }
 
     private fun kunciAvatar(b64: String): String =
         b64.length.toString() + ":" + b64.hashCode().toString(16)
@@ -279,7 +287,10 @@ object ProfileRepo {
      * Tanpa ini, sepuluh kursi plus puluhan baris chat memegang bitmap besar
      * sekaligus dan room terasa berat. Layar profil tetap memakai foto asli.
      */
-    private val avatarKecilCache = object : android.util.LruCache<String, ImageBitmap>(160) {}
+    private val avatarKecilCache = object : android.util.LruCache<String, ImageBitmap>(kuotaFotoKb / 2) {
+        override fun sizeOf(key: String, value: ImageBitmap): Int =
+            ((value.width.toLong() * value.height.toLong() * 4L) / 1024L).toInt().coerceAtLeast(1)
+    }
 
     private fun kunciKecil(b64: String, px: Int): String = px.toString() + "|" + kunciAvatar(b64)
 

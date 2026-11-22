@@ -369,8 +369,8 @@ object WalletRepo {
         r.wallet?.let { emitBackup(uid, it) }
         // Gift yang masuk ikut menambah skor PK room (kalau PK sedang jalan).
         if (r.error == null && !roomId.isNullOrBlank()) {
-            // Skor PK dan poin kamar dicatat di belakang supaya tombol kirim dan
-            // toast tidak menunggu dua permintaan jaringan tambahan.
+            // Skor PK dan poin kamar dicatat di belakang supaya tombol kirim
+            // tidak menunggu dua permintaan jaringan tambahan.
             AppScope.scope.launch {
                 try { RoomPk.tambahSkor(roomId, price, to) } catch (e: Exception) { }
                 try { RoomPoin.tambah(roomId, uid, price) } catch (e: Exception) { }
@@ -1731,8 +1731,8 @@ fun GiftPanel(
                                         tr("Gift terkirim! +${fmtNum(dm)} diamond"),
                                         Toast.LENGTH_SHORT,
                                     ).show()
-                                    // Gift sudah terpotong di server: tombol kirim langsung
-                                    // aktif lagi, kerja lanjutan jalan di belakang.
+                                    // Gift sudah terpotong di server: tombol kirim langsung aktif lagi,
+                                    // kerja lanjutan jalan di belakang.
                                     sending = false
                                     AppScope.scope.launch {
                                     try { RoomExtras.sendGiftMessage(roomId, myName, g, count, toText) } catch (e: Exception) { }

@@ -543,7 +543,7 @@ fun OtherProfileScreen(
         }
 
         // Foto profil penuh 1:1: terbuka dari satu ketukan pada avatar.
-        FotoPenuh(user, fotoPenuh) { fotoPenuh = false }
+        FotoProfilPenuh(user, fotoPenuh) { fotoPenuh = false }
     }
 }
 

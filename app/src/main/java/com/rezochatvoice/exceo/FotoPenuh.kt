@@ -1,27 +1,29 @@
 package com.rezochatvoice.exceo
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -29,64 +31,77 @@ import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 
 /**
- * Foto profil ukuran penuh, rasio 1:1 (persegi), di tengah layar hitam.
+ * Pratinjau foto layar penuh dengan cubit (pinch) untuk zoom.
  *
- * Dipakai dari profil orang lain: satu ketukan pada foto langsung membuka
- * tampilan ini. Ketuk di mana saja untuk menutup.
+ * Dipakai chat: sekali ketuk foto, gambar langsung memenuhi layar, cubit dua
+ * jari untuk memperbesar sampai 5x, geser untuk menggeser, dan tombol X untuk
+ * menutup. Dua ketuk juga mengembalikan ukuran ke awal.
  */
 @Composable
-fun FotoPenuh(u: PublicUser?, tampil: Boolean, onTutup: () -> Unit) {
-    if (!tampil) return
+fun FotoLayarPenuh(uri: String, onTutup: () -> Unit) {
     Dialog(
         onDismissRequest = onTutup,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
+        var skala by remember { mutableStateOf(1f) }
+        var geser by remember { mutableStateOf(Offset.Zero) }
+
         Box(
-            Modifier.fillMaxSize().background(Color.Black).clickable { onTutup() },
-            contentAlignment = Alignment.Center,
-        ) {
-            val b64 = u?.avatarB64
-            // Foto disimpan dua bentuk: base64 dari aplikasi dan URL dari panel.
-            val bmp by produceState<ImageBitmap?>(
-                initialValue = ProfileRepo.avatarCached(b64),
-                key1 = b64,
-            ) { value = ProfileRepo.decodeAvatar(b64) ?: value }
-            val gambar = bmp
-            val url = u?.photoUrl
-            Box(
-                Modifier.fillMaxWidth().aspectRatio(1f),
-                contentAlignment = Alignment.Center,
-            ) {
-                when {
-                    gambar != null -> Image(
-                        gambar, contentDescription = null,
-                        modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
-                    )
-                    !url.isNullOrBlank() -> AsyncImage(
-                        model = url, contentDescription = null,
-                        modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
-                    )
-                    u?.gender == "F" -> Image(
-                        painterResource(R.drawable.ic_default_avatar_female), null,
-                        Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
-                    )
-                    u?.gender == "M" -> Image(
-                        painterResource(R.drawable.ic_default_avatar_male), null,
-                        Modifier.fillMaxSize(), contentScale = ContentScale.Crop,
-                    )
-                    else -> Box(Modifier.fillMaxSize().background(Color(0xFF263238)), contentAlignment = Alignment.Center) {
-                        Text(
-                            (u?.name ?: "?").take(1).uppercase(),
-                            color = Color(0xFFFFD54F), fontWeight = FontWeight.Bold, fontSize = 64.sp,
-                        )
+            Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .pointerInput(Unit) {
+                    detectTransformGestures { _, pan, zoom, _ ->
+                        val baru = (skala * zoom).coerceIn(1f, 5f)
+                        skala = baru
+                        geser = if (baru > 1.01f) geser + pan else Offset.Zero
                     }
                 }
-            }
-            // Petunjuk kecil di bawah, tidak menutupi foto.
-            Box(
-                Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 24.dp),
+                // Dua ketuk: perbesar 2,5x. Dua ketuk lagi: kembali ke awal.
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onDoubleTap = {
+                            if (skala > 1.05f) {
+                                skala = 1f
+                                geser = Offset.Zero
+                            } else {
+                                skala = 2.5f
+                            }
+                        },
+                    )
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            AsyncImage(
+                model = uri,
+                contentDescription = "Foto",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer(
+                        scaleX = skala,
+                        scaleY = skala,
+                        translationX = geser.x,
+                        translationY = geser.y,
+                    ),
+            )
+            IconButton(
+                onClick = onTutup,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(12.dp),
             ) {
-                Text("Ketuk untuk menutup", color = Color(0x99FFFFFF), fontSize = 12.sp)
+                Icon(Icons.Filled.Close, "Tutup", tint = Color.White)
+            }
+            if (skala < 1.05f) {
+                Text(
+                    "Cubit untuk zoom, dua ketuk untuk kembali",
+                    color = Color(0x99FFFFFF),
+                    fontSize = 12.sp,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 28.dp),
+                )
             }
         }
     }

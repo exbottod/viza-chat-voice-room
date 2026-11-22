@@ -1,19 +1,28 @@
-// Susunan menu mengikuti panel acuan Rayzi Ultimate: grup berjudul kecil,
-// ikon garis (Material Icons), item aktif pink dengan garis di tepi.
+// Susunan menu mengikuti panel acuan Rayzi Ultimate: grup berjudul kecil
+// (USER MANAGEMENT, FINANCIAL MANAGEMENT, GAMING, ...), ikon garis, panah di
+// kanan tiap item, dan item aktif pink dengan garis di tepi kiri menu.
 export const MENU = [
-  { grup: "", isi: [["dashboard", "dashboard", "Dashboard"]] },
+  { grup: "DASHBOARD", isi: [["dashboard", "insights", "Dashboard"]] },
   {
-    grup: "KELOLA",
+    grup: "USER MANAGEMENT",
     isi: [
-      ["user", "group", "User"],
+      ["user", "person", "User"],
       ["room", "mic", "Room"],
-      ["staf", "badge", "Staf & seller"],
+      ["staf", "badge", "Host & Agency"],
       ["cs", "support_agent", "Customer Service"],
+      ["seller", "storefront", "Coin Seller"],
       ["laporan", "flag", "Laporan user"],
-      ["wallet", "paid", "Coin & reset"],
-      ["cekin", "event_available", "Cek in harian"],
-      ["vipharga", "workspace_premium", "Harga VIP"],
       ["family", "diversity_3", "Family"],
+    ],
+  },
+  {
+    grup: "FINANCIAL MANAGEMENT",
+    isi: [
+      ["vipharga", "workspace_premium", "Plan (harga VIP)"],
+      ["cekin", "event_available", "Plan history (cek in)"],
+      ["wallet", "account_balance_wallet", "Currency (coin & reset)"],
+      ["gift", "redeem", "Gift"],
+      ["cashback", "savings", "Cashback gift"],
     ],
   },
   {
@@ -31,10 +40,9 @@ export const MENU = [
   {
     grup: "ENGAGEMENT",
     isi: [
-      ["gift", "redeem", "Gift"],
-      ["cashback", "savings", "Cashback gift"],
       ["emote", "mood", "Reaction (emote)"],
       ["kirim", "send", "Kirim ke user"],
+      ["pengumuman", "campaign", "Broadcast & pengumuman"],
     ],
   },
   {
@@ -44,7 +52,6 @@ export const MENU = [
       ["aset", "auto_awesome", "Aset & VIP"],
       ["asetvps", "folder_open", "Aset di VPS"],
       ["latar", "wallpaper", "Background tab"],
-      ["pengumuman", "campaign", "Pengumuman resmi"],
     ],
   },
   {

@@ -130,3 +130,13 @@
   .tombolLonceng { width: 72px; height: 44px; }
   .menuTurun, .menuTurun.lebar { width: min(320px, calc(100vw - 24px)); }
 }
+
+/* Panah kecil di kanan tiap item menu, seperti panel acuan */
+.sidebar .menu::before {
+  content: "\203A"; order: 3; margin-left: auto; font-size: 17px;
+  color: #6d7688; line-height: 1; transition: color .15s, transform .15s;
+}
+.sidebar .menu:hover::before { color: #d1d3e0; transform: translateX(2px); }
+.sidebar .menu.aktif::before { color: #e8538f; }
+/* Judul grup pertama tidak perlu jarak atas */
+.sidebar .grup:first-of-type { margin-top: 6px; }

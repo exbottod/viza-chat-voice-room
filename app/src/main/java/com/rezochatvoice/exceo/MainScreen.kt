@@ -112,7 +112,9 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
     var showSellerPanel by remember { mutableStateOf(false) }
     var showAgency by remember { mutableStateOf(false) }
     var commentMoment by remember { mutableStateOf<Moment?>(null) }
-    var wallet by remember { mutableStateOf(Wallet()) }
+    // Saldo langsung dari simpanan HP supaya angka tidak kosong/berkedip saat
+    // aplikasi dibuka atau kembali dari WhatsApp; angka terbaru menyusul.
+    var wallet by remember { mutableStateOf(runCatching { WalletCache.load(uid) }.getOrNull() ?: Wallet()) }
     // Tarik-ulang: dipakai tab Saya dan halaman Dompet. Semua data diambil
     // ulang dari server, bukan dari cache, supaya angkanya benar-benar baru.
     var refreshingTab by remember { mutableStateOf(false) }

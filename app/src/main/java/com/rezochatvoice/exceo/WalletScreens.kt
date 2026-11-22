@@ -309,6 +309,13 @@ object WalletRepo {
         val job = kotlinx.coroutines.GlobalScope.launch {
             var jeda = 60_000L
             while (true) {
+                // Kembali dari WhatsApp tidak perlu langsung menembak server:
+                // saldo yang baru diambil beberapa detik lalu masih dipakai,
+                // jadi tidak ada pengambilan data berulang yang membuat berat.
+                if (System.currentTimeMillis() - StatusDompet.terakhir < 15_000L) {
+                    kotlinx.coroutines.delay(8_000L)
+                    continue
+                }
                 var res = SupaRepo.get(uid)
                 if (res.needMigrate) {
                     // Pertama kali di Supabase: pindahkan saldo lama dari Firestore.

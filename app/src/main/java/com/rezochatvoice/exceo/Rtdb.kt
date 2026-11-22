@@ -19,6 +19,17 @@ class Reg(private val onRemove: () -> Unit) {
 }
 
 object Rtdb {
+    init {
+        // Simpanan Realtime Database di HP. Tanpa ini setiap kali aplikasi dibuka
+        // atau kembali dari WhatsApp seluruh data (room, kursi, gift, chat,
+        // profil) diambil ulang dari jaringan sehingga aplikasi terasa berat.
+        // Dengan simpanan ini data terakhir langsung tampil, lalu disegarkan
+        // diam-diam di belakang.
+        runCatching {
+            FirebaseDatabase.getInstance(RTDB_URL).setPersistenceEnabled(true)
+        }
+    }
+
     fun root(): DatabaseReference = FirebaseDatabase.getInstance(RTDB_URL).reference
 
     @Volatile private var clockOffset: Long = 0L

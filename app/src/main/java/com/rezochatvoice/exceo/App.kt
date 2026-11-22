@@ -36,6 +36,11 @@ class App : Application(), ImageLoaderFactory {
 
     override fun onCreate() {
         super.onCreate()
+        // Simpanan database di HP diaktifkan sedini mungkin (sekali per proses).
+        runCatching {
+            com.google.firebase.database.FirebaseDatabase.getInstance(RTDB_URL)
+                .setPersistenceEnabled(true)
+        }
         instance = this
         QuotaGuard.init(this)
     }

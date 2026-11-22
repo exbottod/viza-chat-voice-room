@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.350",
-  "catatan": "• Panel: menu Gift berjenjang (Category, Gift) dan daftar gift dengan edit",
-  "ukuran_apk": 74377115,
-  "sha256_apk": "a76ddee7790c6c732643d45b279e924c0356683d8cbcaa5aeb953c21e84b8863",
+  "versi": "1.0.351",
+  "catatan": "• vps: skrip pulih cepat dompet Viza (restart, cek health, hitung aset)\n• Panel: menu Gift berjenjang (Category, Gift) dan daftar gift dengan edit",
+  "ukuran_apk": 74377111,
+  "sha256_apk": "fd80ee2b0ee8fafd4dc54f2e6fcc8fa2f3b7ff5334d317b1a27f0be7250dc83f",
   "abis": {
     "arm64": {
-      "ukuran": 74377115,
-      "sha256": "a76ddee7790c6c732643d45b279e924c0356683d8cbcaa5aeb953c21e84b8863"
+      "ukuran": 74377111,
+      "sha256": "fd80ee2b0ee8fafd4dc54f2e6fcc8fa2f3b7ff5334d317b1a27f0be7250dc83f"
     },
     "armv7": {
       "ukuran": 72611626,
-      "sha256": "63aaae29c2677aeca0f5b794c31a7b448fd46103069bfb27c3711fbcc6db6c76"
+      "sha256": "f5b7be93ffeb13e15087eca5092037c451ac6f3ad787c0ec04bb4023b0ebe07a"
     },
     "universal": {
-      "ukuran": 122231085,
-      "sha256": "fa835b56e02b2773f076315e0b20cad2408e2e7e67b4c5a669f81be6268889d2"
+      "ukuran": 122231086,
+      "sha256": "9b639dc10f95d23a35cc26781baad56c9945cdb7f0fade9a52706874ef1ef4e3"
     }
   }
 }

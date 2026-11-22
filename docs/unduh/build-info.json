@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.368",
-  "catatan": "• panel reset: nomor ID angka (mis. 1000) diterjemahkan ke UID lewat userIds/users sebelum reset, rese\n• panel: halaman Customer Service untuk menunjuk akun CS lewat pencarian nama/ID/UID dan mencabutnya, ",
-  "ukuran_apk": 74378555,
-  "sha256_apk": "a5a42a2451e438d0a2c1050e19ad27c0a352ad9b6a0f0fe16a9a54d0d8c8de6e",
+  "versi": "1.0.369",
+  "catatan": "• panel: halaman Background tab berisi unggah gambar/gradasi untuk tiap tab (party, moment, family, pe\n• reset user: nama jadi UNKNOWN dan foto kembali ke foto bawaan di RTDB + Firestore (users, userIds), ",
+  "ukuran_apk": 74378568,
+  "sha256_apk": "b952a56e1311494758ac19d1ad5f3c2caa415f3bd3ffed462f25e6f919140c19",
   "abis": {
     "arm64": {
-      "ukuran": 74378555,
-      "sha256": "a5a42a2451e438d0a2c1050e19ad27c0a352ad9b6a0f0fe16a9a54d0d8c8de6e"
+      "ukuran": 74378568,
+      "sha256": "b952a56e1311494758ac19d1ad5f3c2caa415f3bd3ffed462f25e6f919140c19"
     },
     "armv7": {
-      "ukuran": 72613052,
-      "sha256": "f8601d454e5d9e0ee10c1ab3497a1a018aa6fe38cc2fd00910d5e63f9bb076c5"
+      "ukuran": 72613073,
+      "sha256": "ee9a300f2950fa4179c265c75ae493c99b93adbe5875c3ac0d24199aab3eef66"
     },
     "universal": {
-      "ukuran": 122232512,
-      "sha256": "e5f4a012bcaf7e720f87ae94aca75ab1f6cb142c3c385f694efd46818f32a813"
+      "ukuran": 122232534,
+      "sha256": "62eda787fff288a2e42bf616f516f4d887df798d390b67f0a0ef77a211311a06"
     }
   }
 }

@@ -1,2 +1,2 @@
-• panel reset: nomor ID angka (mis. 1000) diterjemahkan ke UID lewat userIds/users sebelum reset, rese
-• panel: halaman Customer Service untuk menunjuk akun CS lewat pencarian nama/ID/UID dan mencabutnya, 
+• panel: halaman Background tab berisi unggah gambar/gradasi untuk tiap tab (party, moment, family, pe
+• reset user: nama jadi UNKNOWN dan foto kembali ke foto bawaan di RTDB + Firestore (users, userIds), 

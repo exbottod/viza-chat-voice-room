@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.369",
-  "catatan": "• panel: halaman Background tab berisi unggah gambar/gradasi untuk tiap tab (party, moment, family, pe\n• reset user: nama jadi UNKNOWN dan foto kembali ke foto bawaan di RTDB + Firestore (users, userIds), ",
-  "ukuran_apk": 74378549,
-  "sha256_apk": "6d137fd9f7e6e67eb66fe0b581ad6235f30674e730ff2dc7fffee33360bd4d1f",
+  "versi": "1.0.370",
+  "catatan": "• panel: menu Game satu tab (bet, RTP, banner, kategori, roket, reward); server dompet izinkan panel m\n• panel Kirim ke user: jenis ID unik (slot uid) dengan nomor wajib 3-12 digit",
+  "ukuran_apk": 74378557,
+  "sha256_apk": "7b469aa6bfd0eabb1a834d1fb768123c62c98cdbb87c683b782bd4104f68aed5",
   "abis": {
     "arm64": {
-      "ukuran": 74378549,
-      "sha256": "6d137fd9f7e6e67eb66fe0b581ad6235f30674e730ff2dc7fffee33360bd4d1f"
+      "ukuran": 74378557,
+      "sha256": "7b469aa6bfd0eabb1a834d1fb768123c62c98cdbb87c683b782bd4104f68aed5"
     },
     "armv7": {
-      "ukuran": 72613060,
-      "sha256": "71207e5810563c8a5195f2e5e51660a0a1678c2920b3e02e2e0c82c2e5c53311"
+      "ukuran": 72613067,
+      "sha256": "9648aa181f0472085b4442ee4bc09c81a14953734f4c334751bd5bc80bd0e54c"
     },
     "universal": {
-      "ukuran": 122232505,
-      "sha256": "582236acbdf039d5c0299e6d45f16f6bdbe7d3ef47c6ec2ef8afc62bd9410c48"
+      "ukuran": 122232522,
+      "sha256": "a8983e67e905ddcca9190dcba2bd89e2d4ea1522da23c64a6ac0f8ea2b8347d0"
     }
   }
 }

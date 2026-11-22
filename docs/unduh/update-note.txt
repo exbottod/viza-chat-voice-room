@@ -1,2 +1,2 @@
-• panel: halaman Background tab berisi unggah gambar/gradasi untuk tiap tab (party, moment, family, pe
-• reset user: nama jadi UNKNOWN dan foto kembali ke foto bawaan di RTDB + Firestore (users, userIds), 
+• panel: menu Game satu tab (bet, RTP, banner, kategori, roket, reward); server dompet izinkan panel m
+• panel Kirim ke user: jenis ID unik (slot uid) dengan nomor wajib 3-12 digit

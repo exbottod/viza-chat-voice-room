@@ -1,3 +1,2 @@
-• Script perbaiki total: arahkan domain viza ke dompet Viza yang benar dan pasang ulang panel
-• Script cek peladen dompet: port 8080/8092, unit viza, baris cek token
-• Game langsung terbuka: token dompet gagal tidak lagi menahan di layar pesan
+• server.js murni ESM (require dibuang) + script betulkan layanan dompet Viza di VPS
+• Script benahi viza-dompet: type=module, cek sintaks, restart, lapor port

@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.321",
-  "catatan": "• Script perbaiki total: arahkan domain viza ke dompet Viza yang benar dan pasang ulang panel\n• Script cek peladen dompet: port 8080/8092, unit viza, baris cek token\n• Game langsung terbuka: token dompet gagal tidak lagi menahan di layar pesan",
-  "ukuran_apk": 74349139,
-  "sha256_apk": "6fba4909192c747fa28fd6c085899a33e5911004893048c958336586056afcaf",
+  "versi": "1.0.322",
+  "catatan": "• server.js murni ESM (require dibuang) + script betulkan layanan dompet Viza di VPS\n• Script benahi viza-dompet: type=module, cek sintaks, restart, lapor port",
+  "ukuran_apk": 74349134,
+  "sha256_apk": "a1a997c4f51a77b7b1e578ff7dc4a35b46cba2aeddc6b17502beb5559b474124",
   "abis": {
     "arm64": {
-      "ukuran": 74349139,
-      "sha256": "6fba4909192c747fa28fd6c085899a33e5911004893048c958336586056afcaf"
+      "ukuran": 74349134,
+      "sha256": "a1a997c4f51a77b7b1e578ff7dc4a35b46cba2aeddc6b17502beb5559b474124"
     },
     "armv7": {
-      "ukuran": 72583651,
-      "sha256": "4ae1fbec44062ea63372613b25c4ae60f0236af411e9b9e9fab2c40392c510ed"
+      "ukuran": 72583647,
+      "sha256": "90dece895c6cec3ad48bff644094851119a9a3b2a155fca19532cf981cb27ecd"
     },
     "universal": {
-      "ukuran": 122203104,
-      "sha256": "d829459884673e3b8ff50f7adf1250b08fb64a0e2b70f2270fc607165e45f6e8"
+      "ukuran": 122203106,
+      "sha256": "58a1bfbc7281cd8b46047717795ca7d988d4cef4b5f24eaf8b4ffe6bf712bd0e"
     }
   }
 }

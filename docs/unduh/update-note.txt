@@ -1,2 +1,1 @@
-• Setting: tab General berisi App Setting (Android App Version + Android App Link) dan Android Asset L
-• Panel React: menu profil (Profile/Setting/Logout), halaman Profile dan Setting; server: cfg_get/cfg_
+• Panel React: nama menu tampil di samping ikon, termasuk di HP

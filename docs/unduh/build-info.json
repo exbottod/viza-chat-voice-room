@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.359",
-  "catatan": "• panel: form Kirim ke user bisa unggah berkas atau tautan untuk lencana/bingkai/medali dll, opsi lang\n• panel: Tabel menerima kolom {k,t} dan {kunci,label,sel}; Seller/Staf/Wallet/Admin panel tidak lagi l",
-  "ukuran_apk": 74378563,
-  "sha256_apk": "4ca1e7261a221b42a73ca34ae802b890d379c2a43cb5b42f2c220bdf8d20ec25",
+  "versi": "1.0.360",
+  "catatan": "• panel: tombol + Aset VIP di Aset & VIP (pilih tier VIP 1-9, unggah atau tautan, id vip_<tier>_<slot>",
+  "ukuran_apk": 74378546,
+  "sha256_apk": "70e0b63b26ccefca96672e46f55a366b176cc41e7ca98e772dbdd6cdb3380e23",
   "abis": {
     "arm64": {
-      "ukuran": 74378563,
-      "sha256": "4ca1e7261a221b42a73ca34ae802b890d379c2a43cb5b42f2c220bdf8d20ec25"
+      "ukuran": 74378546,
+      "sha256": "70e0b63b26ccefca96672e46f55a366b176cc41e7ca98e772dbdd6cdb3380e23"
     },
     "armv7": {
-      "ukuran": 72613064,
-      "sha256": "586c8ec7a9f17c5834480bbf1f5302f93bb7ba37aab331f15f19f4905b91ad7f"
+      "ukuran": 72613055,
+      "sha256": "694ed5a079a08970d8bbb96863a7eb8bed54151ada3e2bc02b9c77f05b85292d"
     },
     "universal": {
-      "ukuran": 122232516,
-      "sha256": "0f37895894b91f7012e4ab8850b3b6146a650ca329de680fc09871b1db33a856"
+      "ukuran": 122232518,
+      "sha256": "40205b154c9ef4f21479d91292e03af0728e8c4837b5df10caa6d416f1754f68"
     }
   }
 }

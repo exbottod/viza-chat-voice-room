@@ -1,2 +1,1 @@
-• panel: form Kirim ke user bisa unggah berkas atau tautan untuk lencana/bingkai/medali dll, opsi lang
-• panel: Tabel menerima kolom {k,t} dan {kunci,label,sel}; Seller/Staf/Wallet/Admin panel tidak lagi l
+• panel: tombol + Aset VIP di Aset & VIP (pilih tier VIP 1-9, unggah atau tautan, id vip_<tier>_<slot>

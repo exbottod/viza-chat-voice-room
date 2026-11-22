@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.358",
-  "catatan": "• panel: katalog aset dibaca lewat akun layanan server (aturan RTDB menolak browser); server: /panel-r\n• panel: aset baca Firestore+RTDB (aset panel lama ikut tampil), tab Banner tampil semua, menu VIP & M",
-  "ukuran_apk": 74378545,
-  "sha256_apk": "293a4bcca398771ce95d83d3048246c897ed4cfd1a745fb75ac42eb1dfcd51b3",
+  "versi": "1.0.359",
+  "catatan": "• panel: form Kirim ke user bisa unggah berkas atau tautan untuk lencana/bingkai/medali dll, opsi lang\n• panel: Tabel menerima kolom {k,t} dan {kunci,label,sel}; Seller/Staf/Wallet/Admin panel tidak lagi l",
+  "ukuran_apk": 74378558,
+  "sha256_apk": "3c5090143f7385c4f3d32860b256184bce1bc56ab41cb8b57adf70d6c89645eb",
   "abis": {
     "arm64": {
-      "ukuran": 74378545,
-      "sha256": "293a4bcca398771ce95d83d3048246c897ed4cfd1a745fb75ac42eb1dfcd51b3"
+      "ukuran": 74378558,
+      "sha256": "3c5090143f7385c4f3d32860b256184bce1bc56ab41cb8b57adf70d6c89645eb"
     },
     "armv7": {
-      "ukuran": 72613057,
-      "sha256": "f97f409cd70910616264e15d6188a7a6d1759e53a31791af59dfdfcd231bd25a"
+      "ukuran": 72613063,
+      "sha256": "92e54d3cd6b4ddf407d397bc02c8caaef9413826228b034b2b27523a805f0659"
     },
     "universal": {
-      "ukuran": 122232509,
-      "sha256": "5aeb71ddc2c67177473612c71f1d55c5efd24f991b7c29ca80845a8880a6f3d2"
+      "ukuran": 122232517,
+      "sha256": "61161b818008e214f41d09c4fa3faef3ae97c0ed6c2c23ac4072e61cdf32e82d"
     }
   }
 }

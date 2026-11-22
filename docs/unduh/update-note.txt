@@ -1,2 +1,2 @@
-• panel: katalog aset dibaca lewat akun layanan server (aturan RTDB menolak browser); server: /panel-r
-• panel: aset baca Firestore+RTDB (aset panel lama ikut tampil), tab Banner tampil semua, menu VIP & M
+• panel: form Kirim ke user bisa unggah berkas atau tautan untuk lencana/bingkai/medali dll, opsi lang
+• panel: Tabel menerima kolom {k,t} dan {kunci,label,sel}; Seller/Staf/Wallet/Admin panel tidak lagi l

@@ -29,13 +29,16 @@ export const MENU = [
   {
     grup: "GAMING",
     isi: [
-      ["katalog", "sports_esports", "Katalog game"],
-      ["pasang", "link", "Pasang game"],
-      ["bet", "casino", "Bet game"],
-      ["greedy", "toll", "Greedy King"],
-      ["fruit", "nutrition", "Crazy Fruit"],
-      ["roket", "rocket_launch", "Hadiah roket"],
-      ["reward", "emoji_events", "Reward room"],
+      // Satu tab Game dengan sub menu ke bawah: bet, RTP, banner, kategori,
+      // hadiah roket, dan reward room.
+      ["game", "sports_esports", "Game", [
+        ["gamebet", "Bet game"],
+        ["gamertp", "RTP game"],
+        ["gamebanner", "Banner game"],
+        ["gamekategori", "Kategori game"],
+        ["gameroket", "Hadiah roket"],
+        ["gamereward", "Reward room"],
+      ]],
     ],
   },
   {

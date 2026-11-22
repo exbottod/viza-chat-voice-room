@@ -11,6 +11,7 @@ import User from "./pages/User.jsx";
 import Reset from "./pages/Reset.jsx";
 import Cs from "./pages/Cs.jsx";
 import Background from "./pages/Background.jsx";
+import { GAME_HALAMAN } from "./pages/Game.jsx";
 import Room from "./pages/Room.jsx";
 import Gift from "./pages/Gift.jsx";
 import GiftDaftar from "./pages/GiftDaftar.jsx";
@@ -52,6 +53,13 @@ const KETERANGAN = {
   seller: "Coin seller, stok, dan status toko",
   wallet: "Paket coin, tujuan top-up, dan top-up manual",
   kirim: "Kirim frame, efek, atau medal ke satu akun",
+  game: "Bet, RTP, banner, dan kategori game",
+  gamebet: "Chip bet tiap game: Bikini Wild Rush, Greedy King, Crazy Fruit",
+  gamertp: "Persentase RTP tiap game",
+  gamebanner: "Banner kemenangan game: unggah gambar atau tempel tautan",
+  gamekategori: "Tampilkan atau sembunyikan kategori Game Viza di Game Center",
+  gameroket: "Energi tiap level roket dan hadiah peringkat",
+  gamereward: "Banner kemenangan room",
   bet: "Chip bet dan RTP game Bikini Wild Rush",
   greedy: "Chip bet dan RTP Greedy King",
   fruit: "Chip bet dan RTP Crazy Fruit",
@@ -70,6 +78,8 @@ const alat = (id) => (p) => <Alat spec={ALAT[id]} {...p} />;
 const daftar = (judul, koleksi, ket) => () => <Daftar judul={judul} koleksi={koleksi} ket={ket} />;
 
 const HALAMAN = {
+  ...GAME_HALAMAN,
+  game: GAME_HALAMAN.gamebet,
   dashboard: Dashboard,
   user: User,
   reset: Reset,

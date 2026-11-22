@@ -6587,7 +6587,7 @@ export default {
       // Mode baca: panel perlu melihat katalog aset (vipCfg/giftCfg) yang
       // ditolak aturan RTDB untuk browser.
       if (b.baca) {
-        if (!/^(vipCfg|giftCfg|banners|betCfg|signinCfg|cashbackCfg|rewardRoom|_owner)(\/|$)/.test(jalur)) {
+        if (!/^(vipCfg|giftCfg|banners|betCfg|signinCfg|cashbackCfg|rewardRoom|_owner|_cs|tabBg|gameCfg)(\/|$)/.test(jalur)) {
           return json({ ok: 0, e: "Path tidak diizinkan" }, 400);
         }
         try {
@@ -6598,7 +6598,7 @@ export default {
         }
       }
       // Batasi: panel hanya boleh menulis cabang pengaturan, bukan data user.
-      if (!/^(vipCfg|banners|pengumuman|giftCfg|betCfg|signinCfg|cashbackCfg|_owner)\//.test(jalur)) {
+      if (!/^((vipCfg|banners|pengumuman|giftCfg|betCfg|signinCfg|cashbackCfg|_owner|tabBg|gameCfg)\/|_cs(\/[A-Za-z0-9_-]+)?$)/.test(jalur)) {
         return json({ ok: 0, e: "Path tidak diizinkan" }, 400);
       }
       try {

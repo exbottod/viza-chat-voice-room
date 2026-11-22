@@ -12,6 +12,7 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.core.app.ServiceCompat
 
 /**
  * Layanan latar depan selama pemakai berada di room.
@@ -28,30 +29,50 @@ class RoomService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    override fun onCreate() {
+        super.onCreate()
+        berjalan = true
+    }
+
+    override fun onDestroy() {
+        berjalan = false
+        super.onDestroy()
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == AKSI_STOP) {
+            ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
             stopSelf()
             return START_NOT_STICKY
         }
         val judul = intent?.getStringExtra("judul").orEmpty()
         return try {
             buatSaluran()
-            startForeground(ID_NOTIF, notifikasi(judul), jenisLayanan())
+            // Android 14 mewajibkan tipe layanan yang jelas. Tipe diambil dari
+            // manifes (dataSync), bukan microphone: suara room sudah diurus Agora
+            // di dalam layar, sedangkan layanan ini hanya menjaga proses tetap
+            // hidup. Tipe microphone dulu menuntut izin mic aktif saat layanan
+            // dimulai dan bisa membuat sistem menganggap aplikasi macet lalu
+            // menutupnya saat masuk room.
+            ServiceCompat.startForeground(
+                this,
+                ID_NOTIF,
+                notifikasi(judul),
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST
+                } else {
+                    0
+                },
+            )
             START_STICKY
-        } catch (e: Exception) {
-            // Kalau sistem menolak (mis. izin mic dicabut), room tetap jalan
-            // tanpa layanan; aplikasi tidak boleh mati karena ini.
+        } catch (e: Throwable) {
+            // Apa pun penolakan sistem, room tetap jalan tanpa layanan dan
+            // aplikasi tidak boleh macet atau tertutup karena ini.
+            runCatching { ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE) }
             stopSelf()
             START_NOT_STICKY
         }
     }
-
-    private fun jenisLayanan(): Int =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
-        } else {
-            0
-        }
 
     private fun buatSaluran() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -92,7 +113,20 @@ class RoomService : Service() {
         private const val ID_NOTIF = 4711
         const val AKSI_STOP = "com.rezochatvoice.exceo.STOP_ROOM"
 
-        /** Mulai layanan. Aman dipanggil berkali-kali; notifikasi hanya diperbarui. */
+        /** Apakah layanan sedang jalan. Dipakai supaya tidak dimulai berulang kali. */
+        @Volatile
+        var berjalan: Boolean = false
+            private set
+
+        /**
+         * Mulai layanan. Aman dipanggil berkali-kali; notifikasi hanya diperbarui.
+         *
+         * Android 12 ke atas melarang memulai layanan latar depan dari aplikasi
+         * yang sedang di belakang layar, dan Android 14 menuntut izin yang masih
+         * berlaku saat layanan dimulai. Karena itu semua syarat diperiksa lebih
+         * dulu: kalau tidak terpenuhi, layanan tidak dipanggil sama sekali,
+         * sehingga sistem tidak pernah menganggap aplikasi lalai lalu memacetkannya.
+         */
         fun mulai(c: Context, judul: String) {
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
@@ -100,20 +134,23 @@ class RoomService : Service() {
                 ) {
                     return
                 }
+                if (!AppAktif.ya) return
                 val i = Intent(c, RoomService::class.java).putExtra("judul", judul)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     c.startForegroundService(i)
                 } else {
                     c.startService(i)
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
+                // ForegroundServiceStartNotAllowedException dan sejenisnya:
+                // room tetap jalan tanpa layanan.
             }
         }
 
         fun hentikan(c: Context) {
             try {
                 c.stopService(Intent(c, RoomService::class.java))
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
             }
         }
     }

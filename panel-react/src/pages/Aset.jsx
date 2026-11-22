@@ -100,10 +100,10 @@ export default function Aset({ awal = "frame" }) {
 
   return (
     <>
-      <Panel judul="Aset Store" sub="Unggah dan hapus aset langsung di panel ini. Aplikasi membaca daftar ini tanpa build ulang."
+      <Panel judul="Aset Store" sub="Tambah ke Store untuk aset yang dijual, + Aset VIP untuk aset yang dipakai otomatis oleh tier VIP. Aplikasi membaca daftar ini tanpa build ulang."
         aksi={<span style={{ display: "flex", gap: 8 }}>
           <button className="pil" onClick={() => { setGanti(null); setTambahVip(true); }}>+ Aset VIP</button>
-          <button className="tombolBaru" onClick={() => { setGanti(null); setTambah(true); }}>Tambah {SLOT.find((s) => s[0] === slot)?.[1]}</button>
+          <button className="tombolBaru" onClick={() => { setGanti(null); setTambah(true); }}>Tambah ke Store</button>
         </span>}>
         <div className="filter" style={{ marginBottom: 12 }}>
           {SLOT.map(([k, n]) => (

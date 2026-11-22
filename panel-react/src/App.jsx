@@ -21,6 +21,8 @@ import Staf from "./pages/Staf.jsx";
 import Daftar from "./pages/Daftar.jsx";
 import Kirim from "./pages/Kirim.jsx";
 import Aset from "./pages/Aset.jsx";
+import Banner from "./pages/Banner.jsx";
+import Store from "./pages/Store.jsx";
 import Vip from "./pages/Vip.jsx";
 import Penahan from "./Penahan.jsx";
 import Roket from "./pages/Roket.jsx";
@@ -87,7 +89,9 @@ const HALAMAN = {
   cs: daftar("Customer Service", "customerService", "Pesan dan keluhan yang masuk dari aplikasi."),
   laporan: daftar("Laporan user", "reports", "Laporan dari pengguna: saring isinya, hapus bila sudah selesai."),
   cekin: daftar("Plan history (cek in)", "checkIn", "Catatan cek in harian pengguna VIP."),
-  frame: () => <Aset awal="frame" />,
+  banner: () => <Banner />,
+  store: () => <Store />,
+  frame: () => <Store />,
   aset: () => <Aset awal="frame" />,
   asetvps: daftar("Aset di VPS", "vpsAssets", "Berkas aset yang tersimpan di server."),
   latar: daftar("Background tab", "tabBackgrounds", "Gambar latar tab room yang dipakai aplikasi."),

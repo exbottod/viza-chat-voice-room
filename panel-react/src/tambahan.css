@@ -219,3 +219,7 @@
 .isianForm select { width: 100%; background: #1f1f2b; border: 1px solid #2d2d3f; border-radius: 3px; color: #e7e8ef; font: inherit; font-size: 14px; padding: 13px 14px; }
 .barisAksiForm .isianForm { margin: 0; }
 .barisAksiForm .cari { flex: none; }
+
+.mini{width:44px;height:44px;object-fit:contain;border-radius:8px;background:#262635;display:inline-block;vertical-align:middle}
+.mini.lebar{width:96px;height:44px;object-fit:cover}
+.mini.kosongMini,.mini.ikonMini{display:inline-flex;align-items:center;justify-content:center;color:#9a9cab}

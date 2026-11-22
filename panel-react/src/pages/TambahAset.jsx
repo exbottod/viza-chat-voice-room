@@ -4,7 +4,7 @@ import { unggahBerkas, tulisRtdbServer, kunciVip } from "../unggah.js";
 import { catatLog } from "../data.js";
 import { Laci, toast } from "../ui.jsx";
 
-const KOSONG = { nama: "", urut: "0", harga: "0", hari: "0", mode: "berkas", url: "", berkas: null, tier: "1" };
+const KOSONG = { nama: "", urut: "0", harga: "0", hari: "0", mode: "berkas", url: "", berkas: null, tier: "1", nomor: "" };
 const TIER = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 /**
@@ -40,6 +40,7 @@ export default function TambahAset({ buka, slot, judul, vip = false, ganti = nul
         tier: String(Number(ganti.n) || 1),
         mode: ganti.url ? "tautan" : "berkas",
         url: String(ganti.url || ""),
+        nomor: String(ganti.customId || ""),
       });
       return;
     }
@@ -71,6 +72,8 @@ export default function TambahAset({ buka, slot, judul, vip = false, ganti = nul
         url = await unggahBerkas(form.berkas, slot, (p) => setProgres("mengunggah " + p + "%"));
       }
       if (!url) throw new Error("Isi tautan atau pilih berkas");
+      const nomor = String(form.nomor || "").trim();
+      if (slot === "uid" && !/^\d{3,12}$/.test(nomor)) throw new Error("Isi nomor ID unik (angka 3-12 digit)");
       // Aset VIP dipakai otomatis oleh tier VIP 1-9 (bukan item toko), jadi
       // idnya vip_<tier>_<slot> dan ditandai meta. Aset toko memakai id bebas.
       const tier = Math.min(9, Math.max(1, Number(form.tier) || 1));
@@ -83,6 +86,7 @@ export default function TambahAset({ buka, slot, judul, vip = false, ganti = nul
         url, hasData: false, updatedAt: Date.now(), chunks: 0,
         store: vip ? false : true,
         ...(vip ? { n: tier, meta: true } : {}),
+        ...(slot === "uid" ? { customId: nomor } : {}),
       };
       setProgres("menyimpan…");
       await walletAdmin({ op: "fs_set", jalur: "vipConfig/" + id, data });
@@ -114,6 +118,11 @@ export default function TambahAset({ buka, slot, judul, vip = false, ganti = nul
           </div>
           <div className="catatan">Aset ini dipakai otomatis oleh anggota VIP tier {form.tier} untuk {judul || slot}. Tidak dijual di Store.</div>
         </>
+      ) : null}
+      {slot === "uid" ? (
+        <label className="isianForm"><span>Nomor ID unik (yang tampil di profil)</span>
+          <input value={form.nomor} onChange={(e) => setForm({ ...form, nomor: e.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="mis. 1000" />
+        </label>
       ) : null}
       <label className="isianForm"><span>Nama</span>
         <input value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value })} placeholder="mis. Tawa" />

@@ -50,7 +50,8 @@ export const MENU = [
   {
     grup: "CONTENT MANAGEMENT",
     isi: [
-      ["frame", "image", "Frame & banner"],
+      ["banner", "image", "Banner"],
+      ["store", "storefront", "Store"],
       ["aset", "auto_awesome", "Aset & VIP"],
       ["asetvps", "folder_open", "Aset di VPS"],
       ["latar", "wallpaper", "Background tab"],

@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.352",
   "catatan": "• vps: skrip pencarian dan pemindahan data coin seller ke database Viza\n• vps: skrip pulih cepat dompet Viza (restart, cek health, hitung aset)",
-  "ukuran_apk": 74377112,
-  "sha256_apk": "e658baa355b6b9071b7fdd24dd399c857217c6756b3f828b60e212858ab51a11",
+  "ukuran_apk": 74377097,
+  "sha256_apk": "ceb884b02247e3b54fbe3cea81de74b231d2b1631671beb93598c770744e6e36",
   "abis": {
     "arm64": {
-      "ukuran": 74377112,
-      "sha256": "e658baa355b6b9071b7fdd24dd399c857217c6756b3f828b60e212858ab51a11"
+      "ukuran": 74377097,
+      "sha256": "ceb884b02247e3b54fbe3cea81de74b231d2b1631671beb93598c770744e6e36"
     },
     "armv7": {
-      "ukuran": 72611607,
-      "sha256": "f95d7c6f29de15bc2ba9bc57ade36309178483d7c7ab0dd16429b80aed4dfe35"
+      "ukuran": 72611608,
+      "sha256": "6860077a1f68fd2195cc03e7b1d70656518114f259513a5338d2aa494f430ce1"
     },
     "universal": {
-      "ukuran": 122231072,
-      "sha256": "cc8cca6d11c573f922f46f6526576744460e8c24a5e6f0178e150b452465f972"
+      "ukuran": 122231058,
+      "sha256": "8060108e80b8dec421dab6f654a5a62f3deeb91cdc2ad6c2887953a34f69aef2"
     }
   }
 }

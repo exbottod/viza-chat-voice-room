@@ -1,5 +1,5 @@
 // Satu titik pendaftaran Firebase untuk seluruh panel React.
-import { initializeApp } from "firebase/app";
+import { getApp, getApps, initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getDatabase } from "firebase/database";
@@ -21,3 +21,11 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const rtdb = getDatabase(app);
 export const storage = getStorage(app);
+
+// Aplikasi Firebase kedua: dipakai membuat akun admin baru tanpa mengeluarkan
+// akun pemilik yang sedang masuk. createUserWithEmailAndPassword pada auth
+// utama akan otomatis berpindah ke akun baru, sedangkan di sini tidak.
+export const appKedua = getApps().some((a) => a.name === "kedua")
+  ? getApp("kedua")
+  : initializeApp(firebaseConfig, "kedua");
+export const authKedua = getAuth(appKedua);

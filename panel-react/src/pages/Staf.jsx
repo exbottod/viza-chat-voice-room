@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { walletAdmin } from "../dompet.js";
 import { catatLog, rupiah } from "../data.js";
 import { Konfirmasi, Laci, Panel, Rangka, Tabel, Tag, toast } from "../ui.jsx";
+import AdminPanel from "./AdminPanel.jsx";
 
 export default function Staf() {
   const [staf, setStaf] = useState(null);
@@ -49,6 +50,8 @@ export default function Staf() {
 
   return (
     <>
+      <AdminPanel />
+
       <Panel judul="Staf panel" sub="Akun yang boleh membuka panel ini. Saldo coin dipakai untuk membeli stok frame dan efek.">
         {galat ? <div className="kosong">Belum bisa dimuat: {galat}</div> : null}
         <Tabel

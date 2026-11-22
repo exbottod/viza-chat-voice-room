@@ -1786,8 +1786,10 @@ async function peranPanelWeb(env, sesi) {
 
 async function bolehPanel(env, sesi) {
   if (!sesi) return false;
-  // Hanya pemilik. Staf panel dan panelAdmins tidak lagi diakui.
-  return adalahAdmin(sesi);
+  if (adalahAdmin(sesi)) return true;
+  // Admin tambahan yang didaftarkan pemilik di menu Staf panel (panelAdmins).
+  // Alamat @vizapanel.app tidak lagi otomatis diakui.
+  try { return !!(await peranPanelWeb(env, sesi)); } catch { return false; }
 }
 const cache = new Map();
 

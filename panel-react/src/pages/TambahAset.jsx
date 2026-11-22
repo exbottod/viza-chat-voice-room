@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { walletAdmin } from "../dompet.js";
 import { unggahBerkas, tulisRtdbServer, kunciVip } from "../unggah.js";
 import { catatLog } from "../data.js";
@@ -16,8 +16,32 @@ export default function TambahAset({ buka, slot, judul, onTutup, onSelesai }) {
   const [form, setForm] = useState(KOSONG);
   const [sibuk, setSibuk] = useState(false);
   const [progres, setProgres] = useState("");
+  // Pratinjau berkas yang baru dipilih: langsung tampil di formulir, lalu
+  // tinggal dikonfirmasi dengan tombol Simpan.
+  const [pratinjau, setPratinjau] = useState("");
+  const alamatPratinjau = useRef("");
 
-  useEffect(() => { if (buka) { setForm(KOSONG); setProgres(""); } }, [buka]);
+  const lepasPratinjau = () => {
+    if (alamatPratinjau.current) { URL.revokeObjectURL(alamatPratinjau.current); alamatPratinjau.current = ""; }
+    setPratinjau("");
+  };
+
+  useEffect(() => {
+    if (buka) { setForm(KOSONG); setProgres(""); lepasPratinjau(); }
+  }, [buka]);
+  useEffect(() => () => { if (alamatPratinjau.current) URL.revokeObjectURL(alamatPratinjau.current); }, []);
+
+  /** Berkas dipilih: tampilkan pratinjau saat itu juga. */
+  const pilihBerkas = (e) => {
+    const f = e.target.files?.[0] || null;
+    lepasPratinjau();
+    setForm((l) => ({ ...l, berkas: f }));
+    if (f) {
+      const alamat = URL.createObjectURL(f);
+      alamatPratinjau.current = alamat;
+      setPratinjau(alamat);
+    }
+  };
 
   const simpan = async () => {
     setSibuk(true);
@@ -68,13 +92,38 @@ export default function TambahAset({ buka, slot, judul, onTutup, onSelesai }) {
       </div>
       {form.mode === "berkas" ? (
         <label className="isianForm"><span>Berkas (PNG, GIF, WebP, SVGA, MP4 · maks 8 MB)</span>
-          <input type="file" accept="image/*,video/mp4,.svga" onChange={(e) => setForm({ ...form, berkas: e.target.files?.[0] || null })} />
+          <input type="file" accept="image/*,video/mp4,.svga" onChange={pilihBerkas} />
         </label>
       ) : (
         <label className="isianForm"><span>Tautan berkas</span>
           <input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://…" />
         </label>
       )}
+      {form.mode === "berkas" && form.berkas ? (
+        <div className="kotakPratinjau">
+          <div className="judulPratinjau">Pratinjau</div>
+          <div className="isiPratinjau">
+            {/\.(png|jpe?g|gif|webp)$/i.test(form.berkas.name) ? (
+              <img src={pratinjau} alt={form.berkas.name} />
+            ) : /\.mp4$/i.test(form.berkas.name) ? (
+              <video src={pratinjau} muted loop playsInline autoPlay />
+            ) : (
+              <div className="ikonPratinjau">
+                <span className="material-icons">animation</span>
+                <b>{(form.berkas.name.split(".").pop() || "").toUpperCase()}</b>
+                <i>Pratinjau bergerak muncul di aplikasi</i>
+              </div>
+            )}
+            <div className="ketPratinjau">
+              <b>{form.berkas.name}</b>
+              <span>{Math.max(1, Math.round(form.berkas.size / 1024))} KB</span>
+            </div>
+            <button type="button" className="pil" onClick={() => { lepasPratinjau(); setForm({ ...form, berkas: null }); }}>Ganti berkas</button>
+          </div>
+          <div className="catatan">Sudah sesuai? Tekan Simpan untuk mengunggah dan menyimpannya.</div>
+        </div>
+      ) : null}
+
       <label className="isianForm"><span>Urutan tampil</span>
         <input value={form.urut} onChange={(e) => setForm({ ...form, urut: e.target.value })} inputMode="numeric" />
       </label>

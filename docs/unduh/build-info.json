@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.336",
-  "catatan": "• Room dijaga tetap hidup saat aplikasi ditinggal\n• Level room tidak pernah kembali ke awal",
-  "ukuran_apk": 74374579,
-  "sha256_apk": "cca01f8796e67c2229712bd85050d5db8aa9fb7029008965b32ed1006b754fa8",
+  "versi": "1.0.337",
+  "catatan": "• Betulkan bingkai diam kursi yang gagal dikompilasi\n• Tampilan room seringan contoh ZEGOCLOUD",
+  "ukuran_apk": 74374955,
+  "sha256_apk": "a997ceb1c11cecff60bcd1e521289019a5d335c079b1fc25758f106a331f4508",
   "abis": {
     "arm64": {
-      "ukuran": 74374579,
-      "sha256": "cca01f8796e67c2229712bd85050d5db8aa9fb7029008965b32ed1006b754fa8"
+      "ukuran": 74374955,
+      "sha256": "a997ceb1c11cecff60bcd1e521289019a5d335c079b1fc25758f106a331f4508"
     },
     "armv7": {
-      "ukuran": 72609097,
-      "sha256": "ab6e5408443c5fae583e89b5f8d709b670e211bf200f74a04a90e62ab2984250"
+      "ukuran": 72609468,
+      "sha256": "ddd673cfdabd0a94dc9fd57d76a24b44281059166c9876fa027686de255c4ad9"
     },
     "universal": {
-      "ukuran": 122228544,
-      "sha256": "b95b60138976bf24aad1525518dd1bbbdf3eb9cbae66f077e4b0ee650d9ff44b"
+      "ukuran": 122228916,
+      "sha256": "85fa87cc0d3d1c738dff06170febf8ad448b37b8dfadcfae4341d464d6fcfa5d"
     }
   }
 }

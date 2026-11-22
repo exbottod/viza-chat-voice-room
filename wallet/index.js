@@ -1887,6 +1887,50 @@ async function tandaiBannedFs(env, uidTarget, alasan, hapus = false) {
   return r.ok;
 }
 
+/** Tulis/ubah dokumen Firestore memakai akun layanan (melewati aturan). */
+async function tulisFsSa(env, jalur, data) {
+  try {
+    const token = await tokenLayanan(env);
+    if (!token) return false;
+    const proyek = String(env.FIREBASE_PROJECT || "my-app-e7f8c").trim();
+    const bersih = String(jalur || "").split("/").filter(Boolean).map((x) => encodeURIComponent(x)).join("/");
+    if (!bersih) return false;
+    const medan = {};
+    for (const k of Object.keys(data || {})) medan[k] = fsNilai(data[k]);
+    const kunci = Object.keys(medan);
+    const samaran = kunci.length ? "?updateMask.fieldPaths=" + kunci.map((x) => encodeURIComponent(x)).join("&updateMask.fieldPaths=") : "";
+    const r = await fetch(
+      `https://firestore.googleapis.com/v1/projects/${proyek}/databases/(default)/documents/${bersih}${samaran}`,
+      {
+        method: "PATCH",
+        headers: { authorization: "Bearer " + token, "content-type": "application/json" },
+        body: JSON.stringify({ fields: medan }),
+      },
+    );
+    return r.ok;
+  } catch {
+    return false;
+  }
+}
+
+/** Nomor ID resmi (mis. 1000) milik sebuah uid, dibaca dari users/{uid}.userId. */
+async function idResmiSa(env, uid) {
+  try {
+    const token = await tokenLayanan(env);
+    if (!token) return "";
+    const proyek = String(env.FIREBASE_PROJECT || "my-app-e7f8c").trim();
+    const r = await fetch(
+      `https://firestore.googleapis.com/v1/projects/${proyek}/databases/(default)/documents/users/${encodeURIComponent(uid)}`,
+      { headers: { authorization: "Bearer " + token } },
+    );
+    if (!r.ok) return "";
+    const d = await r.json();
+    return String(d?.fields?.userId?.stringValue || "").trim();
+  } catch {
+    return "";
+  }
+}
+
 /** Baca RTDB memakai token akun layanan (melewati aturan baca publik). */
 async function cfgRtdbSa(env, path) {
   try {
@@ -3850,19 +3894,36 @@ async function panel(env, body) {
     if (!(dev || peran === "manager")) return gagal("Hanya manager atau developer yang bisa reset nama");
     // Ditulis dari server memakai akun layanan: aturan RTDB hanya mengizinkan
     // pemilik akun menulis pub/{uid}, jadi dari HP panel selalu "Permission denied".
-    await tulisRtdbSa(env, "pub/" + target + "/name", "Unknown");
+    // Nama wajib sama di RTDB (pub) dan Firestore (users, userIds): aplikasi
+    // membaca Firestore lebih dulu, jadi kalau hanya RTDB yang diubah nama lama
+    // tetap tampil.
+    const NAMA_BARU = "UNKNOWN";
+    await tulisRtdbSa(env, "pub/" + target + "/name", NAMA_BARU);
     await tulisRtdbSa(env, "nameReset/" + target, { at: Date.now(), by: uid });
-    return json({ ok: 1, nama: "Unknown" });
+    const cermin = { rtdb: true, users: false, userIds: false };
+    cermin.users = await tulisFsSa(env, "users/" + target, { name: NAMA_BARU, nama: NAMA_BARU });
+    const nomor = String(p.id ?? "").trim() || (await idResmiSa(env, target));
+    if (nomor) cermin.userIds = await tulisFsSa(env, "userIds/" + nomor, { name: NAMA_BARU });
+    return json({ ok: 1, nama: NAMA_BARU, cermin });
   }
 
   if (aksi === "reset_foto") {
     const salah = butuhTarget();
     if (salah) return gagal(salah);
     if (!(dev || peran === "manager")) return gagal("Hanya manager atau developer yang bisa reset foto");
+    // Foto disimpan di tiga tempat: RTDB pub/{uid} (avatarB64 + photo) dan
+    // Firestore users/{uid}.photoUrl + userIds/{id}.photo. Semua harus
+    // dikosongkan, karena aplikasi memakai Firestore lebih dulu dan akan
+    // menampilkan foto lama bila hanya RTDB yang dibersihkan. Setelah kosong,
+    // aplikasi otomatis memakai foto bawaan (ic_default_avatar_*).
     await tulisRtdbSa(env, "pub/" + target + "/avatarB64", null);
     await tulisRtdbSa(env, "pub/" + target + "/photo", "");
     await tulisRtdbSa(env, "photoReset/" + target, { at: Date.now(), by: uid });
-    return json({ ok: 1 });
+    const cermin = { rtdb: true, users: false, userIds: false };
+    cermin.users = await tulisFsSa(env, "users/" + target, { photoUrl: "", photo: "" });
+    const nomor = String(p.id ?? "").trim() || (await idResmiSa(env, target));
+    if (nomor) cermin.userIds = await tulisFsSa(env, "userIds/" + nomor, { photo: "" });
+    return json({ ok: 1, bawaan: true, cermin });
   }
 
   if (aksi === "bans") {

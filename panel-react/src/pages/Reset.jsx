@@ -17,8 +17,8 @@ const BAGIAN = [
   ["vip", "VIP", "Tier VIP dicabut, masa aktif dihapus"],
   ["level", "XP & level", "Exp jadi 0, hadiah level bisa diklaim ulang"],
   ["aset", "Aset My Item", "Inventaris dan aset yang dipakai dikosongkan"],
-  ["foto", "Foto profil", "Foto kembali ke bawaan"],
-  ["nama", "Nama user", "Nama kembali menjadi Unknown"],
+  ["foto", "Foto profil", "Kembali ke foto bawaan (kosong)"],
+  ["nama", "Nama user", "Nama diganti menjadi UNKNOWN"],
 ];
 
 const AWAL = { coin: false, diamond: false, vip: false, level: false, aset: false, foto: false, nama: false };
@@ -109,12 +109,12 @@ export default function Reset() {
         }
         if (pilih.nama) {
           setProgres("Meriset nama " + siapa + "…");
-          try { await panelAksi("reset_nama", { uid: u }); catat("Nama", "Nama " + siapa + " kembali Unknown", true); }
+          try { await panelAksi("reset_nama", { uid: u, id: orang.nomor }); catat("Nama", "Nama " + siapa + " sekarang UNKNOWN", true); }
           catch (e) { catat("Nama", String(e.message || e), false); }
         }
         if (pilih.foto) {
           setProgres("Meriset foto profil " + siapa + "…");
-          try { await panelAksi("reset_foto", { uid: u }); catat("Foto profil", "Foto " + siapa + " dikosongkan", true); }
+          try { await panelAksi("reset_foto", { uid: u, id: orang.nomor }); catat("Foto profil", "Foto " + siapa + " kembali ke foto bawaan", true); }
           catch (e) { catat("Foto profil", String(e.message || e), false); }
         }
       } else {
@@ -144,8 +144,8 @@ export default function Reset() {
             beres++;
             setProgres("Memproses " + beres + "/" + sasaran.length + " user…");
             try {
-              if (pilih.nama) await panelAksi("reset_nama", { uid: o.uid });
-              if (pilih.foto) await panelAksi("reset_foto", { uid: o.uid });
+              if (pilih.nama) await panelAksi("reset_nama", { uid: o.uid, id: o.nomor });
+              if (pilih.foto) await panelAksi("reset_foto", { uid: o.uid, id: o.nomor });
             } catch (e) { gagal++; }
           }
           if (sasaran.length) {

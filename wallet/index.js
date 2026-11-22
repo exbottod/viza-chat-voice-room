@@ -1068,7 +1068,9 @@ async function catatKomisiAgency(env, hostUid, nilaiCoin, now) {
   } catch (e) { /* komisi opsional: jangan ganggu gift */ }
 }
 
-const KOLOM_SELLER = `s.uid, s.store, s.wa, s.wa_link, s.stock, s.urut, s.active,
+// s.stock dikirim juga sebagai "coins": panel lama membaca kolom coins,
+// jadi stok seller tampil 0 walau isi stok berhasil.
+const KOLOM_SELLER = `s.uid, s.store, s.wa, s.wa_link, s.stock, s.stock as coins, s.urut, s.active,
   coalesce(nullif(s.photo, ''), (select avatar from wave_players w where w.uid = s.uid), '') as photo`;
 
 async function daftarSeller(env, hanyaAktif) {

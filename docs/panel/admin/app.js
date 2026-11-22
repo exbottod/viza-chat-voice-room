@@ -2032,9 +2032,9 @@ async function gambarStaf() {
             <tr><th>SELLER</th><th>TOKO</th><th>WHATSAPP</th><th>STOK COIN</th><th>STATUS</th><th>AKSI</th></tr>
             ${seller.map((s) => `<tr>
               <td>${aman(s.name || s.uid)}</td><td>${aman(s.store || "-")}</td><td>${aman(s.wa || "-")}</td>
-              <td>${fmtKoin(s.coins || 0)}</td>
+              <td>${fmtKoin(s.stock ?? s.coins ?? 0)}</td>
               <td>${s.active ? '<span class="tag aktif">aktif</span>' : '<span class="tag blokir">nonaktif</span>'}</td>
-              <td><button class="aksi" data-selstok="${aman(s.uid)}">Stok</button> ·
+              <td><button class="aksi" data-selstok="${aman(s.uid)}" data-stok="${Number(s.stock ?? s.coins ?? 0)}">Stok</button> ·
                   <button class="aksi" data-selaktif="${aman(s.uid)}" data-nilai="${s.active ? 0 : 1}">${s.active ? "Nonaktifkan" : "Aktifkan"}</button> ·
                   <button class="aksi" data-seledit="${aman(s.uid)}">Edit</button> ·
                   <button class="aksi" data-selhapus="${aman(s.uid)}">Hapus</button></td>
@@ -2169,7 +2169,7 @@ async function gambarStaf() {
   // ---- seller ----
   const daftarSeller = seller || [];
   $("isiHal").querySelectorAll("[data-seledit]").forEach((b) => (b.onclick = () => formSeller(daftarSeller.find((x) => String(x.uid) === b.dataset.seledit))));
-  $("isiHal").querySelectorAll("[data-selstok]").forEach((b) => (b.onclick = () => formStokSeller(b.dataset.selstok)));
+  $("isiHal").querySelectorAll("[data-selstok]").forEach((b) => (b.onclick = () => formStokSeller(b.dataset.selstok, Number(b.dataset.stok || 0))));
   $("isiHal").querySelectorAll("[data-selhapus]").forEach((b) => (b.onclick = async () => {
     if (!confirm("Hapus seller ini dari daftar dompet?")) return;
     try { await walletAdmin({ op: "seller_del", uid: b.dataset.selhapus }); catatLog("Hapus seller", b.dataset.selhapus); toast("Seller dihapus"); gambarStaf(); }
@@ -2226,8 +2226,9 @@ function formSeller(s) {
 }
 
 /** Tambah atau potong stok coin seller. */
-function formStokSeller(uid) {
+function formStokSeller(uid, stokSekarang) {
   modal("Stok coin seller", `
+    <div class="catatan" style="margin-bottom:10px">Stok coin sekarang: <b>${fmtKoin(Number(stokSekarang || 0))}</b> coin</div>
     <div class="isian"><label>Jumlah coin</label><input id="stokNilai" type="number" value="100000"></div>
     <div class="filter" style="margin-top:12px">
       <div class="pil on" data-mode="add">Tambah stok</div>

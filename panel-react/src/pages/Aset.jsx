@@ -51,7 +51,17 @@ export default function Aset({ awal = "frame" }) {
         if (sn.exists()) sn.forEach((c) => simpan(c.val() || {}, c.key));
       } catch (e) { /* tetap pakai Firestore */ }
     }
-    const semua = [...peta.values()];
+    // Nilai dari database bisa berbentuk apa saja (objek/array dari panel lama).
+    // Paksa kolom yang ditampilkan menjadi teks atau angka supaya tidak crash.
+    const teks = (v) => (typeof v === "string" || typeof v === "number" ? v : "");
+    const semua = [...peta.values()].map((x) => ({
+      ...x,
+      id: String(x.id ?? ""),
+      name: teks(x.name),
+      kind: teks(x.kind),
+      url: typeof x.url === "string" ? x.url : "",
+      slot: typeof x.slot === "string" ? x.slot : "",
+    }));
     setDaftar(semua
       .filter((x) => String(x.slot || "") === slot)
       .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0)

@@ -4904,8 +4904,34 @@ async function admin(env, body) {
       await tulisRtdbSa(env, `uidCustom/${nomorUnik}`, { uid: uidI, itemId: "sx_" + itemI, at: Date.now() });
       await tulisRtdbSa(env, `uidAliasOf/${uidI}`, nomorUnik);
     }
+    // Langsung pasang di akun penerima (opsional). Lencana bisa banyak, jadi
+    // ditambahkan ke daftar; slot lain cukup diisi satu id.
+    const slotPakai = String(p.pakai ?? "").trim().toLowerCase();
+    let dipasang = "";
+    if (slotPakai) {
+      const idPasang = "sx_" + itemI;
+      try {
+        const w1 = await pastikan(env, uidI);
+        const eq = { ...(w1.equip ?? {}) };
+        if (slotPakai === "badge") {
+          const lama = String(eq.badge ?? "").split(",").map((x) => x.trim()).filter(Boolean);
+          if (!lama.includes(idPasang)) lama.push(idPasang);
+          eq.badge = lama.join(",");
+        } else {
+          eq[slotPakai] = idPasang;
+        }
+        await pipe(env, [{
+          sql: "update wallets set equip = ?, updated_at = ? where uid = ?",
+          args: [T(JSON.stringify(eq)), I(Date.now()), T(uidI)],
+        }]);
+        dipasang = slotPakai;
+      } catch (e) {
+        // Item tetap terkirim walau pemasangan otomatis gagal.
+        dipasang = "";
+      }
+    }
     try { await catatReset(env, "kirim_item", uid, uidI + " " + itemI + " " + hariI + "h"); } catch { /* log opsional */ }
-    return json({ ok: 1, uid: uidI, item: itemI, hari: hariI, sampai: sampaiI, idUnik: nomorUnik || undefined });
+    return json({ ok: 1, uid: uidI, item: itemI, hari: hariI, sampai: sampaiI, dipasang: dipasang || undefined, idUnik: nomorUnik || undefined });
   }
 
   // Panel: reset coin (dan diamond kalau gem) untuk satu user / semua user.

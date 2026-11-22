@@ -23,6 +23,8 @@ import Kirim from "./pages/Kirim.jsx";
 import Aset from "./pages/Aset.jsx";
 import Vip from "./pages/Vip.jsx";
 import Penahan from "./Penahan.jsx";
+import Roket from "./pages/Roket.jsx";
+import Reward from "./pages/Reward.jsx";
 import { ALAT } from "./alat.js";
 import Belum from "./pages/Belum.jsx";
 import { Toast } from "./ui.jsx";
@@ -76,12 +78,12 @@ const HALAMAN = {
   bet: alat("bet"),
   greedy: alat("greedy"),
   fruit: alat("fruit"),
-  roket: alat("roket"),
+  roket: () => <Roket />,
   family: alat("family"),
   vipharga: () => <Vip />,
   vip: () => <Vip />,
   cashback: alat("cashback"),
-  reward: alat("reward"),
+  reward: () => <Reward />,
   cs: daftar("Customer Service", "customerService", "Pesan dan keluhan yang masuk dari aplikasi."),
   laporan: daftar("Laporan user", "reports", "Laporan dari pengguna: saring isinya, hapus bila sudah selesai."),
   cekin: daftar("Plan history (cek in)", "checkIn", "Catatan cek in harian pengguna VIP."),

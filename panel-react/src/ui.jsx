@@ -107,6 +107,16 @@ export const Rangka = ({ baris = 6 }) => (
 );
 
 /** Tabel dengan kepala melekat saat digulir dan pengurutan lewat klik judul. */
+/** Nilai sel yang bukan elemen React (objek/array dari database) diubah jadi teks,
+ *  karena React menolak merender objek biasa dan seluruh layar jadi hitam. */
+function amanSel(v) {
+  if (v === null || v === undefined || typeof v === "boolean") return "";
+  if (typeof v === "string" || typeof v === "number") return v;
+  if (typeof v === "object" && v.$$typeof) return v; // elemen React
+  if (Array.isArray(v)) return v.map((x) => (typeof x === "object" && x && !x.$$typeof ? "" : x)).join(", ");
+  try { return JSON.stringify(v).slice(0, 80); } catch (e) { return ""; }
+}
+
 export function Tabel({ kolom: kolomMentah, baris, urut, onUrut, kosong = "Tidak ada data." }) {
   const [kunci, arah] = urut || [null, 1];
   // Dua bentuk kolom diterima: {kunci, label, sel} dan bentuk ringkas {k, t}
@@ -135,7 +145,7 @@ export function Tabel({ kolom: kolomMentah, baris, urut, onUrut, kosong = "Tidak
         </thead>
         <tbody>
           {baris.map((b, i) => (
-            <tr key={b.__kunci ?? i}>{kolom.map((k) => <td key={k.kunci}>{k.sel(b)}</td>)}</tr>
+            <tr key={b.__kunci ?? i}>{kolom.map((k) => <td key={k.kunci}>{amanSel(k.sel(b))}</td>)}</tr>
           ))}
         </tbody>
       </table>

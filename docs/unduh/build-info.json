@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.330",
-  "catatan": "• Room ringan seperti aplikasi pembanding\n• Suara: hilangkan gema antar peserta",
-  "ukuran_apk": 74360263,
-  "sha256_apk": "1e1b070561d0e8995f4f080f995af9fb4a9be60f96a2b1d85d68236381e9a5b9",
+  "versi": "1.0.331",
+  "catatan": "• Room ringan, masuk room paralel, dan gift mp4 tampil\n• Room ringan seperti aplikasi pembanding",
+  "ukuran_apk": 74362093,
+  "sha256_apk": "ac0552737aad99f20eba5bb54e2643f71dfb83123a3264b18001acef3be1bbc0",
   "abis": {
     "arm64": {
-      "ukuran": 74360263,
-      "sha256": "1e1b070561d0e8995f4f080f995af9fb4a9be60f96a2b1d85d68236381e9a5b9"
+      "ukuran": 74362093,
+      "sha256": "ac0552737aad99f20eba5bb54e2643f71dfb83123a3264b18001acef3be1bbc0"
     },
     "armv7": {
-      "ukuran": 72594778,
-      "sha256": "35b3e1c17fedf884a6210d0df0f888833b12000b6a2319b96407a3dcd7baff71"
+      "ukuran": 72596597,
+      "sha256": "6169c73416568a76bc26eaf65bf10e43c5679b4dd1c4a73fc4985ae46aa1d8ef"
     },
     "universal": {
-      "ukuran": 122214232,
-      "sha256": "1029f8a386d7fc8e532b15a22e339398739c8f736f3f926daa7201c20630fde3"
+      "ukuran": 122216054,
+      "sha256": "11ef386e5026853103145b3c902de111336021ef601b42485b8bbd93fcf9696f"
     }
   }
 }

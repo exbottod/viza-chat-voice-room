@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.353",
-  "catatan": "• vps: cetak galat dompet terbaru lengkap untuk melihat nilai aud\n• vps: ringkasan galat dompet per aksi + galat equip/beli item",
-  "ukuran_apk": 74377104,
-  "sha256_apk": "5e4f803e7689af7bbbffb8937d836963a025e4d039fcf1ef478fa35b9a454334",
+  "versi": "1.0.354",
+  "catatan": "• buka aplikasi selalu mendarat di beranda, room terakhir hanya saat kembali dari latar belakang\n• dompet: tolak lagi token project raps-star (project milik orang lain)",
+  "ukuran_apk": 74377270,
+  "sha256_apk": "61e9ff39d97a8b8be2e1df080169cb3c0a1767da0525e3a7c8f97b7f3cdafd12",
   "abis": {
     "arm64": {
-      "ukuran": 74377104,
-      "sha256": "5e4f803e7689af7bbbffb8937d836963a025e4d039fcf1ef478fa35b9a454334"
+      "ukuran": 74377270,
+      "sha256": "61e9ff39d97a8b8be2e1df080169cb3c0a1767da0525e3a7c8f97b7f3cdafd12"
     },
     "armv7": {
-      "ukuran": 72611611,
-      "sha256": "133f587ab3040635d6d562a30eb3750575af0195efa1b5e147b3d3184603ed70"
+      "ukuran": 72611782,
+      "sha256": "f78c66b51e3acee70652582e46b1db70f3a780b2fed97087450d9f0598e7e38c"
     },
     "universal": {
-      "ukuran": 122231070,
-      "sha256": "270d0aa7113b541fe8a5337448aae163ea63617cd9839dc776432d74abb92a46"
+      "ukuran": 122231239,
+      "sha256": "a62943974796e6bf0f8a577e56f46bae1f56c76ea06cd47be17847e24d58e81e"
     }
   }
 }

@@ -1,2 +1,2 @@
-• vps: cetak galat dompet terbaru lengkap untuk melihat nilai aud
-• vps: ringkasan galat dompet per aksi + galat equip/beli item
+• buka aplikasi selalu mendarat di beranda, room terakhir hanya saat kembali dari latar belakang
+• dompet: tolak lagi token project raps-star (project milik orang lain)

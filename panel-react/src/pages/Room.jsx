@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useKoleksi, rupiah, catatLog, ambilRtdb, tulisRtdb, hapusDokumen } from "../data.js";
+import { useKoleksi, rupiah, catatLog, ambilRtdb, tulisRtdb, hapusDokumen, teks } from "../data.js";
 import { Kartu, Panel, Tag, Kosong, Cari, Konfirmasi, Tabel, Rangka, toast, pakaiUrut } from "../ui.jsx";
 import { walletAdmin } from "../dompet.js";
 
@@ -39,8 +39,8 @@ export default function Room() {
   const daftarRoom = useMemo(() => {
     const k = kata.trim().toLowerCase();
     return rooms.isi
-      .map((r) => ({ __kunci: r.id, id: r.id, nama: r.name || r.title || "(tanpa nama)", pemilik: r.ownerUid || "", locked: !!r.locked }))
-      .filter((r) => !k || r.nama.toLowerCase().includes(k) || r.id.toLowerCase().includes(k));
+      .map((r) => ({ __kunci: r.id, id: r.id, nama: teks(r.name) || teks(r.title) || "(tanpa nama)", pemilik: r.ownerUid || "", locked: !!r.locked }))
+      .filter((r) => !k || r.nama.toLowerCase().includes(k) || String(r.id).toLowerCase().includes(k));
   }, [rooms.isi, kata]);
 
   const [urutParty, urutP, klikP] = pakaiUrut(daftarParty);

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useKoleksi, rupiah, waktu } from "../data.js";
+import { useKoleksi, rupiah, waktu, teks } from "../data.js";
 
 /** Grafik batang tanpa pustaka luar, warnanya mengikuti tema panel acuan. */
 function Grafik({ sumber, hari, satuan }) {
@@ -131,7 +131,7 @@ export default function Dashboard() {
             <tbody>
               {rooms.isi.slice(0, 8).map((r) => (
                 <tr key={r.id}>
-                  <td>{r.name || r.title || r.id}</td>
+                  <td>{teks(r.name) || teks(r.title) || teks(r.id)}</td>
                   <td>{String(r.ownerUid || "").slice(0, 10)}…</td>
                   <td>{r.locked ? <span className="tag blokir">terkunci</span> : <span className="tag aktif">terbuka</span>}</td>
                 </tr>

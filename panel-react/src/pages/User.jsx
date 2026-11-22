@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useKoleksi, rupiah, waktu, catatLog, hapusDokumen, tulisDokumen, ambilDokumen } from "../data.js";
+import { useKoleksi, rupiah, waktu, catatLog, hapusDokumen, tulisDokumen, ambilDokumen, teks } from "../data.js";
 import { Kartu, Panel, Pil, Tag, Kosong, Cari, Laci, Konfirmasi, Tabel, Rangka, toast, pakaiUrut } from "../ui.jsx";
 import { auth } from "../firebase.js";
 
@@ -22,8 +22,8 @@ export default function User() {
         const uid = u.uid || u.id;
         return {
           __kunci: uid,
-          uid,
-          nama: u.name || u.nama || "(tanpa nama)",
+          uid: String(uid ?? ""),
+          nama: teks(u.name) || teks(u.nama) || "(tanpa nama)",
           foto: u.avatar || u.photo || "",
           vip: Number(u.vip || 0),
           koin: Number(u.coins ?? u.coin ?? 0),

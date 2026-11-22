@@ -57,6 +57,11 @@ export function useDokumen(koleksi, id) {
   return isi;
 }
 
+/** Paksa nilai dari database menjadi teks. Nilai berbentuk objek/array (sisa
+ *  data panel lama) dijadikan kosong supaya tidak membuat React error dan layar
+ *  panel jadi hitam. */
+export const teks = (v) => (v === null || v === undefined ? "" : typeof v === "string" ? v : typeof v === "number" || typeof v === "boolean" ? String(v) : "");
+
 export const rupiah = (n) => new Intl.NumberFormat("id-ID").format(Number(n) || 0);
 export const waktu = (ts) => {
   if (!ts) return "—";

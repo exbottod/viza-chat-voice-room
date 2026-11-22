@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useKoleksi, rupiah, catatLog, hapusDokumen } from "../data.js";
+import { useKoleksi, rupiah, catatLog, hapusDokumen, teks } from "../data.js";
 import { Kartu, Panel, Pil, Tag, Kosong, Cari, Konfirmasi, Tabel, Rangka, toast, pakaiUrut } from "../ui.jsx";
 
 export default function Gift() {
@@ -15,12 +15,12 @@ export default function Gift() {
       .map((g) => ({
         __kunci: g.id,
         id: g.id,
-        nama: g.name || g.id,
+        nama: teks(g.name) || String(g.id ?? ""),
         ikon: g.icon || "",
         emoji: g.emoji || "🎁",
         harga: Number(g.price || 0),
-        media: g.mediaUrl || "",
-        tipe: g.mediaType || "",
+        media: teks(g.mediaUrl),
+        tipe: teks(g.mediaType),
         cashback: !!g.cashback,
         special: !!g.special,
         rocket: !!g.rocket,
@@ -94,7 +94,7 @@ export default function Gift() {
     },
   ];
 
-  const video = gifts.isi.filter((g) => /mp4|video/i.test(g.mediaType || "") || /\.mp4$/i.test(g.mediaUrl || "")).length;
+  const video = gifts.isi.filter((g) => /mp4|video/i.test(teks(g.mediaType)) || /\.mp4$/i.test(teks(g.mediaUrl))).length;
 
   return (
     <>

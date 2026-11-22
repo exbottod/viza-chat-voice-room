@@ -820,7 +820,7 @@ object RoomRepo {
             // semua orang setiap ada perubahan kursi, jadi foto penuh membuat
             // masuk room terasa berat.
             val avatar = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-                ProfileRepo.avatarKecil(avatarB64?.takeIf { it.isNotBlank() } ?: UserCache.peek(uid)?.avatarB64)
+                ProfileRepo.avatarKecil(avatarB64?.takeIf { it.isNotBlank() } ?: UserCache.peek(uid)?.avatarB64, 128)
             }
             // Menulis seluruh node seats kena "Permission denied": aturan database
             // hanya mengizinkan menulis kursi milik sendiri. Jadi kursi baru
@@ -1039,7 +1039,7 @@ object RoomRepo {
             }
             if (upd.isNotEmpty()) base.updateChildren(upd).await()
             val avatar = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-                ProfileRepo.avatarKecil(avatarB64?.takeIf { it.isNotBlank() } ?: UserCache.peek(uid)?.avatarB64)
+                ProfileRepo.avatarKecil(avatarB64?.takeIf { it.isNotBlank() } ?: UserCache.peek(uid)?.avatarB64, 128)
             }
             Rtdb.ref("seats/$roomId/$index").setValue(
                 hashMapOf<String, Any?>("uid" to uid, "name" to name, "avatarB64" to avatar, "muted" to false),

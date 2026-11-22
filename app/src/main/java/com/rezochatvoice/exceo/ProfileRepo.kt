@@ -273,6 +273,34 @@ object ProfileRepo {
     }
 
     /**
+     * Avatar versi kecil untuk dipakai DI DALAM room: kursi mic, baris chat,
+     * daftar gift, daftar tamu. Ukurannya mengikuti ukuran tampil di layar
+     * (mis. kursi mic 64dp -> sekitar 170 px), bukan ukuran foto asli.
+     * Tanpa ini, sepuluh kursi plus puluhan baris chat memegang bitmap besar
+     * sekaligus dan room terasa berat. Layar profil tetap memakai foto asli.
+     */
+    private val avatarKecilCache = object : android.util.LruCache<String, ImageBitmap>(160) {}
+
+    private fun kunciKecil(b64: String, px: Int): String = px.toString() + "|" + kunciAvatar(b64)
+
+    fun avatarKecilCached(b64: String?, px: Int): ImageBitmap? {
+        if (b64.isNullOrBlank()) return null
+        return avatarKecilCache.get(kunciKecil(b64, px.coerceIn(48, 256)))
+    }
+
+    suspend fun decodeAvatarKecil(b64: String?, px: Int): ImageBitmap? {
+        if (b64.isNullOrBlank()) return null
+        val sisi = px.coerceIn(48, 256)
+        val kunci = kunciKecil(b64, sisi)
+        avatarKecilCache.get(kunci)?.let { return it }
+        val bmp = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            decodeB64Scaled(b64, sisi)
+        }
+        if (bmp != null) avatarKecilCache.put(kunci, bmp)
+        return bmp
+    }
+
+    /**
      * Baca gambar dari galeri, perbaiki rotasi, (opsional) crop persegi,
      * perkecil, lalu jadikan JPEG base64 supaya muat di dokumen Firestore (<1MB).
      */

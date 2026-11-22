@@ -460,10 +460,16 @@ fun PublicAvatar(u: PublicUser?, size: Dp, fallback: String = "?", modifier: Mod
     // Foto dibaca dari cache bitmap dulu (tanpa decode); kalau belum ada,
     // didekode di thread IO. Dulu setiap baris mendekode base64 di thread UI.
     val b64 = u?.avatarB64
+    // Foto didekode seukuran yang benar-benar dipakai di layar (mis. 40dp untuk
+    // baris chat), bukan ukuran foto asli. Di room isinya puluhan foto, jadi
+    // bitmap besar sekaligus membuat layar berat.
+    val pxFoto = with(androidx.compose.ui.platform.LocalDensity.current) { size.toPx().toInt() }
+        .coerceIn(48, 256)
     val bmp by androidx.compose.runtime.produceState<androidx.compose.ui.graphics.ImageBitmap?>(
-        initialValue = ProfileRepo.avatarCached(b64),
+        initialValue = ProfileRepo.avatarKecilCached(b64, pxFoto),
         key1 = b64,
-    ) { value = ProfileRepo.decodeAvatar(b64) ?: value }
+        key2 = pxFoto,
+    ) { value = ProfileRepo.decodeAvatarKecil(b64, pxFoto) ?: value }
     val base = modifier.size(size).clip(CircleShape)
     val bmpTampil = bmp
     when {

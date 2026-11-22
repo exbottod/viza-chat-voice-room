@@ -1962,10 +1962,16 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
     // yang tampil hanya huruf awal nama. Pakai foto dari cache profil sebagai
     // cadangan supaya kursi selalu ada fotonya.
     val fotoKursi = seat?.avatarB64?.takeIf { it.isNotBlank() } ?: seatUser?.avatarB64
+    // Foto kursi didekode seukuran kursinya (64dp -> sekitar 170 px), bukan
+    // seukuran foto asli. Sepuluh kursi berfoto besar sekaligus inilah yang
+    // membuat layar room berat.
+    val pxKursi = with(androidx.compose.ui.platform.LocalDensity.current) { size.toPx().toInt() }
+        .coerceIn(96, 256)
     val bmp by androidx.compose.runtime.produceState<ImageBitmap?>(
-        initialValue = ProfileRepo.avatarCached(fotoKursi),
+        initialValue = ProfileRepo.avatarKecilCached(fotoKursi, pxKursi),
         key1 = fotoKursi,
-    ) { value = ProfileRepo.decodeAvatar(fotoKursi) }
+        key2 = pxKursi,
+    ) { value = ProfileRepo.decodeAvatarKecil(fotoKursi, pxKursi) }
     // Pindah kursi tidak boleh memuat ulang profil: data yang sudah ada dipakai,
     // server hanya dipanggil kalau user ini belum dikenal, dan hasilnya masuk ke
     // penampung bersama tanpa mengosongkan tampilan.
@@ -2217,9 +2223,9 @@ private fun RmSeatProfile(
         ?: ProfilRoom.ambil(seat.uid)?.avatarB64
         ?: UserCache.peek(seat.uid)?.avatarB64
     val bmp by androidx.compose.runtime.produceState<ImageBitmap?>(
-        initialValue = ProfileRepo.avatarCached(fotoProfil),
+        initialValue = ProfileRepo.avatarKecilCached(fotoProfil, 320),
         key1 = fotoProfil,
-    ) { value = ProfileRepo.decodeAvatar(fotoProfil) ?: value }
+    ) { value = ProfileRepo.decodeAvatarKecil(fotoProfil, 320) ?: value }
     val actions = LocalActions.current
     var counts by remember(seat.uid) { mutableStateOf(0L to 0L) }
     LaunchedEffect(seat.uid) {

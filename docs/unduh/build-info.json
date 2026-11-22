@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.334",
-  "catatan": "• Kembali dari WhatsApp tidak memuat ulang room\n• Room tidak memuat ulang setelah keluar dari game",
-  "ukuran_apk": 74371371,
-  "sha256_apk": "362f282b9c03d9b0b127e402a02f599248751af7edddf7794cff62d6dcbd77a1",
+  "versi": "1.0.335",
+  "catatan": "• Level room tidak pernah kembali ke awal",
+  "ukuran_apk": 74372314,
+  "sha256_apk": "14c84804b93471f46ee50e0b52b38792f272179506ce9becde37ddd83051a0c3",
   "abis": {
     "arm64": {
-      "ukuran": 74371371,
-      "sha256": "362f282b9c03d9b0b127e402a02f599248751af7edddf7794cff62d6dcbd77a1"
+      "ukuran": 74372314,
+      "sha256": "14c84804b93471f46ee50e0b52b38792f272179506ce9becde37ddd83051a0c3"
     },
     "armv7": {
-      "ukuran": 72605884,
-      "sha256": "4987a2436b8afbc6e1eda9a34fee44846e5817f834627b1e6c51a18781ca724a"
+      "ukuran": 72606820,
+      "sha256": "9f09d4ef5cc909fafbf91c644e5d60dc51faad7d131f5b18cb8dd72bca155d96"
     },
     "universal": {
-      "ukuran": 122225339,
-      "sha256": "2f62bd07875f148bc284de281b11cfbfe0304793b2e06661e81b0e8dab4ae2a3"
+      "ukuran": 122226282,
+      "sha256": "c1777a4a1103382e526d0da3323a86cb32a5583bc39d2ddf85360b8167c42022"
     }
   }
 }

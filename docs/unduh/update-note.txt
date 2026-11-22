@@ -1,2 +1,1 @@
-• Kembali dari WhatsApp tidak memuat ulang room
-• Room tidak memuat ulang setelah keluar dari game
+• Level room tidak pernah kembali ke awal

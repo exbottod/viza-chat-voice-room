@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.318",
-  "catatan": "• Profil orang lain: satu ketukan pada foto membuka foto penuh 1:1.\n• Tombol kirim gift langsung aktif setelah dompet terpotong.\n• Pesan gift, undian cashback, poin mic, dan ranking dicatat di belakang.\n• Skor PK dan poin kamar tidak lagi menahan tombol kirim.",
-  "ukuran_apk": 74348896,
-  "sha256_apk": "6a4c60231f3c01e6b40e347af2d1162a21e021ae2d00dc944d1ce65702818b16",
+  "versi": "1.0.319",
+  "catatan": "• Script cek sesi dompet Viza (401)\n• Script pasang Caddyfile Viza (viza -> 8080, panel, livekit, vender)",
+  "ukuran_apk": 74348901,
+  "sha256_apk": "84eb5599c342d09f63350fa6a194181200c363287665f3c06f625e6b0528b3a3",
   "abis": {
     "arm64": {
-      "ukuran": 74348896,
-      "sha256": "6a4c60231f3c01e6b40e347af2d1162a21e021ae2d00dc944d1ce65702818b16"
+      "ukuran": 74348901,
+      "sha256": "84eb5599c342d09f63350fa6a194181200c363287665f3c06f625e6b0528b3a3"
     },
     "armv7": {
-      "ukuran": 72583407,
-      "sha256": "acce8b85802aac70deaef72a13f7d8644772bf110917b17bfc077fe70b33425e"
+      "ukuran": 72583406,
+      "sha256": "4f55d81da70c88a1f77974a92ba2a363d25bc9a92d77908964731bc2cee35ef2"
     },
     "universal": {
       "ukuran": 122202859,
-      "sha256": "df3832529fd86868154929785030c3e4c0c21b7b8724ec07f561ad489c16a258"
+      "sha256": "59af62c91fd8e3cb5bcd8f57ac8978887484fc75f5b2ca62e667ab3257e7208e"
     }
   }
 }

@@ -1,4 +1,2 @@
-• Profil orang lain: satu ketukan pada foto membuka foto penuh 1:1.
-• Tombol kirim gift langsung aktif setelah dompet terpotong.
-• Pesan gift, undian cashback, poin mic, dan ranking dicatat di belakang.
-• Skor PK dan poin kamar tidak lagi menahan tombol kirim.
+• Script cek sesi dompet Viza (401)
+• Script pasang Caddyfile Viza (viza -> 8080, panel, livekit, vender)

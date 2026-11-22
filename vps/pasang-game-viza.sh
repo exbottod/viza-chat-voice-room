@@ -64,6 +64,6 @@ echo "Cek dari dalam VPS:"
 curl -s -o /dev/null -w "   /health              -> %{http_code}\n" --max-time 10 "http://127.0.0.1:$PORT/health"
 curl -s -o /dev/null -w "   index.html           -> %{http_code}\n" --max-time 10 "http://127.0.0.1:$PORT/game/html5-game/index.html"
 curl -s -o /dev/null -w "   game.js              -> %{http_code}\n" --max-time 20 "http://127.0.0.1:$PORT/game/html5-game/game.js"
-curl -s -o /dev/null -w "   assets/bikini/girl-0 -> %{http_code}\n" --max-time 20 "http://127.0.0.1:$PORT/game/html5-game/assets/bikini/girl-0.webp"
+curl -s -o /dev/null -w "   images/girl-0       -> %{http_code}\n" --max-time 20 "http://127.0.0.1:$PORT/game/html5-game/images/girl-0.webp"
 echo
 echo "Keempat baris di atas harus 200. Lalu buka https://$DOMAIN/game/html5-game/index.html"

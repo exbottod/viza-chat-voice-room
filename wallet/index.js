@@ -6952,6 +6952,38 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
       catch (e) { return json({ ok: 0, e: "Token suara gagal dibuat" }, 500); }
       return json({ ok: 1, token: tokenLk, url: alamatLk, exp: klaimLk.exp });
     }
+    // Token suara room lewat Agora. HP hanya menerima App ID dan token; App
+    // Certificate tidak pernah dikirim ke HP. Nilainya diambil dari lingkungan
+    // server, jadi ganti akun Agora cukup ganti isian di server tanpa rilis APK.
+    if (url.pathname.toLowerCase() === "/agora-token") {
+      const kepalaAg = req.headers.get("authorization") || "";
+      const idAg = kepalaAg.toLowerCase().startsWith("bearer ") ? kepalaAg.slice(7).trim() : "";
+      const uidAg = idAg ? await uidDariToken(idAg) : null;
+      if (!uidAg) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
+      const appIdAg = String(env.AGORA_APP_ID || "");
+      const certAg = String(env.AGORA_APP_CERTIFICATE || "");
+      if (!appIdAg || !certAg) return json({ ok: 0, e: "Agora belum diatur di server" }, 503);
+      let isiAg = {};
+      try { isiAg = await req.json(); } catch { isiAg = {}; }
+      const roomAg = (String(
+        isiAg.room || isiAg.channel || url.searchParams.get("room") || url.searchParams.get("channel") || "umum",
+      ).replace(/[^0-9A-Za-z_.:-]/g, "") || "umum").slice(0, 64);
+      // Agora memakai angka 32 bit sebagai uid. Angka ini dihitung dari uid
+      // login, jadi tetap sama tiap masuk room dan tidak bentrok antar pemain.
+      const nomorUid = (t) => { let h = 7; for (const c of t) h = (Math.imul(h, 31) + c.charCodeAt(0)) >>> 0; return (h % 2000000000) + 1; };
+      const diminta = Number(isiAg.uid || 0);
+      const uidAngka = Number.isFinite(diminta) && diminta > 0 && diminta < 4294967295 ? Math.floor(diminta) : nomorUid(uidAg);
+      let modAg = null;
+      try { modAg = await import("agora-token"); }
+      catch (e) { return json({ ok: 0, e: "Pustaka token Agora belum terpasang di server" }, 503); }
+      const pakAg = modAg.default ?? modAg;
+      let tokenAg = "";
+      try {
+        tokenAg = pakAg.RtcTokenBuilder.buildTokenWithUid(appIdAg, certAg, roomAg, uidAngka, pakAg.RtcRole.PUBLISHER, 21600, 21600);
+      } catch (e) { return json({ ok: 0, e: "Token suara gagal dibuat" }, 500); }
+      if (!tokenAg) return json({ ok: 0, e: "App ID atau App Certificate tidak sah" }, 500);
+      return json({ ok: 1, appId: appIdAg, token: tokenAg, channel: roomAg, uid: uidAngka, exp: Math.floor(Date.now() / 1000) + 21600 });
+    }
     if (url.pathname === "/health") {
       // Sekaligus buktikan database masih bisa dibaca.
       try {

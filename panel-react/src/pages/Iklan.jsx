@@ -41,7 +41,7 @@ export default function Iklan() {
   const simpan = async () => {
     setSibuk(true);
     try {
-      const out = await walletAdmin({ op: "cfg_set", nilai: {
+      const nilai = {
         iklanAktif: form.aktif ? "1" : "0",
         iklanCoin: String(Math.max(0, Math.trunc(Number(form.coin) || 0))),
         iklanMaxHari: String(Math.max(0, Math.trunc(Number(form.maxHari) || 0))),
@@ -50,10 +50,26 @@ export default function Iklan() {
         iklanGameId: String(form.gameId || "").trim(),
         iklanPlacement: String(form.placement || "").trim(),
         iklanUji: form.uji ? "1" : "0",
-      } });
-      if (Number(out?.ok) !== 1) throw new Error(out?.e || "Server menolak pengaturan iklan");
+      };
+      // Server lama hanya mengenal sebagian kunci. Bila satu kunci ditolak,
+      // kunci itu dibuang lalu sisanya dikirim ulang, supaya isian lain tetap
+      // tersimpan dan pemilik tahu kunci mana yang belum didukung server.
+      const ditolak = [];
+      for (let i = 0; i < 6; i++) {
+        const out = await walletAdmin({ op: "cfg_set", nilai });
+        if (Number(out?.ok) === 1) break;
+        const m = /Kunci tidak dikenal: (\w+)/.exec(String(out?.e || ""));
+        if (!m || !(m[1] in nilai)) throw new Error(out?.e || "Server menolak pengaturan iklan");
+        ditolak.push(m[1]);
+        delete nilai[m[1]];
+        if (!Object.keys(nilai).length) throw new Error("Server belum mendukung pengaturan iklan");
+      }
+      if (ditolak.length) {
+        toast("Tersimpan sebagian. Server belum mengenal: " + ditolak.join(", ") + ". Jalankan dompet.sh lalu simpan lagi.", true);
+      } else {
+        toast("Pengaturan iklan disimpan");
+      }
       await catatLog("Atur iklan coin gratis", (form.aktif ? "aktif" : "mati") + " · " + form.coin + " coin/iklan · " + form.maxHari + "x/hari");
-      toast("Pengaturan iklan disimpan");
       await muat();
     } catch (e) { toast("Gagal: " + (e.message || e), true); }
     finally { setSibuk(false); }

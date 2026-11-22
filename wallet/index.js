@@ -3433,6 +3433,7 @@ const CFG_KUNCI = new Set([
   "assetPackage", "assetSha256",
   // Iklan berhadiah untuk coin gratis: diatur dari panel, dibaca aplikasi.
   "iklanAktif", "iklanCoin", "iklanMaxHari", "iklanAdUnit", "iklanCooldown", "iklanUji",
+  "iklanGameId", "iklanPlacement",
 ]);
 let cfgCache = { at: 0, v: {} };
 

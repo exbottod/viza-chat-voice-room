@@ -1,1 +1,2 @@
+• panel: tombol tambah aset toko dinamai Tambah ke Store agar jelas beda dengan + Aset VIP
 • panel: tombol + Aset VIP di Aset & VIP (pilih tier VIP 1-9, unggah atau tautan, id vip_<tier>_<slot>

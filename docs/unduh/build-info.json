@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.360",
-  "catatan": "• panel: tombol + Aset VIP di Aset & VIP (pilih tier VIP 1-9, unggah atau tautan, id vip_<tier>_<slot>",
-  "ukuran_apk": 74378546,
-  "sha256_apk": "70e0b63b26ccefca96672e46f55a366b176cc41e7ca98e772dbdd6cdb3380e23",
+  "versi": "1.0.361",
+  "catatan": "• panel: tombol tambah aset toko dinamai Tambah ke Store agar jelas beda dengan + Aset VIP\n• panel: tombol + Aset VIP di Aset & VIP (pilih tier VIP 1-9, unggah atau tautan, id vip_<tier>_<slot>",
+  "ukuran_apk": 74378552,
+  "sha256_apk": "938d857da7bcc92617759bd41b76ced2893a810ca5f7de09b8caecebabe39fda",
   "abis": {
     "arm64": {
-      "ukuran": 74378546,
-      "sha256": "70e0b63b26ccefca96672e46f55a366b176cc41e7ca98e772dbdd6cdb3380e23"
+      "ukuran": 74378552,
+      "sha256": "938d857da7bcc92617759bd41b76ced2893a810ca5f7de09b8caecebabe39fda"
     },
     "armv7": {
-      "ukuran": 72613055,
-      "sha256": "694ed5a079a08970d8bbb96863a7eb8bed54151ada3e2bc02b9c77f05b85292d"
+      "ukuran": 72613070,
+      "sha256": "f44072b535af4f137bb17c8600a73f0d66c23369124e427cb7d43d57cc7bbaf7"
     },
     "universal": {
       "ukuran": 122232518,
-      "sha256": "40205b154c9ef4f21479d91292e03af0728e8c4837b5df10caa6d416f1754f68"
+      "sha256": "a90c6f671a8e05d223d9acd90948fdeb99732b8fb65adc750beb90b6a4c9fea1"
     }
   }
 }

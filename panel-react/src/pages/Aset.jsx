@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { get, ref } from "firebase/database";
+import { rtdb } from "../firebase.js";
 import { walletAdmin } from "../dompet.js";
-import { catatLog, rupiah } from "../data.js";
+import { ambilSemuaMentah, catatLog, rupiah } from "../data.js";
 import { kunciVip, hapusRtdbServer } from "../unggah.js";
 import { Konfirmasi, Kosong, Panel, Rangka, Tabel, Tag, toast } from "../ui.jsx";
 import TambahAset from "./TambahAset.jsx";
@@ -18,12 +20,30 @@ export default function Aset({ awal = "frame" }) {
   const [hapus, setHapus] = useState(null);
   const [sibuk, setSibuk] = useState(false);
 
+  /**
+   * Daftar aset dibaca dari DUA tempat, sama seperti aplikasi:
+   * Firestore vipConfig (warisan panel lama) dan RTDB vipCfg (yang dipakai
+   * aplikasi sekarang). Dulu halaman ini hanya membaca Firestore, sehingga
+   * aset yang diunggah lewat panel baru tampil kosong walau berkasnya ada.
+   */
   const muat = async () => {
     setDaftar(null);
+    const peta = new Map();
+    const simpan = (o, kunci) => {
+      const id = String(o.id || kunci || "");
+      if (!id) return;
+      peta.set(id, { ...(peta.get(id) || {}), ...o, id });
+    };
+    try { (await ambilSemuaMentah("vipConfig", 400)).forEach((d) => simpan(d, d.id)); } catch (e) { /* tanpa izin baca */ }
     try {
-      const out = await walletAdmin({ op: "fs_list", koleksi: "vipConfig", batas: 400 });
-      setDaftar((out.items || []).filter((x) => String(x.slot || "") === slot));
-    } catch (e) { setDaftar([]); }
+      const sn = await get(ref(rtdb, "vipCfg"));
+      if (sn.exists()) sn.forEach((c) => simpan(c.val() || {}, c.key));
+    } catch (e) { /* tetap pakai Firestore */ }
+    const semua = [...peta.values()];
+    setDaftar(semua
+      .filter((x) => String(x.slot || "") === slot)
+      .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0)
+        || String(a.name || "").localeCompare(String(b.name || ""))));
   };
   useEffect(() => { muat(); }, [slot]);
 
@@ -32,6 +52,20 @@ export default function Aset({ awal = "frame" }) {
     try {
       await walletAdmin({ op: "fs_del", koleksi: "vipConfig", id: hapus.id });
       await hapusRtdbServer("vipCfg/" + kunciVip(hapus.id)).catch(() => {});
+      // Anak RTDB lama bisa tersimpan dengan kunci lain (mis. id tanpa awalan),
+      // jadi cari juga yang ber-id sama supaya tidak muncul lagi setelah dihapus.
+      try {
+        const sn = await get(ref(rtdb, "vipCfg"));
+        if (sn.exists()) {
+          const tugas = [];
+          sn.forEach((c) => {
+            const v = c.val() || {};
+            if (c.key !== kunciVip(hapus.id) && String(v.id || "") !== String(hapus.id)) return;
+            tugas.push(hapusRtdbServer("vipCfg/" + c.key));
+          });
+          await Promise.all(tugas);
+        }
+      } catch (e) { /* diabaikan */ }
       await catatLog("Hapus aset", hapus.name || hapus.id);
       toast("Aset dihapus");
       setHapus(null);
@@ -53,9 +87,9 @@ export default function Aset({ awal = "frame" }) {
           : !daftar.length ? <Kosong>Belum ada {SLOT.find((s) => s[0] === slot)?.[1].toLowerCase()}. Tekan tombol tambah di kanan atas.</Kosong>
           : (
             <Tabel
-              kolom={[{ k: "name", t: "Nama" }, { k: "kind", t: "Jenis" }, { k: "price", t: "Harga" }, { k: "days", t: "Hari" }, { k: "order", t: "Urut" }, { k: "aksi", t: "" }]}
+              kolom={[{ k: "name", t: "Nama" }, { k: "tier", t: "Tier" }, { k: "kind", t: "Jenis" }, { k: "price", t: "Harga" }, { k: "days", t: "Hari" }, { k: "order", t: "Urut" }, { k: "aksi", t: "" }]}
               baris={daftar.map((x) => ({
-                name: x.name || x.id, kind: x.kind || "-",
+                name: x.name || x.id, tier: Number(x.n) ? "VIP " + Number(x.n) : "-", kind: x.kind || "-",
                 price: Number(x.price) ? rupiah(x.price) + " coin" : <Tag jenis="aktif">Gratis</Tag>,
                 days: Number(x.days) || "∞", order: Number(x.order) || 0,
                 aksi: <span style={{ display: "flex", gap: 10 }}>

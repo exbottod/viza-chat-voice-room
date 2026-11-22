@@ -165,7 +165,16 @@ button.polos {
 .panelAtas .filter { margin-left: 0; }
 .panelAtas { flex-wrap: wrap; }
 .panel, .panelIsi { min-width: 0; }
-.panelIsi .filter { display: flex; flex-wrap: nowrap; }
+.panelIsi .filter {
+  display: flex;
+  /* Tab aset (Bingkai, Lencana, Medali, Gelembung, Efek masuk, Banner) dulu
+     dipaksa satu baris sehingga tab terakhir terpotong dan tombolnya terlihat
+     tidak ada. Sekarang dibungkus ke baris berikutnya, dan tetap bisa digeser
+     ke samping bila layar sangat sempit. */
+  flex-wrap: wrap;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
 .pil.on { background: #2a2550; color: var(--ungu3); }
 table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
 th {

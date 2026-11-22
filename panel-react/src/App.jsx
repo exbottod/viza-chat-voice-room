@@ -21,6 +21,7 @@ import Staf from "./pages/Staf.jsx";
 import Daftar from "./pages/Daftar.jsx";
 import Kirim from "./pages/Kirim.jsx";
 import Aset from "./pages/Aset.jsx";
+import Vip from "./pages/Vip.jsx";
 import { ALAT } from "./alat.js";
 import Belum from "./pages/Belum.jsx";
 import { Toast } from "./ui.jsx";
@@ -45,7 +46,8 @@ const KETERANGAN = {
   fruit: "Chip bet dan RTP Crazy Fruit",
   roket: "Energi tiap level roket dan hadiah peringkat",
   family: "Harga membuat family dan rasio exp",
-  vipharga: "Harga VIP level 1 sampai 9",
+  vipharga: "Harga VIP level 1 sampai 9 dan medali tiap tier",
+  vip: "Harga VIP level 1 sampai 9 dan medali tiap tier",
   cashback: "Tingkatan cashback gift",
   reward: "Banner kemenangan room",
 };
@@ -75,7 +77,8 @@ const HALAMAN = {
   fruit: alat("fruit"),
   roket: alat("roket"),
   family: alat("family"),
-  vipharga: alat("vipharga"),
+  vipharga: () => <Vip />,
+  vip: () => <Vip />,
   cashback: alat("cashback"),
   reward: alat("reward"),
   cs: daftar("Customer Service", "customerService", "Pesan dan keluhan yang masuk dari aplikasi."),

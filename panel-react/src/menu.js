@@ -19,6 +19,7 @@ export const MENU = [
     grup: "FINANCIAL MANAGEMENT",
     isi: [
       ["vipharga", "workspace_premium", "Plan (harga VIP)"],
+      ["vip", "military_tech", "VIP & Medali"],
       ["cekin", "event_available", "Plan history (cek in)"],
       ["wallet", "account_balance_wallet", "Currency (coin & reset)"],
       ["cashback", "savings", "Cashback gift"],

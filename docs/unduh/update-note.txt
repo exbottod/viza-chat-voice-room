@@ -1,2 +1,2 @@
-• Nama akun peserta diambil lewat UserInfo keluaran, gelombang suara kembali tampil.
-• Jalur suara Agora lainnya tidak berubah.
+• Batas patch dinaikkan dari 40 ke 60 persen APK.
+• Berlaku hanya untuk lompatan besar, patch harian tetap kecil.

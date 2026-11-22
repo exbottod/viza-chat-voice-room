@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.310",
-  "catatan": "• Nama akun peserta diambil lewat UserInfo keluaran, gelombang suara kembali tampil.\n• Jalur suara Agora lainnya tidak berubah.",
-  "ukuran_apk": 74343864,
-  "sha256_apk": "946c3299d390fdfefc4f7b710e8575df98f73731aea76abbd7a9ad5811896db9",
+  "versi": "1.0.311",
+  "catatan": "• Batas patch dinaikkan dari 40 ke 60 persen APK.\n• Berlaku hanya untuk lompatan besar, patch harian tetap kecil.",
+  "ukuran_apk": 74343841,
+  "sha256_apk": "8b521b801a98fc55b451a2564295a63daf68d4337125111baf7be6874af34fae",
   "abis": {
     "arm64": {
-      "ukuran": 74343864,
-      "sha256": "946c3299d390fdfefc4f7b710e8575df98f73731aea76abbd7a9ad5811896db9"
+      "ukuran": 74343841,
+      "sha256": "8b521b801a98fc55b451a2564295a63daf68d4337125111baf7be6874af34fae"
     },
     "armv7": {
-      "ukuran": 72578371,
-      "sha256": "d279af48a7b583635d9b7e4d1d2b826f8c7fbb75fc048f23ab6085cce98d0684"
+      "ukuran": 72578358,
+      "sha256": "eaba67905675ea16a58a86ce8b86d59ed592124fd62a1400ef92feb42210ac9f"
     },
     "universal": {
-      "ukuran": 122197823,
-      "sha256": "7a0bea00f5c599775770a1412900c68091c7a1bc09d18d3d64539054af3d5438"
+      "ukuran": 122197804,
+      "sha256": "ab50062650e0f090611b8749bf68c51d54c7e8a4633e75d3dc5f952d9e788c56"
     }
   }
 }

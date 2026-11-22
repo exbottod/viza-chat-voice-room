@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.346",
   "catatan": "• Perbaiki aplikasi macet/terpental saat masuk room: layanan penjaga room bukan tipe microphone",
-  "ukuran_apk": 74377108,
-  "sha256_apk": "569441dcbf88d81ddc0770096141ee9cba2d23ad8392528c5d2d16ec5887d106",
+  "ukuran_apk": 74377105,
+  "sha256_apk": "eaeb50fcf87525bb3f7930dd48dae63e5216e447cd869bac1dbbd4f924229ade",
   "abis": {
     "arm64": {
-      "ukuran": 74377108,
-      "sha256": "569441dcbf88d81ddc0770096141ee9cba2d23ad8392528c5d2d16ec5887d106"
+      "ukuran": 74377105,
+      "sha256": "eaeb50fcf87525bb3f7930dd48dae63e5216e447cd869bac1dbbd4f924229ade"
     },
     "armv7": {
-      "ukuran": 72611631,
-      "sha256": "4ecde965361ba2614d769b3d2549a9eac5abeea410746e31731b18e8fa23f04e"
+      "ukuran": 72611626,
+      "sha256": "cf6f3ecf7807fe123b37c4601ee689f43a3ed7cb06b439a9ed627da70685bfdd"
     },
     "universal": {
-      "ukuran": 122231075,
-      "sha256": "b48f9bc8d68c9a37ef3f1d60c3eecab6c9879231b80a184f67f1aaeb61f089ea"
+      "ukuran": 122231067,
+      "sha256": "2db00a6fa4ce7a228a7512b2da31f7d5afa66013ad11c003e6a4d57d94703417"
     }
   }
 }

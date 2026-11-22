@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.359",
   "catatan": "• panel: form Kirim ke user bisa unggah berkas atau tautan untuk lencana/bingkai/medali dll, opsi lang\n• panel: Tabel menerima kolom {k,t} dan {kunci,label,sel}; Seller/Staf/Wallet/Admin panel tidak lagi l",
-  "ukuran_apk": 74378558,
-  "sha256_apk": "3c5090143f7385c4f3d32860b256184bce1bc56ab41cb8b57adf70d6c89645eb",
+  "ukuran_apk": 74378563,
+  "sha256_apk": "4ca1e7261a221b42a73ca34ae802b890d379c2a43cb5b42f2c220bdf8d20ec25",
   "abis": {
     "arm64": {
-      "ukuran": 74378558,
-      "sha256": "3c5090143f7385c4f3d32860b256184bce1bc56ab41cb8b57adf70d6c89645eb"
+      "ukuran": 74378563,
+      "sha256": "4ca1e7261a221b42a73ca34ae802b890d379c2a43cb5b42f2c220bdf8d20ec25"
     },
     "armv7": {
-      "ukuran": 72613063,
-      "sha256": "92e54d3cd6b4ddf407d397bc02c8caaef9413826228b034b2b27523a805f0659"
+      "ukuran": 72613064,
+      "sha256": "586c8ec7a9f17c5834480bbf1f5302f93bb7ba37aab331f15f19f4905b91ad7f"
     },
     "universal": {
-      "ukuran": 122232517,
-      "sha256": "61161b818008e214f41d09c4fa3faef3ae97c0ed6c2c23ac4072e61cdf32e82d"
+      "ukuran": 122232516,
+      "sha256": "0f37895894b91f7012e4ab8850b3b6146a650ca329de680fc09871b1db33a856"
     }
   }
 }

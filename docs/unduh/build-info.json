@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.371",
-  "catatan": "• panel User: tampilkan ID angka (id dokumen userIds) dan foto profil dari users/{uid}.photoUrl, koin ",
-  "ukuran_apk": 74378550,
-  "sha256_apk": "dc08d65eb03387894a27e6fc0de5c164871897850f2d8428fa638b75d507745a",
+  "versi": "1.0.372",
+  "catatan": "• panel: tab Coin Seller diganti STAF APP dengan sheet Coin seller/Manager/Admin; halaman Manager & Ad\n• panel User: tampilkan ID angka (id dokumen userIds) dan foto profil dari users/{uid}.photoUrl, koin ",
+  "ukuran_apk": 74378546,
+  "sha256_apk": "083b013eba97edfa4149d77d662115576ba45d907d66b0c1ce3504d70ff3deba",
   "abis": {
     "arm64": {
-      "ukuran": 74378550,
-      "sha256": "dc08d65eb03387894a27e6fc0de5c164871897850f2d8428fa638b75d507745a"
+      "ukuran": 74378546,
+      "sha256": "083b013eba97edfa4149d77d662115576ba45d907d66b0c1ce3504d70ff3deba"
     },
     "armv7": {
-      "ukuran": 72613055,
-      "sha256": "f2eac71bc4fb1885d5a755b391781f0c19475f670a5ef82056dfeb4fd8060bed"
+      "ukuran": 72613061,
+      "sha256": "20a8c539ea68672bc386b45a633c2f9f7dda5875b51e5cc07b64292d8f7bf8d5"
     },
     "universal": {
-      "ukuran": 122232515,
-      "sha256": "f5e55ef41cda8498c0a988914151ffe0e65c46bac42c907c209435967f08dd6a"
+      "ukuran": 122232524,
+      "sha256": "a411ca2cd27130c4d42c98c5b14c3278f151df11c7aa989873e34c280dee2315"
     }
   }
 }

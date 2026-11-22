@@ -4,7 +4,8 @@ import { unggahBerkas, tulisRtdbServer, kunciVip } from "../unggah.js";
 import { catatLog } from "../data.js";
 import { Laci, toast } from "../ui.jsx";
 
-const KOSONG = { nama: "", urut: "0", harga: "0", hari: "0", mode: "berkas", url: "", berkas: null };
+const KOSONG = { nama: "", urut: "0", harga: "0", hari: "0", mode: "berkas", url: "", berkas: null, tier: "1" };
+const TIER = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 /**
  * Form tambah aset (emote, frame, medal, lencana, gelembung, efek masuk,
@@ -12,7 +13,7 @@ const KOSONG = { nama: "", urut: "0", harga: "0", hari: "0", mode: "berkas", url
  * catatannya ditulis ke Firestore dan RTDB lewat akun layanan, jadi aplikasi
  * langsung membacanya tanpa build ulang.
  */
-export default function TambahAset({ buka, slot, judul, onTutup, onSelesai }) {
+export default function TambahAset({ buka, slot, judul, vip = false, ganti = null, onTutup, onSelesai }) {
   const [form, setForm] = useState(KOSONG);
   const [sibuk, setSibuk] = useState(false);
   const [progres, setProgres] = useState("");
@@ -27,8 +28,23 @@ export default function TambahAset({ buka, slot, judul, onTutup, onSelesai }) {
   };
 
   useEffect(() => {
-    if (buka) { setForm(KOSONG); setProgres(""); lepasPratinjau(); }
-  }, [buka]);
+    if (!buka) return;
+    setProgres(""); lepasPratinjau();
+    if (ganti) {
+      setForm({
+        ...KOSONG,
+        nama: String(ganti.name || ganti.id || ""),
+        urut: String(Number(ganti.order) || 0),
+        harga: String(Number(ganti.price) || 0),
+        hari: String(Number(ganti.days) || 0),
+        tier: String(Number(ganti.n) || 1),
+        mode: ganti.url ? "tautan" : "berkas",
+        url: String(ganti.url || ""),
+      });
+      return;
+    }
+    setForm(KOSONG);
+  }, [buka, ganti]);
   useEffect(() => () => { if (alamatPratinjau.current) URL.revokeObjectURL(alamatPratinjau.current); }, []);
 
   /** Berkas dipilih: tampilkan pratinjau saat itu juga. */
@@ -55,17 +71,24 @@ export default function TambahAset({ buka, slot, judul, onTutup, onSelesai }) {
         url = await unggahBerkas(form.berkas, slot, (p) => setProgres("mengunggah " + p + "%"));
       }
       if (!url) throw new Error("Isi tautan atau pilih berkas");
-      const id = slot + "_" + Date.now().toString(36);
+      // Aset VIP dipakai otomatis oleh tier VIP 1-9 (bukan item toko), jadi
+      // idnya vip_<tier>_<slot> dan ditandai meta. Aset toko memakai id bebas.
+      const tier = Math.min(9, Math.max(1, Number(form.tier) || 1));
+      const id = ganti?.id
+        ? String(ganti.id)
+        : vip ? "vip_" + tier + "_" + slot : slot + "_" + Date.now().toString(36);
       const data = {
         id, slot, name: nama, price: Number(form.harga) || 0, days: Number(form.hari) || 0,
         order: Number(form.urut) || 0, kind: (url.split("?")[0].split(".").pop() || "").toLowerCase(),
-        url, hasData: false, updatedAt: Date.now(), chunks: 0, store: false,
+        url, hasData: false, updatedAt: Date.now(), chunks: 0,
+        store: vip ? false : true,
+        ...(vip ? { n: tier, meta: true } : {}),
       };
       setProgres("menyimpan…");
       await walletAdmin({ op: "fs_set", jalur: "vipConfig/" + id, data });
       await tulisRtdbServer("vipCfg/" + kunciVip(id), data);
-      await catatLog("Tambah " + (judul || slot), nama);
-      toast((judul || "Aset") + " disimpan");
+      await catatLog((ganti ? "Ganti " : "Tambah ") + (judul || slot), nama + (vip ? " · VIP " + tier : ""));
+      toast((judul || "Aset") + " disimpan" + (vip ? " untuk VIP " + tier : ""));
       setForm(KOSONG);
       setProgres("");
       onSelesai?.();
@@ -77,10 +100,21 @@ export default function TambahAset({ buka, slot, judul, onTutup, onSelesai }) {
   };
 
   return (
-    <Laci buka={buka} judul={"Tambah " + (judul || slot)} onTutup={onTutup}
+    <Laci buka={buka} judul={(ganti ? "Ganti " : "Tambah ") + (judul || slot) + (vip ? " VIP" : "")} onTutup={onTutup}
       kaki={<button className="tombolBaru" onClick={simpan} disabled={sibuk}>
         {sibuk ? (progres || "Menyimpan…") : "Simpan"}
       </button>}>
+      {vip ? (
+        <>
+          <div className="barisSaklar"><b>Tier VIP</b></div>
+          <div className="filter" style={{ marginBottom: 12 }}>
+            {TIER.map((n) => (
+              <div key={n} className={"pil" + (Number(form.tier) === n ? " on" : "")} onClick={() => setForm({ ...form, tier: String(n) })}>VIP {n}</div>
+            ))}
+          </div>
+          <div className="catatan">Aset ini dipakai otomatis oleh anggota VIP tier {form.tier} untuk {judul || slot}. Tidak dijual di Store.</div>
+        </>
+      ) : null}
       <label className="isianForm"><span>Nama</span>
         <input value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value })} placeholder="mis. Tawa" />
       </label>
@@ -127,12 +161,16 @@ export default function TambahAset({ buka, slot, judul, onTutup, onSelesai }) {
       <label className="isianForm"><span>Urutan tampil</span>
         <input value={form.urut} onChange={(e) => setForm({ ...form, urut: e.target.value })} inputMode="numeric" />
       </label>
-      <label className="isianForm"><span>Harga coin (0 = gratis)</span>
-        <input value={form.harga} onChange={(e) => setForm({ ...form, harga: e.target.value })} inputMode="numeric" />
-      </label>
-      <label className="isianForm"><span>Masa pakai hari (0 = selamanya)</span>
-        <input value={form.hari} onChange={(e) => setForm({ ...form, hari: e.target.value })} inputMode="numeric" />
-      </label>
+      {vip ? null : (
+        <>
+          <label className="isianForm"><span>Harga coin (0 = gratis)</span>
+            <input value={form.harga} onChange={(e) => setForm({ ...form, harga: e.target.value })} inputMode="numeric" />
+          </label>
+          <label className="isianForm"><span>Masa pakai hari (0 = selamanya)</span>
+            <input value={form.hari} onChange={(e) => setForm({ ...form, hari: e.target.value })} inputMode="numeric" />
+          </label>
+        </>
+      )}
       {progres ? <div className="catatan">{progres}</div> : null}
     </Laci>
   );

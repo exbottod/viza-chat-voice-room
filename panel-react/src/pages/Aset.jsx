@@ -17,6 +17,8 @@ export default function Aset({ awal = "frame" }) {
   const [slot, setSlot] = useState(awal);
   const [daftar, setDaftar] = useState(null);
   const [tambah, setTambah] = useState(false);
+  const [tambahVip, setTambahVip] = useState(false);
+  const [ganti, setGanti] = useState(null);
   const [hapus, setHapus] = useState(null);
   const [sibuk, setSibuk] = useState(false);
 
@@ -99,7 +101,10 @@ export default function Aset({ awal = "frame" }) {
   return (
     <>
       <Panel judul="Aset Store" sub="Unggah dan hapus aset langsung di panel ini. Aplikasi membaca daftar ini tanpa build ulang."
-        aksi={<button className="tombolBaru" onClick={() => setTambah(true)}>Tambah {SLOT.find((s) => s[0] === slot)?.[1]}</button>}>
+        aksi={<span style={{ display: "flex", gap: 8 }}>
+          <button className="pil" onClick={() => { setGanti(null); setTambahVip(true); }}>+ Aset VIP</button>
+          <button className="tombolBaru" onClick={() => { setGanti(null); setTambah(true); }}>Tambah {SLOT.find((s) => s[0] === slot)?.[1]}</button>
+        </span>}>
         <div className="filter" style={{ marginBottom: 12 }}>
           {SLOT.map(([k, n]) => (
             <div key={k} className={"pil" + (slot === k ? " on" : "")} onClick={() => setSlot(k)}>{n}</div>
@@ -125,6 +130,7 @@ export default function Aset({ awal = "frame" }) {
                 days: Number(x.days) || "∞", order: Number(x.order) || 0,
                 aksi: <span style={{ display: "flex", gap: 10 }}>
                   {x.url ? <a className="tautanPink" href={x.url} target="_blank" rel="noopener">Buka</a> : null}
+                  <a className="tautanPink" onClick={() => { setGanti(x); setTambahVip(Number(x.n) > 0); setTambah(!Number(x.n)); }}>Ganti</a>
                   <a className="tautanPink" onClick={() => setHapus(x)}>Hapus</a>
                 </span>,
               }))}
@@ -133,7 +139,12 @@ export default function Aset({ awal = "frame" }) {
       </Panel>
 
       <TambahAset buka={tambah} slot={slot} judul={SLOT.find((s) => s[0] === slot)?.[1]}
-        onTutup={() => setTambah(false)} onSelesai={muat} />
+        ganti={ganti && !Number(ganti.n) ? ganti : null}
+        onTutup={() => { setTambah(false); setGanti(null); }} onSelesai={muat} />
+
+      <TambahAset buka={tambahVip} vip slot={slot} judul={SLOT.find((s) => s[0] === slot)?.[1]}
+        ganti={ganti && Number(ganti.n) ? ganti : null}
+        onTutup={() => { setTambahVip(false); setGanti(null); }} onSelesai={muat} />
 
       <Konfirmasi buka={!!hapus} judul="Hapus aset?" pesan={(hapus?.name || hapus?.id || "") + " akan dihapus dari Store dan room."}
         tombol="Hapus" sibuk={sibuk} onYa={jalanHapus} onTidak={() => setHapus(null)} />

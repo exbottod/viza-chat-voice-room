@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.342",
   "catatan": "• Setting: tab General berisi App Setting (Android App Version + Android App Link) dan Android Asset L\n• Panel React: menu profil (Profile/Setting/Logout), halaman Profile dan Setting; server: cfg_get/cfg_",
-  "ukuran_apk": 74375510,
-  "sha256_apk": "94c93372713912e3b5aef67af27dd43b5d49e7102a6b70ae345a69e49bc68558",
+  "ukuran_apk": 74376995,
+  "sha256_apk": "2f161522bd15b2b113fe7037eba384edfe49bba171516d84f9c3200d129c71e8",
   "abis": {
     "arm64": {
-      "ukuran": 74375510,
-      "sha256": "94c93372713912e3b5aef67af27dd43b5d49e7102a6b70ae345a69e49bc68558"
+      "ukuran": 74376995,
+      "sha256": "2f161522bd15b2b113fe7037eba384edfe49bba171516d84f9c3200d129c71e8"
     },
     "armv7": {
-      "ukuran": 72610014,
-      "sha256": "f0a07c001349fa31f26f39c01bb1faca306b7e6e5eb5638ecb82f32621390f3f"
+      "ukuran": 72611505,
+      "sha256": "84840b72e280931bdca7d1a0feaf58ce6e543edc82f8b00a63a4b83213b73911"
     },
     "universal": {
-      "ukuran": 122229472,
-      "sha256": "2437d7bceb68cb5ee8026c100923e6d357f845bf3abaad8407abe55383a04cee"
+      "ukuran": 122230953,
+      "sha256": "b155922cea8fff1da8510337bd3b26e81e17d7ed704af91573b588682356fe1a"
     }
   }
 }

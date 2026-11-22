@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.369",
   "catatan": "• panel: halaman Background tab berisi unggah gambar/gradasi untuk tiap tab (party, moment, family, pe\n• reset user: nama jadi UNKNOWN dan foto kembali ke foto bawaan di RTDB + Firestore (users, userIds), ",
-  "ukuran_apk": 74378568,
-  "sha256_apk": "b952a56e1311494758ac19d1ad5f3c2caa415f3bd3ffed462f25e6f919140c19",
+  "ukuran_apk": 74378549,
+  "sha256_apk": "6d137fd9f7e6e67eb66fe0b581ad6235f30674e730ff2dc7fffee33360bd4d1f",
   "abis": {
     "arm64": {
-      "ukuran": 74378568,
-      "sha256": "b952a56e1311494758ac19d1ad5f3c2caa415f3bd3ffed462f25e6f919140c19"
+      "ukuran": 74378549,
+      "sha256": "6d137fd9f7e6e67eb66fe0b581ad6235f30674e730ff2dc7fffee33360bd4d1f"
     },
     "armv7": {
-      "ukuran": 72613073,
-      "sha256": "ee9a300f2950fa4179c265c75ae493c99b93adbe5875c3ac0d24199aab3eef66"
+      "ukuran": 72613060,
+      "sha256": "71207e5810563c8a5195f2e5e51660a0a1678c2920b3e02e2e0c82c2e5c53311"
     },
     "universal": {
-      "ukuran": 122232534,
-      "sha256": "62eda787fff288a2e42bf616f516f4d887df798d390b67f0a0ef77a211311a06"
+      "ukuran": 122232505,
+      "sha256": "582236acbdf039d5c0299e6d45f16f6bdbe7d3ef47c6ec2ef8afc62bd9410c48"
     }
   }
 }

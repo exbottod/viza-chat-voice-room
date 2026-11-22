@@ -7,6 +7,27 @@ const KUNCI = "sb_publishable_4PxD2LedOsBgIJyHLkM47A_bImSQI2W";
 const TANPA_UID = ["coin_all", "reset_all", "reset_gem_all", "reset_all_assets", "delete_users",
   "manual_pending", "manual_all", "pay_get", "pay_set", "cfg_get", "cfg_set"];
 
+/**
+ * Pembungkus walletAdmin yang mengulang otomatis bila sambungan terputus
+ * (server dompet sedang tersendat atau baru restart). Galat dari server sendiri
+ * (mis. "Pengajuan sudah diproses") tidak diulang. Aman dipakai untuk aksi yang
+ * dijaga di sisi server (manual_decide mengunci baris, jadi tidak menambah coin dua kali).
+ */
+export async function walletAdminUlang(p, batasMs = 15000, percobaan = 3) {
+  let galat;
+  for (let i = 0; i < percobaan; i++) {
+    try { return await walletAdmin(p, batasMs); }
+    catch (e) {
+      galat = e;
+      const msg = String(e?.message || e);
+      const putus = msg.includes("Tidak bisa menghubungi") || msg.includes("tidak menjawab");
+      if (!putus || i === percobaan - 1) break;
+      await new Promise((r) => setTimeout(r, 1500 * (i + 1)));
+    }
+  }
+  throw galat;
+}
+
 export async function walletAdmin(p, batasMs = 15000) {
   const u = auth.currentUser;
   if (!u) throw new Error("Belum login");

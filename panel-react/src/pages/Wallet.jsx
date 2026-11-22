@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { walletAdmin } from "../dompet.js";
+import { walletAdmin, walletAdminUlang } from "../dompet.js";
 import { catatLog, rupiah, waktu } from "../data.js";
 import { Konfirmasi, Panel, Rangka, Tabel, Tag, toast } from "../ui.jsx";
 
@@ -47,14 +47,20 @@ export default function Wallet() {
   };
 
   const putuskan = async (id, ok) => {
+    if (sibuk) return; // cegah klik ganda
     setSibuk(true);
     try {
-      await walletAdmin({ op: "manual_decide", id, ok });
+      await walletAdminUlang({ op: "manual_decide", id, ok }, 20000, 3);
       await catatLog(ok ? "Setujui top-up manual" : "Tolak top-up manual", id);
-      toast(ok ? "Top-up disetujui" : "Top-up ditolak");
-      await muat();
-    } catch (e) { toast("Gagal: " + (e.message || e), true); }
-    finally { setSibuk(false); setTanya(null); }
+      toast(ok ? "Top-up disetujui, coin sudah dikirim" : "Top-up ditolak");
+    } catch (e) {
+      const pesan = String(e.message || e);
+      if (pesan.includes("sudah diproses")) toast("Pengajuan ini sudah diproses sebelumnya");
+      else toast("Gagal: " + pesan + " Daftar disegarkan, cek dulu apakah coin sudah masuk sebelum mencoba lagi.", true);
+    } finally {
+      setSibuk(false); setTanya(null);
+      try { await muat(); } catch (e) { /* abaikan */ }
+    }
   };
 
   if (paket === null || bayar === null) return <Rangka baris={8} />;

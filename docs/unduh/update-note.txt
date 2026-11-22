@@ -1,1 +1,1 @@
-• Panel React: tambah emote dan aset langsung di panel, tanpa lompat ke panel lama
+• Perbaiki aplikasi macet/terpental saat masuk room: layanan penjaga room bukan tipe microphone

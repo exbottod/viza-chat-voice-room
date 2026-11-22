@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.345",
-  "catatan": "• Panel React: tambah emote dan aset langsung di panel, tanpa lompat ke panel lama",
-  "ukuran_apk": 74377422,
-  "sha256_apk": "2d057c56ecabba23e8e8d0b1dc16af0e41d1259ad3b69253c743db588880a056",
+  "versi": "1.0.346",
+  "catatan": "• Perbaiki aplikasi macet/terpental saat masuk room: layanan penjaga room bukan tipe microphone",
+  "ukuran_apk": 74377108,
+  "sha256_apk": "569441dcbf88d81ddc0770096141ee9cba2d23ad8392528c5d2d16ec5887d106",
   "abis": {
     "arm64": {
-      "ukuran": 74377422,
-      "sha256": "2d057c56ecabba23e8e8d0b1dc16af0e41d1259ad3b69253c743db588880a056"
+      "ukuran": 74377108,
+      "sha256": "569441dcbf88d81ddc0770096141ee9cba2d23ad8392528c5d2d16ec5887d106"
     },
     "armv7": {
-      "ukuran": 72611920,
-      "sha256": "b5ce1de1ebba5dc45e42b6a2560ecc28f6c2df91e23083caaf05a17af7ce2e8b"
+      "ukuran": 72611631,
+      "sha256": "4ecde965361ba2614d769b3d2549a9eac5abeea410746e31731b18e8fa23f04e"
     },
     "universal": {
-      "ukuran": 122231380,
-      "sha256": "81ff8aca6c0b893f7292e2742597360bcad4d09918ca0aaa379659a8a11e1b07"
+      "ukuran": 122231075,
+      "sha256": "b48f9bc8d68c9a37ef3f1d60c3eecab6c9879231b80a184f67f1aaeb61f089ea"
     }
   }
 }

@@ -249,7 +249,7 @@ object AgoraVoice {
             } catch (e: Exception) {
                 Log.e(TAG, "token: ${e.message}")
             }
-            lastStatus = "Suara: menyambung…"
+            lastStatus = ""
             delay(900L * attempt)
         }
         if (!diam) lastStatus = "Suara: belum tersambung, ketuk untuk coba"
@@ -310,7 +310,7 @@ object AgoraVoice {
 
         override fun onConnectionStateChanged(state: Int, reason: Int) {
             when (state) {
-                Constants.CONNECTION_STATE_RECONNECTING -> lastStatus = "Suara: menyambung ulang…"
+                Constants.CONNECTION_STATE_RECONNECTING -> lastStatus = ""
                 Constants.CONNECTION_STATE_CONNECTED -> { joined = true; lastStatus = "OK tersambung" }
                 Constants.CONNECTION_STATE_FAILED -> {
                     joined = false
@@ -363,7 +363,7 @@ object AgoraVoice {
                 if (roomId != id) return@withLock
                 try {
                     tutupEngine()
-                    lastStatus = "Suara: menyambung…"
+                    lastStatus = ""
                     akunSaya = t.account
                     val e = buatEngine(app, t.appId)
                     engine = e

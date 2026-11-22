@@ -199,6 +199,9 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
         // lewat tombol; kalau aplikasi ditutup paksa, room tetap tercatat dan
         // efek masuk tidak pernah muncul lagi.
         EfekMasukTercatat.reset(room.id)
+        // Room dijaga tetap hidup selama pemakai di dalamnya, jadi pindah ke
+        // WhatsApp atau game lalu kembali tidak memuat ulang apa pun.
+        RoomService.mulai(context, "Kamu masih di " + room.name)
         // Layar room langsung tampil. Semua pemeriksaan (daftar hitam & dompet)
         // jalan di belakang layar supaya tidak terasa "menunggu" saat masuk.
         activeRoom = room
@@ -252,6 +255,7 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
         minimized = false
         EfekMasukTercatat.reset(r.id)
         RoomCache.lupakan(context)
+        RoomService.hentikan(context)
         scope.launch { RoomRepo.leave(r.id, uid) }
     }
 
@@ -265,6 +269,7 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
         val r = activeRoom ?: return@LaunchedEffect
         if (RoomCache.idTerakhir(context) != r.id) return@LaunchedEffect
         try {
+            RoomService.mulai(context, "Kamu masih di " + r.name)
             val w = kotlinx.coroutines.withTimeoutOrNull(8000L) { SupaRepo.get(uid).wallet } ?: Wallet()
             wallet = w
             RoomRepo.join(

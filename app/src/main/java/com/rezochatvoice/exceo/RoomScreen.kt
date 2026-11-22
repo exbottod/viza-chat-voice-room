@@ -2389,6 +2389,9 @@ private fun RmSettings(r: RoomInfo, awalSub: Int = 0, onBlacklist: () -> Unit, o
         fUsers = m
     }
     LaunchedEffect(r.id) { RoomImg.muat(r.id) }
+    // Katalog gift dimuat begitu masuk room, jadi tab gift terbuka seketika
+    // tanpa menunggu data (bukan "memproses" beberapa detik).
+    LaunchedEffect(Unit) { GiftCatalog.start() }
     LaunchedEffect(r.id) {
         poinTotal = try {
             Rtdb.ref("roomPoin/" + r.id + "/total").get().await().getValue(Long::class.java) ?: 0L

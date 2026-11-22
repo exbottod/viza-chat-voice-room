@@ -369,9 +369,12 @@ object WalletRepo {
         r.wallet?.let { emitBackup(uid, it) }
         // Gift yang masuk ikut menambah skor PK room (kalau PK sedang jalan).
         if (r.error == null && !roomId.isNullOrBlank()) {
-            try { RoomPk.tambahSkor(roomId, price, to) } catch (e: Exception) { }
-            // Gift menambah poin kamar (level kamar) untuk pemilik room.
-            try { RoomPoin.tambah(roomId, uid, price) } catch (e: Exception) { }
+            // Skor PK dan poin kamar dicatat di belakang supaya tombol kirim dan
+            // toast tidak menunggu dua permintaan jaringan tambahan.
+            AppScope.scope.launch {
+                try { RoomPk.tambahSkor(roomId, price, to) } catch (e: Exception) { }
+                try { RoomPoin.tambah(roomId, uid, price) } catch (e: Exception) { }
+            }
         }
         return r.error
     }
@@ -1728,6 +1731,10 @@ fun GiftPanel(
                                         tr("Gift terkirim! +${fmtNum(dm)} diamond"),
                                         Toast.LENGTH_SHORT,
                                     ).show()
+                                    // Gift sudah terpotong di server: tombol kirim langsung
+                                    // aktif lagi, kerja lanjutan jalan di belakang.
+                                    sending = false
+                                    AppScope.scope.launch {
                                     try { RoomExtras.sendGiftMessage(roomId, myName, g, count, toText) } catch (e: Exception) { }
                                     var jp = 0L
                                     var cb = 0L
@@ -1788,6 +1795,7 @@ fun GiftPanel(
                                     }
                                     // Gift cashback: panel ditutup, tombol kombo bulat muncul
                                     // supaya bisa diklik terus untuk kirim ulang.
+                                    }
                                     if (g.cashback || g.cbRate > 0) {
                                         val t0 = receivers.firstOrNull()
                                         GiftCombo.start(
@@ -1803,7 +1811,6 @@ fun GiftPanel(
                                         )
                                         onDismiss()
                                     }
-                                    sending = false
                                 }
                             }
                             .padding(horizontal = 16.dp, vertical = 7.dp),

@@ -101,6 +101,8 @@ fun OtherProfileScreen(
     var counts by remember(uid) { mutableStateOf(0L to 0L) }
     var following by remember(uid) { mutableStateOf(false) }
     var busy by remember(uid) { mutableStateOf(false) }
+    // Foto profil penuh 1:1, dibuka dengan satu ketukan pada avatar.
+    var fotoPenuh by remember(uid) { mutableStateOf(false) }
     var moments by remember(uid) { mutableStateOf<List<Moment>?>(null) }
     var tab by remember(uid) { mutableStateOf(0) }
     var online by remember(uid) { mutableStateOf(false) }
@@ -292,7 +294,12 @@ fun OtherProfileScreen(
 
                 // Avatar + identitas
                 Column(Modifier.padding(horizontal = 20.dp)) {
-                    if (hidden) MysteryAvatar(84.dp) else FramedAvatar(u, 84.dp)
+                    // Satu ketukan pada foto profil langsung membuka foto penuh 1:1.
+                    if (hidden) {
+                        MysteryAvatar(84.dp)
+                    } else {
+                        Box(Modifier.clickable { fotoPenuh = true }) { FramedAvatar(u, 84.dp) }
+                    }
                     Spacer(Modifier.height(10.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(Modifier.size(12.dp).clip(CircleShape).background(if (hidden || !online) Color(0xFF555555) else Color(0xFF2ED573)))
@@ -534,6 +541,9 @@ fun OtherProfileScreen(
                 Text(tr("LIVE"), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
         }
+
+        // Foto profil penuh 1:1: terbuka dari satu ketukan pada avatar.
+        FotoPenuh(user, fotoPenuh) { fotoPenuh = false }
     }
 }
 

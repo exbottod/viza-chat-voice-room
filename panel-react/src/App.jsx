@@ -21,6 +21,7 @@ import Setting from "./pages/Setting.jsx";
 import Alat from "./pages/Alat.jsx";
 import Wallet from "./pages/Wallet.jsx";
 import Seller from "./pages/Seller.jsx";
+import StafApp, { StafAppShell } from "./pages/StafApp.jsx";
 import Staf from "./pages/Staf.jsx";
 import Daftar from "./pages/Daftar.jsx";
 import Kirim from "./pages/Kirim.jsx";
@@ -51,6 +52,10 @@ const KETERANGAN = {
   pengaturan: "Agora, versi & link APK, payment, dan Firebase",
   staf: "Staf panel dan agensi host",
   seller: "Coin seller, stok, dan status toko",
+  stafapp: "Staf aplikasi: Coin seller, Manager, dan Admin",
+  coinseller: "Coin seller, stok, dan status toko",
+  managerapp: "Manager aplikasi: isi stok coin dan stok aset untuk manager",
+  adminapp: "Admin aplikasi: isi stok coin dan stok aset untuk admin",
   wallet: "Paket coin, tujuan top-up, dan top-up manual",
   kirim: "Kirim frame, efek, atau medal ke satu akun",
   game: "Bet, RTP, banner, dan kategori game",
@@ -86,6 +91,10 @@ const HALAMAN = {
   room: Room,
   staf: Staf,
   seller: Seller,
+  stafapp: () => <StafAppShell awal="coinseller" />,
+  coinseller: () => <StafAppShell awal="coinseller" />,
+  managerapp: () => <StafAppShell awal="manager" />,
+  adminapp: () => <StafAppShell awal="admin" />,
   wallet: Wallet,
   gift: Gift,
   giftdaftar: GiftDaftar,

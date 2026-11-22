@@ -11,7 +11,13 @@ export const MENU = [
       ["room", "mic", "Room"],
       ["staf", "badge", "Host & Agency"],
       ["cs", "support_agent", "Customer Service"],
-      ["seller", "storefront", "Coin Seller"],
+      // Staf aplikasi (bukan staf panel): Coin seller, Manager, dan Admin yang
+      // memakai panel di dalam aplikasi. Dibuka ke bawah seperti Gift.
+      ["stafapp", "badge", "Staf App", [
+        ["coinseller", "Coin seller"],
+        ["managerapp", "Manager"],
+        ["adminapp", "Admin"],
+      ]],
       ["laporan", "flag", "Laporan user"],
       ["family", "diversity_3", "Family"],
     ],

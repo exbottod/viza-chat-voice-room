@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.325",
   "catatan": "• Animasi gift terbang (giftFly) memutar video mp4, bukan hanya emoji,\n• Gift bervideo tetap memunculkan efek layar penuh walau ditandai\n• Kotak .fs-card tidak dibatasi tinggi dan tidak digulir, jadi judul tidak\n• Latar kartu diberi ruang 64 piksel di atas untuk ikon scatter.",
-  "ukuran_apk": 74349457,
-  "sha256_apk": "12a2b59521cb5a20a7744a4442ccedd3abd4591f745a85793ed54bf4440ef39a",
+  "ukuran_apk": 74349458,
+  "sha256_apk": "f7c7d9a42e070501f6c12b7a8ff842d2f8dd2aafce57a2c8ead5257f2c75096b",
   "abis": {
     "arm64": {
-      "ukuran": 74349457,
-      "sha256": "12a2b59521cb5a20a7744a4442ccedd3abd4591f745a85793ed54bf4440ef39a"
+      "ukuran": 74349458,
+      "sha256": "f7c7d9a42e070501f6c12b7a8ff842d2f8dd2aafce57a2c8ead5257f2c75096b"
     },
     "armv7": {
-      "ukuran": 72583970,
-      "sha256": "4c445ec689bda604e9bc17f58b08a5a4e21bd924a45f6f1dc0ef2a8eb25bc498"
+      "ukuran": 72583964,
+      "sha256": "27bbdbabed78ebfc6455c4e06fa5a799fcd18867f4f781db0b60e291db2cb885"
     },
     "universal": {
-      "ukuran": 122203417,
-      "sha256": "93c658cfff7c9f88b48c133344d7d68016b073a7c55245180536a5faedefbf49"
+      "ukuran": 122203415,
+      "sha256": "0130e01e2f61ece09d2f058734960d7b4d62eeb7581d5fdadcdefa005aab6f67"
     }
   }
 }

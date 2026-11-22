@@ -410,22 +410,13 @@ fun FrameOverlay(a: VipAsset, size: Dp, diam: Boolean = false) {
  */
 @Composable
 fun BingkaiDiam(a: VipAsset, modifier: Modifier) {
-    if (a.poster.isNotBlank()) {
-        coil.compose.AsyncImage(
-            model = a.poster,
-            contentDescription = null,
-            imageLoader = rememberVipLoader(),
-            modifier = modifier,
-            contentScale = ContentScale.Fit,
-        )
-        return
-    }
-    val jenis = kindAset(a.kind, a.url, if (a.hasData) VipAssets.bytesSegera(a) else null)
-    when (jenis) {
-        // Satu kali putar saja, tidak berulang, jadi decoder berhenti sendiri.
-        "mp4", "svga" -> VipMedia(a, modifier, loop = false)
-        else -> VipMediaSafe(a, modifier, loop = false, fallback = {})
-    }
+    // Poster dipakai kalau ada (gambar diam seketika). Kalau tidak ada, animasi
+    // diputar SATU kali lalu berhenti, jadi tidak ada decoder yang jalan terus di
+    // sepuluh kursi sekaligus.
+    VipMediaSafe(
+        a, modifier, loop = false, diam = true,
+        fallback = { VipMedia(a, modifier, loop = false) },
+    )
 }
 
 /** Efek masuk untuk satu pesan "masuk kamar": item store yang dipakai dulu, lalu efek VIP. */

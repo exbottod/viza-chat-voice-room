@@ -1,2 +1,2 @@
-• vps: skrip pencarian dan pemindahan data coin seller ke database Viza
-• vps: skrip pulih cepat dompet Viza (restart, cek health, hitung aset)
+• vps: cetak galat dompet terbaru lengkap untuk melihat nilai aud
+• vps: ringkasan galat dompet per aksi + galat equip/beli item

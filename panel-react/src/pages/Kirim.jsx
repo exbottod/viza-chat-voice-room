@@ -6,6 +6,7 @@ import { Panel, toast } from "../ui.jsx";
 
 const JENIS = [
   ["frame", "Bingkai"], ["badge", "Lencana"], ["medal", "Medali"],
+  ["cardbg", "Kartu profil"], ["title", "Gelar VIP"],
   ["bubble", "Gelembung"], ["entry", "Efek masuk"], ["banner", "Banner"],
 ];
 const KOSONG = {

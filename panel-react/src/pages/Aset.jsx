@@ -9,6 +9,7 @@ import TambahAset from "./TambahAset.jsx";
 
 const SLOT = [
   ["frame", "Bingkai"], ["badge", "Lencana"], ["medal", "Medali"],
+  ["cardbg", "Kartu profil"], ["title", "Gelar VIP"],
   ["bubble", "Gelembung"], ["entry", "Efek masuk"], ["banner", "Banner"],
 ];
 

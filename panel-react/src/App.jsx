@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard.jsx";
 import User from "./pages/User.jsx";
 import Reset from "./pages/Reset.jsx";
 import Cs from "./pages/Cs.jsx";
+import Background from "./pages/Background.jsx";
 import Room from "./pages/Room.jsx";
 import Gift from "./pages/Gift.jsx";
 import GiftDaftar from "./pages/GiftDaftar.jsx";
@@ -39,6 +40,7 @@ const KETERANGAN = {
   user: "Cari user, lihat detail, blokir atau buka blokir",
   reset: "Reset coin, diamond, VIP, XP, nama, foto, dan aset satu user atau semua user",
   cs: "Tunjuk atau cabut akun Customer Service di aplikasi",
+  latar: "Unggah gambar latar untuk tiap tab aplikasi dan bilah bawah",
   room: "Pantau room, sematkan, beri tag official, dan tutup room",
   gift: "Kategori gift: gift biasa, cashback, video MP4, dan SVGA",
   giftdaftar: "Semua gift per kategori: tambah, edit, dan hapus",
@@ -99,7 +101,7 @@ const HALAMAN = {
   frame: () => <Store />,
   aset: () => <Aset awal="frame" />,
   asetvps: daftar("Aset di VPS", "vpsAssets", "Berkas aset yang tersimpan di server."),
-  latar: daftar("Background tab", "tabBackgrounds", "Gambar latar tab room yang dipakai aplikasi."),
+  latar: Background,
   katalog: daftar("Katalog game", "games", "Daftar game yang tampil di aplikasi."),
   pasang: daftar("Pasang game", "games", "Game yang terpasang beserta alamat berkasnya."),
   database: daftar("Database", "users", "Penampil koleksi Firestore. Ganti nama koleksi untuk melihat data lain."),

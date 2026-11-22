@@ -7,8 +7,10 @@ import { bacaRtdbServer, kunciVip, hapusRtdbServer } from "../unggah.js";
 import { Konfirmasi, Kosong, Panel, Rangka, Tabel, Tag, toast } from "../ui.jsx";
 import TambahAset from "./TambahAset.jsx";
 
+// Lencana sengaja tidak ada di sini: tier VIP tidak punya slot lencana.
+// Lencana tetap bisa dikirim ke akun lewat menu Kirim ke user.
 const SLOT = [
-  ["frame", "Bingkai"], ["badge", "Lencana"], ["medal", "Medali"],
+  ["frame", "Bingkai"], ["medal", "Medali"],
   ["cardbg", "Kartu profil"], ["title", "Gelar VIP"],
   ["bubble", "Gelembung"], ["entry", "Efek masuk"], ["banner", "Banner"],
 ];

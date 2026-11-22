@@ -7,6 +7,8 @@
  * jadi saldo Viza tidak pernah bercampur dengan saldo Rezo.
  */
 import http from "node:http";
+import fs from "node:fs";
+import path from "node:path";
 import worker, { hadiahMenitRoom } from "./index.js";
 
 // Semua variabel lingkungan diteruskan ke kode dompet, supaya kunci seperti
@@ -42,8 +44,6 @@ function bacaIsi(req) {
 // ---------- Berkas game HTML5 (Bikini Wild Rush) ----------
 // Game disajikan dari VPS ini juga, jadi alamat game satu domain dengan dompet
 // (tanpa CORS) dan pembaruan game cukup ganti berkas di VPS, tanpa APK baru.
-const fs = require("node:fs");
-const path = require("node:path");
 const GAME_DIR = process.env.GAME_DIR || "/opt/viza-api/game";
 const JENIS = {
   ".html": "text/html; charset=utf-8",

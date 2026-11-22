@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.323",
-  "catatan": "• Blok viza: root * untuk panel (perbaiki galat caddy) + skrip pasang blok viza ke 8092",
-  "ukuran_apk": 74349134,
-  "sha256_apk": "027a569fa6592b144ad1b47a3e69e062cd9f0cfe7209507b28ef4bd1a5ab075d",
+  "versi": "1.0.324",
+  "catatan": "• Kotak .fs-card tidak dibatasi tinggi dan tidak digulir, jadi judul tidak\n• Latar kartu diberi ruang 64 piksel di atas untuk ikon scatter.\n• Kartu hanya dikecilkan (skala) bila benar-benar tidak muat di layar.\n• Keterangan tahap di bawah game hanya tampil saat memuat atau ada galat.",
+  "ukuran_apk": 74349805,
+  "sha256_apk": "c8b01d4c4d143391db6e330c9405cf46e47fc7209fedd5d9addfe22e5afc705a",
   "abis": {
     "arm64": {
-      "ukuran": 74349134,
-      "sha256": "027a569fa6592b144ad1b47a3e69e062cd9f0cfe7209507b28ef4bd1a5ab075d"
+      "ukuran": 74349805,
+      "sha256": "c8b01d4c4d143391db6e330c9405cf46e47fc7209fedd5d9addfe22e5afc705a"
     },
     "armv7": {
-      "ukuran": 72583646,
-      "sha256": "afecc6c5670f01344abbd7e2d803c6ea61d63f5d89357a3df3806fcb0518bdee"
+      "ukuran": 72584320,
+      "sha256": "d0c4b19981e1ee4ce314311a290d123dc41751574a6e7ffd0e64f8c7d60f0894"
     },
     "universal": {
-      "ukuran": 122203118,
-      "sha256": "ab15ecc3ea26b8e9ea1bc39faf7c95e8791715b78059f239734bad49061ef640"
+      "ukuran": 122203779,
+      "sha256": "222a318956435e91b07cf892b9115efd301ca1fa3890a3bc7d7f3db29744cf70"
     }
   }
 }

@@ -1,1 +1,4 @@
-• Blok viza: root * untuk panel (perbaiki galat caddy) + skrip pasang blok viza ke 8092
+• Kotak .fs-card tidak dibatasi tinggi dan tidak digulir, jadi judul tidak
+• Latar kartu diberi ruang 64 piksel di atas untuk ikon scatter.
+• Kartu hanya dikecilkan (skala) bila benar-benar tidak muat di layar.
+• Keterangan tahap di bawah game hanya tampil saat memuat atau ada galat.

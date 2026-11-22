@@ -241,8 +241,8 @@ fun RoomScreen(
         if (perlu.isEmpty()) return@LaunchedEffect
         perlu.forEach { profilDicoba.add(it) }
         kotlinx.coroutines.coroutineScope {
-            perlu.forEach { uid ->
-                kotlinx.coroutines.launch(kotlinx.coroutines.Dispatchers.IO) {
+            for (uid in perlu) {
+                launch(kotlinx.coroutines.Dispatchers.IO) {
                     try {
                         UserCache.byUid(uid)
                     } catch (e: kotlinx.coroutines.CancellationException) {

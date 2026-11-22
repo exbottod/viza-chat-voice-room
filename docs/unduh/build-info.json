@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.349",
   "catatan": "• Panel: unggah aset dan emot memakai XHR, ada persentase nyata dan batas waktu",
-  "ukuran_apk": 74377089,
-  "sha256_apk": "c40407efb447da967c2945d4bafa2df5849b5956082c30157809020e6a139d14",
+  "ukuran_apk": 74377102,
+  "sha256_apk": "473e7bb7d36ce12d1701ba6fa25d2088f010f70cae16fc3356fdb04708d5ff67",
   "abis": {
     "arm64": {
-      "ukuran": 74377089,
-      "sha256": "c40407efb447da967c2945d4bafa2df5849b5956082c30157809020e6a139d14"
+      "ukuran": 74377102,
+      "sha256": "473e7bb7d36ce12d1701ba6fa25d2088f010f70cae16fc3356fdb04708d5ff67"
     },
     "armv7": {
-      "ukuran": 72611609,
-      "sha256": "7340d9bb16fa1457ec6c8710f143bc9c2e18d8b9a79c530b66a92932c812fed8"
+      "ukuran": 72611619,
+      "sha256": "7db27e459b578e41cee33fbfdc8f67ef156281888a40483f63d902da81809b73"
     },
     "universal": {
-      "ukuran": 122231067,
-      "sha256": "9d975bf6a125372316dec939f3a1b110c9da6ec65470bf392009e35f3d06b3cc"
+      "ukuran": 122231064,
+      "sha256": "3362d31b3145e99333ba1d9940f82e6b9988864604451340299f2ffe8467113f"
     }
   }
 }

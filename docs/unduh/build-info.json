@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.316",
+  "versi": "1.0.317",
   "catatan": "• Profil orang lain: satu ketukan pada foto membuka foto penuh 1:1.\n• Tombol kirim gift langsung aktif setelah dompet terpotong.\n• Pesan gift, undian cashback, poin mic, dan ranking dicatat di belakang.\n• Skor PK dan poin kamar tidak lagi menahan tombol kirim.",
-  "ukuran_apk": 74348884,
-  "sha256_apk": "c5061f4fd00bd8da494dbc79cd651d95b5af0a7514b5520f5189190303605164",
+  "ukuran_apk": 74348890,
+  "sha256_apk": "1d6661914298b4242f8f1ef00c7ea69ef841831c2014f0c539788336462fe786",
   "abis": {
     "arm64": {
-      "ukuran": 74348884,
-      "sha256": "c5061f4fd00bd8da494dbc79cd651d95b5af0a7514b5520f5189190303605164"
+      "ukuran": 74348890,
+      "sha256": "1d6661914298b4242f8f1ef00c7ea69ef841831c2014f0c539788336462fe786"
     },
     "armv7": {
-      "ukuran": 72583401,
-      "sha256": "9eb442eda586d9a221a35426ad8583260c4484b6d6e18b6bb0bff25ff50cdd5d"
+      "ukuran": 72583390,
+      "sha256": "8cadb9e55dc8096f963a4a2a0d485173703896b8538ed960738190f270a69efc"
     },
     "universal": {
-      "ukuran": 122202850,
-      "sha256": "1f8689013d4444b28353b9c72c7ab1e80ff8cc61a9265984280277ea48273f4c"
+      "ukuran": 122202856,
+      "sha256": "2cf9f874ef694da045d347f993ac01b86c88b08b00dbcd7f001c563c615b1115"
     }
   }
 }

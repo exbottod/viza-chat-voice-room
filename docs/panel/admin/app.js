@@ -2349,6 +2349,19 @@ const DOMPET_BASE = DOMPET_SEHOST ? location.origin : "https://viza.43-156-99-4.
 const WALLET_KEY = "sb_publishable_4PxD2LedOsBgIJyHLkM47A_bImSQI2W";
 const OPS_TANPA_UID = ["coin_all", "reset_all", "reset_gem_all", "reset_all_assets", "delete_users", "manual_pending", "manual_all", "pay_get", "pay_set"];
 
+/**
+ * Batas waktu untuk panggilan jaringan. Tanpa ini, satu permintaan yang
+ * menggantung membuat halaman panel berhenti di tulisan "Loading..." tanpa
+ * ujung, karena fetch di browser tidak punya batas waktu sendiri.
+ */
+function denganBatas(p, ms = 12000) {
+  let t = null;
+  const batas = new Promise((_, tolak) => {
+    t = setTimeout(() => tolak(new Error("Waktu habis " + Math.round(ms / 1000) + " detik")), ms);
+  });
+  return Promise.race([p, batas]).finally(() => clearTimeout(t));
+}
+
 async function walletAdmin(p) {
   const u = auth.currentUser;
   if (!u) throw new Error("Belum login");
@@ -2360,9 +2373,9 @@ async function walletAdmin(p) {
     body: JSON.stringify({ a: "admin", t, p })
   });
   let res = null, galat = "";
-  try { res = await kirim(WALLET_VPS); } catch (e) { galat = "VPS(" + WALLET_VPS + "): " + (e.message || e); }
+  try { res = await denganBatas(kirim(WALLET_VPS), 15000); } catch (e) { galat = "VPS(" + WALLET_VPS + "): " + (e.message || e); }
   if (!res || !res.ok) {
-    try { const cad = await kirim(WALLET_CAD); if (cad.ok || !res) res = cad; }
+    try { const cad = await denganBatas(kirim(WALLET_CAD), 15000); if (cad.ok || !res) res = cad; }
     catch (e) { galat += (galat ? " | " : "") + "cadangan: " + (e.message || e); }
   }
   if (!res) throw new Error("Server tidak terjangkau (" + (galat || "jaringan") + ")");
@@ -3567,31 +3580,24 @@ async function gambarRoket() {
 }
 
 async function gambarBet() {
-  const [konfig, games] = await Promise.all([
-    ambilSemua("gameConfig", 100).catch(() => []),
-    ambilSemua("games", 200).catch(() => [])
-  ]);
-  // Pengaturan Game Bikini (bet dan RTP) dibaca dari RTDB bikiniCfg.
-  let bw = { bets: [25, 50, 100, 200, 500, 1000, 2000, 5000], rtp: 85 };
-  try { bw = Object.assign(bw, await walletAdmin({ op: "bikini_cfg_get" })); }
-  catch (e) { /* pengaturan bawaan */ }
-  const betsBw = Array.isArray(bw.bets) && bw.bets.length ? bw.bets : bw.bets;
-  const rtpBw = Number(bw.rtp) || 85;
+  // Halaman digambar DULU dengan nilai bawaan. Dulu seluruh halaman menunggu
+  // Firestore (gameConfig + games) dan server dompet, jadi kalau server lambat
+  // yang tampil cuma tulisan "Loading..." lama sekali.
   $("isiHal").innerHTML = `
     <div class="panel">
       <div class="panelAtas"><h3>Game Bikini: bet &amp; RTP</h3><div class="sub">langsung dipakai game, tanpa build ulang</div></div>
       <div class="panelIsi">
-        <div class="isian"><label>Pilihan bet (pisahkan dengan koma)</label><input id="bwBet" value="${aman((betsBw || []).join(", "))}"></div>
+        <div class="isian"><label>Pilihan bet (pisahkan dengan koma)</label><input id="bwBet" value="25, 50, 100, 200, 500, 1000, 2000, 5000"></div>
         <div class="grid2" style="margin-top:10px">
           <div class="isian"><label>RTP</label><select id="bwRtp">
-            <option value="85" ${rtpBw < 95 ? "selected" : ""}>85% — standar biasa</option>
-            <option value="95" ${rtpBw >= 95 && rtpBw < 100 ? "selected" : ""}>95% — scater 4 lebih sering</option>
-            <option value="100" ${rtpBw >= 100 ? "selected" : ""}>100% — scater 5 sering turun</option>
+            <option value="85">85% — standar biasa</option>
+            <option value="95">95% — scater 4 lebih sering</option>
+            <option value="100">100% — scater 5 sering turun</option>
           </select></div>
           <div class="isian"><label>Peluang scater per gulungan</label><input id="bwScatter" readonly></div>
         </div>
         <button class="tombol" id="bwSimpan" style="margin-top:14px">Simpan bet &amp; RTP Bikini</button>
-        <div class="catatan">85% memakai peluang standar 13% per gulungan, 95% menaikkan scater 4, 100% membuat scater 5 paling sering turun. Game membaca pengaturan ini setiap kali dibuka, jadi tidak perlu build ulang.</div>
+        <div class="catatan" id="bwCatatan">Memuat pengaturan tersimpan…</div>
       </div>
     </div>
     <div class="panel" style="max-width:620px">
@@ -3608,13 +3614,33 @@ async function gambarBet() {
       </div>
     </div>
     <div class="panel">
-      <div class="panelAtas"><h3>Pengaturan tersimpan</h3><div class="filter"><div class="pil on">${konfig.length}</div></div></div>
-      ${konfig.length ? `<table><tr><th>GAME</th><th>MIN</th><th>MAKS</th><th>CHIP</th><th>AKSI</th></tr>
-        ${konfig.map((k) => `<tr><td>${aman(k.id)}</td><td>${rupiah(k.minBet)}</td><td>${rupiah(k.maxBet)}</td>
-        <td>${aman((k.chips || []).join(", "))}</td>
-        <td><button class="aksi" data-hapusbet="${aman(k.id)}">Hapus</button></td></tr>`).join("")}</table>`
-        : `<div class="kosong">Belum ada pengaturan bet.${games.length ? " Game terdaftar: " + games.map((g) => aman(g.name)).join(", ") : ""}</div>`}
+      <div class="panelAtas"><h3>Pengaturan tersimpan</h3><div class="filter"><div class="pil on" id="betJumlah">…</div></div></div>
+      <div id="betTabel"><div class="kosong">Memuat…</div></div>
     </div>`;
+
+  // Peluang scater mengikuti RTP (dihitung di layar, tanpa menunggu server).
+  const hitungScater = (rtp) => (rtp >= 100 ? 0.42 : rtp >= 95 ? 0.28 : 0.13);
+  const tampilScater = () => {
+    const rtp = Number($("bwRtp").value) || 85;
+    $("bwScatter").value = Math.round(hitungScater(rtp) * 100) + "% per gulungan";
+  };
+  tampilScater();
+  $("bwRtp").onchange = tampilScater;
+
+  $("bwSimpan").onclick = async () => {
+    const bets = $("bwBet").value.split(",").map((x) => Number(x.trim())).filter((x) => x > 0);
+    if (bets.length < 2) return toast("Isi minimal dua nilai bet", true);
+    const rtp = Number($("bwRtp").value) || 85;
+    $("bwSimpan").disabled = true;
+    try {
+      await walletAdmin({ op: "bikini_cfg_set", bets, rtp });
+      catatLog("Atur bet & RTP Bikini", bets.join(", ") + " | RTP " + rtp + "%");
+      toast("Pengaturan Bikini disimpan");
+      $("bwCatatan").textContent = "Tersimpan: " + bets.join(", ") + " | RTP " + rtp + "%";
+    } catch (e) { toast("Gagal: " + (e.message || e), true); }
+    finally { $("bwSimpan").disabled = false; }
+  };
+
   $("tSimpan").onclick = async () => {
     const nama = $("tGame").value.trim().toLowerCase();
     if (!nama) return toast("Nama game wajib diisi", true);
@@ -3627,40 +3653,69 @@ async function gambarBet() {
       }, { merge: true });
       catatLog("Atur bet", nama);
       toast("Pengaturan bet disimpan");
-      gambarBet();
+      muatTabel();
     } catch (e) { toast("Gagal: " + (e.code || e.message), true); }
   };
-  $("isiHal").querySelectorAll("[data-hapusbet]").forEach((b) => (b.onclick = async () => {
-    if (!confirm("Hapus pengaturan bet ini?")) return;
-    await deleteDoc(doc(db, "gameConfig", b.dataset.hapusbet)).then(() => { toast("Dihapus"); gambarBet(); })
-      .catch((e) => toast("Gagal: " + (e.code || e.message), true));
-  }));
 
-  // --- Game Bikini: peluang scater mengikuti RTP ---
-  const hitungScater = (rtp) => (rtp >= 100 ? 0.42 : rtp >= 95 ? 0.28 : 0.13);
-  const tampilScater = () => {
-    const rtp = Number($("bwRtp").value) || 85;
-    $("bwScatter").value = Math.round(hitungScater(rtp) * 100) + "% per gulungan";
+  // Tabel pengaturan bet dimuat terpisah supaya halaman tidak menunggu.
+  let daftarGame = null;
+  const gambarTabel = (konfig) => {
+    const kotak = $("betTabel");
+    if (!kotak) return;
+    $("betJumlah").textContent = String(konfig.length);
+    kotak.innerHTML = konfig.length
+      ? `<table><tr><th>GAME</th><th>MIN</th><th>MAKS</th><th>CHIP</th><th>AKSI</th></tr>
+        ${konfig.map((k) => `<tr><td>${aman(k.id)}</td><td>${rupiah(k.minBet)}</td><td>${rupiah(k.maxBet)}</td>
+        <td>${aman((k.chips || []).join(", "))}</td>
+        <td><button class="aksi" data-hapusbet="${aman(k.id)}">Hapus</button></td></tr>`).join("")}</table>`
+      : `<div class="kosong">Belum ada pengaturan bet.${daftarGame && daftarGame.length ? " Game terdaftar: " + daftarGame.map((g) => aman(g.name)).join(", ") : ""}</div>`;
+    kotak.querySelectorAll("[data-hapusbet]").forEach((b) => (b.onclick = async () => {
+      if (!confirm("Hapus pengaturan bet ini?")) return;
+      await deleteDoc(doc(db, "gameConfig", b.dataset.hapusbet)).then(() => { toast("Dihapus"); muatTabel(); })
+        .catch((e) => toast("Gagal: " + (e.code || e.message), true));
+    }));
   };
-  if ($("bwRtp")) {
-    tampilScater();
-    $("bwRtp").onchange = tampilScater;
-  }
-  if ($("bwSimpan")) $("bwSimpan").onclick = async () => {
-    const bets = $("bwBet").value.split(",").map((x) => Number(x.trim())).filter((x) => x > 0);
-    if (bets.length < 2) return toast("Isi minimal dua nilai bet", true);
-    const rtp = Number($("bwRtp").value) || 85;
+  const muatTabel = async () => {
     try {
-      await walletAdmin({ op: "bikini_cfg_set", bets, rtp });
-      catatLog("Atur bet & RTP Bikini", bets.join(", ") + " | RTP " + rtp + "%");
-      toast("Pengaturan Bikini disimpan");
-    } catch (e) { toast("Gagal: " + (e.message || e), true); }
+      const konfig = await denganBatas(ambilSemua("gameConfig", 100), 12000);
+      gambarTabel(konfig);
+    } catch (e) {
+      const kotak = $("betTabel");
+      if (kotak) kotak.innerHTML = `<div class="kosong">Gagal memuat pengaturan bet: ${aman(e.message || e)}</div>`;
+      if ($("betJumlah")) $("betJumlah").textContent = "0";
+    }
+    // Daftar game hanya dipakai sebagai keterangan, jadi dimuat paling akhir.
+    try {
+      daftarGame = await denganBatas(ambilSemua("games", 200), 12000);
+      if (!$("betTabel").querySelector("table")) gambarTabel([]);
+    } catch (e) { /* keterangan opsional */ }
   };
+
+  // Pengaturan Bikini yang tersimpan diambil dari server dompet, dengan batas
+  // waktu supaya halaman tidak menggantung kalau server lambat.
+  let cfgTerbaca = false;
+  const muatBikini = async () => {
+    try {
+      const bw = await denganBatas(walletAdmin({ op: "bikini_cfg_get" }), 15000);
+      if (cfgTerbaca) return;
+      cfgTerbaca = true;
+      const bets = Array.isArray(bw.bets) && bw.bets.length ? bw.bets : null;
+      if (bets && !$("bwBet").dataset.diubah) $("bwBet").value = bets.join(", ");
+      const rtp = Number(bw.rtp) || 85;
+      $("bwRtp").value = rtp >= 100 ? "100" : rtp >= 95 ? "95" : "85";
+      tampilScater();
+      $("bwCatatan").textContent = "Pengaturan tersimpan dimuat dari server.";
+    } catch (e) {
+      if (!cfgTerbaca) $("bwCatatan").textContent = "Pengaturan tersimpan belum terbaca (" + (e.message || e) + "). Nilai di atas masih nilai bawaan; coba muat ulang halaman.";
+    }
+  };
+  // Kalau admin sudah mengubah isian, jangan ditimpa data yang datang terlambat.
+  $("bwBet").oninput = () => { $("bwBet").dataset.diubah = "1"; };
+
+  muatTabel();
+  muatBikini();
 }
 
-/* ================= database ================= */
-const koleksiUmum = ["userIds", "users", "wallets", "rooms", "gifts", "banners", "frames", "banned", "games", "gameConfig", "panelAdmins", "adminLogs", "vipConfig", "counters", "families", "moments", "chats"];
-let koleksiPilih = "userIds";
 async function gambarDatabase() {
   $("aksiTopbar").innerHTML = `
     <select id="pilihKoleksi" class="cari" style="width:190px">

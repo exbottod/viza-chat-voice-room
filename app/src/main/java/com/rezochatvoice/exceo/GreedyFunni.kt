@@ -58,14 +58,17 @@ private const val skripUkuran = """(function(){
       '#app{position:fixed;left:0;top:0;right:0;bottom:0;width:100%;height:100%}'+
       // Dialog pengaturan/menu dibuat selalu muat di layar. Di WebView, satuan vh
       // bisa lebih besar dari layar yang terlihat sehingga kotaknya terpotong.
+      // Latar dialog dibuat pas di layar dan isinya boleh menggulir, TANPA
+      // mengecilkan kotak dialog. Ukuran kotak tetap memakai aturan asli game
+      // (sama seperti saat dibuka dari zip), jadi tidak terlihat kecil.
       '.gd-backdrop,.prize-backdrop{position:fixed!important;top:0!important;left:0!important;'+
       'right:0!important;bottom:0!important;display:flex!important;align-items:center!important;'+
-      'justify-content:center!important;padding:8px!important;box-sizing:border-box!important;'+
+      'justify-content:center!important;padding:0!important;box-sizing:border-box!important;'+
       'overflow:auto!important;z-index:99999!important}'+
-      '.gd-box{width:92%!important;max-width:460px!important;max-height:100%!important;'+
-      'margin:0!important;box-sizing:border-box!important;overflow:auto!important}'+
+      '.gd-box{max-height:94vh!important;overflow:auto!important}'+
       '.gd-scroll{max-height:none!important;overflow:visible!important}'+
-      '.fs-card{max-height:100%!important;overflow:auto!important}';
+      '.prize-art{max-width:none!important;max-height:none!important}'+
+      '.fs-card{max-height:94vh!important;overflow:auto!important}';
     document.head.appendChild(s);
   }catch(e){}
   fix();
@@ -148,41 +151,39 @@ object BikiniRush {
     }
 
     suspend fun alamat(): List<String> {
-        // Batas waktu total: apa pun yang macet (token Firebase atau jaringan),
-        // game tetap dibuka dengan koin mainan, jangan sampai layar hitam.
-        val hasil = kotlinx.coroutines.withTimeoutOrNull(6000L) {
-            try {
-                val idToken = com.google.firebase.auth.FirebaseAuth.getInstance()
-                    .currentUser?.getIdToken(false)?.await()?.token
-                if (idToken.isNullOrBlank()) {
-                    statusDompet = "dompet: sesi Viza kosong"
-                    return@withTimeoutOrNull null
-                }
-                val jawabToken = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    panggilDompet("$DOMPET/token", "POST", idToken, "{}")
-                }
-                val token = if (jawabToken.startsWith("2")) {
-                    org.json.JSONObject(jawabToken.substringAfter(' ', "{}")).optString("token")
-                } else ""
-                if (token.isBlank()) {
-                    statusDompet = "dompet: token " + jawabToken.take(60)
+        // Dompet Viza wajib tersambung: koin game = koin Viza. Token diminta sampai
+        // 3 kali (token login disegarkan di percobaan kedua) sebelum menyerah.
+        var hasil: String? = null
+        for (percobaan in 1..3) {
+            hasil = kotlinx.coroutines.withTimeoutOrNull(7000L) {
+                try {
+                    val idToken = com.google.firebase.auth.FirebaseAuth.getInstance()
+                        .currentUser?.getIdToken(percobaan > 1)?.await()?.token
+                    if (idToken.isNullOrBlank()) return@withTimeoutOrNull null
+                    val token = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        val c = java.net.URL("$DOMPET/token").openConnection() as java.net.HttpURLConnection
+                        c.requestMethod = "POST"
+                        c.connectTimeout = 5000
+                        c.readTimeout = 5000
+                        c.doOutput = true
+                        c.setRequestProperty("Authorization", "Bearer $idToken")
+                        c.setRequestProperty("Content-Type", "application/json")
+                        c.outputStream.use { it.write("{}".toByteArray()) }
+                        if (c.responseCode != 200) return@withContext ""
+                        val isi = c.inputStream.bufferedReader().use { it.readText() }
+                        org.json.JSONObject(isi).optString("token")
+                    }
+                    if (token.isBlank()) null else "$GAME?api=$DOMPET/api&token=$token"
+                } catch (e: Exception) {
                     null
-                } else {
-                    val saldo = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                        panggilDompet("$DOMPET/api/balance", "GET", token, null)
-                    }
-                    statusDompet = if (saldo.startsWith("2")) {
-                        "dompet: saldo " + org.json.JSONObject(saldo.substringAfter(' ', "{}")).optInt("balance", -1)
-                    } else {
-                        "dompet: saldo " + saldo.take(50)
-                    }
-                    "$GAME?api=$DOMPET/api&token=$token"
                 }
-            } catch (e: Exception) {
-                statusDompet = "dompet: galat " + (e.message ?: "?").take(50)
-                null
             }
+            if (hasil != null) break
+            kotlinx.coroutines.delay(600L * percobaan)
         }
+        // Gagal tersambung: kembalikan daftar kosong supaya layar menampilkan pesan
+        // dan tombol coba lagi, BUKAN membuka game dengan koin mainan.
+        if (hasil == null) return emptyList()
         // Urutan percobaan: berkas di APK, berkas APK tanpa appassets, lalu internet.
         val kueri = hasil?.substringAfter("?", "") ?: ""
         val akhiran = if (kueri.isBlank()) "" else "?$kueri"
@@ -205,10 +206,32 @@ fun GreedyFunniScreen(onClose: () -> Unit) {
 @Composable
 fun BikiniRushScreen(onClose: () -> Unit) {
     var daftar by remember { mutableStateOf<List<String>>(emptyList()) }
-    androidx.compose.runtime.LaunchedEffect(Unit) { daftar = BikiniRush.alamat() }
+    var selesai by remember { mutableStateOf(false) }
+    var ulangDompet by remember { mutableStateOf(0) }
+    androidx.compose.runtime.LaunchedEffect(ulangDompet) {
+        selesai = false
+        daftar = BikiniRush.alamat()
+        selesai = true
+    }
     if (daftar.isEmpty()) {
         Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
-            Text("Menyiapkan meja...", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
+            if (!selesai) {
+                Text("Menghubungkan ke dompet Viza...", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
+            } else {
+                androidx.compose.foundation.layout.Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(14.dp),
+                    modifier = Modifier.padding(horizontal = 28.dp),
+                ) {
+                    Text(
+                        "Dompet Viza belum tersambung, koin game harus memakai koin Viza kamu.",
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontSize = 14.sp,
+                    )
+                    androidx.compose.material3.Button(onClick = { ulangDompet += 1 }) { Text("Coba lagi") }
+                    androidx.compose.material3.TextButton(onClick = onClose) { Text("Tutup") }
+                }
+            }
         }
     } else {
         GameWebScreen(daftar, onClose, BikiniRush.statusDompet)

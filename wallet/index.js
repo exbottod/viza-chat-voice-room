@@ -5099,10 +5099,18 @@ function bwAcak() {
   return (b[0] ?? 0) / 4294967296;
 }
 
+// Peluang scater per gulungan mengikuti RTP dari panel developer:
+// 85% = standar (13%), 95% = scater 4 lebih sering, 100% = scater 5 sering turun.
+function bwPeluangScater() {
+  const rtp = Number(BIKINI_CFG.rtp) || 85;
+  return rtp >= 100 ? 0.42 : rtp >= 95 ? 0.28 : 0.13;
+}
+
 function bwBoard(acak, gratis) {
+  const peluangSc = bwPeluangScater();
   return Array.from({ length: 5 }, () => {
     const reel = Array.from({ length: 4 }, () => Math.floor(acak() * 10));
-    if (acak() < 0.13) reel[Math.floor(acak() * 4)] = BW_SCATTER;
+    if (acak() < peluangSc) reel[Math.floor(acak() * 4)] = BW_SCATTER;
     if (acak() < 0.25 && !reel.includes(BW_SCATTER)) {
       const mulai = Math.floor(acak() * 3);
       const panjang = 1 + Math.floor(acak() * (4 - mulai));
@@ -5237,9 +5245,11 @@ async function bikiniPlay(req, env, h) {
   const w = await baca();
   const gratis = w.freeSpins > 0;
   const taruhan = gratis ? Math.max(1, w.freeBet) : bet;
-  if (!gratis && !BW_BETS.includes(bet)) return json({ error: "Taruhan tidak dikenal" }, 400);
+  const betSah = (await bikiniCfgKini()).bets;
+  if (!gratis && !betSah.includes(bet) && !BW_BETS.includes(bet)) return json({ error: "Taruhan tidak dikenal" }, 400);
   if (!gratis && w.balance < bet) return json({ error: "Koin tidak cukup" }, 402);
 
+  await bikiniCfgKini();
   const board = bwBoard(bwAcak, gratis);
   const hasil = bwNilai(board, taruhan);
   const saldoBaru = Math.max(0, w.balance - (gratis ? 0 : bet) + hasil.win);

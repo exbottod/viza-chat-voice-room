@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Pasang panel developer React ke /opt/viza-panel dari satu paket tar.gz
 # (tanpa API GitHub, jadi tidak kena batas unduhan). Panel lama (app.js)
-# dicadangkan ke /opt/viza-panel/admin-lama, lalu diganti panel React.
+# dihapus: mulai sekarang panel Viza hanya panel React.
 # Pakai: curl -fsSL https://raw.githubusercontent.com/exbottod/viza-chat-voice-room/main/vps/pasang-panel-viza.sh | sudo bash
 set -u
 REPO=https://raw.githubusercontent.com/exbottod/viza-chat-voice-room/main
@@ -11,12 +11,11 @@ echo "== 1. unduh paket panel"
 curl -fsSL "$REPO/docs/panel/admin.tar.gz?cb=$(date +%s)" -o /tmp/panel.tgz || { echo "   unduh gagal"; exit 1; }
 echo "   ukuran: $(du -h /tmp/panel.tgz | cut -f1)"
 
-echo "== 2. cadangkan panel lama lalu pasang panel React"
+echo "== 2. hapus panel lama lalu pasang panel React"
 mkdir -p /opt/viza-panel
-if [ -f /opt/viza-panel/admin/app.js ]; then
-  rm -rf /opt/viza-panel/admin-lama
-  mv /opt/viza-panel/admin /opt/viza-panel/admin-lama
-  echo "   panel lama dipindah ke /opt/viza-panel/admin-lama"
+if [ -d /opt/viza-panel/admin ]; then
+  find /opt/viza-panel/admin -mindepth 1 -delete 2>/dev/null || true
+  echo "   isi panel lama dibersihkan"
 fi
 tar -xzf /tmp/panel.tgz -C /opt/viza-panel || { echo "   ekstrak gagal"; exit 1; }
 chmod -R a+rX /opt/viza-panel

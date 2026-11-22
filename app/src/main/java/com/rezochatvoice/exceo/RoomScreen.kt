@@ -233,16 +233,22 @@ fun RoomScreen(
     // kursi terasa "memuat" berkali-kali. Yang sudah dicoba dicatat supaya tidak diulang.
     val profilDicoba = remember { java.util.Collections.synchronizedSet(HashSet<String>()) }
     LaunchedEffect(seats.values.map { it.uid }.sorted()) {
-        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-            for (uid in seats.values.map { it.uid }) {
-                if (uid.isBlank() || profilDicoba.contains(uid)) continue
-                if (UserCache.peek(uid) != null) continue
-                profilDicoba.add(uid)
-                try {
-                    UserCache.byUid(uid)
-                } catch (e: kotlinx.coroutines.CancellationException) {
-                    throw e
-                } catch (e: Exception) {
+        // Semua kursi dimuat BERSAMAAN. Dulu satu per satu, jadi room dengan
+        // 8-10 kursi terisi butuh 8-10 kali menunggu jaringan berurutan dan
+        // masuk room terasa berat.
+        val perlu = seats.values.map { it.uid }.distinct()
+            .filter { it.isNotBlank() && !profilDicoba.contains(it) && UserCache.peek(it) == null }
+        if (perlu.isEmpty()) return@LaunchedEffect
+        perlu.forEach { profilDicoba.add(it) }
+        kotlinx.coroutines.coroutineScope {
+            perlu.forEach { uid ->
+                kotlinx.coroutines.launch(kotlinx.coroutines.Dispatchers.IO) {
+                    try {
+                        UserCache.byUid(uid)
+                    } catch (e: kotlinx.coroutines.CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                    }
                 }
             }
         }

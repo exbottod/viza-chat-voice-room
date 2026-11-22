@@ -816,7 +816,12 @@ object RoomRepo {
             val present = Rtdb.ref("members/$roomId").get().await().children.mapNotNull { it.key }.toSet()
             // Foto kursi dulu kosong kalau profil belum termuat saat naik kursi,
             // sehingga yang tampil hanya huruf awal nama. Ambil dari cache profil.
-            val avatar = avatarB64?.takeIf { it.isNotBlank() } ?: UserCache.peek(uid)?.avatarB64
+            // Foto kursi disimpan versi kecil saja: node seats dikirim ulang ke
+            // semua orang setiap ada perubahan kursi, jadi foto penuh membuat
+            // masuk room terasa berat.
+            val avatar = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                ProfileRepo.avatarKecil(avatarB64?.takeIf { it.isNotBlank() } ?: UserCache.peek(uid)?.avatarB64)
+            }
             // Menulis seluruh node seats kena "Permission denied": aturan database
             // hanya mengizinkan menulis kursi milik sendiri. Jadi kursi baru
             // diklaim lewat transaksi pada satu kursi itu saja, lalu kursi lama
@@ -1033,8 +1038,11 @@ object RoomRepo {
                 if (c.key != index.toString() && c.child("uid").getValue(String::class.java) == uid) upd[c.key!!] = null
             }
             if (upd.isNotEmpty()) base.updateChildren(upd).await()
+            val avatar = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                ProfileRepo.avatarKecil(avatarB64?.takeIf { it.isNotBlank() } ?: UserCache.peek(uid)?.avatarB64)
+            }
             Rtdb.ref("seats/$roomId/$index").setValue(
-                hashMapOf<String, Any?>("uid" to uid, "name" to name, "avatarB64" to avatarB64, "muted" to false),
+                hashMapOf<String, Any?>("uid" to uid, "name" to name, "avatarB64" to avatar, "muted" to false),
             ).await()
             null
         } catch (e: kotlinx.coroutines.CancellationException) {

@@ -181,6 +181,43 @@ object ProfileRepo {
      * sehingga layar tersendat, suara LiveKit putus-nyambung, dan ikon lencana
      * lambat muncul. Dipakai untuk gambar room saja.
      */
+    /**
+     * Versi kecil foto base64 untuk ditempel di node kursi mic.
+     * Node seats dikirim ulang ke SEMUA penghuni room setiap kali ada yang naik
+     * kursi, mute, atau turun. Kalau foto ukuran penuh ikut di sana, masuk room
+     * orang lain terasa berat (ratusan KB per muat, dan berulang setiap update).
+     * 96 px sudah cukup tajam untuk kursi mic.
+     */
+    fun avatarKecil(b64: String?, maxSide: Int = 96): String? {
+        if (b64.isNullOrBlank()) return null
+        return try {
+            val bytes = Base64.decode(b64, Base64.NO_WRAP)
+            val ukur = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, ukur)
+            if (ukur.outWidth <= 0 || ukur.outHeight <= 0) return b64
+            val sisi = maxOf(ukur.outWidth, ukur.outHeight)
+            if (sisi <= maxSide) return b64
+            var s = 1
+            while (sisi / (s * 2) >= maxSide) s *= 2
+            val bmp = BitmapFactory.decodeByteArray(
+                bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = s },
+            ) ?: return b64
+            val skala = maxSide.toFloat() / maxOf(bmp.width, bmp.height).toFloat()
+            val w = (bmp.width * skala).toInt().coerceAtLeast(1)
+            val h = (bmp.height * skala).toInt().coerceAtLeast(1)
+            val kecil = Bitmap.createScaledBitmap(bmp, w, h, true)
+            val out = ByteArrayOutputStream()
+            kecil.compress(Bitmap.CompressFormat.JPEG, 70, out)
+            if (kecil !== bmp) kecil.recycle()
+            bmp.recycle()
+            Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            b64
+        }
+    }
+
     fun decodeB64Scaled(b64: String?, maxSide: Int): ImageBitmap? {
         if (b64.isNullOrBlank()) return null
         return try {

@@ -4160,7 +4160,14 @@ async function admin(env, body) {
         days: Math.max(0, Math.floor(Number(x?.days ?? 30))),
       };
     }
-    return json({ ok: 1, lv, rank });
+    // Syarat energi (EXP) tiap roket: dibaca aplikasi dari rocketCfg/exp1..exp5.
+    const expBaku = [100000000, 500000000, 1000000000, 1500000000, 2000000000];
+    const exp = [];
+    for (let n = 1; n <= 5; n++) {
+      const v = Number(akar["exp" + n] ?? pub["exp" + n]);
+      exp.push(Number.isFinite(v) && v > 0 ? Math.floor(v) : expBaku[n - 1]);
+    }
+    return json({ ok: 1, lv, rank, exp });
   }
   if (op === "rocket_cfg_set") {
     const brt = (x) => {
@@ -4169,6 +4176,13 @@ async function admin(env, body) {
       const days = Math.max(0, Math.min(3650, Math.floor(Number(x?.days ?? 30))));
       return { coins, vip, days };
     };
+    const expBaku = [100000000, 500000000, 1000000000, 1500000000, 2000000000];
+    const expMasuk = Array.isArray(p.exp) ? p.exp : [];
+    const exp = [];
+    for (let n = 1; n <= 5; n++) {
+      const v = Math.floor(Number(expMasuk[n - 1]));
+      exp.push(Number.isFinite(v) && v > 0 ? v : expBaku[n - 1]);
+    }
     const lvMasuk = p.lv && typeof p.lv === "object" ? p.lv : {};
     const rankMasuk = p.rank && typeof p.rank === "object" ? p.rank : {};
     const lv = {};
@@ -4198,13 +4212,19 @@ async function admin(env, body) {
           method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(rank),
         });
         if (!r2.ok) return gagal("Gagal menyimpan hadiah peringkat: HTTP " + r2.status);
+        for (let n = 1; n <= 5; n++) {
+          const r3 = await fetch(`${RTDB}/${jalur}/exp${n}.json${q}`, {
+            method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(exp[n - 1]),
+          });
+          if (!r3.ok) return gagal("Gagal menyimpan energi roket: HTTP " + r3.status);
+        }
       }
     } catch (e) {
       return gagal("Gagal menyimpan roket: " + String(e?.message ?? e));
     }
     cache.delete("pub/_rocketCfg");
     cache.delete("rocketCfg");
-    return json({ ok: 1, lv, rank });
+    return json({ ok: 1, lv, rank, exp });
   }
 
   // ---- Cashback gift: disimpan lewat server supaya tidak kena aturan RTDB ----

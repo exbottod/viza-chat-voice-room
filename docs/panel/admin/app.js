@@ -1265,7 +1265,7 @@ const daftarHal = {
   bet: { judul: "Bet game", crumb: "Dashboard / Game", gambar: gambarBet },
   greedy: { judul: "Greedy King", crumb: "Dashboard / Game", gambar: gambarGreedy },
   fruit: { judul: "Crazy Fruit", crumb: "Dashboard / Game", gambar: gambarFruit },
-  roket: { judul: "Hadiah roket", crumb: "Dashboard / Hadiah roket", gambar: gambarRoket },
+  roket: { judul: "Roket", crumb: "Dashboard / Roket", gambar: gambarRoket },
   reward: { judul: "Reward room", crumb: "Dashboard / Reward room", gambar: gambarReward },
   database: { judul: "Database", crumb: "Dashboard / Data", gambar: gambarDatabase },
   latar: { judul: "Background tab", crumb: "Dashboard / Background tab", gambar: gambarLatar },
@@ -3512,10 +3512,18 @@ async function gambarRoket() {
   };
   $("isiHal").innerHTML = `
     <div class="panel" style="max-width:760px">
-      <div class="panelAtas"><h3>Hadiah roket</h3><div class="sub">level 1-5 &amp; peringkat</div></div>
+      <div class="panelAtas"><h3>Roket</h3><div class="sub">energi (EXP) &amp; hadiah level 1-5</div></div>
       <div class="panelIsi">
         <div class="catatan">Hadiah roket 1 sampai 5: setiap roket punya 6 kartu hadiah. Saat roket meluncur,
           satu kartu dipilih acak untuk peluncurnya. Isi 0 kalau tidak dipakai.</div>
+        <h4 style="margin-top:16px">Energi (EXP) tiap roket</h4>
+        <div class="catatan">Energi yang harus terkumpul sebelum roket itu meluncur. Energi datang dari koin gift
+          yang dikirim di room. Angka roket 1 paling kecil, lalu naik sampai roket 5. Contoh: 100000000 = 100 juta.</div>
+        <div class="grid3" style="margin-top:6px">
+          ${[1, 2, 3, 4, 5].map((n) => `<div class="isian"><label>Roket ${n}</label>
+            <input id="rkExp${n}" type="number" min="1" step="1000" value="${Number(cfg.exp?.[n - 1] || 0)}">
+            <div class="catatan" id="rkExpKet${n}">${fmtKoin(cfg.exp?.[n - 1] || 0)}</div></div>`).join("")}
+        </div>
         ${[1, 2, 3, 4, 5].map((n) => `<h4 style="margin-top:16px">Roket level ${n}</h4>${isiLv(n)}`).join("")}
         <h4 style="margin-top:18px">Hadiah peringkat (papan roket)</h4>
         <div class="catatan">Diberikan ke Top 1, Top 2, dan Top 3 penyumbang energi roket.</div>
@@ -3523,6 +3531,11 @@ async function gambarRoket() {
         <button class="tombol" id="rkSimpan" style="margin-top:16px">Simpan hadiah roket</button>
       </div>
     </div>`;
+  // Angka besar ditampilkan ringkas di bawah isian supaya tidak salah nol.
+  for (let n = 1; n <= 5; n++) {
+    const el = $(`rkExp${n}`);
+    if (el) el.oninput = () => { $(`rkExpKet${n}`).textContent = fmtKoin(Number(el.value) || 0); };
+  }
   $("rkSimpan").onclick = async () => {
     const lv = {}, rank = {};
     for (let n = 1; n <= 5; n++) {
@@ -3542,10 +3555,12 @@ async function gambarRoket() {
         days: 30,
       };
     }
+    const exp = [];
+    for (let n = 1; n <= 5; n++) exp.push(Math.max(1, Math.floor(Number($(`rkExp${n}`).value) || 0)));
     try {
-      await walletAdmin({ op: "rocket_cfg_set", lv, rank });
-      catatLog("Atur hadiah roket", "Top1 " + rank[1].coins + " | Top2 " + rank[2].coins + " | Top3 " + rank[3].coins);
-      toast("Hadiah roket disimpan");
+      await walletAdmin({ op: "rocket_cfg_set", lv, rank, exp });
+      catatLog("Atur roket", "Energi " + exp.join(" / ") + " | Top1 " + rank[1].coins + " | Top2 " + rank[2].coins);
+      toast("Roket disimpan");
       gambarRoket();
     } catch (e) { toast("Gagal menyimpan: " + (e.message || e), true); }
   };

@@ -41,7 +41,7 @@ export default function Iklan() {
   const simpan = async () => {
     setSibuk(true);
     try {
-      await walletAdmin({ op: "cfg_set", cfg: {
+      const out = await walletAdmin({ op: "cfg_set", nilai: {
         iklanAktif: form.aktif ? "1" : "0",
         iklanCoin: String(Math.max(0, Math.trunc(Number(form.coin) || 0))),
         iklanMaxHari: String(Math.max(0, Math.trunc(Number(form.maxHari) || 0))),
@@ -51,6 +51,7 @@ export default function Iklan() {
         iklanPlacement: String(form.placement || "").trim(),
         iklanUji: form.uji ? "1" : "0",
       } });
+      if (Number(out?.ok) !== 1) throw new Error(out?.e || "Server menolak pengaturan iklan");
       await catatLog("Atur iklan coin gratis", (form.aktif ? "aktif" : "mati") + " · " + form.coin + " coin/iklan · " + form.maxHari + "x/hari");
       toast("Pengaturan iklan disimpan");
       await muat();

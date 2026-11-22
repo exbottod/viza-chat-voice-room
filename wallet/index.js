@@ -7252,11 +7252,15 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
       return json({ ok: 0, e: "Sesi tidak sah" }, 401);
     }
 
-    // uid hanya boleh dirinya sendiri, kecuali deep link lama yang kosong.
-    const uid = String(p.uid ?? uidToken);
-    if (uid !== uidToken) {
-      await logGalat(env, uid, aksi, "uid app beda dengan token: " + uidToken);
-      return json({ ok: 0, e: "Sesi tidak sah" }, 401);
+    // uid selalu mengikuti token yang sah. Aplikasi kadang masih membawa uid
+    // akun lama (mis. setelah ganti akun atau pulih dari cadangan), dan dulu
+    // permintaan seperti itu ditolak "Sesi tidak sah" sehingga gift, pasang
+    // bingkai, dan game ikut gagal. Sekarang uid lama hanya dicatat, lalu
+    // dipakai uid dari token supaya aksi tetap berjalan pada akun yang login.
+    const uidKirim = String(p.uid ?? "").trim();
+    const uid = uidToken;
+    if (uidKirim && uidKirim !== uidToken) {
+      await logGalat(env, uidToken, aksi, "uid app beda dengan token, dipakai uid token: " + uidKirim);
     }
 
     try {

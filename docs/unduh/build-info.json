@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.320",
-  "catatan": "• Game langsung terbuka: token dompet gagal tidak lagi menahan di layar pesan",
-  "ukuran_apk": 74349136,
-  "sha256_apk": "1d0e989f13586487dbdbddbe02b5ad672d2734ff070b3b2dad90e96e0c660d73",
+  "versi": "1.0.321",
+  "catatan": "• Script perbaiki total: arahkan domain viza ke dompet Viza yang benar dan pasang ulang panel\n• Script cek peladen dompet: port 8080/8092, unit viza, baris cek token\n• Game langsung terbuka: token dompet gagal tidak lagi menahan di layar pesan",
+  "ukuran_apk": 74349143,
+  "sha256_apk": "897d6d0502d571f51b9462a64d86186c6d0013966904fb37d955f05011951132",
   "abis": {
     "arm64": {
-      "ukuran": 74349136,
-      "sha256": "1d0e989f13586487dbdbddbe02b5ad672d2734ff070b3b2dad90e96e0c660d73"
+      "ukuran": 74349143,
+      "sha256": "897d6d0502d571f51b9462a64d86186c6d0013966904fb37d955f05011951132"
     },
     "armv7": {
-      "ukuran": 72583659,
-      "sha256": "3a4a317328be70276de08d0bbbc9ec035eef506f94db92f29e35495772b22f7a"
+      "ukuran": 72583650,
+      "sha256": "d29c3aa991d2fd61abd2332c956cce07996aebc8af303134c9db23176b3e43b6"
     },
     "universal": {
-      "ukuran": 122203106,
-      "sha256": "3abe035ccd65aea3d7cb1160b9e16a8618ca1d1e2c830c91921a9c37830b4e11"
+      "ukuran": 122203101,
+      "sha256": "cc7effb83fc53ed7b152e8bf84e2aceff44724f3613fe01785c5ae10a7e1e0a2"
     }
   }
 }

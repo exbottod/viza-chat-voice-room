@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.363",
-  "catatan": "• panel: pratinjau aset di semua daftar (Aset & VIP, Store, VIP & Medali) dengan pemutar SVGA, WebP/GI",
+  "versi": "1.0.364",
+  "catatan": "• panel: tombol Pratinjau di formulir unggah (Frame/Store/Aset VIP/Banner/Kirim ke user) membuka kartu\n• panel: pratinjau aset di semua daftar (Aset & VIP, Store, VIP & Medali) dengan pemutar SVGA, WebP/GI",
   "ukuran_apk": 74378547,
-  "sha256_apk": "89e56574ae8803e36cbd55968412c08a3a2e87ec93b987745632c5cbc2b4198c",
+  "sha256_apk": "edc92753ae0b4cb5ec40cc095b447ab8fee9e07e74efc53fb95e572c490ce79b",
   "abis": {
     "arm64": {
       "ukuran": 74378547,
-      "sha256": "89e56574ae8803e36cbd55968412c08a3a2e87ec93b987745632c5cbc2b4198c"
+      "sha256": "edc92753ae0b4cb5ec40cc095b447ab8fee9e07e74efc53fb95e572c490ce79b"
     },
     "armv7": {
-      "ukuran": 72613060,
-      "sha256": "cf0b3f7e031f4c8b510d6ac96dbe7aef1afe70b084034494bbeb19d09e10e074"
+      "ukuran": 72613076,
+      "sha256": "fe1eb0b0c2471641f107ee09f50c9bedaf74ede102002068eca499c2c426225f"
     },
     "universal": {
-      "ukuran": 122232505,
-      "sha256": "ab56eafce9e35566fe28e7cc859eddb496415db50e0052ac9ffe8af05063413e"
+      "ukuran": 122232518,
+      "sha256": "dd5afa3b26c234667ad08313c12bd1e1ce98046b7a34fa8554605d64e55b7334"
     }
   }
 }

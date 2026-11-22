@@ -1,1 +1,2 @@
+• panel: tombol Pratinjau di formulir unggah (Frame/Store/Aset VIP/Banner/Kirim ke user) membuka kartu
 • panel: pratinjau aset di semua daftar (Aset & VIP, Store, VIP & Medali) dengan pemutar SVGA, WebP/GI

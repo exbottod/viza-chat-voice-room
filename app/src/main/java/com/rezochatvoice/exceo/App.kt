@@ -23,6 +23,15 @@ class App : Application(), ImageLoaderFactory {
         /** Konteks aplikasi, dipakai untuk penyimpanan lokal yang harus selalu ada. */
         @Volatile lateinit var instance: App
             private set
+
+        /**
+         * True kalau layar utama dibuka dari aplikasi yang benar-benar baru
+         * dijalankan (proses baru), bukan kembali dari latar belakang.
+         *
+         * Dipakai supaya buka aplikasi selalu mendarat di beranda, sedangkan
+         * kembali dari WhatsApp/game tetap di room yang sama.
+         */
+        @Volatile var mulaiDingin = true
     }
 
     override fun onCreate() {

@@ -84,11 +84,15 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
     var overlay by rememberSaveable { mutableStateOf(OV_NONE) }
     var profile by remember { mutableStateOf(ProfileRepo.loadLocal(context, user.email)) }
     var userId by remember { mutableStateOf(UserDirectory.cachedId(context, uid) ?: "...") }
-    // Room terakhir dibuka lagi dari simpanan HP. Dulu saat aplikasi dibuang
-    // Android di latar belakang, kembali ke Viza berarti mulai dari tab Party dan
-    // room dimuat ulang dari nol.
+    // Room terakhir dibuka lagi dari simpanan HP, TAPI hanya kalau layar utama
+    // dibuat ulang di dalam proses yang masih hidup (kembali dari WhatsApp, game,
+    // atau layar diputar). Kalau aplikasi benar-benar dibuka dari awal, pengguna
+    // mendarat di beranda (tab Party), bukan dilempar ke room terakhir.
     var activeRoom by remember {
-        mutableStateOf(RoomCache.idTerakhir(context)?.let { RoomCache.info(context, it) })
+        mutableStateOf(
+            if (App.mulaiDingin) null
+            else RoomCache.idTerakhir(context)?.let { RoomCache.info(context, it) }
+        )
     }
     var minimized by remember { mutableStateOf(false) }
     val myName = profile.nickname.ifBlank { user.name }

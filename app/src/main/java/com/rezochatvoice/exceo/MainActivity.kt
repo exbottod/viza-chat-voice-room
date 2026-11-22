@@ -92,6 +92,20 @@ object RoomDeepLink {
 }
 
 class MainActivity : ComponentActivity() {
+    companion object {
+        /** True setelah layar utama pernah dibuat di proses ini. */
+        @Volatile private var pernahDibuat = false
+    }
+
+    /**
+     * Aplikasi ditutup lewat tombol kembali: prosesnya bisa masih hidup, jadi
+     * penanda dilupakan supaya membuka aplikasi lagi mulai dari beranda.
+     */
+    override fun onDestroy() {
+        if (isFinishing) pernahDibuat = false
+        super.onDestroy()
+    }
+
     /**
      * Kunci tata letak: tampilan app dibuat SAMA di semua HP.
      *
@@ -107,6 +121,10 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Proses baru = mulai dingin. Layar utama yang dibuat ulang dalam proses
+        // yang masih hidup = lanjutan, jadi room terakhir boleh dibuka lagi.
+        App.mulaiDingin = !pernahDibuat
+        pernahDibuat = true
         RoomDeepLink.parse(intent)
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),

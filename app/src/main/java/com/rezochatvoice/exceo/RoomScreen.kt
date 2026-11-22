@@ -261,6 +261,16 @@ fun RoomScreen(
         // masuk room terasa berat.
         val perlu = seats.values.map { it.uid }.distinct()
             .filter { it.isNotBlank() && !profilDicoba.contains(it) && UserCache.peek(it) == null }
+        // Hitungan mengikuti/fans semua yang duduk dihangatkan di belakang layar,
+        // jadi saat sheet kursi diketuk angkanya sudah ada.
+        val semua = seats.values.map { it.uid }.distinct().filter { it.isNotBlank() }
+        for (u in semua) {
+            if (FollowRepo.countsTersimpan(u) == null) {
+                launch(kotlinx.coroutines.Dispatchers.IO) {
+                    try { FollowRepo.counts(u) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { }
+                }
+            }
+        }
         if (perlu.isEmpty()) return@LaunchedEffect
         perlu.forEach { profilDicoba.add(it) }
         kotlinx.coroutines.coroutineScope {
@@ -2315,7 +2325,7 @@ private fun RmSeatProfile(
         key1 = fotoProfil,
     ) { value = ProfileRepo.decodeAvatarKecil(fotoProfil, 320) ?: value }
     val actions = LocalActions.current
-    var counts by remember(seat.uid) { mutableStateOf(0L to 0L) }
+    var counts by remember(seat.uid) { mutableStateOf(FollowRepo.countsTersimpan(seat.uid) ?: (0L to 0L)) }
     LaunchedEffect(seat.uid) {
         try {
             counts = FollowRepo.counts(seat.uid)

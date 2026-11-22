@@ -521,12 +521,12 @@ private fun FlyMedia(f: GiftFly) {
         // Video (mp4) diputar apa adanya. Dulu hanya emoji yang tampil,
         // jadi gift mp4 terlihat tidak muncul saat dikirim.
         isVideoMedia(url, f.mediaType) ->
-            GiftVideo(url, Modifier.fillMaxSize(), onEnd = { })
+            GiftVideo(mediaAman(url), Modifier.fillMaxSize(), onEnd = { })
         url.substringBefore('?').lowercase().endsWith(".svga") ||
             f.mediaType.lowercase().startsWith("svga") ->
-            GiftSvga(url, f.emoji, Modifier.fillMaxSize(), onEnd = { })
+            GiftSvga(mediaAman(url), f.emoji, Modifier.fillMaxSize(), onEnd = { })
         else -> coil.compose.AsyncImage(
-            model = url,
+            model = mediaAman(url),
             contentDescription = f.emoji,
             modifier = Modifier.fillMaxSize(),
             contentScale = androidx.compose.ui.layout.ContentScale.Fit,

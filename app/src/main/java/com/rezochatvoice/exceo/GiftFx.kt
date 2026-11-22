@@ -587,15 +587,20 @@ fun GiftFxOverlay(roomId: String) {
         if (d.mediaUrl.isNotBlank()) {
             if (isVideoMedia(d.mediaUrl, d.mediaType)) {
                 // mp4: diputar otomatis. TextureView dipakai supaya tidak
-                // tertutup lapisan video Agora (SurfaceView) di room.
-                GiftVideo(d.mediaUrl, Modifier.fillMaxSize(), onEnd = { fx = null })
+                // tertutup lapisan video Agora (SurfaceView) di room. Ikon gift
+                // tetap digambar di belakang video, jadi layar tidak pernah
+                // kosong kalau video lambat atau berkasnya bermasalah.
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    if (d.emoji.isNotBlank()) Text(d.emoji, fontSize = 88.sp)
+                    GiftVideo(mediaAman(d.mediaUrl), Modifier.fillMaxSize(), onEnd = { fx = null })
+                }
             } else {
                 val kind = kindOf(d.mediaUrl, d.mediaType)
                 if (kind == "svga") {
-                    GiftSvga(d.mediaUrl, d.emoji, Modifier.fillMaxSize(), onEnd = { fx = null })
+                    GiftSvga(mediaAman(d.mediaUrl), d.emoji, Modifier.fillMaxSize(), onEnd = { fx = null })
                 } else {
                     AsyncImage(
-                        model = d.mediaUrl,
+                        model = mediaAman(d.mediaUrl),
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Fit,
@@ -653,6 +658,20 @@ private fun RocketFly(from: String) {
             modifier = Modifier.offset(x = x, y = y + 62.dp).alpha(if (p.value > 0.9f) 0f else 1f),
         )
     }
+}
+
+/**
+ * Alamat media gift dirapikan: panel kadang menyimpan alamat relatif
+ * ("/gifts/nama.mp4"). MediaPlayer dan pemuat gambar butuh alamat penuh, kalau
+ * tidak, berkasnya dianggap tidak ada dan efek gift tidak tampil sama sekali.
+ */
+fun mediaAman(url: String): String {
+    val u = url.trim()
+    if (u.isEmpty()) return u
+    if (u.startsWith("http://") || u.startsWith("https://") || u.startsWith("asset/")) return u
+    if (u.startsWith("//")) return "https:" + u
+    val dasar = "https://viza.43-156-99-4.sslip.io"
+    return if (u.startsWith("/")) dasar + u else "$dasar/$u"
 }
 
 /** True kalau media gift berupa video (mp4/mov/m4v), dilihat dari tipe simpanan

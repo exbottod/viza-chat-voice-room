@@ -572,16 +572,25 @@ object RoomRepo {
     suspend fun join(roomId: String, name: String, vip: Int = 0, entry: String = "", banner: String = "") {
         try {
             val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
-            if (isBanned(roomId, uid)) return
+            // Dua pemeriksaan dijalankan bersamaan, bukan berurutan.
+            val (dilarang, siluman) = kotlinx.coroutines.coroutineScope {
+                val a = async { isBanned(roomId, uid) }
+                val b = async { SvipRepo.myOn(uid, "invisibleRoom", 7) }
+                a.await() to b.await()
+            }
+            if (dilarang) return
             // Invisible in rooms (SVIP7): masuk room tanpa terlihat sampai naik mic.
-            if (SvipRepo.myOn(uid, "invisibleRoom", 7)) return
+            if (siluman) return
             val me = Rtdb.ref("members/$roomId/$uid")
             me.onDisconnect().removeValue()
-            me.setValue(true).await()
-            // Penanda "sedang live di room ini" untuk badge LIVE di halaman profil.
             val live = Rtdb.ref("live/$uid")
             live.onDisconnect().removeValue()
-            live.setValue(roomId).await()
+            // Keanggotaan dan penanda LIVE ditulis bersamaan.
+            kotlinx.coroutines.coroutineScope {
+                val m = async { me.setValue(true).await() }
+                val l = async { live.setValue(roomId).await() }
+                m.await(); l.await()
+            }
             Rtdb.ref("messages/$roomId").push().setValue(
                 hashMapOf<String, Any?>(
                     "text" to "$name masuk kamar",

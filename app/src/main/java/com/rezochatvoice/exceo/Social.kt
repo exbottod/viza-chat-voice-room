@@ -436,6 +436,13 @@ object FollowRepo {
         }
     }
 
+    /**
+     * Hitungan yang sudah tersimpan (walau agak lama), tanpa jaringan. Dipakai
+     * supaya sheet langsung menampilkan angka, bukan 0 yang lalu berubah.
+     */
+    fun countsTersimpan(uid: String): Pair<Long, Long>? =
+        synchronized(cacheCounts) { cacheCounts[uid] }
+
     suspend fun counts(uid: String): Pair<Long, Long> {
         val now = System.currentTimeMillis()
         synchronized(cacheCounts) {

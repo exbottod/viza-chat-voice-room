@@ -2010,11 +2010,16 @@ async function hadiahMenitRoom(env) {
         }
         if (tambah <= 0) continue;
 
-        ubah.total = Number(lama.total || 0) + tambah;
-        ubah["harian/" + hari] = Number((lama.harian || {})[hari] || 0) + tambah;
-        ubah["bulanan/" + bulan] = Number((lama.bulanan || {})[bulan] || 0) + tambah;
+        // Penambahan ATOMIK di sisi database ({".sv":{"increment":n}}), bukan
+        // baca lalu tulis ulang. Cara lama bisa menimpa tambahan poin dari
+        // aplikasi (gift) dengan angka yang lebih kecil, sehingga level kamar
+        // seperti kembali ke awal. Poin kamar hanya boleh bertambah.
+        const naik = (n) => ({ ".sv": { increment: n } });
+        ubah.total = naik(tambah);
+        ubah["harian/" + hari] = naik(tambah);
+        ubah["bulanan/" + bulan] = naik(tambah);
         for (const [uid, nilai] of Object.entries(sumbang)) {
-          ubah["anggota/" + uid] = Number((lama.anggota || {})[uid] || 0) + nilai;
+          ubah["anggota/" + uid] = naik(nilai);
         }
         await patchRtdbSa(env, "roomPoin/" + roomId, ubah);
         roomDiproses++;

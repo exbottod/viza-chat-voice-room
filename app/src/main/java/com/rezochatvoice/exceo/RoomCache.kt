@@ -72,6 +72,27 @@ object RoomCache {
         null
     }
 
+    /**
+     * Poin kamar terakhir yang pernah terbaca. Level kamar tidak boleh kembali ke
+     * awal: poin hanya bertambah, jadi nilai yang tersimpan tidak pernah diganti
+     * dengan angka yang lebih kecil, dan bacaan kosong dari jaringan diabaikan.
+     */
+    fun poin(c: Context, roomId: String): Long = try {
+        sp(c).getLong("poin_" + roomId, 0L)
+    } catch (e: Exception) {
+        0L
+    }
+
+    fun simpanPoin(c: Context, roomId: String, nilai: Long): Long {
+        val lama = poin(c, roomId)
+        if (nilai <= lama) return lama
+        try {
+            sp(c).edit().putLong("poin_" + roomId, nilai).apply()
+        } catch (e: Exception) {
+        }
+        return nilai
+    }
+
     /** Id room terakhir, dipakai supaya aplikasi kembali ke room yang sama. */
     fun idTerakhir(c: Context): String? = try {
         sp(c).getString("terakhir", null)?.takeIf { it.isNotBlank() }

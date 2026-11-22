@@ -224,10 +224,23 @@ fun RoomScreen(
     }
     var micPoints by remember { mutableStateOf<Map<Int, Long>>(emptyMap()) }
     // Poin kamar (RTDB): dipakai untuk menampilkan level room di sebelah ID room.
-    var poinKamar by remember { mutableStateOf(0L) }
+    // Mulai dari poin yang tersimpan di HP, jadi level kamar langsung benar saat
+    // room dibuka dan tidak sempat tampil Lv.0/Lv.2 sebelum data server tiba.
+    // Poin kamar hanya bertambah: bacaan kosong, gagal, atau lebih kecil dari yang
+    // pernah terbaca diabaikan, sehingga level tidak pernah turun.
+    var poinKamar by remember(roomId) { mutableStateOf(RoomCache.poin(ctxSimpan, roomId)) }
     androidx.compose.runtime.DisposableEffect(roomId) {
         val regPoin = Rtdb.listen(Rtdb.ref("roomPoin/" + roomId + "/total")) { snap ->
-            poinKamar = snap.getValue(Long::class.java) ?: 0L
+            // Angka bisa tersimpan sebagai Long atau Double (server menulis Number).
+            val baru = when (val v = snap.getValue()) {
+                is Long -> v
+                is Double -> v.toLong()
+                is Int -> v.toLong()
+                else -> null
+            }
+            if (baru != null) {
+                poinKamar = RoomCache.simpanPoin(ctxSimpan, roomId, baru).coerceAtLeast(poinKamar)
+            }
         }
         onDispose { regPoin.remove() }
     }
@@ -2522,7 +2535,8 @@ private fun RmSettings(r: RoomInfo, awalSub: Int = 0, onBlacklist: () -> Unit, o
     var pengikut by remember { mutableStateOf<Set<String>>(emptySet()) }
     var fUsers by remember { mutableStateOf<Map<String, PublicUser?>>(emptyMap()) }
     // Poin kamar (level kamar) dan daftar peringkat.
-    var poinTotal by remember { mutableStateOf(0L) }
+    val ctxSimpan2 = androidx.compose.ui.platform.LocalContext.current.applicationContext
+    var poinTotal by remember(r.id) { mutableStateOf(RoomCache.poin(ctxSimpan2, r.id)) }
     var periode by remember { mutableStateOf(2) } // 0 harian, 1 bulanan, 2 keseluruhan
     var peringkat by remember { mutableStateOf<List<RoomPoin.Baris>>(emptyList()) }
     var kontribusi by remember { mutableStateOf<List<Pair<String, Long>>>(emptyList()) }
@@ -2565,12 +2579,17 @@ private fun RmSettings(r: RoomInfo, awalSub: Int = 0, onBlacklist: () -> Unit, o
     // Katalog gift dimuat begitu masuk room, jadi tab gift terbuka seketika.
     LaunchedEffect(Unit) { GiftCatalog.start() }
     LaunchedEffect(r.id) {
-        poinTotal = try {
-            Rtdb.ref("roomPoin/" + r.id + "/total").get().await().getValue(Long::class.java) ?: 0L
+        val ctxPoin = ctxSimpan2
+        // Tampilkan dulu yang tersimpan di HP, lalu perbarui dari server. Gagal
+        // baca tidak boleh membuat level kembali ke awal.
+        poinTotal = RoomCache.poin(ctxPoin, r.id)
+        try {
+            val v = Rtdb.ref("roomPoin/" + r.id + "/total").get().await().getValue()
+            val baru = when (v) { is Long -> v; is Double -> v.toLong(); is Int -> v.toLong(); else -> null }
+            if (baru != null) poinTotal = RoomCache.simpanPoin(ctxPoin, r.id, baru).coerceAtLeast(poinTotal)
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {
-            0L
         }
     }
     LaunchedEffect(sub, periode) {

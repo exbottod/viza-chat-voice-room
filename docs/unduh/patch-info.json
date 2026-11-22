@@ -550,15 +550,6 @@
       }
     },
     {
-      "dari": "1.0.342",
-      "ke": "1.0.346",
-      "arm64": {
-        "file": "patch-1.0.342-1.0.346-arm64.bsdiff",
-        "ukuran": 4411195,
-        "sha256": "dbf3720a963d89986b0f0720a9c796967da3ac0f475403b6cb37b78ff7e3bfae"
-      }
-    },
-    {
       "dari": "1.0.343",
       "ke": "1.0.344",
       "arm64": {
@@ -578,11 +569,11 @@
     },
     {
       "dari": "1.0.343",
-      "ke": "1.0.346",
+      "ke": "1.0.347",
       "arm64": {
-        "file": "patch-1.0.343-1.0.346-arm64.bsdiff",
-        "ukuran": 4393953,
-        "sha256": "346705e82608b587f675a4cbd4460210182f832f63bf63b8637c6a04d3a142a6"
+        "file": "patch-1.0.343-1.0.347-arm64.bsdiff",
+        "ukuran": 4386350,
+        "sha256": "e140d742a433ea83e46d3eef39ad1353b95a3de9e3fe27f08fa68405ae64daea"
       }
     },
     {
@@ -596,20 +587,29 @@
     },
     {
       "dari": "1.0.344",
-      "ke": "1.0.346",
+      "ke": "1.0.347",
       "arm64": {
-        "file": "patch-1.0.344-1.0.346-arm64.bsdiff",
-        "ukuran": 4413577,
-        "sha256": "fc1848976a0fb23173ba35a08e3c83d535d2c2af86025ba6898f4ae79d1d1805"
+        "file": "patch-1.0.344-1.0.347-arm64.bsdiff",
+        "ukuran": 4410548,
+        "sha256": "8bb1ef09e8400a19da186e067126eeac083a1c1364bdea6b856cb7f52ce7f88d"
       }
     },
     {
       "dari": "1.0.345",
-      "ke": "1.0.346",
+      "ke": "1.0.347",
       "arm64": {
-        "file": "patch-1.0.345-1.0.346-arm64.bsdiff",
-        "ukuran": 4398539,
-        "sha256": "1f4c24bbfbb93c676cd3538b88ef31b2f28a3afb0b190f45b6d973b3ff681b30"
+        "file": "patch-1.0.345-1.0.347-arm64.bsdiff",
+        "ukuran": 4384616,
+        "sha256": "4609e434f38a69c0b616d5ba5f8fb9aca044ea1771810a621245655ef4fdfcb2"
+      }
+    },
+    {
+      "dari": "1.0.346",
+      "ke": "1.0.347",
+      "arm64": {
+        "file": "patch-1.0.346-1.0.347-arm64.bsdiff",
+        "ukuran": 1115529,
+        "sha256": "b0da7795558d197149cea40a55ff171027b1a68fd96c919962a1b99fd1ab1f1c"
       }
     }
   ]

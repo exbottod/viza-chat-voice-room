@@ -1,1 +1,3 @@
+• Panel dan alat developer hanya bisa diakses email pemilik
+• Panel: layar login punya tab Daftar, Lupa sandi, dan pesan galat yang jelas
 • Perbaiki aplikasi macet/terpental saat masuk room: layanan penjaga room bukan tipe microphone

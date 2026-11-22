@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.346",
-  "catatan": "• Perbaiki aplikasi macet/terpental saat masuk room: layanan penjaga room bukan tipe microphone",
-  "ukuran_apk": 74377105,
-  "sha256_apk": "eaeb50fcf87525bb3f7930dd48dae63e5216e447cd869bac1dbbd4f924229ade",
+  "versi": "1.0.347",
+  "catatan": "• Panel dan alat developer hanya bisa diakses email pemilik\n• Panel: layar login punya tab Daftar, Lupa sandi, dan pesan galat yang jelas\n• Perbaiki aplikasi macet/terpental saat masuk room: layanan penjaga room bukan tipe microphone",
+  "ukuran_apk": 74377098,
+  "sha256_apk": "cdfdaf08c1b86d3fcf1ab61926189b2ac2135fdeae6104a4a2d1456fbea4ba6e",
   "abis": {
     "arm64": {
-      "ukuran": 74377105,
-      "sha256": "eaeb50fcf87525bb3f7930dd48dae63e5216e447cd869bac1dbbd4f924229ade"
+      "ukuran": 74377098,
+      "sha256": "cdfdaf08c1b86d3fcf1ab61926189b2ac2135fdeae6104a4a2d1456fbea4ba6e"
     },
     "armv7": {
-      "ukuran": 72611626,
-      "sha256": "cf6f3ecf7807fe123b37c4601ee689f43a3ed7cb06b439a9ed627da70685bfdd"
+      "ukuran": 72611612,
+      "sha256": "d743aa79027b6eb8318288958d438b520b88432fc3df380d53b947b7a217a654"
     },
     "universal": {
-      "ukuran": 122231067,
-      "sha256": "2db00a6fa4ce7a228a7512b2da31f7d5afa66013ad11c003e6a4d57d94703417"
+      "ukuran": 122231064,
+      "sha256": "d38aaa8fab0edd345f38df4125717f0af788f3ced26c265b11382f40b831b6ca"
     }
   }
 }

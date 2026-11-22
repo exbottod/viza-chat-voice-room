@@ -9,6 +9,7 @@ import { MENU, JUDUL } from "./menu.js";
 import Dashboard from "./pages/Dashboard.jsx";
 import User from "./pages/User.jsx";
 import Reset from "./pages/Reset.jsx";
+import Cs from "./pages/Cs.jsx";
 import Room from "./pages/Room.jsx";
 import Gift from "./pages/Gift.jsx";
 import GiftDaftar from "./pages/GiftDaftar.jsx";
@@ -37,6 +38,7 @@ const KETERANGAN = {
   dashboard: "Ringkasan user, room, gift, dan aktivitas admin",
   user: "Cari user, lihat detail, blokir atau buka blokir",
   reset: "Reset coin, diamond, VIP, XP, nama, foto, dan aset satu user atau semua user",
+  cs: "Tunjuk atau cabut akun Customer Service di aplikasi",
   room: "Pantau room, sematkan, beri tag official, dan tutup room",
   gift: "Kategori gift: gift biasa, cashback, video MP4, dan SVGA",
   giftdaftar: "Semua gift per kategori: tambah, edit, dan hapus",
@@ -89,7 +91,7 @@ const HALAMAN = {
   vip: () => <Vip />,
   cashback: alat("cashback"),
   reward: () => <Reward />,
-  cs: daftar("Customer Service", "customerService", "Pesan dan keluhan yang masuk dari aplikasi."),
+  cs: Cs,
   laporan: daftar("Laporan user", "reports", "Laporan dari pengguna: saring isinya, hapus bila sudah selesai."),
   cekin: daftar("Plan history (cek in)", "checkIn", "Catatan cek in harian pengguna VIP."),
   banner: () => <Banner />,

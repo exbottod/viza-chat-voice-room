@@ -20,7 +20,7 @@ viza.43-156-99-4.sslip.io {
 		header Cache-Control "no-cache, must-revalidate"
 		@manif path *.webmanifest
 		header @manif Content-Type application/manifest+json
-		root /opt/viza-panel
+		root * /opt/viza-panel
 		file_server
 	}
 	handle {

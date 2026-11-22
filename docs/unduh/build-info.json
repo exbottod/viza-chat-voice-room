@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.338",
-  "catatan": "• Skrip pasang domain khusus untuk panel developer\n• Panel berpindah menu seketika seperti React",
-  "ukuran_apk": 74375517,
-  "sha256_apk": "8eed6dfd899c828fb0e2906e44e4130a6f9784c60e58cbef511be7f5c8d3c423",
+  "versi": "1.0.339",
+  "catatan": "• Panel React: layar login muncul walau Firebase lambat menjawab\n• Panel React (Vite + React 18) tahap pertama: kerangka, login, dasbor\n• Perbaiki pemilik room terpental saat masuk room",
+  "ukuran_apk": 74375513,
+  "sha256_apk": "32500025db443c7833c6a6edc94d31dbe32b7fa73ecc8ac58098a8b63ded63fd",
   "abis": {
     "arm64": {
-      "ukuran": 74375517,
-      "sha256": "8eed6dfd899c828fb0e2906e44e4130a6f9784c60e58cbef511be7f5c8d3c423"
+      "ukuran": 74375513,
+      "sha256": "32500025db443c7833c6a6edc94d31dbe32b7fa73ecc8ac58098a8b63ded63fd"
     },
     "armv7": {
-      "ukuran": 72610033,
-      "sha256": "24bc123f854fb647bf85bdb650e94db1bf17c0f3838a2fc845306fa786140a00"
+      "ukuran": 72610026,
+      "sha256": "70154d08af25c4deedf750e0664c073691e1db37c30714d9dbdca9dcb5510b9c"
     },
     "universal": {
-      "ukuran": 122229474,
-      "sha256": "463643999201c093b5c1e935cd25e4ccf7bc47d162cf03baace34f965a38c39a"
+      "ukuran": 122229484,
+      "sha256": "874410f8a65ac6d80e2dea5bbbc3b9e37fd1765aeecbf866fa3b8b84cecdb1c2"
     }
   }
 }

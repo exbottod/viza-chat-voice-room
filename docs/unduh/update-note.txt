@@ -1,2 +1,3 @@
-• Skrip pasang domain khusus untuk panel developer
-• Panel berpindah menu seketika seperti React
+• Panel React: layar login muncul walau Firebase lambat menjawab
+• Panel React (Vite + React 18) tahap pertama: kerangka, login, dasbor
+• Perbaiki pemilik room terpental saat masuk room

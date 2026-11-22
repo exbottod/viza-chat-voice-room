@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.311",
-  "catatan": "• Batas patch dinaikkan dari 40 ke 60 persen APK.\n• Berlaku hanya untuk lompatan besar, patch harian tetap kecil.",
-  "ukuran_apk": 74343841,
-  "sha256_apk": "8b521b801a98fc55b451a2564295a63daf68d4337125111baf7be6874af34fae",
+  "versi": "1.0.312",
+  "catatan": "• Skenario audio diganti ke game streaming supaya tidak masuk mode panggilan.\n• MODE_IN_COMMUNICATION tidak dipaksa lagi, itu penyebab label Memanggil muncul.\n• Kunci volume diarahkan ke jalur media dan volume media dinaikkan kalau terlalu kecil.",
+  "ukuran_apk": 74343926,
+  "sha256_apk": "841b6808d4f1b898225573c6ee492d393f368f3d585d84a8ec3bf0394cb868bf",
   "abis": {
     "arm64": {
-      "ukuran": 74343841,
-      "sha256": "8b521b801a98fc55b451a2564295a63daf68d4337125111baf7be6874af34fae"
+      "ukuran": 74343926,
+      "sha256": "841b6808d4f1b898225573c6ee492d393f368f3d585d84a8ec3bf0394cb868bf"
     },
     "armv7": {
-      "ukuran": 72578358,
-      "sha256": "eaba67905675ea16a58a86ce8b86d59ed592124fd62a1400ef92feb42210ac9f"
+      "ukuran": 72578439,
+      "sha256": "1af5c8e4ea1386cd066a2d001c50f79a19d312b30ec528b309eba4bdb53bbc63"
     },
     "universal": {
-      "ukuran": 122197804,
-      "sha256": "ab50062650e0f090611b8749bf68c51d54c7e8a4633e75d3dc5f952d9e788c56"
+      "ukuran": 122197889,
+      "sha256": "ad7822ff2c6f72aa0452a16c3e2acd1df9ba93d07945eba9d7359dfbf712f10b"
     }
   }
 }

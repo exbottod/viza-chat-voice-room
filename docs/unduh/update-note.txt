@@ -1,2 +1,1 @@
-• buka aplikasi selalu mendarat di beranda, room terakhir hanya saat kembali dari latar belakang
-• dompet: tolak lagi token project raps-star (project milik orang lain)
+• vps: skrip ringankan VPS (batasi memori, restart malam, kosongkan swap)

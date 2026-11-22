@@ -68,6 +68,34 @@ object AgoraVoice {
     private val mainScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     @Volatile private var engine: RtcEngine? = null
+    // Kode terakhir dari Agora dan dari server, supaya tulisan status di room
+    // menyebut sebabnya (bukan hanya "belum tersambung") dan mudah dilaporkan.
+    @Volatile private var errTerakhir = 0
+    @Volatile private var alasanTerakhir = 0
+    @Volatile private var kodeServerTerakhir = 0
+
+    /** Teks status saat gagal, lengkap dengan kode sebabnya. */
+    private fun gagalTeks(): String {
+        val sebab = when {
+            errTerakhir != 0 -> "err $errTerakhir"
+            kodeServerTerakhir != 0 -> "server $kodeServerTerakhir"
+            alasanTerakhir != 0 -> "alasan $alasanTerakhir"
+            else -> "tanpa balasan"
+        }
+        return "Suara: belum tersambung ($sebab), ketuk untuk coba"
+    }
+
+    /** Rincian untuk dialog: dipakai saat status suara ditekan lama. */
+    fun diagnostikTeks(): String = buildString {
+        append("Room: ").append(roomId.ifBlank { "-" })
+        append("\nAkun Agora: ").append(akunSaya.ifBlank { "-" })
+        append("\nToken: ").append(if (tokSimpan != null) "ada" else "belum ada")
+        append("\nKode server: ").append(if (kodeServerTerakhir != 0) kodeServerTerakhir.toString() else "200")
+        append("\nGalat Agora: ").append(if (errTerakhir != 0) errTerakhir.toString() else "-")
+        append("\nAlasan putus: ").append(if (alasanTerakhir != 0) alasanTerakhir.toString() else "-")
+        append("\nTersambung: ").append(if (joined) "ya" else "tidak")
+        append("\nStatus: ").append(lastStatus.ifBlank { "-" })
+    }
     @Volatile private var appCtx: Context? = null
     @Volatile private var roomId: String? = null
     @Volatile private var joined = false
@@ -248,9 +276,11 @@ object AgoraVoice {
                     continue
                 }
                 if (c.responseCode in 400..499 && c.responseCode != 408 && c.responseCode != 429) {
+                    kodeServerTerakhir = c.responseCode
                     if (!diam) problem("Suara: server menolak sesi (${c.responseCode})")
                     return null
                 }
+                kodeServerTerakhir = c.responseCode
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -259,7 +289,7 @@ object AgoraVoice {
             lastStatus = ""
             delay(900L * attempt)
         }
-        if (!diam) lastStatus = "Suara: belum tersambung, ketuk untuk coba"
+        if (!diam) lastStatus = gagalTeks()
         return null
     }
 
@@ -321,13 +351,15 @@ object AgoraVoice {
                 Constants.CONNECTION_STATE_CONNECTED -> { joined = true; lastStatus = "OK tersambung" }
                 Constants.CONNECTION_STATE_FAILED -> {
                     joined = false
-                    lastStatus = "Suara: belum tersambung, ketuk untuk coba"
+                    alasanTerakhir = reason
+                    lastStatus = gagalTeks()
                 }
             }
         }
 
         override fun onError(err: Int) {
             Log.e(TAG, "onError: $err")
+            errTerakhir = err
             if (err == Constants.ERR_JOIN_CHANNEL_REJECTED || err == Constants.ERR_INVALID_TOKEN) {
                 tokSimpan = null
                 lastStatus = "Suara: token kadaluarsa, ketuk untuk coba"
@@ -366,44 +398,64 @@ object AgoraVoice {
         joinJob = scope.launch {
             joinLock.withLock {
                 if (roomId != id) return@withLock
-                val t = tokenUntuk(id) ?: return@withLock
-                if (roomId != id) return@withLock
-                try {
-                    tutupEngine()
-                    lastStatus = ""
-                    akunSaya = t.account
-                    val e = buatEngine(app, t.appId)
-                    engine = e
-                    val opt = ChannelMediaOptions().apply {
-                        channelProfile = Constants.CHANNEL_PROFILE_LIVE_BROADCASTING
-                        clientRoleType = if (wantSpeaking) Constants.CLIENT_ROLE_BROADCASTER else Constants.CLIENT_ROLE_AUDIENCE
-                        autoSubscribeAudio = true
-                        publishMicrophoneTrack = wantSpeaking
-                    }
-                    val kode = e.joinChannelWithUserAccount(t.token, t.channel, t.account, opt)
-                    if (kode != 0) {
+                errTerakhir = 0
+                alasanTerakhir = 0
+                // Dua percobaan: kalau yang pertama tidak mendapat balasan dari
+                // Agora, token dibuang lalu dicoba lagi dengan token baru.
+                for (coba in 1..2) {
+                    if (roomId != id || sengajaKeluar) return@withLock
+                    val t = tokenUntuk(id) ?: return@withLock
+                    if (roomId != id) return@withLock
+                    try {
                         tutupEngine()
-                        problem("Suara: gagal masuk room ($kode)")
+                        lastStatus = ""
+                        akunSaya = t.account
+                        val e = buatEngine(app, t.appId)
+                        engine = e
+                        val opt = ChannelMediaOptions().apply {
+                            channelProfile = Constants.CHANNEL_PROFILE_LIVE_BROADCASTING
+                            clientRoleType = if (wantSpeaking) Constants.CLIENT_ROLE_BROADCASTER else Constants.CLIENT_ROLE_AUDIENCE
+                            autoSubscribeAudio = true
+                            publishMicrophoneTrack = wantSpeaking
+                        }
+                        val kode = e.joinChannelWithUserAccount(t.token, t.channel, t.account, opt)
+                        if (kode != 0) {
+                            tutupEngine()
+                            errTerakhir = kode
+                            if (coba < 2) {
+                                tokSimpan = null
+                                delay(400)
+                                continue
+                            }
+                            problem("Suara: gagal masuk room ($kode)")
+                            return@withLock
+                        }
+                        val selesai = kotlinx.coroutines.withTimeoutOrNull(20_000L) {
+                            while (!joined && !sengajaKeluar) delay(200)
+                            joined
+                        }
+                        if (selesai != true) {
+                            tutupEngine()
+                            if (coba < 2 && !sengajaKeluar) {
+                                tokSimpan = null
+                                delay(600)
+                                continue
+                            }
+                            lastStatus = gagalTeks()
+                            return@withLock
+                        }
+                        try { tuneAudioRoute(app) } catch (x: Exception) { }
+                        lastStatus = "OK tersambung"
+                        applyMute()
+                        applyRole()
+                        return@withLock
+                    } catch (e: kotlinx.coroutines.CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        tutupEngine()
+                        problem("Suara: gagal (${(e.message ?: "?").take(60)})")
                         return@withLock
                     }
-                    val selesai = kotlinx.coroutines.withTimeoutOrNull(20_000L) {
-                        while (!joined && !sengajaKeluar) delay(200)
-                        joined
-                    }
-                    if (selesai != true) {
-                        tutupEngine()
-                        lastStatus = "Suara: belum tersambung, ketuk untuk coba"
-                        return@withLock
-                    }
-                    try { tuneAudioRoute(app) } catch (x: Exception) { }
-                    lastStatus = "OK tersambung"
-                    applyMute()
-                    applyRole()
-                } catch (e: kotlinx.coroutines.CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    tutupEngine()
-                    problem("Suara: gagal (${(e.message ?: "?").take(60)})")
                 }
             }
         }

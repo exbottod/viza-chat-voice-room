@@ -17,6 +17,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -143,6 +144,7 @@ private const val P_BICARA = 12
 private val Teal = Color(0xFF2BD9C4)
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun RoomScreen(
     roomId: String,
@@ -227,6 +229,8 @@ fun RoomScreen(
     var subAwalSettings by remember { mutableStateOf(0) }
     var followed by remember { mutableStateOf(false) }
     var showRank by remember { mutableStateOf(false) }
+    // Tekan lama penanda suara untuk melihat rincian sambungan Agora.
+    var diagSuara by remember { mutableStateOf(false) }
     val seats = rawSeats.filterValues { it.uid in members }
     // Profil orang yang duduk dipanaskan SEKALI di sini, bukan dari dalam tiap sel
     // kursi. Dulu setiap sel memanggil server sendiri saat dibuat ulang, jadi pindah
@@ -506,6 +510,29 @@ fun RoomScreen(
         }
     }
     val r = room?.copy(online = members.size, lockedSeats = locks.toList())
+
+    // Foto kursi dari versi lama masih menyimpan gambar ukuran asli (ratusan KB
+    // per orang), dan itulah beban terbesar saat masuk room. Foto besar dibuang
+    // sekali di sini: pemilik/admin room boleh membersihkan semua kursi, pengguna
+    // biasa hanya kursinya sendiri. Kursi tetap berfoto karena gambar diambil dari
+    // profil (versi kecil) saat kursi digambar.
+    LaunchedEffect(
+        rawSeats.values.map { it.uid + ":" + (it.avatarB64?.length ?: 0) }.sorted(),
+        r?.ownerUid,
+    ) {
+        val pemilik = r ?: return@LaunchedEffect
+        val bolehSemua = pemilik.ownerUid == myUid || pemilik.isAdminRoom(myUid)
+        rawSeats.values.forEach { st ->
+            val a = st.avatarB64 ?: return@forEach
+            if (a.length <= 20_000) return@forEach
+            if (!bolehSemua && st.uid != myUid) return@forEach
+            try {
+                Rtdb.ref("seats/$roomId/${st.index}/avatarB64").setValue(null)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) { }
+        }
+    }
 
     Box(Modifier.fillMaxSize().blockTouches()) {
         RoyalBackground()
@@ -1280,11 +1307,39 @@ fun RoomScreen(
                     Modifier.align(Alignment.TopStart).padding(top = 64.dp, start = 8.dp)
                         .clip(RoundedCornerShape(8.dp))
                         .background(Color(0xCC000000))
-                        // Ketuk status suara untuk mencoba menyambung lagi.
-                        .clickable { AgoraVoice.sambungUlang(context, r.id) }
+                        // Ketuk status suara untuk mencoba menyambung lagi;
+                        // tekan lama untuk melihat rincian (kode server & Agora).
+                        .combinedClickable(
+                            onClick = { AgoraVoice.sambungUlang(context, r.id) },
+                            onLongClick = { diagSuara = true },
+                        )
                         .padding(horizontal = 6.dp, vertical = 3.dp),
                 ) {
                     Text(st, color = Color(0xFFFFD24D), fontSize = 9.sp, maxLines = 2)
+                }
+            }
+        }
+        if (diagSuara) {
+            Dialog(onDismissRequest = { diagSuara = false }) {
+                Column(
+                    Modifier.clip(RoundedCornerShape(14.dp)).background(Color(0xFF16181D))
+                        .padding(16.dp).widthIn(max = 320.dp),
+                ) {
+                    Text("Rincian suara", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.height(8.dp))
+                    Text(AgoraVoice.diagnostikTeks(), color = Color(0xFFCFD3DA), fontSize = 11.sp)
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        "Kirim tulisan ini ke pengembang bila suara tetap tidak tersambung.",
+                        color = Color(0xFF8E949E), fontSize = 10.sp,
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    Box(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
+                            .background(Color(0xFF2A2E36))
+                            .clickable { diagSuara = false }.padding(vertical = 9.dp),
+                        contentAlignment = Alignment.Center,
+                    ) { Text("Tutup", color = Color.White, fontSize = 12.sp) }
                 }
             }
         }

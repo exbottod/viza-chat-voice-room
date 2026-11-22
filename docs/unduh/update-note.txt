@@ -1,4 +1,4 @@
-• Build gagal karena anotasi Compose salah tempat, sekarang dibetulkan.
-• Perilaku panel hadiah tidak berubah: tetap membuka gift terakhir yang dikirim.
-• Gift terakhir disimpan di HP, jadi tetap diingat walau aplikasi ditutup.
-• Tab Hadiah atau Cashback ikut terbuka sesuai gift yang terakhir dikirim.
+• Endpoint /agora-token menandatangani token room selama 6 jam.
+• uid angka dihitung tetap dari uid login supaya tidak bentrok.
+• App ID dan Certificate dibaca dari lingkungan layanan, jadi ganti akun tidak perlu APK baru.
+• Skrip pasang-agora-viza.sh memasang pustaka token dan mengisi kunci.

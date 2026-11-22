@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.308",
-  "catatan": "• Build gagal karena anotasi Compose salah tempat, sekarang dibetulkan.\n• Perilaku panel hadiah tidak berubah: tetap membuka gift terakhir yang dikirim.\n• Gift terakhir disimpan di HP, jadi tetap diingat walau aplikasi ditutup.\n• Tab Hadiah atau Cashback ikut terbuka sesuai gift yang terakhir dikirim.",
-  "ukuran_apk": 59401429,
-  "sha256_apk": "9d2f5418c7a5ca0a6b49f8d900328b75909132a73374950a1f2967a209963cb2",
+  "versi": "1.0.309",
+  "catatan": "• Endpoint /agora-token menandatangani token room selama 6 jam.\n• uid angka dihitung tetap dari uid login supaya tidak bentrok.\n• App ID dan Certificate dibaca dari lingkungan layanan, jadi ganti akun tidak perlu APK baru.\n• Skrip pasang-agora-viza.sh memasang pustaka token dan mengisi kunci.",
+  "ukuran_apk": 59401426,
+  "sha256_apk": "71b5f6cbff08a9f8c602d6c912b0511021424a32fd2ff07bed849e0cffb9b3e3",
   "abis": {
     "arm64": {
-      "ukuran": 59401429,
-      "sha256": "9d2f5418c7a5ca0a6b49f8d900328b75909132a73374950a1f2967a209963cb2"
+      "ukuran": 59401426,
+      "sha256": "71b5f6cbff08a9f8c602d6c912b0511021424a32fd2ff07bed849e0cffb9b3e3"
     },
     "armv7": {
       "ukuran": 57552574,
-      "sha256": "545bce00c9ad1ac6d2f8f12354d4cd946aedbdaa712b44298cdae64a6594bc4d"
+      "sha256": "a8ff14c82f11faffd75725de90ae9f4c17b400e406ae09fbae22144b3bc4e881"
     },
     "universal": {
-      "ukuran": 77817396,
-      "sha256": "6e8a5f95b0ecfb7951fd6e779b630298049df0f03d32d34c7985fdfd81a092e8"
+      "ukuran": 77817410,
+      "sha256": "ed62954bf5fbb5be7658c5336afd3e200028f5a17f1f1e2e102c764bb4ca60af"
     }
   }
 }

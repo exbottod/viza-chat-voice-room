@@ -1030,6 +1030,60 @@ function bulanIni(t = Date.now()) {
   return d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0");
 }
 
+/**
+ * Coin yang BENAR-BENAR dibayar user bulan ini (topup manual yang disetujui).
+ * Dipakai sebagai dasar batas pencairan agensi, karena coin gratis dari game,
+ * hadiah level, invite, dan reward room tidak menghasilkan uang masuk.
+ */
+async function coinTopupBulan(env, bulan = bulanIni()) {
+  const awal = Date.parse(bulan + "-01T00:00:00Z");
+  const akhir = Date.parse(bulan + "-01T00:00:00Z") + 32 * 24 * 3600 * 1000;
+  try {
+    const r = await pipe(env, [
+      {
+        sql: `select coalesce(sum(coins), 0) as coins from topup_manual
+              where status = 'ok' and created_at >= ? and created_at < ?`,
+        args: [I(awal), I(akhir)],
+      },
+    ]);
+    return Number(r[0].rows[0]?.coins ?? 0);
+  } catch (e) { return 0; }
+}
+
+/** Persen komisi agensi yang boleh dicairkan dari coin topup sah bulan ini. */
+async function persenCairAgensi(env) {
+  try {
+    const c = await cfgSemua(env, true);
+    const n = Number(c.agency_cair_persen ?? 10);
+    return Math.max(0, Math.min(100, Number.isFinite(n) ? n : 10));
+  } catch (e) { return 10; }
+}
+
+/**
+ * Batas pencairan bulan ini dan coin yang sudah diajukan/dibayar.
+ * Semua angka dalam coin. Kalau belum ada topup sah, batasnya 0 sehingga
+ * pencairan rupiah tidak bisa menguras uang yang belum masuk.
+ */
+async function batasCairAgensi(env, bulan = bulanIni()) {
+  const persen = await persenCairAgensi(env);
+  const topup = await coinTopupBulan(env, bulan);
+  const batas = Math.floor((topup * persen) / 100);
+  const awal = Date.parse(bulan + "-01T00:00:00Z");
+  const akhir = awal + 32 * 24 * 3600 * 1000;
+  let dipakai = 0;
+  try {
+    const r = await pipe(env, [
+      {
+        sql: `select coalesce(sum(coins), 0) as coins from agency_req
+              where status in ('menunggu', 'dibayar') and at >= ? and at < ?`,
+        args: [I(awal), I(akhir)],
+      },
+    ]);
+    dipakai = Number(r[0].rows[0]?.coins ?? 0);
+  } catch (e) { dipakai = 0; }
+  return { bulan, persen, topup, batas, dipakai, sisa: Math.max(0, batas - dipakai) };
+}
+
 /** Kode undangan agensi: 6 huruf/angka besar, mudah dibaca ulang. */
 function kodeAgensi() {
   const abjad = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -3713,7 +3767,11 @@ async function panel(env, body) {
       ]);
       komisiBulan = Number(e[0].rows[0]?.coins ?? 0);
     }
-    return json({ ok: 1, bulan, agency: ag, komisiBulan, host, sebagaiHost: sbgHost[0].rows[0] || null });
+    let cair = null;
+    if (ag) {
+      try { cair = await batasCairAgensi(env); } catch (e) { cair = null; }
+    }
+    return json({ ok: 1, bulan, agency: ag, komisiBulan, host, cair, sebagaiHost: sbgHost[0].rows[0] || null });
   }
 
   if (aksi === "agency_join") {
@@ -3754,6 +3812,16 @@ async function panel(env, body) {
     const minta = Math.trunc(Number(p.coins ?? row.saldo));
     if (!(minta > 0)) return gagal("Tidak ada komisi untuk dicairkan");
     if (minta > Number(row.saldo ?? 0)) return gagal("Saldo komisi tidak cukup");
+    // Pengaman: pencairan tidak boleh melebihi porsi dari coin yang benar-benar
+    // dibeli bulan ini. Coin gratis (game, hadiah, invite, reward room) tidak
+    // dihitung, jadi uang keluar tidak pernah melebihi uang masuk.
+    const batas = await batasCairAgensi(env);
+    if (batas.batas <= 0) {
+      return gagal("Pencairan rupiah belum dibuka bulan ini karena belum ada topup coin yang masuk. Komisi tetap tersimpan dan bisa dicairkan setelah ada topup.");
+    }
+    if (minta > batas.sisa) {
+      return gagal("Melebihi batas pencairan bulan ini. Batas " + batas.persen + "% dari coin topup sah = " + batas.batas + " coin, sisa yang bisa dicairkan " + batas.sisa + " coin.");
+    }
     await pipe(env, [
       {
         sql: "insert into agency_req (agency_id, coins, status, at) values (?, ?, 'menunggu', ?)",
@@ -4579,6 +4647,23 @@ async function admin(env, body) {
       },
     ]);
     return json({ ok: 1, uid: who, agency: id });
+  }
+  if (op === "agency_cair_info") {
+    await siapAgency(env);
+    return json({ ok: 1, cair: await batasCairAgensi(env) });
+  }
+  if (op === "agency_cair_set") {
+    if (!devPanel) return json({ ok: 0, e: "Hanya developer" }, 403);
+    const n = Math.max(0, Math.min(100, Math.trunc(Number(p.persen ?? 10))));
+    await pipe(env, [
+      {
+        sql: `insert into app_cfg (kunci, nilai, updated_at) values ('agency_cair_persen', ?, ?)
+              on conflict (kunci) do update set nilai = excluded.nilai, updated_at = excluded.updated_at`,
+        args: [T(String(n)), I(Date.now())],
+      },
+    ]);
+    cache.delete("cfg");
+    return json({ ok: 1, cair: await batasCairAgensi(env) });
   }
   if (op === "agency_req_list") {
     await siapAgency(env);

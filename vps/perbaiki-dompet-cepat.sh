@@ -7,7 +7,7 @@ echo "== 1. Status layanan =="
 systemctl is-active viza-dompet 2>/dev/null || echo "tidak aktif"
 echo
 echo "== 2. Proses yang memakai port 8080 dan 8092 =="
-ss -lntp 2>/dev/null | grep -E ':(8080|8092)\b' || echo "tidak ada yang mendengar"
+ss -lntp 2>/dev/null | grep -E ":(8080|8092)\b' || echo "tidak ada yang mendengar"
 echo
 echo "== 3. Restart viza-dompet =="
 systemctl restart viza-dompet 2>&1 || echo "restart gagal"
@@ -16,7 +16,7 @@ systemctl is-active viza-dompet
 echo
 echo "== 4. Tunggu /health dari dalam (maks 30 detik) =="
 for i in $(seq 1 15); do
-  kode=$(curl -s -o /tmp/h.txt -m 3 -w '%{http_code}' http://127.0.0.1:8080/health 2>/dev/null)
+  kode=$(curl -s -o /tmp/h.txt -m 3 -w '%{http_code}' http://127.0.0.1:8092/health 2>/dev/null)
   if [ "$kode" = "200" ]; then echo "OK /health 200"; head -c 200 /tmp/h.txt; echo; break; fi
   echo "  coba $i: $kode"; sleep 2
 done

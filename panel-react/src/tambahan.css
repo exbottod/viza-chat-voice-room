@@ -223,3 +223,18 @@
 .mini{width:44px;height:44px;object-fit:contain;border-radius:8px;background:#262635;display:inline-block;vertical-align:middle}
 .mini.lebar{width:96px;height:44px;object-fit:cover}
 .mini.kosongMini,.mini.ikonMini{display:inline-flex;align-items:center;justify-content:center;color:#9a9cab}
+
+/* Pratinjau aset: gambar kecil di tabel + jendela lihat penuh (termasuk SVGA). */
+.tombolThumb { background: none; border: 0; padding: 0; cursor: pointer; display: inline-flex; }
+.thumb { width: 48px; height: 48px; object-fit: contain; border-radius: 8px; background: #262635; display: block; }
+.kotakIkon { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; color: #9a9cab; gap: 1px; }
+.kotakIkon .material-icons { font-size: 18px; }
+.kotakIkon i { font-size: 8px; font-style: normal; letter-spacing: .5px; }
+.lapisPratinjau { position: fixed; inset: 0; background: rgba(10,10,16,.86); z-index: 90; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.kotakPratinjauBesar { background: #1f1f2b; border: 1px solid #2e2e3d; border-radius: 10px; width: min(560px, 100%); max-height: 92vh; overflow: auto; padding: 14px; }
+.kepalaPratinjau { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.kepalaPratinjau b { display: block; font-size: 13px; color: #f2f2f6; }
+.kepalaPratinjau span { font-size: 11px; color: #9a9cab; }
+.isiPratinjauBesar { display: flex; flex-direction: column; align-items: center; gap: 8px; min-height: 120px; justify-content: center; }
+.kanvasSvga { width: 100%; max-width: 320px; aspect-ratio: 1 / 1; background: #181821; border-radius: 8px; }
+.kakiPratinjau { margin-top: 10px; display: flex; justify-content: flex-end; }

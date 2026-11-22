@@ -6,6 +6,7 @@ import { ambilSemuaMentah, catatLog, rupiah } from "../data.js";
 import { bacaRtdbServer, kunciVip, hapusRtdbServer } from "../unggah.js";
 import { Konfirmasi, Kosong, Panel, Rangka, Tabel, Tag, toast } from "../ui.jsx";
 import TambahAset from "./TambahAset.jsx";
+import { Pratinjau, Thumb } from "../pratinjau.jsx";
 
 // Isi Store Viza: semua jenis item yang dijual di aplikasi.
 // Urutan dan nama sama dengan tab Store di aplikasi.
@@ -21,16 +22,6 @@ const JENIS = [
 
 const teks = (v) => (typeof v === "string" || typeof v === "number" ? v : "");
 
-/** Gambar kecil di tabel: gambar biasa, video MP4, atau ikon untuk SVGA. */
-function Mini({ x }) {
-  const u = typeof x.url === "string" ? x.url : "";
-  if (!u) return <span className="mini kosongMini">-</span>;
-  const k = String(x.kind || u.split("?")[0].split(".").pop() || "").toLowerCase();
-  if (k === "mp4") return <video className="mini" src={u} muted loop playsInline autoPlay />;
-  if (k === "svga") return <span className="mini ikonMini"><span className="material-icons">animation</span></span>;
-  return <img className="mini" src={u} alt="" loading="lazy" />;
-}
-
 /**
  * Halaman Store: unggah dan kelola frame, banner masuk, efek masuk,
  * lencana, ID unik, medali, dan gelembung lengkap dengan harga dan pratinjau.
@@ -43,6 +34,7 @@ export default function Store() {
   const [ganti, setGanti] = useState(null);
   const [hapus, setHapus] = useState(null);
   const [sibuk, setSibuk] = useState(false);
+  const [lihat, setLihat] = useState(null);
 
   const muat = async () => {
     setDaftar(null);
@@ -124,7 +116,7 @@ export default function Store() {
               ]}
               baris={daftar.map((x) => ({
                 __kunci: x.id,
-                mini: <Mini x={x} />,
+                mini: <Thumb url={x.url} kind={x.kind} poster={x.poster} nama={x.name || x.id} onKlik={() => setLihat({ ...x, nama: x.name || x.id })} />,
                 name: x.name || x.id,
                 nomor: x.customId || "-",
                 price: Number(x.price) ? rupiah(x.price) + " coin" : <Tag jenis="aktif">Gratis</Tag>,
@@ -143,6 +135,8 @@ export default function Store() {
 
       <TambahAset buka={tambah} slot={jenis} judul={nama} ganti={ganti}
         onTutup={() => { setTambah(false); setGanti(null); }} onSelesai={muat} />
+
+      <Pratinjau aset={lihat} onTutup={() => setLihat(null)} />
 
       <Konfirmasi buka={!!hapus} judul="Hapus item?" pesan={(hapus?.name || hapus?.id || "") + " akan dihapus dari Store."}
         tombol="Hapus" sibuk={sibuk} onYa={jalanHapus} onTidak={() => setHapus(null)} />

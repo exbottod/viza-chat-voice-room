@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { get, ref } from "firebase/database";
 import { rtdb } from "../firebase.js";
 import { walletAdmin } from "../dompet.js";
+import { Pratinjau, Thumb } from "../pratinjau.jsx";
 import { unggahBerkas, tulisRtdbServer, kunciVip, hapusRtdbServer, bacaRtdbServer } from "../unggah.js";
 import { ambilSemuaMentah, catatLog, rupiah } from "../data.js";
 import { Konfirmasi, Panel, Tag, toast } from "../ui.jsx";
@@ -20,6 +21,7 @@ const TIER = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 export default function Vip() {
   const [harga, setHarga] = useState(Array(9).fill(""));
   const [medali, setMedali] = useState({});
+  const [lihat, setLihat] = useState(null);
   const [sibuk, setSibuk] = useState("");
   const [progres, setProgres] = useState("");
   const [hapus, setHapus] = useState(null);
@@ -138,13 +140,16 @@ export default function Vip() {
                 display: "flex", alignItems: "center", gap: 12, padding: 10,
                 background: "#1f1f2b", borderRadius: 5, border: "1px solid #2b2b3a",
               }}>
-                <div style={{
-                  width: 46, height: 46, borderRadius: 8, overflow: "hidden", flex: "0 0 auto",
-                  background: "#262635", display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 12, color: "#9a9cab",
-                }}>
-                  {kosong ? "kosong" : <img src={m.url} alt={"Medali VIP " + n} style={{ width: "100%", height: "100%", objectFit: "contain" }} />}
-                </div>
+                {kosong ? (
+                  <div style={{
+                    width: 46, height: 46, borderRadius: 8, flex: "0 0 auto",
+                    background: "#262635", display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 12, color: "#9a9cab",
+                  }}>kosong</div>
+                ) : (
+                  <Thumb url={m.url} kind={m.kind} poster={m.poster} nama={"Medali VIP " + n} lebar={46}
+                    onKlik={() => setLihat({ ...m, nama: "Medali VIP " + n })} />
+                )}
                 <div style={{ flex: "1 1 auto", minWidth: 0 }}>
                   <div style={{ fontWeight: 600 }}>VIP {n}</div>
                   <div style={{ fontSize: 12, color: "#9a9cab" }}>
@@ -194,6 +199,8 @@ export default function Vip() {
         onYa={async () => { const n = hapus; setHapus(null); await hapusMedali(n); }}
         onTidak={() => setHapus(null)}
       />
+      <Pratinjau aset={lihat} onTutup={() => setLihat(null)} />
+
     </>
   );
 }

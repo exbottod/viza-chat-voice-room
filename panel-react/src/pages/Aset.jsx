@@ -6,6 +6,7 @@ import { ambilSemuaMentah, catatLog, rupiah } from "../data.js";
 import { bacaRtdbServer, kunciVip, hapusRtdbServer } from "../unggah.js";
 import { Konfirmasi, Kosong, Panel, Rangka, Tabel, Tag, toast } from "../ui.jsx";
 import TambahAset from "./TambahAset.jsx";
+import { Pratinjau, Thumb } from "../pratinjau.jsx";
 
 // Lencana sengaja tidak ada di sini: tier VIP tidak punya slot lencana.
 // Lencana tetap bisa dikirim ke akun lewat menu Kirim ke user.
@@ -24,6 +25,7 @@ export default function Aset({ awal = "frame" }) {
   const [ganti, setGanti] = useState(null);
   const [hapus, setHapus] = useState(null);
   const [sibuk, setSibuk] = useState(false);
+  const [lihat, setLihat] = useState(null);
 
   /**
    * Daftar aset dibaca dari DUA tempat, sama seperti aplikasi:
@@ -118,6 +120,7 @@ export default function Aset({ awal = "frame" }) {
           : (
             <Tabel
               kolom={[
+                { kunci: "lihat", label: "Pratinjau", sel: (b) => b.lihat },
                 { kunci: "name", label: "Nama", sel: (b) => b.name },
                 { kunci: "tier", label: "Tier", sel: (b) => b.tier },
                 { kunci: "kind", label: "Jenis", sel: (b) => b.kind },
@@ -128,6 +131,8 @@ export default function Aset({ awal = "frame" }) {
               ]}
               baris={daftar.map((x) => ({
                 __kunci: x.id,
+                lihat: <Thumb url={x.url} kind={x.kind} poster={x.poster} nama={x.name || x.id}
+                  onKlik={() => setLihat({ ...x, nama: x.name || x.id })} />,
                 name: x.name || x.id, tier: Number(x.n) ? "VIP " + Number(x.n) : "-", kind: x.kind || "-",
                 price: Number(x.price) ? rupiah(x.price) + " coin" : <Tag jenis="aktif">Gratis</Tag>,
                 days: Number(x.days) || "∞", order: Number(x.order) || 0,
@@ -148,6 +153,8 @@ export default function Aset({ awal = "frame" }) {
       <TambahAset buka={tambahVip} vip slot={slot} judul={SLOT.find((s) => s[0] === slot)?.[1]}
         ganti={ganti && Number(ganti.n) ? ganti : null}
         onTutup={() => { setTambahVip(false); setGanti(null); }} onSelesai={muat} />
+
+      <Pratinjau aset={lihat} onTutup={() => setLihat(null)} />
 
       <Konfirmasi buka={!!hapus} judul="Hapus aset?" pesan={(hapus?.name || hapus?.id || "") + " akan dihapus dari Store dan room."}
         tombol="Hapus" sibuk={sibuk} onYa={jalanHapus} onTidak={() => setHapus(null)} />

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { walletAdmin } from "../dompet.js";
-import { ambilSemuaMentah, catatLog, rupiah, waktu } from "../data.js";
+import { ambilSemuaMentah, catatLog, rupiah, teks, waktu } from "../data.js";
 import { bacaRtdbServer } from "../unggah.js";
 import { Kartu, Konfirmasi, Laci, Panel, Pil, Tag, Tabel, Rangka, toast } from "../ui.jsx";
 import Seller from "./Seller.jsx";
@@ -25,27 +25,55 @@ const KET = {
   },
 };
 
-/** Daftar user untuk mencari nama/nomor ID: userIds (nomor = id dokumen) + users. */
+/** Angka besar diringkas (jt, M, T) supaya kartu dan kolom tidak melebar. */
+const ringkas = (n) => {
+  const a = Math.abs(Number(n) || 0);
+  if (a >= 1e12) return (n / 1e12).toFixed(a >= 1e14 ? 0 : 1).replace(/\.0$/, "") + " T";
+  if (a >= 1e9) return (n / 1e9).toFixed(1).replace(/\.0$/, "") + " M";
+  if (a >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, "") + " jt";
+  return rupiah(n);
+};
+
+/**
+ * Daftar user untuk nama, nomor ID, dan foto. Dibaca langsung dari Firestore
+ * lebih dulu, lalu dilengkapi lewat server dompet (akun layanan) karena aturan
+ * Firestore menolak pembacaan langsung dari browser untuk banyak akun. Tanpa
+ * jalur server, nama dan ID staf tampil kosong.
+ */
 function pakaiDaftarUser() {
   const [daftar, setDaftar] = useState([]);
   useEffect(() => {
+    let hidup = true;
+    const baca = (nama) => Promise.allSettled([
+      ambilSemuaMentah(nama, 800),
+      walletAdmin({ op: "fs_list", koleksi: nama, batas: 500 }).then((r) => r?.items || []),
+    ]).then((h) => h.flatMap((x) => (x.status === "fulfilled" ? x.value : [])));
     (async () => {
-      const [ids, users] = await Promise.allSettled([
-        ambilSemuaMentah("userIds", 800),
-        ambilSemuaMentah("users", 800),
-      ]);
-      const out = [];
-      const kunci = new Set();
-      const tambah = (uid, nomor, nama, foto) => {
+      const [ids, users] = await Promise.all([baca("userIds"), baca("users")]);
+      const peta = new Map();
+      const ambil = (uid) => {
         const u = String(uid || "").trim();
-        if (!u || /^\d+$/.test(u) || kunci.has(u)) return;
-        kunci.add(u);
-        out.push({ uid: u, nomor: String(nomor || "").trim(), nama: String(nama || "").trim(), foto: String(foto || "") });
+        if (!u || /^\d+$/.test(u)) return null;
+        if (!peta.has(u)) peta.set(u, { uid: u, nomor: "", nama: "", foto: "" });
+        return peta.get(u);
       };
-      if (ids.status === "fulfilled") ids.value.forEach((d) => tambah(d.uid, d.id || d.userId, d.name || d.nama));
-      if (users.status === "fulfilled") users.value.forEach((d) => tambah(d.uid || d.id, d.userId, d.nickname || d.name, d.photoUrl));
-      setDaftar(out);
+      ids.forEach((d) => {
+        const o = ambil(d.uid);
+        if (!o) return;
+        const nomor = /^\d{3,}$/.test(String(d.id || "")) ? String(d.id) : String(d.userId || "");
+        if (!o.nomor && nomor) o.nomor = nomor;
+        if (!o.nama) o.nama = teks(d.name) || teks(d.nama);
+      });
+      users.forEach((d) => {
+        const o = ambil(d.uid || d.id);
+        if (!o) return;
+        if (!o.nomor && d.userId) o.nomor = teks(d.userId);
+        o.nama = teks(d.nickname) || teks(d.name) || o.nama;
+        o.foto = o.foto || teks(d.photoUrl) || teks(d.photo) || teks(d.avatar);
+      });
+      if (hidup) setDaftar([...peta.values()]);
     })().catch(() => {});
+    return () => { hidup = false; };
   }, []);
   return daftar;
 }
@@ -114,6 +142,7 @@ export default function StafApp({ peran = "manager" }) {
         uid: String(x.uid || ""),
         nomor: String(u.nomor || ""),
         nama: String(u.nama || ""),
+        foto: String(u.foto || ""),
         manager: String(x.manager || ""),
         coins: Number(x.coins || 0),
         stok: Number(x.stok || 0),
@@ -176,7 +205,9 @@ export default function StafApp({ peran = "manager" }) {
       kunci: "nama", label: "STAF", urut: true,
       sel: (x) => (
         <div className="user">
-          <div className="mini">{x.nama ? x.nama[0].toUpperCase() : "?"}</div>
+          <div className="mini">
+            {x.foto ? <img src={x.foto} alt="" /> : (x.nama ? x.nama[0].toUpperCase() : "?")}
+          </div>
           <div>
             <div>{x.nama || "(tanpa nama)"}</div>
             <div className="catatan" style={{ padding: 0, marginTop: 2 }}>
@@ -187,7 +218,7 @@ export default function StafApp({ peran = "manager" }) {
       ),
     },
     { kunci: "uid", label: "UID", sel: (x) => <span style={{ fontFamily: "monospace", fontSize: 11 }} title={x.uid}>{x.uid.slice(0, 10)}…</span> },
-    { kunci: "coins", label: "STOK COIN", urut: true, sel: (x) => rupiah(x.coins) },
+    { kunci: "coins", label: "STOK COIN", urut: true, sel: (x) => <span title={rupiah(x.coins)}>{ringkas(x.coins)}</span> },
     { kunci: "stok", label: "STOK ASET", urut: true, sel: (x) => rupiah(x.stok) + " item" },
     { kunci: "dibuat", label: "SEJAK", sel: (x) => (x.dibuat ? waktu(x.dibuat) : "—") },
     { kunci: "aktif", label: "STATUS", sel: (x) => (x.aktif ? <Tag>aktif</Tag> : <Tag jenis="blokir">dicabut</Tag>) },
@@ -213,7 +244,7 @@ export default function StafApp({ peran = "manager" }) {
       <Kartu isi={[
         [rupiah(data.filter((x) => x.aktif).length), ket.judul + " aktif"],
         [rupiah(data.filter((x) => !x.aktif).length), "Dicabut"],
-        [rupiah(totalCoin), "Total stok coin"],
+        [ringkas(totalCoin), "Total stok coin"],
         [rupiah(totalAset), "Total stok aset"],
       ]} />
 
@@ -234,6 +265,9 @@ export default function StafApp({ peran = "manager" }) {
             {!cocok.length ? "Tidak ada akun yang cocok."
               : cocok.map((u) => (
                 <div key={u.uid} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: "1px solid #2b2b3a" }}>
+                  <span className="mini" style={{ flex: "0 0 auto" }}>
+                    {u.foto ? <img src={u.foto} alt="" /> : (u.nama ? u.nama[0].toUpperCase() : "?")}
+                  </span>
                   <span style={{ flex: "1 1 auto", minWidth: 0 }}>
                     <b>{u.nama || "(tanpa nama)"}</b><br />
                     <small>{u.nomor ? "ID " + u.nomor + " · " : ""}{u.uid}</small>

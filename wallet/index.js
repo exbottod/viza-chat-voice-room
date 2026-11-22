@@ -1079,6 +1079,21 @@ async function catatKomisiAgency(env, hostUid, nilaiCoin, now) {
 const KOLOM_SELLER = `s.uid, s.store, s.wa, s.wa_link, s.stock, s.stock as coins, s.urut, s.active,
   coalesce(nullif(s.photo, ''), (select avatar from wave_players w where w.uid = s.uid), '') as photo`;
 
+/**
+ * UID yang punya dompet di database Viza ini. Dipakai untuk memisahkan seller
+ * milik Viza dari seller lama yang ikut tersalin dari database aplikasi lain
+ * (mis. Rezo). Bila tabel wallets belum ada, hasilnya null dan semua seller
+ * dianggap milik Viza supaya tidak ada yang terhapus keliru.
+ */
+async function uidPunyaDompet(env) {
+  try {
+    const r = await pipe(env, [{ sql: "select uid from wallets limit 20000" }]);
+    const set = new Set();
+    (r[0].rows || []).forEach((x) => { const u = String(x.uid || ""); if (u) set.add(u); });
+    return set;
+  } catch (e) { return null; }
+}
+
 async function daftarSeller(env, hanyaAktif) {
   await siapSeller(env);
   const batas = Date.now() - 3 * 24 * 3600 * 1000;
@@ -1093,7 +1108,12 @@ async function daftarSeller(env, hanyaAktif) {
       args: [I(batas)],
     },
   ]);
-  return r[0].rows;
+  const dompet = await uidPunyaDompet(env);
+  return (r[0].rows || []).map((x) => ({
+    ...x,
+    // viza = 1 seller milik aplikasi Viza, 0 seller lama dari aplikasi lain.
+    viza: dompet ? (dompet.has(String(x.uid || "")) ? 1 : 0) : 1,
+  }));
 }
 
 async function satuSeller(env, uid) {
@@ -4415,6 +4435,20 @@ async function admin(env, body) {
     ]);
     if (!r[0].affected) return gagal("Seller belum terdaftar");
     return json({ ok: 1, seller: await satuSeller(env, who) });
+  }
+  if (op === "seller_bersih") {
+    // Hapus seller yang UID-nya tidak punya dompet di database Viza (sisa
+    // salinan dari aplikasi lain). Tidak menyentuh seller milik Viza.
+    await siapSeller(env);
+    const dompet = await uidPunyaDompet(env);
+    if (!dompet) return gagal("Tabel wallets belum ada, tidak ada yang dihapus");
+    const r = await pipe(env, [{ sql: "select uid, store from coin_seller" }]);
+    const buang = (r[0].rows || []).filter((x) => !dompet.has(String(x.uid || "")));
+    if (!buang.length) return json({ ok: 1, hapus: 0, list: [] });
+    for (const x of buang) {
+      await pipe(env, [{ sql: "delete from coin_seller where uid = ?", args: [T(String(x.uid))] }]);
+    }
+    return json({ ok: 1, hapus: buang.length, list: buang.map((x) => x.store || x.uid) });
   }
   if (op === "seller_del") {
     const who = String(p.uid ?? "").trim();

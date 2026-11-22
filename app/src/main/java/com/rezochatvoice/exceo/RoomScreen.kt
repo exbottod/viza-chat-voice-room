@@ -233,7 +233,24 @@ fun RoomScreen(
     var showRank by remember { mutableStateOf(false) }
     // Tekan lama penanda suara untuk melihat rincian sambungan Agora.
     var diagSuara by remember { mutableStateOf(false) }
-    val seats = rawSeats.filterValues { it.uid in members }
+    // Kursi yang baru diketuk langsung tampil sebagai milik kita, tanpa menunggu
+    // jaringan. Begitu data asli dari server menyebut kita di kursi itu, penanda
+    // sementara ini dilepas.
+    var kursiCepat by remember { mutableStateOf<Int?>(null) }
+    androidx.compose.runtime.LaunchedEffect(rawSeats.values.any { it.uid == myUid && it.index == kursiCepat }, kursiCepat) {
+        val k = kursiCepat ?: return@LaunchedEffect
+        if (rawSeats.values.any { it.uid == myUid && it.index == k }) {
+            kursiCepat = null
+        } else {
+            kotlinx.coroutines.delay(6000L)
+            if (kursiCepat == k) kursiCepat = null
+        }
+    }
+    val seats = rawSeats.filterValues { it.uid in members }.let { asli ->
+        val k = kursiCepat
+        if (k == null || asli[k]?.uid == myUid) asli
+        else asli + (k to Seat(index = k, uid = myUid, name = myName, avatarB64 = null, muted = false))
+    }
     // Profil orang yang duduk dipanaskan SEKALI di sini, bukan dari dalam tiap sel
     // kursi. Dulu setiap sel memanggil server sendiri saat dibuat ulang, jadi pindah
     // kursi terasa "memuat" berkali-kali. Yang sudah dicoba dicatat supaya tidak diulang.
@@ -1174,7 +1191,18 @@ fun RoomScreen(
                         } else {
                             GoldButton(if (mySeat == null) "Naik kursi mic" else "Pindah ke kursi ini") {
                                 seatSheet = null
-                                scope.launch { RoomRepo.takeSeat(r.id, idx, myUid, myName, myAvatarB64)?.let { toast(it) } }
+                                // Kursi langsung terlihat terisi oleh kita; penulisan ke
+                                // server berjalan di belakang. Kalau gagal, penanda
+                                // sementara dilepas dan pesan galat ditampilkan.
+                                val sebelum = mySeat?.index
+                                kursiCepat = idx
+                                scope.launch {
+                                    val err = RoomRepo.takeSeat(r.id, idx, myUid, myName, myAvatarB64, sebelum)
+                                    if (err != null) {
+                                        kursiCepat = null
+                                        toast(err)
+                                    }
+                                }
                             }
                         }
                         if (canManage) {

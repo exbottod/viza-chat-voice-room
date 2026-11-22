@@ -803,25 +803,52 @@ object RoomRepo {
         }
     }
 
-    suspend fun takeSeat(roomId: String, index: Int, uid: String, name: String, avatarB64: String?): String? =
-        kunciKursi.withLock { takeSeatSekali(roomId, index, uid, name, avatarB64) }
+    /** Foto kursi 128 px yang sudah pernah dibuat, supaya naik kursi tidak mengolah gambar lagi. */
+    private val avatarKursiCache = java.util.concurrent.ConcurrentHashMap<String, String>()
 
-    private suspend fun takeSeatSekali(roomId: String, index: Int, uid: String, name: String, avatarB64: String?): String? {
+    suspend fun takeSeat(
+        roomId: String,
+        index: Int,
+        uid: String,
+        name: String,
+        avatarB64: String?,
+        kursiLama: Int? = null,
+    ): String? = kunciKursi.withLock { takeSeatSekali(roomId, index, uid, name, avatarB64, kursiLama) }
+
+    private suspend fun takeSeatSekali(
+        roomId: String,
+        index: Int,
+        uid: String,
+        name: String,
+        avatarB64: String?,
+        kursiLama: Int? = null,
+    ): String? {
         return try {
             val base = Rtdb.ref("seats/$roomId")
-            if (Rtdb.ref("locks/$roomId/$index").get().await().exists()) return "Mic ini dikunci oleh owner"
-            if (Rtdb.ref("roomBans/$roomId/$uid/mic").get().await().getValue(Boolean::class.java) == true) {
-                return "Kamu dilarang naik mic di room ini"
+            // Tiga pemeriksaan izin dijalankan bersamaan, bukan satu per satu:
+            // naik kursi jadi terasa langsung, bukan menunggu tiga putaran jaringan.
+            val cek = kotlinx.coroutines.coroutineScope {
+                val kunci = async { Rtdb.ref("locks/$roomId/$index").get().await().exists() }
+                val larangan = async {
+                    Rtdb.ref("roomBans/$roomId/$uid/mic").get().await().getValue(Boolean::class.java) == true
+                }
+                val hadir = async {
+                    Rtdb.ref("members/$roomId").get().await().children.mapNotNull { it.key }.toSet()
+                }
+                Triple(kunci.await(), larangan.await(), hadir.await())
             }
-            val present = Rtdb.ref("members/$roomId").get().await().children.mapNotNull { it.key }.toSet()
+            if (cek.first) return "Mic ini dikunci oleh owner"
+            if (cek.second) return "Kamu dilarang naik mic di room ini"
+            val present = cek.third
             // Foto kursi dulu kosong kalau profil belum termuat saat naik kursi,
             // sehingga yang tampil hanya huruf awal nama. Ambil dari cache profil.
             // Foto kursi disimpan versi kecil saja: node seats dikirim ulang ke
             // semua orang setiap ada perubahan kursi, jadi foto penuh membuat
             // masuk room terasa berat.
-            val avatar = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-                ProfileRepo.avatarKecil(avatarB64?.takeIf { it.isNotBlank() } ?: UserCache.peek(uid)?.avatarB64, 128)
-            }
+            val sumberFoto = avatarB64?.takeIf { it.isNotBlank() } ?: UserCache.peek(uid)?.avatarB64
+            val avatar = avatarKursiCache[uid] ?: kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                ProfileRepo.avatarKecil(sumberFoto, 128)
+            }?.also { if (it.isNotBlank()) avatarKursiCache[uid] = it }
             // Menulis seluruh node seats kena "Permission denied": aturan database
             // hanya mengizinkan menulis kursi milik sendiri. Jadi kursi baru
             // diklaim lewat transaksi pada satu kursi itu saja, lalu kursi lama
@@ -843,10 +870,16 @@ object RoomRepo {
                 }
             }
             if (err != null) return err
+            // Kursi lama langsung dihapus tanpa membaca ulang seluruh node seats:
+            // layar sudah tahu di kursi mana pengguna tadi duduk.
             val lama = HashMap<String, Any?>()
-            for (c in base.get().await().children) {
-                if (c.key != index.toString() && c.child("uid").getValue(String::class.java) == uid) {
-                    lama[c.key!!] = null
+            if (kursiLama != null && kursiLama.toString() != index.toString()) {
+                lama[kursiLama.toString()] = null
+            } else if (kursiLama == null) {
+                for (c in base.get().await().children) {
+                    if (c.key != index.toString() && c.child("uid").getValue(String::class.java) == uid) {
+                        lama[c.key!!] = null
+                    }
                 }
             }
             if (lama.isNotEmpty()) base.updateChildren(lama).await()

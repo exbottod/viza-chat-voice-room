@@ -214,15 +214,53 @@ object AgoraVoice {
     private var tokRoom: String? = null
     private var tokWaktu = 0L
     private const val TOK_UMUR = 30 * 60_000L
+    private const val TOK_DISK_UMUR = 20 * 60_000L
     private val kunciToken = Mutex()
+
+    /**
+     * Token yang masih berlaku disimpan juga di HP. Jadi saat aplikasi dibuka lagi
+     * dan masuk room yang sama, suara langsung menyambung tanpa menunggu permintaan
+     * token ke server (seperti di aplikasi pembanding).
+     */
+    private fun bacaTokenDisk(id: String): Tok? = try {
+        val ctx = appCtx ?: return null
+        val o = org.json.JSONObject(ctx.getSharedPreferences("agora_tok", Context.MODE_PRIVATE).getString(id, null) ?: "")
+        val umur = System.currentTimeMillis() - o.optLong("waktu")
+        val akun = o.optString("account")
+        val uidSaya = try { FirebaseAuth.getInstance().currentUser?.uid ?: "" } catch (e: Exception) { "" }
+        val t = Tok(o.optString("appId"), o.optString("token"), o.optString("channel"), akun)
+        if (umur in 0..TOK_DISK_UMUR && t.appId.isNotBlank() && t.token.isNotBlank() &&
+            t.channel == id && (uidSaya.isBlank() || akun.isBlank() || akun == uidSaya)
+        ) t else null
+    } catch (e: Exception) { null }
+
+    private fun simpanTokenDisk(id: String, t: Tok) {
+        try {
+            val ctx = appCtx ?: return
+            ctx.getSharedPreferences("agora_tok", Context.MODE_PRIVATE).edit().putString(
+                id,
+                org.json.JSONObject().put("appId", t.appId).put("token", t.token)
+                    .put("channel", t.channel).put("account", t.account)
+                    .put("waktu", System.currentTimeMillis()).toString(),
+            ).apply()
+        } catch (e: Exception) { }
+    }
 
     private suspend fun tokenUntuk(id: String, diam: Boolean = false): Tok? = kunciToken.withLock {
         val t = tokSimpan
         if (t != null && tokRoom == id && System.currentTimeMillis() - tokWaktu < TOK_UMUR) return@withLock t
+        // Token tersimpan dari sesi sebelumnya: langsung pakai, tanpa jaringan.
+        bacaTokenDisk(id)?.let { d ->
+            tokSimpan = d
+            tokRoom = id
+            tokWaktu = System.currentTimeMillis()
+            return@withLock d
+        }
         val baru = fetchToken(id, diam) ?: return@withLock null
         tokSimpan = baru
         tokRoom = id
         tokWaktu = System.currentTimeMillis()
+        simpanTokenDisk(id, baru)
         baru
     }
 
@@ -380,9 +418,11 @@ object AgoraVoice {
         }
         val e = RtcEngine.create(cfg)
         try { e.setChannelProfile(Constants.CHANNEL_PROFILE_LIVE_BROADCASTING) } catch (x: Exception) { }
-        // Profil musik supaya suara DJ tidak gepeng, tetap dengan skenario CHATROOM
-        // agar gema tidak muncul saat semua orang memakai speaker.
-        try { e.setAudioProfile(Constants.AUDIO_PROFILE_MUSIC_STANDARD, Constants.AUDIO_SCENARIO_CHATROOM) } catch (x: Exception) { }
+        // Profil ucapan (32 kHz mono) dipakai supaya suara tidak putus-putus saat
+        // banyak orang bicara bersamaan: tiap peserta hanya butuh sekitar 18 kbps,
+        // bukan 64 kbps seperti profil musik. Tetap dengan skenario CHATROOM agar
+        // peredam gema aktif.
+        try { e.setAudioProfile(Constants.AUDIO_PROFILE_SPEECH_STANDARD, Constants.AUDIO_SCENARIO_CHATROOM) } catch (x: Exception) { }
         try { e.setParameters("{\"che.audio.enable.aec\":true}") } catch (x: Exception) { }
         try { e.setParameters("{\"che.audio.enable.agc\":true}") } catch (x: Exception) { }
         try { e.setParameters("{\"che.audio.enable.ns\":true}") } catch (x: Exception) { }

@@ -37,6 +37,41 @@ import kotlinx.coroutines.tasks.await
 // Dipasang setelah halaman game selesai dimuat. Meja game dipaksa berukuran
 // piksel penuh layar karena di sebagian WebView ukuran halaman terbaca 0.
 private const val skripUkuran = """(function(){
+  // Kartu dialog (scatter/putaran gratis) dipaskan ke layar dengan skala,
+  // bukan dengan memotong isinya. Ukuran asli dipakai selama masih muat.
+  function pasKartu(){
+    var d=document.documentElement;
+    var krt=document.querySelectorAll('.fs-card');
+    if(!krt.length){
+      // Dialog lain (mis. big win) memakai latar yang sama: kembalikan
+      // jaraknya supaya ukurannya tetap seperti aslinya.
+      var lb=document.querySelectorAll('.prize-backdrop');
+      for(var b=0;b<lb.length;b++){ if(lb[b].style.padding) lb[b].style.padding=''; }
+      return;
+    }
+    var wv=window.visualViewport;
+    var vw=Math.min(window.innerWidth||1e9,(wv?wv.width:1e9),(d.clientWidth||1e9));
+    var vh=Math.min(window.innerHeight||1e9,(wv?wv.height:1e9),(d.clientHeight||1e9));
+    if(vw<50||vh<50) return;
+    for(var i=0;i<krt.length;i++){
+      var c=krt[i];
+      c.style.transform='';
+      // Ikon scatter menempel 58 piksel di atas kartu, jadi latar kartu
+      // diberi ruang atas supaya ikon tidak terpotong tepi layar.
+      var latar=c.parentElement;
+      if(latar) latar.style.padding='64px 8px 8px';
+      var r=c.getBoundingClientRect();
+      if(!r.width||!r.height) continue;
+      // 88 = ruang ikon scatter (64) + tepi atas/bawah (8+8) + aman 8.
+      var kH=(vh-88)/r.height;
+      var kW=(vw-16)/r.width;
+      var k=Math.min(1,kH,kW);
+      if(k<1){
+        c.style.transformOrigin='center center';
+        c.style.transform='scale('+k+')';
+      }
+    }
+  }
   function fix(){
     var d=document.documentElement;
     var st=document.querySelector('.bw-stage');
@@ -64,19 +99,31 @@ private const val skripUkuran = """(function(){
       '.gd-backdrop,.prize-backdrop{position:fixed!important;top:0!important;left:0!important;'+
       'right:0!important;bottom:0!important;display:flex!important;align-items:center!important;'+
       'justify-content:center!important;padding:0!important;box-sizing:border-box!important;'+
-      'overflow:auto!important;z-index:99999!important}'+
+      'overflow:hidden!important;z-index:99999!important}'+
       '.gd-box{max-height:94vh!important;overflow:auto!important}'+
       '.gd-scroll{max-height:none!important;overflow:visible!important}'+
       '.prize-art{max-width:none!important;max-height:none!important}'+
-      '.fs-card{max-height:94vh!important;overflow:auto!important}';
+      // Kartu "PUTARAN GRATIS" (scatter) tidak boleh dibatasi tingginya:
+      // ikon scatter menempel di atas kartu, jadi kalau kotaknya digulir
+      // judul tertutup ikon dan tombol MULAI ikut terpotong.
+      // Ukuran asli tetap dipakai; hanya dikecilkan bila benar-benar
+      // tidak muat di layar (lihat pasKartu).
+      '.fs-card{max-height:none!important;overflow:visible!important;'+
+      'max-width:calc(100vw - 16px)!important}';
     document.head.appendChild(s);
   }catch(e){}
   fix();
-  [200,600,1200,2000,3000,4500,6000].forEach(function(t){setTimeout(fix,t);});
+  pasKartu();
+  [200,600,1200,2000,3000,4500,6000].forEach(function(t){setTimeout(function(){fix();pasKartu();},t);});
+  // Dialog bisa muncul kapan saja (scatter, big win), jadi setiap kali
+  // isi halaman berubah, kartu dipaskan lagi.
+  try{
+    new MutationObserver(function(){pasKartu();}).observe(document.body,{childList:true,subtree:true});
+  }catch(e){}
   var n=0;
   var iv=setInterval(function(){fix();n++;if(n>40){clearInterval(iv);}},500);
-  window.addEventListener('resize',fix);
-  window.addEventListener('orientationchange',fix);
+  window.addEventListener('resize',function(){fix();pasKartu();});
+  window.addEventListener('orientationchange',function(){fix();pasKartu();});
 })();"""
 
 /**
@@ -406,8 +453,8 @@ private fun GameWebScreen(daftar: List<String>, onClose: () -> Unit, awal: Strin
             }
         }
 
-        // Keterangan tahap: kecil, di kiri bawah, selalu tampil.
-        Text(
+        // Keterangan tahap: kecil, di kiri bawah, hanya saat memuat atau galat.
+        if (prog < 100 || galat.isNotBlank()) Text(
             tahap,
             color = Color(0x99FFFFFF),
             fontSize = 9.sp,

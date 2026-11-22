@@ -1,1 +1,1 @@
-• Panel: unggah aset dan emot memakai XHR, ada persentase nyata dan batas waktu
+• Panel: menu Gift berjenjang (Category, Gift) dan daftar gift dengan edit

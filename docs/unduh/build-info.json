@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.349",
-  "catatan": "• Panel: unggah aset dan emot memakai XHR, ada persentase nyata dan batas waktu",
-  "ukuran_apk": 74377102,
-  "sha256_apk": "473e7bb7d36ce12d1701ba6fa25d2088f010f70cae16fc3356fdb04708d5ff67",
+  "versi": "1.0.350",
+  "catatan": "• Panel: menu Gift berjenjang (Category, Gift) dan daftar gift dengan edit",
+  "ukuran_apk": 74377115,
+  "sha256_apk": "a76ddee7790c6c732643d45b279e924c0356683d8cbcaa5aeb953c21e84b8863",
   "abis": {
     "arm64": {
-      "ukuran": 74377102,
-      "sha256": "473e7bb7d36ce12d1701ba6fa25d2088f010f70cae16fc3356fdb04708d5ff67"
+      "ukuran": 74377115,
+      "sha256": "a76ddee7790c6c732643d45b279e924c0356683d8cbcaa5aeb953c21e84b8863"
     },
     "armv7": {
-      "ukuran": 72611619,
-      "sha256": "7db27e459b578e41cee33fbfdc8f67ef156281888a40483f63d902da81809b73"
+      "ukuran": 72611626,
+      "sha256": "63aaae29c2677aeca0f5b794c31a7b448fd46103069bfb27c3711fbcc6db6c76"
     },
     "universal": {
-      "ukuran": 122231064,
-      "sha256": "3362d31b3145e99333ba1d9940f82e6b9988864604451340299f2ffe8467113f"
+      "ukuran": 122231085,
+      "sha256": "fa835b56e02b2773f076315e0b20cad2408e2e7e67b4c5a669f81be6268889d2"
     }
   }
 }

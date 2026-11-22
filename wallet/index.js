@@ -12,7 +12,10 @@
 
 const PROJ = "my-app-e7f8c";
 // Project Firebase lain yang dipercaya (aplikasi white-label Viza memakai project sendiri).
-const PROJ_LAIN = [];
+// "raps-star" = project Firebase yang dipakai APK Viza untuk login (terlihat
+// dari galat "token ditolak: aud beda: raps-star"). Tanpa ini semua aksi
+// aplikasi (gift, pasang bingkai, game, klaim level) ditolak "Sesi tidak sah".
+const PROJ_LAIN = ["raps-star"];
 const PROJ_SAH = [PROJ, ...PROJ_LAIN];
 
 // ---------- Game Greedy King (satu berkas dengan dompet supaya update VPS

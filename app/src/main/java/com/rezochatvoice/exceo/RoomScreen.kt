@@ -169,12 +169,15 @@ fun RoomScreen(
     }
     val scope = rememberCoroutineScope()
 
-    var room by remember { mutableStateOf<RoomInfo?>(initialRoom) }
+    val ctxSimpan = androidx.compose.ui.platform.LocalContext.current.applicationContext
+    // Isi room terakhir dipakai lebih dulu supaya layar tidak pernah kosong saat
+    // kembali dari WhatsApp atau APK lain.
+    var room by remember { mutableStateOf(initialRoom ?: RoomCache.info(ctxSimpan, roomId)) }
     // --- Owner bisa mengeluarkan user: kalau keanggotaan kita hilang, keluar dari room.
     var joinedOnce by remember { mutableStateOf(false) }
     var kickedOut by remember { mutableStateOf(false) }
     // Loading singkat saat masuk room, sampai kursi dan chat tampil.
-    var siapRoom by remember { mutableStateOf(false) }
+    var siapRoom by remember { mutableStateOf(RoomCache.kursi(ctxSimpan, roomId).isNotEmpty()) }
     LaunchedEffect(roomId, myUid) {
         val reg = Rtdb.listen(Rtdb.ref("members/" + roomId + "/" + myUid)) { snap ->
             if (snap.exists()) {
@@ -201,8 +204,15 @@ fun RoomScreen(
 
     var members by remember { mutableStateOf<Set<String>>(emptySet()) }
     var locks by remember { mutableStateOf<Set<Int>>(emptySet()) }
-    var rawSeats by remember { mutableStateOf<Map<Int, Seat>>(emptyMap()) }
+    var rawSeats by remember {
+        mutableStateOf(RoomCache.kursi(ctxSimpan, roomId))
+    }
     androidx.compose.runtime.LaunchedEffect(roomId) {
+        // Kalau kursi terakhir sudah ada di HP, layar langsung tampil tanpa loading.
+        if (rawSeats.isNotEmpty()) {
+            siapRoom = true
+            return@LaunchedEffect
+        }
         siapRoom = false
         // Begitu kursi room terbaca, loading langsung dilepas supaya room cepat
         // normal; kalau jaringan lambat, paling lambat 1,2 detik tetap dibuka.
@@ -285,6 +295,14 @@ fun RoomScreen(
         onDispose { rujukan.removeEventListener(pendengar) }
     }
 
+    // Setiap perubahan kursi dan info room disimpan ke HP, jadi saat aplikasi
+    // dibuka lagi semuanya sudah ada tanpa menunggu jaringan.
+    androidx.compose.runtime.LaunchedEffect(rawSeats) {
+        if (rawSeats.isNotEmpty()) RoomCache.simpanKursi(ctxSimpan, roomId, rawSeats)
+    }
+    androidx.compose.runtime.LaunchedEffect(room) {
+        room?.let { RoomCache.simpanInfo(ctxSimpan, it) }
+    }
     val seats = rawSeats.filterValues { it.uid in members }.let { asli ->
         val k = kursiCepat
         if (k == null || asli[k]?.uid == myUid) asli

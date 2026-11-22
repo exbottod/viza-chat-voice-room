@@ -84,7 +84,12 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
     var overlay by rememberSaveable { mutableStateOf(OV_NONE) }
     var profile by remember { mutableStateOf(ProfileRepo.loadLocal(context, user.email)) }
     var userId by remember { mutableStateOf(UserDirectory.cachedId(context, uid) ?: "...") }
-    var activeRoom by remember { mutableStateOf<RoomInfo?>(null) }
+    // Room terakhir dibuka lagi dari simpanan HP. Dulu saat aplikasi dibuang
+    // Android di latar belakang, kembali ke Viza berarti mulai dari tab Party dan
+    // room dimuat ulang dari nol.
+    var activeRoom by remember {
+        mutableStateOf(RoomCache.idTerakhir(context)?.let { RoomCache.info(context, it) })
+    }
     var minimized by remember { mutableStateOf(false) }
     val myName = profile.nickname.ifBlank { user.name }
     var showWallet by remember { mutableStateOf(false) }
@@ -246,12 +251,33 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
         activeRoom = null
         minimized = false
         EfekMasukTercatat.reset(r.id)
+        RoomCache.lupakan(context)
         scope.launch { RoomRepo.leave(r.id, uid) }
     }
 
     // Deep link "bagikan room" (rezo://room/<id>): otomatis masuk room
     // saat link dibuka dan user sudah login. Link tiap room unik (memuat ID room),
     // jadi penerima link selalu masuk ke room milik orang yang membagikan.
+    // Room yang dipulihkan dari simpanan HP tetap harus jadi anggota room lagi
+    // dan menyambung suara. Dulu pemulihan hanya menggambar layar, jadi suara
+    // dan keanggotaan tidak tersambung.
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        val r = activeRoom ?: return@LaunchedEffect
+        if (RoomCache.idTerakhir(context) != r.id) return@LaunchedEffect
+        try {
+            val w = kotlinx.coroutines.withTimeoutOrNull(8000L) { SupaRepo.get(uid).wallet } ?: Wallet()
+            wallet = w
+            RoomRepo.join(
+                r.id, myName,
+                if (vipActive(w.vip, w.vipUntil)) w.vip else 0,
+                fallbackEquip(w, "entry"), fallbackEquip(w, "banner"),
+            )
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+        }
+    }
+
     LaunchedEffect(RoomDeepLink.pendingRoomId) {
         val rid = RoomDeepLink.pendingRoomId ?: return@LaunchedEffect
         RoomDeepLink.pendingRoomId = null

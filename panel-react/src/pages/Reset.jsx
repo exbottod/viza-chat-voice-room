@@ -36,25 +36,45 @@ export default function Reset() {
 
   const adaPilihan = Object.values(pilih).some(Boolean);
   const daftarKecuali = kecuali.split(/[\s,;]+/).map((x) => x.trim()).filter(Boolean);
-  const siap = adaPilihan && (semua ? ketik.trim().toUpperCase() === "HAPUS" : uid.trim().length >= 4);
+  const siap = adaPilihan && (semua ? ketik.trim().toUpperCase() === "HAPUS" : uid.trim().length >= 3);
 
   const putar = (k) => setPilih((l) => ({ ...l, [k]: !l[k] }));
 
   const ringkas = () => BAGIAN.filter(([k]) => pilih[k]).map(([, n]) => n).join(", ");
 
-  /** Daftar uid untuk reset nama/foto semua user (server hanya bisa satu uid). */
-  const semuaUid = async () => {
-    const dok = await ambilSemuaMentah("users", 600);
-    const buang = new Set(daftarKecuali.map((x) => x.toLowerCase()));
-    const kunci = new Set();
+  /**
+   * Daftar user untuk direset. Nomor ID (mis. 1000) BUKAN uid Firebase, jadi
+   * nomornya diterjemahkan dulu: userIds/{nomor}.uid atau users/{uid}.userId.
+   * Server menolak ID angka, jadi semua pemanggilan memakai uid.
+   */
+  const muatUser = async () => {
+    const [ids, users] = await Promise.allSettled([
+      ambilSemuaMentah("userIds", 800),
+      ambilSemuaMentah("users", 800),
+    ]);
     const out = [];
-    dok.forEach((d) => {
-      const id = String(d.uid || d.id || "").trim();
-      if (!id || buang.has(id.toLowerCase()) || kunci.has(id)) return;
-      kunci.add(id);
-      out.push(id);
-    });
+    const kunci = new Set();
+    const tambah = (uid, nomor, nama) => {
+      const u = String(uid || "").trim();
+      if (!u || /^\d+$/.test(u) || kunci.has(u)) return; // uid Firebase tidak pernah angka saja
+      kunci.add(u);
+      out.push({ uid: u, nomor: String(nomor || "").trim(), nama: String(nama || "").trim() });
+    };
+    if (ids.status === "fulfilled") {
+      ids.value.forEach((d) => tambah(d.uid, d.id || d.userId, d.name || d.nama));
+    }
+    if (users.status === "fulfilled") {
+      users.value.forEach((d) => tambah(d.uid || d.id, d.userId, d.name || d.nama));
+    }
     return out;
+  };
+
+  /** Nomor ID angka atau UID -> data user yang cocok. */
+  const cariUser = (kata, daftar) => {
+    const k = String(kata || "").trim();
+    if (!k) return null;
+    if (/^\d+$/.test(k)) return daftar.find((u) => u.nomor === k) || null;
+    return daftar.find((u) => u.uid === k) || null;
   };
 
   const jalan = async () => {
@@ -63,8 +83,41 @@ export default function Reset() {
     setHasil([]);
     const catat = (nama, pesan, ok) => setHasil((l) => [...l, { nama, pesan, ok }]);
     try {
+      let daftar = [];
+      setProgres("Membaca daftar user…");
+      try { daftar = await muatUser(); }
+      catch (e) { catat("Daftar user", "Tidak bisa dibaca: " + String(e.message || e), false); }
+
       const target = uid.trim();
-      if (semua) {
+      if (!semua) {
+        const orang = cariUser(target, daftar);
+        if (!orang) {
+          catat("Sasaran", /^\d+$/.test(target)
+            ? "Nomor ID " + target + " tidak ditemukan di daftar user. Pastikan nomornya benar atau pakai UID akun."
+            : "UID " + target + " tidak ditemukan. Periksa lagi UID-nya.", false);
+          return;
+        }
+        const u = orang.uid;
+        const siapa = (orang.nama || "(tanpa nama)") + (orang.nomor ? " · ID " + orang.nomor : "");
+        const f = { coins: !!pilih.coin, gems: !!pilih.diamond, vip: !!pilih.vip, level: !!pilih.level, assets: !!pilih.aset };
+        if (Object.values(f).some(Boolean)) {
+          setProgres("Meriset saldo dan aset " + siapa + "…");
+          try {
+            await walletAdmin({ op: "reset_user", uid: u, ...f }, 60000);
+            catat("Saldo, VIP, level, aset", "Direset untuk " + siapa, true);
+          } catch (e) { catat("Saldo, VIP, level, aset", String(e.message || e), false); }
+        }
+        if (pilih.nama) {
+          setProgres("Meriset nama " + siapa + "…");
+          try { await panelAksi("reset_nama", { uid: u }); catat("Nama", "Nama " + siapa + " kembali Unknown", true); }
+          catch (e) { catat("Nama", String(e.message || e), false); }
+        }
+        if (pilih.foto) {
+          setProgres("Meriset foto profil " + siapa + "…");
+          try { await panelAksi("reset_foto", { uid: u }); catat("Foto profil", "Foto " + siapa + " dikosongkan", true); }
+          catch (e) { catat("Foto profil", String(e.message || e), false); }
+        }
+      } else {
         if (pilih.coin) {
           setProgres("Mengosongkan coin semua user…");
           try { await walletAdmin({ op: "reset_all", konfirmasi: "HAPUS" }, 60000); catat("Coin semua user", "Coin semua user jadi 0", true); }
@@ -83,42 +136,22 @@ export default function Reset() {
           } catch (e) { catat("VIP / level / aset", String(e.message || e), false); }
         }
         if (pilih.nama || pilih.foto) {
-          setProgres("Mengambil daftar user…");
-          let daftar = [];
-          try { daftar = await semuaUid(); }
-          catch (e) { catat("Daftar user", "Tidak bisa dibaca: " + String(e.message || e), false); }
-          if (daftar.length) {
-            let beres = 0, gagal = 0;
-            for (const u of daftar) {
-              beres++;
-              setProgres("Memproses " + beres + "/" + daftar.length + " user…");
-              try {
-                if (pilih.nama) await panelAksi("reset_nama", { uid: u });
-                if (pilih.foto) await panelAksi("reset_foto", { uid: u });
-              } catch (e) { gagal++; }
-            }
-            catat(pilih.nama && pilih.foto ? "Nama & foto profil" : pilih.nama ? "Nama" : "Foto profil",
-              daftar.length - gagal + " user beres" + (gagal ? ", " + gagal + " gagal" : ""), gagal === 0);
+          const buang = new Set(daftarKecuali.map((x) => x.toLowerCase()));
+          const sasaran = daftar.filter((u) => !buang.has(u.uid.toLowerCase()) && !buang.has(u.nomor.toLowerCase()));
+          if (!sasaran.length) catat("Nama & foto", "Daftar user kosong, tidak ada yang direset", false);
+          let beres = 0, gagal = 0;
+          for (const o of sasaran) {
+            beres++;
+            setProgres("Memproses " + beres + "/" + sasaran.length + " user…");
+            try {
+              if (pilih.nama) await panelAksi("reset_nama", { uid: o.uid });
+              if (pilih.foto) await panelAksi("reset_foto", { uid: o.uid });
+            } catch (e) { gagal++; }
           }
-        }
-      } else {
-        const f = { coins: !!pilih.coin, gems: !!pilih.diamond, vip: !!pilih.vip, level: !!pilih.level, assets: !!pilih.aset };
-        if (Object.values(f).some(Boolean)) {
-          setProgres("Meriset saldo dan aset " + target + "…");
-          try {
-            await walletAdmin({ op: "reset_user", uid: target, ...f }, 60000);
-            catat("Saldo, VIP, level, aset", "Direset untuk " + target, true);
-          } catch (e) { catat("Saldo, VIP, level, aset", String(e.message || e), false); }
-        }
-        if (pilih.nama) {
-          setProgres("Meriset nama " + target + "…");
-          try { await panelAksi("reset_nama", { uid: target }); catat("Nama", "Nama " + target + " kembali Unknown", true); }
-          catch (e) { catat("Nama", String(e.message || e), false); }
-        }
-        if (pilih.foto) {
-          setProgres("Meriset foto profil " + target + "…");
-          try { await panelAksi("reset_foto", { uid: target }); catat("Foto profil", "Foto " + target + " dikosongkan", true); }
-          catch (e) { catat("Foto profil", String(e.message || e), false); }
+          if (sasaran.length) {
+            catat(pilih.nama && pilih.foto ? "Nama & foto profil" : pilih.nama ? "Nama" : "Foto profil",
+              sasaran.length - gagal + " user beres" + (gagal ? ", " + gagal + " gagal" : ""), gagal === 0);
+          }
         }
       }
       await catatLog("Reset " + (semua ? "semua user" : target), ringkas());
@@ -146,8 +179,8 @@ export default function Reset() {
         </div>
 
         {!semua ? (
-          <label className="isianForm"><span>UID user yang direset</span>
-            <input value={uid} onChange={(e) => setUid(e.target.value)} placeholder="UID akun, bukan nama" />
+          <label className="isianForm"><span>Nomor ID atau UID user yang direset</span>
+            <input value={uid} onChange={(e) => setUid(e.target.value)} placeholder="mis. 1000 atau UID akun" />
           </label>
         ) : (
           <>
@@ -179,7 +212,7 @@ export default function Reset() {
         </div>
 
         <div className="catatan" style={{ color: "#f0a3a3" }}>
-          Reset tidak bisa dibatalkan. Untuk semua user, akun yang ditulis di kolom Kecuali tidak ikut direset. Reset nama dan foto semua user berjalan satu per satu, jadi bisa memakan waktu bila user banyak.
+          Reset tidak bisa dibatalkan. Untuk semua user, akun yang ditulis di kolom Kecuali tidak ikut direset. Nomor ID angka (mis. 1000) otomatis diterjemahkan ke UID akun. Reset nama dan foto semua user berjalan satu per satu, jadi bisa memakan waktu bila user banyak.
         </div>
 
         {hasil.length ? (

@@ -99,7 +99,11 @@ export default function App() {
   const rute = pakaiHash();
 
   useEffect(() => {
-    return onAuthStateChanged(auth, async (user) => {
+    // Kalau Firebase tidak menjawab dalam 4 detik, tampilkan layar login saja.
+    // Tanpa ini halaman bisa menggantung di "Memeriksa sesi…".
+    const jaga = setTimeout(() => setAdmin((a) => (a === undefined ? null : a)), 4000);
+    const lepas = onAuthStateChanged(auth, async (user) => {
+      clearTimeout(jaga);
       if (!user) { setAdmin(null); return; }
       const a = await cekAdmin(user);
       if (!a) {
@@ -110,6 +114,7 @@ export default function App() {
       }
       setAdmin(a);
     });
+    return () => { clearTimeout(jaga); lepas(); };
   }, []);
 
   useEffect(() => { setMenuBuka(false); }, [rute]);

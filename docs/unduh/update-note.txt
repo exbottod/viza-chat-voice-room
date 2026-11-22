@@ -1,2 +1,2 @@
-• Betulkan bingkai diam kursi yang gagal dikompilasi
-• Tampilan room seringan contoh ZEGOCLOUD
+• Skrip pasang domain khusus untuk panel developer
+• Panel berpindah menu seketika seperti React

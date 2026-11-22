@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.337",
-  "catatan": "• Betulkan bingkai diam kursi yang gagal dikompilasi\n• Tampilan room seringan contoh ZEGOCLOUD",
-  "ukuran_apk": 74374955,
-  "sha256_apk": "a997ceb1c11cecff60bcd1e521289019a5d335c079b1fc25758f106a331f4508",
+  "versi": "1.0.338",
+  "catatan": "• Skrip pasang domain khusus untuk panel developer\n• Panel berpindah menu seketika seperti React",
+  "ukuran_apk": 74375517,
+  "sha256_apk": "8eed6dfd899c828fb0e2906e44e4130a6f9784c60e58cbef511be7f5c8d3c423",
   "abis": {
     "arm64": {
-      "ukuran": 74374955,
-      "sha256": "a997ceb1c11cecff60bcd1e521289019a5d335c079b1fc25758f106a331f4508"
+      "ukuran": 74375517,
+      "sha256": "8eed6dfd899c828fb0e2906e44e4130a6f9784c60e58cbef511be7f5c8d3c423"
     },
     "armv7": {
-      "ukuran": 72609468,
-      "sha256": "ddd673cfdabd0a94dc9fd57d76a24b44281059166c9876fa027686de255c4ad9"
+      "ukuran": 72610033,
+      "sha256": "24bc123f854fb647bf85bdb650e94db1bf17c0f3838a2fc845306fa786140a00"
     },
     "universal": {
-      "ukuran": 122228916,
-      "sha256": "85fa87cc0d3d1c738dff06170febf8ad448b37b8dfadcfae4341d464d6fcfa5d"
+      "ukuran": 122229474,
+      "sha256": "463643999201c093b5c1e935cd25e4ccf7bc47d162cf03baace34f965a38c39a"
     }
   }
 }

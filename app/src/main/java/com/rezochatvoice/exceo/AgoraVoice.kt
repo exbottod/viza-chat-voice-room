@@ -214,8 +214,7 @@ object AgoraVoice {
     private suspend fun fetchToken(channel: String, diam: Boolean = false): Tok? {
         for (attempt in 1..4) {
             try {
-                val idToken = FirebaseAuth.getInstance().currentUser
-                    ?.getIdToken(attempt > 1)?.await()?.token
+                val idToken = SesiToken.ambil(paksa = attempt > 1)
                 if (idToken == null) { if (!diam) problem("Suara mati: belum login"); return null }
                 val c = (URL(TOKEN_URL).openConnection() as HttpURLConnection).apply {
                     requestMethod = "POST"
@@ -239,6 +238,14 @@ object AgoraVoice {
                     }
                     if (!diam) problem("Suara: token tidak lengkap dari server")
                     return null
+                }
+                if (c.responseCode == 401 || c.responseCode == 403) {
+                    // Token login basi: buang, paksa token baru, lalu coba lagi.
+                    tokSimpan = null
+                    tokWaktu = 0L
+                    SesiToken.lupakan()
+                    delay(400L * attempt)
+                    continue
                 }
                 if (c.responseCode in 400..499 && c.responseCode != 408 && c.responseCode != 429) {
                     if (!diam) problem("Suara: server menolak sesi (${c.responseCode})")

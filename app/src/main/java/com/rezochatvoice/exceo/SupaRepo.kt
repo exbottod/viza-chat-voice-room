@@ -54,34 +54,9 @@ object SupaRepo {
     // menunggu Google dulu; di jaringan lambat itu terlihat seperti
     // "server dompet lambat". Sekarang token dipakai ulang sampai mendekati
     // kedaluwarsa, dan hanya disegarkan kalau server menolak sesi.
-    private var tokCache: String? = null
-    private var tokUid: String? = null
-    private var tokAt: Long = 0L
+    private suspend fun token(): String? = SesiToken.ambil(paksa = false)
 
-    private suspend fun token(): String? {
-        val u = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
-            ?: return null
-        val c = tokCache
-        // Token hanya dipakai untuk akun yang sama, supaya ganti akun tidak
-        // memakai sesi lama.
-        if (c != null && tokUid == u.uid && System.currentTimeMillis() - tokAt < 25 * 60_000L) return c
-        val t = u.getIdToken(false).await()?.token ?: return null
-        tokCache = t
-        tokUid = u.uid
-        tokAt = System.currentTimeMillis()
-        return t
-    }
-
-    private suspend fun tokenFresh(): String? {
-        val u = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
-            ?: return null
-        tokCache = null
-        val t = u.getIdToken(true).await()?.token ?: return null
-        tokCache = t
-        tokUid = u.uid
-        tokAt = System.currentTimeMillis()
-        return t
-    }
+    private suspend fun tokenFresh(): String? = SesiToken.ambil(paksa = true)
 
     /** Satu aksi dompet pada satu waktu, supaya kiriman beruntun tidak menumpuk. */
     private val tulisKunci = Mutex()

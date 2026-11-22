@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.354",
   "catatan": "• buka aplikasi selalu mendarat di beranda, room terakhir hanya saat kembali dari latar belakang\n• dompet: tolak lagi token project raps-star (project milik orang lain)",
-  "ukuran_apk": 74377270,
-  "sha256_apk": "61e9ff39d97a8b8be2e1df080169cb3c0a1767da0525e3a7c8f97b7f3cdafd12",
+  "ukuran_apk": 74378281,
+  "sha256_apk": "f1158d2b647586dd98805ed09389d28bc39480df689118cb69da32755260eef8",
   "abis": {
     "arm64": {
-      "ukuran": 74377270,
-      "sha256": "61e9ff39d97a8b8be2e1df080169cb3c0a1767da0525e3a7c8f97b7f3cdafd12"
+      "ukuran": 74378281,
+      "sha256": "f1158d2b647586dd98805ed09389d28bc39480df689118cb69da32755260eef8"
     },
     "armv7": {
-      "ukuran": 72611782,
-      "sha256": "f78c66b51e3acee70652582e46b1db70f3a780b2fed97087450d9f0598e7e38c"
+      "ukuran": 72612788,
+      "sha256": "260b14116f7a0d81136d680f6035837545433cbb0ef5ca09f378013ea3773b99"
     },
     "universal": {
-      "ukuran": 122231239,
-      "sha256": "a62943974796e6bf0f8a577e56f46bae1f56c76ea06cd47be17847e24d58e81e"
+      "ukuran": 122232249,
+      "sha256": "064e0f588a6d07b056795eabca93b7c91ee0f5045d0ddb4a6ae886dedabdfbc2"
     }
   }
 }

@@ -2,20 +2,20 @@
   "status": "ok",
   "versi": "1.0.343",
   "catatan": "• Panel React: nama menu tampil di samping ikon, termasuk di HP",
-  "ukuran_apk": 74376992,
-  "sha256_apk": "fef4528872737aee6929494c81253c0952724b058c9f4f9f52020e888a4eafa9",
+  "ukuran_apk": 74376989,
+  "sha256_apk": "62905d122492e144677be906d5df700aea416d0f620fdd34cd4d69ac0fa8e65b",
   "abis": {
     "arm64": {
-      "ukuran": 74376992,
-      "sha256": "fef4528872737aee6929494c81253c0952724b058c9f4f9f52020e888a4eafa9"
+      "ukuran": 74376989,
+      "sha256": "62905d122492e144677be906d5df700aea416d0f620fdd34cd4d69ac0fa8e65b"
     },
     "armv7": {
-      "ukuran": 72611496,
-      "sha256": "0baa0bc7a5ed220b01def2e5b88306b276f20c4e308bf7de797e458f8a1c1ecc"
+      "ukuran": 72611502,
+      "sha256": "0c96ae5e4f5841b05482a4416dad58b3feaff74a1df16f5487740d897aac6eef"
     },
     "universal": {
-      "ukuran": 122230958,
-      "sha256": "335e0df6442105b42382363ce1adfceef1bdd7d0b8d701ec67702073df75aa5a"
+      "ukuran": 122230953,
+      "sha256": "b4fb9e3af71cac903350f694a7985ce49f6c9aa8808bf1f14403c1787b024184"
     }
   }
 }

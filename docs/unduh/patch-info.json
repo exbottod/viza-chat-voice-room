@@ -1,39 +1,12 @@
 {
   "patch": [
     {
-      "dari": "1.0.324",
-      "ke": "1.0.328",
-      "arm64": {
-        "file": "patch-1.0.324-1.0.328-arm64.bsdiff",
-        "ukuran": 4445169,
-        "sha256": "e59699398790c8ee902df8df002fbc0d27525cf4e74a38a837508b5c05b1cee8"
-      }
-    },
-    {
-      "dari": "1.0.325",
-      "ke": "1.0.328",
-      "arm64": {
-        "file": "patch-1.0.325-1.0.328-arm64.bsdiff",
-        "ukuran": 4434638,
-        "sha256": "74742416d576fe356f26c672a4a77c5ee4b5a19d62df30149dce30824de5b56d"
-      }
-    },
-    {
       "dari": "1.0.325",
       "ke": "1.0.329",
       "arm64": {
         "file": "patch-1.0.325-1.0.329-arm64.bsdiff",
         "ukuran": 4414255,
         "sha256": "f0e6e63615c2dc271d0dd8678fe1e9d615e76ea84423fbdec6f7724f8b11605d"
-      }
-    },
-    {
-      "dari": "1.0.326",
-      "ke": "1.0.328",
-      "arm64": {
-        "file": "patch-1.0.326-1.0.328-arm64.bsdiff",
-        "ukuran": 4438712,
-        "sha256": "6b92ee56584582e091e24ca027ebf2b8cbafa22243c7498e2264b75451dadffd"
       }
     },
     {
@@ -52,15 +25,6 @@
         "file": "patch-1.0.326-1.0.330-arm64.bsdiff",
         "ukuran": 4448678,
         "sha256": "325760bcf9a0306087880fb0027b27e9b97f8c722cc87cbe80f12db5333369ee"
-      }
-    },
-    {
-      "dari": "1.0.327",
-      "ke": "1.0.328",
-      "arm64": {
-        "file": "patch-1.0.327-1.0.328-arm64.bsdiff",
-        "ukuran": 4440248,
-        "sha256": "fd2169a4974976795be63bd49e66adf0d2667683ba066985ef699aa110b41892"
       }
     },
     {
@@ -1018,6 +982,15 @@
       }
     },
     {
+      "dari": "1.0.361",
+      "ke": "1.0.365",
+      "arm64": {
+        "file": "patch-1.0.361-1.0.365-arm64.bsdiff",
+        "ukuran": 4453154,
+        "sha256": "7c1a72abf2977cd3b9342ad4b75cef4123f651a7ce8b2b38b9f7ad9069951ace"
+      }
+    },
+    {
       "dari": "1.0.362",
       "ke": "1.0.363",
       "arm64": {
@@ -1037,11 +1010,20 @@
     },
     {
       "dari": "1.0.362",
+      "ke": "1.0.365",
+      "arm64": {
+        "file": "patch-1.0.362-1.0.365-arm64.bsdiff",
+        "ukuran": 4438307,
+        "sha256": "f68b25d7dafb678feef9805191ea1cb82b87b06141b53d3d4eaf1186a9af4a70"
+      }
+    },
+    {
+      "dari": "1.0.362",
       "ke": "1.0.366",
       "arm64": {
         "file": "patch-1.0.362-1.0.366-arm64.bsdiff",
-        "ukuran": 4325402,
-        "sha256": "02dd9d6229ca23271cbd9e24dd9a1004b3d6b6c47cf524232b6fb0964bcde0d5"
+        "ukuran": 4171040,
+        "sha256": "e71df86515e8e5f8c52fd4e930f6fbecac974589663f2bdc717ed45cbee63f04"
       }
     },
     {
@@ -1055,11 +1037,29 @@
     },
     {
       "dari": "1.0.363",
+      "ke": "1.0.365",
+      "arm64": {
+        "file": "patch-1.0.363-1.0.365-arm64.bsdiff",
+        "ukuran": 4458198,
+        "sha256": "7780389f4c4e7bb3e2cbd6ad3e59cf4547c71ad35e70513efd12fa49af9966c4"
+      }
+    },
+    {
+      "dari": "1.0.363",
       "ke": "1.0.366",
       "arm64": {
         "file": "patch-1.0.363-1.0.366-arm64.bsdiff",
-        "ukuran": 4159814,
-        "sha256": "53257d5185f9abbd401a154b5208a971e859531a93c35ccba0c8798de3248e6c"
+        "ukuran": 4280633,
+        "sha256": "1c973a368a678b6368bb83ceb5ff5b0753636c06592cd9b17e8402d1d043f900"
+      }
+    },
+    {
+      "dari": "1.0.364",
+      "ke": "1.0.365",
+      "arm64": {
+        "file": "patch-1.0.364-1.0.365-arm64.bsdiff",
+        "ukuran": 4459383,
+        "sha256": "7a14aa67f0fcad8477efbc1d890c63a65ddf145ac6e9d4856895db0aa0eee752"
       }
     },
     {
@@ -1067,8 +1067,8 @@
       "ke": "1.0.366",
       "arm64": {
         "file": "patch-1.0.364-1.0.366-arm64.bsdiff",
-        "ukuran": 4201296,
-        "sha256": "9bd8049684ff691fb561b3bfef6f06c6101e91b28a5178707728c97e83912253"
+        "ukuran": 4443063,
+        "sha256": "8ac8c0379a52612e1ca165e7e9df01e5b99453600ddbf697b752ed1430584874"
       }
     },
     {
@@ -1076,8 +1076,8 @@
       "ke": "1.0.366",
       "arm64": {
         "file": "patch-1.0.365-1.0.366-arm64.bsdiff",
-        "ukuran": 4322332,
-        "sha256": "85b4f40de6ee4a1db0203dee8ca7724f9c514734671ba90fbaf1b0dd80d6cf83"
+        "ukuran": 4207657,
+        "sha256": "695e97499160c7e93bdeff94d1d65a587c282696f2f16d286f9f0bf99d62d63e"
       }
     }
   ]

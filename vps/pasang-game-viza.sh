@@ -3,10 +3,11 @@
 # membuka https://DOMAIN/game/html5-game/ - pembaruan game nanti hanya
 # mengganti berkas di sini, tanpa APK baru.
 #
-# Versi ini mengunduh paket repo (tar.gz) lalu menyalin seluruh folder
-# app/src/main/assets/html5-game. Versi lama hanya mengambil berkas satu
-# tingkat, sehingga folder bersarang seperti assets/bikini/*.webp tertinggal
-# dan game tampil hitam ("Membuka game..." tidak pernah hilang).
+# Cara kerja: unduh satu paket kecil docs/game/html5-game.tar.gz (2,2 MB) lalu
+# ekstrak ke /opt/viza-api/game/html5-game. JANGAN mengunduh paket repo
+# (tar.gz repo ~5,8 GB) karena VPS akan menggantung dan kuota trafik habis.
+# Versi lama juga hanya mengambil berkas satu tingkat, sehingga folder
+# assets/bikini/*.webp tertinggal dan game tampil hitam.
 #
 # Pakai: curl -fsSL https://raw.githubusercontent.com/exbottod/viza-chat-voice-room/main/vps/pasang-game-viza.sh -o game.sh && sudo bash game.sh
 set -uo pipefail
@@ -18,19 +19,19 @@ PORT=$(cat /var/lib/viza-port 2>/dev/null || echo 8092)
 
 [ "$(id -u)" = 0 ] || { echo "Jalankan sebagai root (sudo)"; exit 1; }
 
-echo "== 1/4 Unduh paket repo =="
+echo "== 1/4 Unduh paket game (2,2 MB) =="
 TMP=$(mktemp -d)
-curl -fsSL "https://codeload.github.com/$REPO/tar.gz/refs/heads/main?cb=$(date +%s)" -o "$TMP/repo.tgz" \
-  || { echo "   unduh gagal"; exit 1; }
-echo "   ukuran: $(du -h "$TMP/repo.tgz" | cut -f1)"
+PAKET="$TMP/game.tgz"
+if ! curl -fL --retry 3 --max-time 300 \
+  "https://raw.githubusercontent.com/$REPO/main/docs/game/html5-game.tar.gz?cb=$(date +%s)" \
+  -o "$PAKET"; then
+  echo "   unduh gagal"; exit 1
+fi
+UKUR=$(stat -c %s "$PAKET" 2>/dev/null || echo 0)
+echo "   terunduh: $UKUR byte"
+[ "$UKUR" -gt 1000000 ] || { echo "   paket tidak lengkap, dibatalkan"; exit 1; }
 
-echo "== 2/4 Ekstrak folder game =="
-tar -xzf "$TMP/repo.tgz" -C "$TMP" --wildcards '*/app/src/main/assets/html5-game/*' \
-  || { echo "   ekstrak gagal"; exit 1; }
-SRC=$(find "$TMP" -type d -path '*/app/src/main/assets/html5-game' | head -1)
-[ -n "$SRC" ] || { echo "   folder game tidak ada di paket"; exit 1; }
-
-echo "== 3/4 Pasang ke $TUJUAN =="
+echo "== 2/4 Siapkan folder =="
 mkdir -p "$DIR/game"
 if [ -d "$TUJUAN" ]; then
   CADANGAN="$TUJUAN.lama-$(date +%Y%m%d-%H%M%S)"
@@ -38,7 +39,9 @@ if [ -d "$TUJUAN" ]; then
   echo "   folder lama disimpan: $CADANGAN"
 fi
 mkdir -p "$TUJUAN"
-cp -a "$SRC/." "$TUJUAN/"
+
+echo "== 3/4 Ekstrak =="
+tar -xzf "$PAKET" -C "$TUJUAN" || { echo "   ekstrak gagal"; exit 1; }
 chmod -R a+rX "$DIR/game"
 echo "   berkas: $(find "$TUJUAN" -type f | wc -l) | webp: $(find "$TUJUAN" -name '*.webp' | wc -l) | png: $(find "$TUJUAN" -name '*.png' | wc -l)"
 [ -f "$TUJUAN/index.html" ] || { echo "   index.html tidak ada, dibatalkan"; exit 1; }

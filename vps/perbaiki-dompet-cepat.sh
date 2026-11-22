@@ -7,7 +7,7 @@ echo "== 1. Status layanan =="
 systemctl is-active viza-dompet 2>/dev/null || echo "tidak aktif"
 echo
 echo "== 2. Proses yang memakai port 8080 dan 8092 =="
-ss -lntp 2>/dev/null | grep -E ":(8080|8092)\b' || echo "tidak ada yang mendengar"
+ss -lntp 2>/dev/null | grep -E ':(8080|8092)' || echo "tidak ada yang mendengar"
 echo
 echo "== 3. Restart viza-dompet =="
 systemctl restart viza-dompet 2>&1 || echo "restart gagal"

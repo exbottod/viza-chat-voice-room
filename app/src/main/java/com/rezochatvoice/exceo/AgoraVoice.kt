@@ -116,16 +116,19 @@ object AgoraVoice {
                         prevVolumeStream = it.volumeControlStream
                         streamTerpasang = true
                     }
-                    it.volumeControlStream = AudioManager.STREAM_VOICE_CALL
+                    // Tombol volume mengatur volume MEDIA, bukan volume panggilan.
+                    it.volumeControlStream = AudioManager.STREAM_MUSIC
                 }
-                val max = try { mgr.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL) } catch (e: Exception) { 0 }
-                val cur = try { mgr.getStreamVolume(AudioManager.STREAM_VOICE_CALL) } catch (e: Exception) { 0 }
+                val max = try { mgr.getStreamMaxVolume(AudioManager.STREAM_MUSIC) } catch (e: Exception) { 0 }
+                val cur = try { mgr.getStreamVolume(AudioManager.STREAM_MUSIC) } catch (e: Exception) { 0 }
                 if (max > 0 && cur < (max * 0.7f).toInt()) {
-                    try { mgr.setStreamVolume(AudioManager.STREAM_VOICE_CALL, (max * 0.8f).toInt(), 0) } catch (e: Exception) { }
+                    try { mgr.setStreamVolume(AudioManager.STREAM_MUSIC, (max * 0.8f).toInt(), 0) } catch (e: Exception) { }
                 }
                 routed = true
             }
-            try { mgr.mode = AudioManager.MODE_IN_COMMUNICATION } catch (e: Exception) { }
+            // MODE_IN_COMMUNICATION sengaja tidak dipaksa: mode itu membuat kunci
+            // volume mengatur suara panggilan. Dengan mode normal, suara room
+            // keluar lewat jalur media sehingga volume media yang berlaku.
             try { mgr.isSpeakerphoneOn = true } catch (e: Exception) { }
             try { engine?.setEnableSpeakerphone(true) } catch (e: Exception) { }
         } catch (e: Exception) {
@@ -140,7 +143,7 @@ object AgoraVoice {
             val act = actAktif ?: return
             if (!streamTerpasang) {
                 prevVolumeStream = act.volumeControlStream
-                act.volumeControlStream = AudioManager.STREAM_VOICE_CALL
+                act.volumeControlStream = AudioManager.STREAM_MUSIC
                 streamTerpasang = true
             }
         } catch (e: Exception) {
@@ -331,12 +334,13 @@ object AgoraVoice {
             mAppId = appId
             mEventHandler = handler
             mChannelProfile = Constants.CHANNEL_PROFILE_LIVE_BROADCASTING
-            mAudioScenario = Constants.AUDIO_SCENARIO_CHATROOM
+            mAudioScenario = Constants.AUDIO_SCENARIO_GAME_STREAMING
         }
         val e = RtcEngine.create(cfg)
         try { e.setChannelProfile(Constants.CHANNEL_PROFILE_LIVE_BROADCASTING) } catch (x: Exception) { }
-        // Profil musik supaya suara DJ tidak gepeng, seperti penyetelan LiveKit sebelumnya.
-        try { e.setAudioProfile(Constants.AUDIO_PROFILE_MUSIC_STANDARD, Constants.AUDIO_SCENARIO_CHATROOM) } catch (x: Exception) { }
+        // Profil musik supaya suara DJ tidak gepeng. Skenario GAME_STREAMING dipakai
+        // supaya suara room keluar lewat jalur media (volume media, bukan volume telepon).
+        try { e.setAudioProfile(Constants.AUDIO_PROFILE_MUSIC_STANDARD, Constants.AUDIO_SCENARIO_GAME_STREAMING) } catch (x: Exception) { }
         try { e.setClientRole(if (wantSpeaking) Constants.CLIENT_ROLE_BROADCASTER else Constants.CLIENT_ROLE_AUDIENCE) } catch (x: Exception) { }
         try { e.enableAudioVolumeIndication(300, 3, true) } catch (x: Exception) { }
         try { e.setEnableSpeakerphone(true) } catch (x: Exception) { }

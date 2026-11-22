@@ -1,2 +1,1 @@
-• Script cek sesi dompet Viza (401)
-• Script pasang Caddyfile Viza (viza -> 8080, panel, livekit, vender)
+• Game langsung terbuka: token dompet gagal tidak lagi menahan di layar pesan

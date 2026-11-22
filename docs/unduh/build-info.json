@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.319",
-  "catatan": "• Script cek sesi dompet Viza (401)\n• Script pasang Caddyfile Viza (viza -> 8080, panel, livekit, vender)",
-  "ukuran_apk": 74349361,
-  "sha256_apk": "3b2d80ac48e52a8f5084eef207d62f68bc2038f50e8dd65271345ebb5f2a45b7",
+  "versi": "1.0.320",
+  "catatan": "• Game langsung terbuka: token dompet gagal tidak lagi menahan di layar pesan",
+  "ukuran_apk": 74349136,
+  "sha256_apk": "1d0e989f13586487dbdbddbe02b5ad672d2734ff070b3b2dad90e96e0c660d73",
   "abis": {
     "arm64": {
-      "ukuran": 74349361,
-      "sha256": "3b2d80ac48e52a8f5084eef207d62f68bc2038f50e8dd65271345ebb5f2a45b7"
+      "ukuran": 74349136,
+      "sha256": "1d0e989f13586487dbdbddbe02b5ad672d2734ff070b3b2dad90e96e0c660d73"
     },
     "armv7": {
-      "ukuran": 72583863,
-      "sha256": "877994395911ddfd444c7fb53d3657ed0130aaa7610655ce92fae2ce263a4198"
+      "ukuran": 72583659,
+      "sha256": "3a4a317328be70276de08d0bbbc9ec035eef506f94db92f29e35495772b22f7a"
     },
     "universal": {
-      "ukuran": 122203316,
-      "sha256": "cf21aff4403dfa9f56029b2387ac1a0c452bf847209ec942e3c080379487e8ff"
+      "ukuran": 122203106,
+      "sha256": "3abe035ccd65aea3d7cb1160b9e16a8618ca1d1e2c830c91921a9c37830b4e11"
     }
   }
 }

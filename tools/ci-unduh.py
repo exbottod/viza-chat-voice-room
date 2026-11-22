@@ -206,7 +206,10 @@ def main():
         else:
             ukuran_patch = os.path.getsize(berkas_wajib)
             ukuran_apk = abis.get("arm64", {}).get("ukuran", 0)
-            if ukuran_apk and ukuran_patch > ukuran_apk * 0.4:
+            # Batas 60%: lompatan besar seperti penambahan pustaka suara baru
+            # membuat patch ikut besar, tetapi masih jauh lebih hemat daripada
+            # APK penuh. Setelah itu patch kembali kecil.
+            if ukuran_apk and ukuran_patch > ukuran_apk * 0.6:
                 print(f"Patch {wajib} terlalu besar: {ukuran_patch} dari {ukuran_apk}",
                       file=sys.stderr)
                 kurang_patch = True

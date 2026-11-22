@@ -99,8 +99,17 @@ export default function Aset({ awal = "frame" }) {
           : !daftar.length ? <Kosong>Belum ada {SLOT.find((s) => s[0] === slot)?.[1].toLowerCase()}. Tekan tombol tambah di kanan atas.</Kosong>
           : (
             <Tabel
-              kolom={[{ k: "name", t: "Nama" }, { k: "tier", t: "Tier" }, { k: "kind", t: "Jenis" }, { k: "price", t: "Harga" }, { k: "days", t: "Hari" }, { k: "order", t: "Urut" }, { k: "aksi", t: "" }]}
+              kolom={[
+                { kunci: "name", label: "Nama", sel: (b) => b.name },
+                { kunci: "tier", label: "Tier", sel: (b) => b.tier },
+                { kunci: "kind", label: "Jenis", sel: (b) => b.kind },
+                { kunci: "price", label: "Harga", sel: (b) => b.price },
+                { kunci: "days", label: "Hari", sel: (b) => b.days },
+                { kunci: "order", label: "Urut", sel: (b) => b.order },
+                { kunci: "aksi", label: "", sel: (b) => b.aksi },
+              ]}
               baris={daftar.map((x) => ({
+                __kunci: x.id,
                 name: x.name || x.id, tier: Number(x.n) ? "VIP " + Number(x.n) : "-", kind: x.kind || "-",
                 price: Number(x.price) ? rupiah(x.price) + " coin" : <Tag jenis="aktif">Gratis</Tag>,
                 days: Number(x.days) || "∞", order: Number(x.order) || 0,

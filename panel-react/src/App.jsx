@@ -22,6 +22,7 @@ import Daftar from "./pages/Daftar.jsx";
 import Kirim from "./pages/Kirim.jsx";
 import Aset from "./pages/Aset.jsx";
 import Vip from "./pages/Vip.jsx";
+import Penahan from "./Penahan.jsx";
 import { ALAT } from "./alat.js";
 import Belum from "./pages/Belum.jsx";
 import { Toast } from "./ui.jsx";
@@ -344,7 +345,7 @@ export default function App() {
         </div>
         <div className="isiDalam">
           {pesan && <div className="kosong" style={{ marginBottom: 12 }}>{pesan}</div>}
-          <Halaman nama={rute} judul={judul} admin={admin} />
+          <Penahan kunci={rute}><Halaman nama={rute} judul={judul} admin={admin} /></Penahan>
         </div>
       </main>
       <Toast />

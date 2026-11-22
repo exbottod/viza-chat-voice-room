@@ -31,6 +31,7 @@ export default function Iklan() {
         adUnit: String(out.atur?.adUnit || ""),
         gameId: String(out.atur?.gameId || ""),
         placement: String(out.atur?.placement || ""),
+        uji: Number(out.atur?.uji ? 1 : 0),
       });
       setGalat("");
     } catch (e) { setStat(null); setGalat(e.message || String(e)); }
@@ -48,6 +49,7 @@ export default function Iklan() {
         iklanAdUnit: String(form.adUnit || "").trim(),
         iklanGameId: String(form.gameId || "").trim(),
         iklanPlacement: String(form.placement || "").trim(),
+        iklanUji: form.uji ? "1" : "0",
       } });
       await catatLog("Atur iklan coin gratis", (form.aktif ? "aktif" : "mati") + " · " + form.coin + " coin/iklan · " + form.maxHari + "x/hari");
       toast("Pengaturan iklan disimpan");
@@ -74,6 +76,10 @@ export default function Iklan() {
               <button type="button" className={"saklar" + (form.aktif ? " nyala" : "")}
                 onClick={() => setForm({ ...form, aktif: form.aktif ? 0 : 1 })}><i /></button>
             </div>
+            <div className="barisSaklar"><b>Mode uji (log rinci Unity Ads)</b>
+              <button type="button" className={"saklar" + (form.uji ? " nyala" : "")}
+                onClick={() => setForm({ ...form, uji: form.uji ? 0 : 1 })}><i /></button>
+            </div>
             <label className="isianForm"><span>Coin per iklan selesai</span>
               <input value={form.coin} onChange={(e) => setForm({ ...form, coin: e.target.value })} inputMode="numeric" /></label>
             <label className="isianForm"><span>Batas tonton per hari</span>
@@ -90,6 +96,12 @@ export default function Iklan() {
               Kedua nilai ini ada di dashboard Unity: menu Monetization, buka app Viza Chat,
               lalu bagian app key (Game ID) dan daftar Placements (Placement ID Rewarded).
               Selama kolom dibiarkan kosong, aplikasi memakai nilai bawaan di server.
+            </div>
+            <div className="catatan">
+              Mode uji menyalakan log rinci SDK Unity Ads di HP dan membuat pesan galat
+              menampilkan kode Unity (mis. NO_FILL atau VIDEO_PLAYER_ERROR). Iklan uji
+              resmi tetap diatur di dashboard Unity; saklar ini untuk membaca penyebab
+              kalau iklan tidak mau tampil.
             </div>
             <div className="catatan">
               Hadiah 100 coin dengan 10 tonton per hari berarti maksimal 1.000 coin gratis per user per hari.

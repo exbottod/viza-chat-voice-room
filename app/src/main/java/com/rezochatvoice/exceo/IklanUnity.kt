@@ -38,7 +38,7 @@ object IklanUnity {
         return null
     }
 
-    private fun siapkan(ctx: Context, gameId: String, lanjut: () -> Unit) {
+    private fun siapkan(ctx: Context, gameId: String, uji: Boolean = false, lanjut: () -> Unit) {
         if (gameId.isBlank()) return
         if (UnityAds.isInitialized && gameIdTerpasang == gameId) {
             lanjut()
@@ -48,6 +48,9 @@ object IklanUnity {
         if (sedangSiap && gameIdTerpasang == gameId) return
         gameIdTerpasang = gameId
         sedangSiap = true
+        // Mode uji dari panel: log Unity Ads jadi rinci. Dinyalakan sebelum
+        // initialize karena SDK hanya membacanya sekali di awal.
+        if (uji) runCatching { UnityAds.setDebugMode(true) }
         UnityAds.initialize(ctx.applicationContext, gameId, false, object : IUnityAdsInitializationListener {
             override fun onInitializationComplete() {
                 sedangSiap = false
@@ -67,9 +70,9 @@ object IklanUnity {
     }
 
     /** Muat iklan lebih awal supaya tombol langsung jalan. */
-    fun siapkanAwal(ctx: Context, gameId: String, placement: String) {
+    fun siapkanAwal(ctx: Context, gameId: String, placement: String, uji: Boolean = false) {
         if (gameId.isBlank() || placement.isBlank()) return
-        siapkan(ctx, gameId) { muat(ctx, placement) }
+        siapkan(ctx, gameId, uji) { muat(ctx, placement) }
     }
 
     private fun muat(ctx: Context, placement: String) {
@@ -91,6 +94,7 @@ object IklanUnity {
         activity: Activity,
         gameId: String,
         placement: String,
+        uji: Boolean = false,
         onHadiah: () -> Unit,
         onGagal: (String) -> Unit,
     ) {
@@ -98,7 +102,7 @@ object IklanUnity {
             onGagal("ID iklan belum diatur di panel")
             return
         }
-        siapkan(activity, gameId) {
+        siapkan(activity, gameId, uji) {
             if (!UnityAds.isInitialized) {
                 onGagal("Iklan belum siap, coba lagi sebentar")
                 return@siapkan
@@ -112,7 +116,11 @@ object IklanUnity {
                             error: UnityAds.UnityAdsShowError?,
                             message: String?,
                         ) {
-                            onGagal("Iklan gagal tampil: " + (message ?: error?.name ?: "coba lagi"))
+                            onGagal(
+                                "Iklan gagal tampil" +
+                                    (if (uji) " [" + (error?.name ?: "?") + "]" else "") +
+                                    ": " + (message ?: "coba lagi"),
+                            )
                             muat(activity, q)
                         }
 
@@ -133,7 +141,11 @@ object IklanUnity {
                 }
 
                 override fun onUnityAdsFailedToLoad(p: String, error: UnityAds.UnityAdsLoadError?, message: String?) {
-                    onGagal("Belum ada iklan tersedia sekarang" + if (message.isNullOrBlank()) "" else ": " + message)
+                    onGagal(
+                        "Belum ada iklan tersedia sekarang" +
+                            (if (uji) " [" + (error?.name ?: "?") + "]" else "") +
+                            (if (message.isNullOrBlank()) "" else ": " + message),
+                    )
                 }
             })
         }

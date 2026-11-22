@@ -708,7 +708,7 @@ fun WalletScreen(
     // Dimuat setelah variabelnya ada, supaya tidak ada rujukan ke variabel yang belum dideklarasikan.
     LaunchedEffect(Unit) {
         iklan = SupaRepo.iklanInfo()
-        iklan?.let { IklanUnity.siapkanAwal(context, it.gameId, it.placement) }
+        iklan?.let { IklanUnity.siapkanAwal(context, it.gameId, it.placement, it.uji) }
     }
     var payOrder by remember { mutableStateOf<String?>(null) }
     var manualCoins by remember { mutableStateOf<Long?>(null) }
@@ -853,7 +853,7 @@ fun WalletScreen(
                                     } else {
                                         iklanSibuk = true
                                         IklanUnity.tampil(
-                                            act, ik.gameId, ik.placement,
+                                            act, ik.gameId, ik.placement, ik.uji,
                                             onHadiah = {
                                                 scope.launch {
                                                     val out = SupaRepo.iklanKlaim()

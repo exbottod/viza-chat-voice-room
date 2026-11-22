@@ -540,6 +540,8 @@ object SupaRepo {
         val jeda: Int,
         val gameId: String,
         val placement: String,
+        /** Mode uji: log rinci Unity Ads + kode galat ditampilkan di layar. */
+        val uji: Boolean = false,
     )
 
     /** Pengaturan iklan + sisa jatah hari ini. Null bila server belum menjawab. */
@@ -554,6 +556,7 @@ object SupaRepo {
             jeda = o.optInt("jeda", 20),
             gameId = o.optString("gameId"),
             placement = o.optString("placement"),
+            uji = o.optInt("uji") == 1,
         )
     }
 

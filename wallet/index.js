@@ -1117,6 +1117,9 @@ async function aturIklan(env) {
     adUnit: String(c.iklanAdUnit || ""),
     gameId: String(c.iklanGameId || "800448611").trim(),
     placement: String(c.iklanPlacement || "BP_Rewarded_Android").trim(),
+    // Mode uji: aplikasi menyalakan log rinci Unity Ads dan menampilkan kode
+    // galat apa adanya, supaya masalah iklan bisa dibaca dari layar HP.
+    uji: String(c.iklanUji ?? "0") === "1",
   };
 }
 
@@ -3429,7 +3432,7 @@ const CFG_KUNCI = new Set([
   "paystackAktif", "paystackPub", "paystackSecret", "versiMin", "versiTerbaru", "apkUrl", "apkCatatan",
   "assetPackage", "assetSha256",
   // Iklan berhadiah untuk coin gratis: diatur dari panel, dibaca aplikasi.
-  "iklanAktif", "iklanCoin", "iklanMaxHari", "iklanAdUnit", "iklanCooldown",
+  "iklanAktif", "iklanCoin", "iklanMaxHari", "iklanAdUnit", "iklanCooldown", "iklanUji",
 ]);
 let cfgCache = { at: 0, v: {} };
 
@@ -3797,6 +3800,7 @@ async function panel(env, body) {
       adUnit: at.adUnit,
       gameId: at.gameId,
       placement: at.placement,
+      uji: at.uji ? 1 : 0,
     });
   }
 

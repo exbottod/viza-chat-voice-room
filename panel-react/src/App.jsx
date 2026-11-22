@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
-  GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword,
-  signInWithPopup, signOut,
+  GoogleAuthProvider, createUserWithEmailAndPassword, onAuthStateChanged,
+  sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup, signOut,
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db, PEMILIK } from "./firebase.js";
@@ -116,33 +116,93 @@ function pakaiHash() {
   return rute;
 }
 
+/** Pesan galat Firebase dalam bahasa yang bisa langsung ditindaklanjuti. */
+function pesanGalat(kode) {
+  switch (kode) {
+    case "auth/invalid-credential":
+    case "auth/wrong-password":
+    case "auth/invalid-login-credentials":
+      return "Email atau sandi salah. Kalau akun ini dibuat lewat Google, pakai tombol Masuk dengan Google.";
+    case "auth/user-not-found":
+      return "Email ini belum terdaftar. Pilih tab Daftar untuk membuat akun.";
+    case "auth/email-already-in-use":
+      return "Email ini sudah terdaftar. Pilih tab Masuk, atau pakai Lupa sandi.";
+    case "auth/weak-password":
+      return "Sandi terlalu pendek. Firebase menuntut minimal 6 huruf.";
+    case "auth/invalid-email":
+      return "Bentuk email tidak sah.";
+    case "auth/operation-not-allowed":
+      return "Metode Email/Password belum diaktifkan di Firebase. Buka Firebase Console > Authentication > Sign-in method > Email/Password > Enable, lalu coba lagi.";
+    case "auth/too-many-requests":
+      return "Terlalu banyak percobaan. Tunggu beberapa menit lalu coba lagi.";
+    case "auth/network-request-failed":
+      return "Jaringan bermasalah. Periksa koneksi lalu coba lagi.";
+    case "auth/unauthorized-domain":
+      return "Domain panel ini belum diizinkan di Firebase Authentication > Settings > Authorized domains.";
+    case "auth/popup-blocked":
+    case "auth/popup-closed-by-user":
+      return "Jendela Google tertutup atau diblokir. Coba lagi, atau masuk dengan email dan sandi.";
+    default:
+      return "Gagal: " + kode;
+  }
+}
+
 function Login({ onPesan }) {
+  const [mode, setMode] = useState("masuk");
   const [email, setEmail] = useState("");
   const [sandi, setSandi] = useState("");
   const [sibuk, setSibuk] = useState(false);
 
   const masuk = async (e) => {
     e.preventDefault();
+    if (!email.trim() || !sandi) return onPesan("Isi email dan sandi dulu.");
     setSibuk(true);
     try {
       await signInWithEmailAndPassword(auth, email.trim(), sandi);
     } catch (err) {
-      onPesan(err.code === "auth/invalid-credential" ? "Email atau sandi salah." : "Gagal masuk: " + err.code);
+      onPesan(pesanGalat(err.code));
     } finally {
       setSibuk(false);
     }
   };
+
+  const daftar = async (e) => {
+    e.preventDefault();
+    if (!email.trim() || !sandi) return onPesan("Isi email dan sandi dulu.");
+    setSibuk(true);
+    try {
+      await createUserWithEmailAndPassword(auth, email.trim(), sandi);
+      onPesan("Akun dibuat. Kalau email ini belum punya akses panel, minta pemilik menambahkannya.");
+    } catch (err) {
+      onPesan(pesanGalat(err.code));
+    } finally {
+      setSibuk(false);
+    }
+  };
+
+  const lupa = async () => {
+    if (!email.trim()) return onPesan("Isi email dulu, lalu tekan Lupa sandi.");
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+      onPesan("Tautan atur ulang sandi sudah dikirim ke " + email.trim() + ". Cek kotak masuk dan spam.");
+    } catch (err) {
+      onPesan(pesanGalat(err.code));
+    }
+  };
+
   const google = async () => {
     try {
       await signInWithPopup(auth, new GoogleAuthProvider());
     } catch (err) {
-      onPesan("Gagal masuk dengan Google: " + err.code);
+      onPesan(pesanGalat(err.code));
     }
   };
 
+  const buatBaru = mode === "daftar";
+
   return (
     <div className="layarLogin">
-      <form className="kotakLogin" onSubmit={masuk}>
+      <form className="kotakLogin" onSubmit={buatBaru ? daftar : masuk}>
         <div className="merekLogin">
           <div className="logoBesar">V</div>
           <div>
@@ -150,14 +210,31 @@ function Login({ onPesan }) {
             <span>Panel developer Viza Chat · React</span>
           </div>
         </div>
+
+        <div className="tabLogin">
+          <button type="button" className={buatBaru ? "" : "on"} onClick={() => setMode("masuk")}>Masuk</button>
+          <button type="button" className={buatBaru ? "on" : ""} onClick={() => setMode("daftar")}>Daftar</button>
+        </div>
+
         <label>Email admin</label>
-        <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nama@email.com" autoComplete="username" />
+        <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nama@email.com" autoComplete="username" inputMode="email" />
         <label>Password</label>
-        <input type="password" value={sandi} onChange={(e) => setSandi(e.target.value)} placeholder="••••••••" autoComplete="current-password" />
-        <button className="utama" type="submit" disabled={sibuk}>{sibuk ? "Memeriksa…" : "Masuk"}</button>
+        <input type="password" value={sandi} onChange={(e) => setSandi(e.target.value)} placeholder="minimal 6 huruf" autoComplete={buatBaru ? "new-password" : "current-password"} />
+
+        <button className="utama" type="submit" disabled={sibuk}>
+          {sibuk ? "Memeriksa…" : buatBaru ? "Buat akun" : "Masuk"}
+        </button>
+
+        {!buatBaru ? <button className="polos kecil" type="button" onClick={lupa}>Lupa sandi</button> : null}
+
         <div className="atau"><span>atau</span></div>
         <button className="polos" type="button" onClick={google}>Masuk dengan Google</button>
-        <div className="kakiLogin">Hanya akun yang terdaftar yang bisa membuka panel ini.</div>
+
+        <div className="kakiLogin">
+          {buatBaru
+            ? "Akun baru dibuat di Firebase. Setelah itu pemilik menambahkan emailnya di menu Staf panel agar bisa masuk."
+            : "Hanya akun yang terdaftar yang bisa membuka panel ini."}
+        </div>
       </form>
     </div>
   );

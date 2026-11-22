@@ -366,3 +366,9 @@ tr:hover td { background: #0e141d; }
 @media (max-width: 860px) {
   .menuBahasa { min-width: 152px; top: 38px; }
 }
+
+/* Tab Masuk / Daftar di layar login panel. */
+.tabLogin { display: flex; gap: 6px; background: #14141c; border: 1px solid #2a2a38; border-radius: 6px; padding: 4px; margin-bottom: 14px; }
+.tabLogin button { flex: 1; border: 0; background: transparent; color: #9a9cab; font: inherit; font-weight: 600; padding: 9px 0; border-radius: 4px; cursor: pointer; }
+.tabLogin button.on { background: #e8538f; color: #fff; }
+.kotakLogin .polos.kecil { margin-top: 10px; font-size: 13px; opacity: .85; }

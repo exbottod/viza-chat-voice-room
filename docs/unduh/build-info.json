@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.327",
-  "catatan": "• Perbaiki kompilasi: launch butuh receiver CoroutineScope\n• Panel: ubah energi (EXP) tiap roket\n• Foto di dalam room dikecilkan sesuai ukuran tampil",
-  "ukuran_apk": 74351420,
-  "sha256_apk": "1ae64087e88eb242c1a29dff0d77d1195388c1270ce3ef9786e9a110fcfe87c4",
+  "versi": "1.0.328",
+  "catatan": "• Betulkan kompilasi dan kecilkan foto kursi lama\n• Room: buang foto kursi ukuran asli + rincian suara\n• Panel: halaman Bet game tidak lagi menggantung di Loading",
+  "ukuran_apk": 74357195,
+  "sha256_apk": "c84605f857acbf181b5b15edca52630e41f7b63f90a684111dce00f374907fba",
   "abis": {
     "arm64": {
-      "ukuran": 74351420,
-      "sha256": "1ae64087e88eb242c1a29dff0d77d1195388c1270ce3ef9786e9a110fcfe87c4"
+      "ukuran": 74357195,
+      "sha256": "c84605f857acbf181b5b15edca52630e41f7b63f90a684111dce00f374907fba"
     },
     "armv7": {
-      "ukuran": 72585917,
-      "sha256": "adee7e02e3d69bd95fdbc426b37496df07dcd55177c183a5637191d10affb2a6"
+      "ukuran": 72591709,
+      "sha256": "db8268cf2aa40bb7030a056515be0bd6ed69dd1c8ef5d52489f7b35912725d83"
     },
     "universal": {
-      "ukuran": 122205367,
-      "sha256": "aa4cbb1d759ef713b9115cee8eda35696b7bef35f82fd7f3750e4dabc624c0f2"
+      "ukuran": 122211166,
+      "sha256": "441aac2578c3ed0f7e9b2161693395817bd49ddc2f7aea436a00c572857e601d"
     }
   }
 }

@@ -1,3 +1,3 @@
-• Perbaiki kompilasi: launch butuh receiver CoroutineScope
-• Panel: ubah energi (EXP) tiap roket
-• Foto di dalam room dikecilkan sesuai ukuran tampil
+• Betulkan kompilasi dan kecilkan foto kursi lama
+• Room: buang foto kursi ukuran asli + rincian suara
+• Panel: halaman Bet game tidak lagi menggantung di Loading

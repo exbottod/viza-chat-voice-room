@@ -299,7 +299,9 @@ private fun HalamanBannerIklan(ik: SupaRepo.IklanInfo) {
             },
     ) {
         coil.compose.AsyncImage(
-            model = "file:///android_asset/iklan/banner_party.jpg",
+            // Banner dari panel dipakai lebih dulu; gambar bawaan APK hanya
+            // cadangan supaya banner tetap tampil walau panel belum diisi.
+            model = ik.banner.ifBlank { "file:///android_asset/iklan/banner_party.jpg" },
             contentDescription = tr("Iklan coin gratis"),
             contentScale = androidx.compose.ui.layout.ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),

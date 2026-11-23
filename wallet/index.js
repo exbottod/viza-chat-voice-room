@@ -1120,6 +1120,8 @@ async function aturIklan(env) {
     // Mode uji: aplikasi menyalakan log rinci Unity Ads dan menampilkan kode
     // galat apa adanya, supaya masalah iklan bisa dibaca dari layar HP.
     uji: String(c.iklanUji ?? "0") === "1",
+    // Gambar banner iklan di tab Party. Kosong = pakai gambar bawaan di APK.
+    banner: String(c.iklanBanner || "").trim(),
   };
 }
 
@@ -3433,7 +3435,7 @@ const CFG_KUNCI = new Set([
   "assetPackage", "assetSha256",
   // Iklan berhadiah untuk coin gratis: diatur dari panel, dibaca aplikasi.
   "iklanAktif", "iklanCoin", "iklanMaxHari", "iklanAdUnit", "iklanCooldown", "iklanUji",
-  "iklanGameId", "iklanPlacement",
+  "iklanGameId", "iklanPlacement", "iklanBanner",
 ]);
 let cfgCache = { at: 0, v: {} };
 
@@ -3772,6 +3774,7 @@ async function iklanInfoPengguna(env, uid) {
     gameId: at.gameId,
     placement: at.placement,
     uji: at.uji ? 1 : 0,
+    banner: at.banner,
   });
 }
 

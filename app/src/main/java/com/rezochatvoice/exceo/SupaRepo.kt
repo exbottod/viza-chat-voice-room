@@ -542,6 +542,8 @@ object SupaRepo {
         val placement: String,
         /** Mode uji: log rinci Unity Ads + kode galat ditampilkan di layar. */
         val uji: Boolean = false,
+        /** Gambar banner iklan dari panel. Kosong = pakai gambar bawaan APK. */
+        val banner: String = "",
     )
 
     /** Pengaturan iklan + sisa jatah hari ini. Null bila server belum menjawab. */
@@ -557,6 +559,7 @@ object SupaRepo {
             gameId = o.optString("gameId"),
             placement = o.optString("placement"),
             uji = o.optInt("uji") == 1,
+            banner = o.optString("banner"),
         )
     }
 

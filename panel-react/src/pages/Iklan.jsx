@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { walletAdmin } from "../dompet.js";
 import { catatLog, rupiah } from "../data.js";
 import { Kartu, Panel, Rangka, toast } from "../ui.jsx";
+import { unggahBerkas } from "../unggah.js";
 
 /**
  * Iklan berhadiah untuk coin gratis. Aplikasi menampilkan iklan Unity Ads
@@ -18,6 +19,16 @@ export default function Iklan() {
   const [galat, setGalat] = useState("");
   const [form, setForm] = useState(null);
   const [sibuk, setSibuk] = useState(false);
+  // Gambar banner iklan di tab Party: bisa diganti kapan saja dari sini.
+  const [berkasBanner, setBerkasBanner] = useState(null);
+  const [alamatBanner, setAlamatBanner] = useState("");
+  const [progresBanner, setProgresBanner] = useState("");
+  useEffect(() => {
+    if (!berkasBanner) { setAlamatBanner(""); return; }
+    const u = URL.createObjectURL(berkasBanner);
+    setAlamatBanner(u);
+    return () => URL.revokeObjectURL(u);
+  }, [berkasBanner]);
 
   const muat = async () => {
     try {
@@ -32,6 +43,7 @@ export default function Iklan() {
         gameId: String(out.atur?.gameId || ""),
         placement: String(out.atur?.placement || ""),
         uji: Number(out.atur?.uji ? 1 : 0),
+        banner: String(out.atur?.banner || ""),
       });
       setGalat("");
     } catch (e) { setStat(null); setGalat(e.message || String(e)); }
@@ -41,6 +53,13 @@ export default function Iklan() {
   const simpan = async () => {
     setSibuk(true);
     try {
+      if (berkasBanner) {
+        setProgresBanner("mengunggah banner…");
+        const url = await unggahBerkas(berkasBanner, "iklan", (p) => setProgresBanner("banner " + p + "%"));
+        setForm((f) => ({ ...f, banner: url }));
+        setBerkasBanner(null);
+        setProgresBanner("");
+      }
       const nilai = {
         iklanAktif: form.aktif ? "1" : "0",
         iklanCoin: String(Math.max(0, Math.trunc(Number(form.coin) || 0))),
@@ -50,6 +69,7 @@ export default function Iklan() {
         iklanGameId: String(form.gameId || "").trim(),
         iklanPlacement: String(form.placement || "").trim(),
         iklanUji: form.uji ? "1" : "0",
+        iklanBanner: String(form.banner || "").trim(),
       };
       // Server lama hanya mengenal sebagian kunci. Bila satu kunci ditolak,
       // kunci itu dibuang lalu sisanya dikirim ulang, supaya isian lain tetap
@@ -114,6 +134,29 @@ export default function Iklan() {
               lalu bagian app key (Game ID) dan daftar Placements (Placement ID Rewarded).
               Selama kolom dibiarkan kosong, aplikasi memakai nilai bawaan di server.
             </div>
+            <div className="kotakPratinjau">
+              <div className="judulPratinjau">Banner iklan di tab Party (rasio 3:1, mis. 720×240)</div>
+              <div className="isiPratinjau">
+                {(() => {
+                  const src = alamatBanner || form.banner;
+                  if (!src) return <div className="ikonPratinjau"><span style={{ fontSize: 32 }}>🖼️</span><i>Belum ada banner, dipakai gambar bawaan APK</i></div>;
+                  return <img src={src} alt="Banner iklan" style={{ maxWidth: "100%", borderRadius: 10 }} />;
+                })()}
+                <div className="ketPratinjau">
+                  <b>{berkasBanner ? berkasBanner.name : form.banner ? form.banner.split("/").pop() : "Gambar bawaan APK"}</b>
+                  {berkasBanner ? <span>{Math.max(1, Math.round(berkasBanner.size / 1024))} KB</span> : null}
+                  <input type="file" accept="image/*" onChange={(e) => setBerkasBanner(e.target.files?.[0] || null)} />
+                  <span>PNG, JPG, GIF, atau WebP. Banner ini jadi geseran nomor satu di tab Party.</span>
+                </div>
+                {form.banner ? (
+                  <button type="button" className="pil"
+                    onClick={() => { setBerkasBanner(null); setForm({ ...form, banner: "" }); toast("Banner dikosongkan, kembali ke gambar bawaan"); }}>
+                    Hapus banner
+                  </button>
+                ) : null}
+              </div>
+            </div>
+            {progresBanner ? <div className="catatan">{progresBanner}</div> : null}
             <div className="catatan">
               Mode uji menyalakan log rinci SDK Unity Ads di HP dan membuat pesan galat
               menampilkan kode Unity (mis. NO_FILL atau VIDEO_PLAYER_ERROR). Iklan uji

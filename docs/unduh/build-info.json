@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.395",
-  "catatan": "• Masuk room langsung tampil, tanpa layar memproses\n• Semua aset room (efek masuk, banner, bingkai, lencana) diambil lewat server Viza yang cepat, bukan l\n• Aset disimpan di HP sekali, jadi tidak ada unduhan berjalan saat sudah di room, saat pindah kursi, a\n• Animasi efek masuk dan banner langsung berjalan tanpa menunggu",
-  "ukuran_apk": 75804943,
-  "sha256_apk": "4744d4d92d4c407c7a506161008b11e1c3cc42de0f67511a9128cc6b17be828f",
+  "versi": "1.0.396",
+  "catatan": "• Banner masuk, efek masuk, bingkai, lencana, dan medali kini diambil lewat server Viza yang cepat, bu\n• Masuk room langsung tampil, tanpa layar memproses\n• Aset disimpan di HP sekali, jadi tidak ada unduhan berjalan saat sudah di room, saat pindah kursi, a\n• Animasi efek masuk, banner, dan medali langsung berjalan",
+  "ukuran_apk": 75804703,
+  "sha256_apk": "09aab108f4fc9e4293ed808915ef16403a135a5b4ab98981d9ee7d8041360725",
   "abis": {
     "arm64": {
-      "ukuran": 75804943,
-      "sha256": "4744d4d92d4c407c7a506161008b11e1c3cc42de0f67511a9128cc6b17be828f"
+      "ukuran": 75804703,
+      "sha256": "09aab108f4fc9e4293ed808915ef16403a135a5b4ab98981d9ee7d8041360725"
     },
     "armv7": {
-      "ukuran": 74039459,
-      "sha256": "7226b6fbda2b64ae4af0c03066bec2104f0633904ccf33aee7bbfe598d8b2f97"
+      "ukuran": 74039233,
+      "sha256": "3f9927be4ab48076a70a0fa312c7705b2c5ba3c3ec5e203cebf3050bcb2f7677"
     },
     "universal": {
-      "ukuran": 123658946,
-      "sha256": "e5a67f9aae37c6cba23034fd6539d0a30be06c4e30cc6ac8686573d137929c8f"
+      "ukuran": 123658720,
+      "sha256": "2cd1efd47414ba268bfec94763effe9ebe4b8d883cbe481829b096296fd65055"
     }
   }
 }

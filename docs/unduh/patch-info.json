@@ -1018,15 +1018,6 @@
       }
     },
     {
-      "dari": "1.0.391",
-      "ke": "1.0.395",
-      "arm64": {
-        "file": "patch-1.0.391-1.0.395-arm64.bsdiff",
-        "ukuran": 4165759,
-        "sha256": "6f6d2a88c457f6fd527ee458f9492d9fc57f34f0bf62ff35024301aa43524c8a"
-      }
-    },
-    {
       "dari": "1.0.392",
       "ke": "1.0.393",
       "arm64": {
@@ -1046,11 +1037,11 @@
     },
     {
       "dari": "1.0.392",
-      "ke": "1.0.395",
+      "ke": "1.0.396",
       "arm64": {
-        "file": "patch-1.0.392-1.0.395-arm64.bsdiff",
-        "ukuran": 4172693,
-        "sha256": "dcc6a37245f687e078f300588ac5367c72e81c04c5d46a89c92408ad0ce11f8a"
+        "file": "patch-1.0.392-1.0.396-arm64.bsdiff",
+        "ukuran": 4173014,
+        "sha256": "bb76c5e682ff5d8aec3f9ac4697cca3833683ff4e9e80212a55b89b45f166fa7"
       }
     },
     {
@@ -1064,20 +1055,29 @@
     },
     {
       "dari": "1.0.393",
-      "ke": "1.0.395",
+      "ke": "1.0.396",
       "arm64": {
-        "file": "patch-1.0.393-1.0.395-arm64.bsdiff",
-        "ukuran": 4141005,
-        "sha256": "9af9d74c657fa9fba29b10e9c724a9d7204f636cb3f3e3e148eae01091d0f5e1"
+        "file": "patch-1.0.393-1.0.396-arm64.bsdiff",
+        "ukuran": 4171431,
+        "sha256": "93bd098448a266e4f46b0eea32a9c0af37222f66102884c2c27242fe159b6d7c"
       }
     },
     {
       "dari": "1.0.394",
-      "ke": "1.0.395",
+      "ke": "1.0.396",
       "arm64": {
-        "file": "patch-1.0.394-1.0.395-arm64.bsdiff",
-        "ukuran": 4174501,
-        "sha256": "d290ed4a48fae0c7cf5845c774029c582ebac1d179a69d2ace6563c91a0e27ac"
+        "file": "patch-1.0.394-1.0.396-arm64.bsdiff",
+        "ukuran": 4161106,
+        "sha256": "b753f5556727ff8d13f8f89cd148eacafc5d4f128e3d277a3f800714e9693f80"
+      }
+    },
+    {
+      "dari": "1.0.395",
+      "ke": "1.0.396",
+      "arm64": {
+        "file": "patch-1.0.395-1.0.396-arm64.bsdiff",
+        "ukuran": 4050452,
+        "sha256": "c2a1eaf79792ff9ad5619ab77762449406182f8b7c0a59ab254391c2ed7698f2"
       }
     }
   ]

@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.384",
-  "catatan": "• Melepas bingkai sekarang benar-benar polos, termasuk cincin emas di foto profil ikut hilang\n• Bingkai VIP tidak lagi muncul sendiri setelah dilepas\n• Perbaikan kecil dan peningkatan kecepatan aplikasi",
-  "ukuran_apk": 75792991,
-  "sha256_apk": "4cfbd8db63c427a36ef5b0c19dd1f7befffc04c0f8d0367b3a0d614d4d5be9bd",
+  "versi": "1.0.385",
+  "catatan": "• Suara di room kini melaporkan sendiri penyebabnya bila gagal tersambung\n• Melepas bingkai benar-benar polos, termasuk cincin emas di foto profil\n• Perbaikan kecil dan peningkatan kecepatan aplikasi",
+  "ukuran_apk": 75793901,
+  "sha256_apk": "18ff2f7f539696694fac3b4befedfa64f7a77091f9ed4b393b2e8eeb654ecdd8",
   "abis": {
     "arm64": {
-      "ukuran": 75792991,
-      "sha256": "4cfbd8db63c427a36ef5b0c19dd1f7befffc04c0f8d0367b3a0d614d4d5be9bd"
+      "ukuran": 75793901,
+      "sha256": "18ff2f7f539696694fac3b4befedfa64f7a77091f9ed4b393b2e8eeb654ecdd8"
     },
     "armv7": {
-      "ukuran": 74027513,
-      "sha256": "4952734cf7b10fc29d9d25c30b6d98da67c319c8efabf98d4b340330a13f848e"
+      "ukuran": 74028410,
+      "sha256": "b13c0c466ad2291440f73282524cbf68894202ff267caaa8ca6c7b2f63f435a5"
     },
     "universal": {
-      "ukuran": 123646991,
-      "sha256": "40092f87d440b6cbbb7edabd41a8c1cf44abda105b542ae790b6c9c797a41d75"
+      "ukuran": 123647907,
+      "sha256": "4f0764b8f3a14c1ed808aee0613b8e5eb1d0d217bfcaf8004486ff7b1525f192"
     }
   }
 }

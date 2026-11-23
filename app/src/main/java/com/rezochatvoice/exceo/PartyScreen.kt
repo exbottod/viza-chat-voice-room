@@ -156,8 +156,6 @@ fun PartyTab(
             }
             item(span = { GridItemSpan(maxLineSpan) }) { BannerFeed() }
         } else {
-            // Banner iklan coin gratis: selalu urutan pertama di atas tab Party.
-            item(span = { GridItemSpan(maxLineSpan) }) { BannerIklanParty() }
             if (subTab == 1) {
                 // Banner Koin banyak ikut jadi geseran di banner atas (bisa
                 // digeser manual dan bergeser sendiri), bukan banner kedua.
@@ -256,23 +254,21 @@ private fun TopTabs(
 }
 
 /**
- * Banner iklan di urutan pertama tab Party. Gambar diambil dari aset APK
- * (assets/iklan/banner_party.jpg) supaya tetap tampil walau jaringan lambat.
- * Menekan banner memutar iklan berhadiah Unity, lalu coin diklaim ke server,
- * sama seperti tombol Coin gratis di menu Dompet.
+ * Satu halaman banner iklan di dalam geseran banner Party (urutan pertama).
+ * Gambar diambil dari aset APK (assets/iklan/banner_party.jpg) supaya tetap
+ * tampil walau jaringan lambat. Menekan banner memutar iklan berhadiah Unity,
+ * lalu coin diklaim ke server, sama seperti tombol Coin gratis di menu Dompet.
  */
 @Composable
-private fun BannerIklanParty() {
+private fun HalamanBannerIklan(ik: SupaRepo.IklanInfo) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var info by remember { mutableStateOf<SupaRepo.IklanInfo?>(null) }
     var sibuk by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { info = SupaRepo.iklanInfo() }
-    val ik = info
-    if (ik == null || !ik.aktif || ik.sisa <= 0) return
+    val frame = RoundedCornerShape(18.dp)
+    val goldBorder = Brush.linearGradient(listOf(GoldDark, GoldLight, GoldDark))
     Box(
-        Modifier.fillMaxWidth().padding(bottom = 8.dp)
-            .clip(RoundedCornerShape(16.dp))
+        modifier = Modifier.fillMaxWidth().aspectRatio(3f).clip(frame)
+            .background(Color(0xFF1A1A1A)).border(1.dp, goldBorder, frame)
             .clickable(enabled = !sibuk) {
                 val act = IklanUnity.findActivity(context)
                 if (act == null) {
@@ -292,7 +288,6 @@ private fun BannerIklanParty() {
                                 } else {
                                     Toast.makeText(context, out.optString("e").ifBlank { "Klaim gagal" }, Toast.LENGTH_LONG).show()
                                 }
-                                info = SupaRepo.iklanInfo()
                             }
                         },
                         onGagal = { m ->
@@ -307,7 +302,7 @@ private fun BannerIklanParty() {
             model = "file:///android_asset/iklan/banner_party.jpg",
             contentDescription = tr("Iklan coin gratis"),
             contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-            modifier = Modifier.fillMaxWidth().aspectRatio(3f),
+            modifier = Modifier.fillMaxSize(),
         )
     }
 }
@@ -447,6 +442,11 @@ private fun BannerPager() {
         Triple("Top Family", "Family terbaik pekan ini", listOf(Color(0xFF1E3B5B), Color(0xFF0A121A))),
     )
     var remote by remember { mutableStateOf<List<AppBanner>>(emptyList()) }
+    // Banner iklan coin gratis: jadi geseran NOMOR SATU di grup banner yang sama
+    // dengan banner Viza, bukan banner terpisah di atas.
+    var iklan by remember { mutableStateOf<SupaRepo.IklanInfo?>(null) }
+    LaunchedEffect(Unit) { iklan = SupaRepo.iklanInfo() }
+    val ik = iklan?.takeIf { it.aktif && it.sisa > 0 }
     val context = LocalContext.current
     val openLink = { url: String ->
         try {
@@ -524,7 +524,9 @@ private fun BannerPager() {
         RewardRoomApi.muatTampilan()
         rewardBanner = RewardRoomApi.bannerUrl
     }
-    val count = (if (remote.isNotEmpty()) remote.size else defaults.size) + 1
+    val dasar = if (remote.isNotEmpty()) remote.size else defaults.size
+    val geser = if (ik != null) 1 else 0
+    val count = dasar + 1 + geser
     val rewardPage = count - 1
     val state = rememberPagerState(pageCount = { count })
     // Banner bergeser sendiri ke kanan supaya tab Party terlihat lebih hidup.
@@ -549,7 +551,9 @@ private fun BannerPager() {
     val goldBorder = Brush.linearGradient(listOf(GoldDark, GoldLight, GoldDark))
     Column(Modifier.fillMaxWidth()) {
         HorizontalPager(state = state, modifier = Modifier.fillMaxWidth(), pageSpacing = 12.dp) { page ->
-            if (page == rewardPage) {
+            if (ik != null && page == 0) {
+                HalamanBannerIklan(ik)
+            } else if (page == rewardPage) {
                 Box(
                     modifier = Modifier.fillMaxWidth().aspectRatio(3f).clip(frame)
                         .background(Color(0xFF1A1A1A)).border(1.dp, goldBorder, frame)
@@ -571,7 +575,7 @@ private fun BannerPager() {
                     }
                 }
             } else if (remote.isNotEmpty()) {
-                val b = remote[page.coerceAtMost(remote.lastIndex)]
+                val b = remote[(page - geser).coerceIn(0, remote.lastIndex)]
                 val bmp = remember(b.imageB64) { ProfileRepo.decodeB64(b.imageB64) }
                 Box(
                     modifier = Modifier.fillMaxWidth().aspectRatio(3f).clip(frame)
@@ -603,7 +607,7 @@ private fun BannerPager() {
                     }
                 }
             } else {
-                val (title, subtitle, colors) = defaults[page.coerceAtMost(defaults.lastIndex)]
+                val (title, subtitle, colors) = defaults[(page - geser).coerceIn(0, defaults.lastIndex)]
                 Box(
                     modifier = Modifier.fillMaxWidth().aspectRatio(3f).clip(frame)
                         .background(Brush.linearGradient(colors)).border(1.dp, goldBorder, frame),

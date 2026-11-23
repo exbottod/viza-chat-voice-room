@@ -1018,15 +1018,6 @@
       }
     },
     {
-      "dari": "1.0.386",
-      "ke": "1.0.390",
-      "arm64": {
-        "file": "patch-1.0.386-1.0.390-arm64.bsdiff",
-        "ukuran": 4159502,
-        "sha256": "73e4cda342c6fa2fcb21517ee9cf3d7c7f795a4bded57991bc0c89be05230df6"
-      }
-    },
-    {
       "dari": "1.0.387",
       "ke": "1.0.388",
       "arm64": {
@@ -1046,11 +1037,11 @@
     },
     {
       "dari": "1.0.387",
-      "ke": "1.0.390",
+      "ke": "1.0.391",
       "arm64": {
-        "file": "patch-1.0.387-1.0.390-arm64.bsdiff",
-        "ukuran": 4131966,
-        "sha256": "4f2ed8fb1083586b488344bc817db96dde7e31ba156c36749d6e738a2db31e01"
+        "file": "patch-1.0.387-1.0.391-arm64.bsdiff",
+        "ukuran": 4148040,
+        "sha256": "eeab33a524cd4cb8c2087f9a93f6b893c12c54b34008598be61e146f8a8b0815"
       }
     },
     {
@@ -1064,20 +1055,29 @@
     },
     {
       "dari": "1.0.388",
-      "ke": "1.0.390",
+      "ke": "1.0.391",
       "arm64": {
-        "file": "patch-1.0.388-1.0.390-arm64.bsdiff",
-        "ukuran": 4138961,
-        "sha256": "832c7030d71a2473c700b2f399894e27a4ae7ad7bd95f5e8585822b2eb200fa4"
+        "file": "patch-1.0.388-1.0.391-arm64.bsdiff",
+        "ukuran": 4116986,
+        "sha256": "575454485444e5b232c0a4f992f2c7a0de0148bb60acff8d53e6b08814b5f714"
       }
     },
     {
       "dari": "1.0.389",
-      "ke": "1.0.390",
+      "ke": "1.0.391",
       "arm64": {
-        "file": "patch-1.0.389-1.0.390-arm64.bsdiff",
-        "ukuran": 4033718,
-        "sha256": "dcec3065bd5512a44d33e4e502cb13f9a429d810074cc52a108f5638a6d18fd4"
+        "file": "patch-1.0.389-1.0.391-arm64.bsdiff",
+        "ukuran": 4083329,
+        "sha256": "ccda4decd44047a34d94cee6b9c1e7bf9cfc392ae145bab843c56b9508cc0919"
+      }
+    },
+    {
+      "dari": "1.0.390",
+      "ke": "1.0.391",
+      "arm64": {
+        "file": "patch-1.0.390-1.0.391-arm64.bsdiff",
+        "ukuran": 4058835,
+        "sha256": "f2e40a45d6b0a129e39fc0d907260e1f8d529194a5d03e169920b6d5b7a2fbf6"
       }
     }
   ]

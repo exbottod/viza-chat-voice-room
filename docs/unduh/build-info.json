@@ -1,21 +1,21 @@
 {
   "status": "ok",
   "versi": "1.0.390",
-  "catatan": "• Pindah kursi mic tidak lagi meninggalkan foto di kursi lama, dan satu orang tidak mungkin tampil dob\n• Foto dan data kursi dimuat sekali saat masuk room, pindah kursi tidak memuat ulang\n• Nama pengguna di kursi mic sejajar dengan nomor kursi dan tidak terpotong",
-  "ukuran_apk": 75797224,
-  "sha256_apk": "0926a8fe2e8a517e49d57be2504d5a221dcd94f4defe9b851e8dab7b8956666e",
+  "catatan": "• Pindah kursi mic: profil tidak lagi tampil dobel, langsung berpindah ke kursi tujuan\n• Foto dan data kursi dimuat sekali saat masuk room, pindah kursi tidak memuat ulang\n• Nama pengguna di kursi mic turun sedikit dan sejajar dengan nomor kursi di sebelahnya",
+  "ukuran_apk": 75797128,
+  "sha256_apk": "8ecb6629d613f79fcea8827f43d7d2cea2651f7ecce7a7768ddf599534f427a2",
   "abis": {
     "arm64": {
-      "ukuran": 75797224,
-      "sha256": "0926a8fe2e8a517e49d57be2504d5a221dcd94f4defe9b851e8dab7b8956666e"
+      "ukuran": 75797128,
+      "sha256": "8ecb6629d613f79fcea8827f43d7d2cea2651f7ecce7a7768ddf599534f427a2"
     },
     "armv7": {
-      "ukuran": 74031742,
-      "sha256": "c5f33d7176629981a1baa848486315d1b27dd8bb60c1ac2c0f398f48efaced7b"
+      "ukuran": 74031640,
+      "sha256": "d33c21a9f1c6a8126163a7e16fef6372ac3b5a00424d7c93cde80343e1bd713a"
     },
     "universal": {
-      "ukuran": 123651223,
-      "sha256": "33de81dd7b80e6a1989805688c1e4b7c90b638d478e6ccf14789ae3513a51664"
+      "ukuran": 123651131,
+      "sha256": "d539b0ad70eef3c7efd2b457cb2ea43dec845a13b1dfdaba28fd4be399b08b7b"
     }
   }
 }

@@ -1,2 +1,2 @@
+• ID unik: kepemilikan tetap setelah dilepas (aktif=false), tidak kembali ke Store; tolong Lepas tetap
 • party: banner iklan masuk ke geseran banner Viza sebagai halaman nomor 1, bukan banner terpisah di a
-• party: banner iklan coin gratis di urutan pertama tab Party (aset APK, tekan untuk putar iklan berha

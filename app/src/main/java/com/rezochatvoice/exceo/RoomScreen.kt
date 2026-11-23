@@ -283,7 +283,10 @@ fun RoomScreen(
         if (sekarang - segarTerakhir[0] < 2500L) return
         segarTerakhir[0] = sekarang
         scope.launch {
-            val kursi = rawSeats.values.firstOrNull { it.uid == myUid }?.index
+            // Sedang pindah kursi: data server masih menyebut kursi LAMA. Menegaskan
+            // kursi itu lagi akan menarik kita kembali ke kursi sebelumnya, jadi
+            // yang ditegaskan adalah kursi tujuan, atau tidak ada kursi sama sekali.
+            val kursi = kursiCepat ?: rawSeats.values.firstOrNull { it.uid == myUid }?.index
             RoomRepo.klaimKembali(roomId, myUid, kursi, myName)
         }
         AgoraVoice.sambungUlangJikaPerlu(roomId)

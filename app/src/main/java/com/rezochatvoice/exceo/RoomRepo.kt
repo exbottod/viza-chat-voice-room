@@ -696,8 +696,15 @@ object RoomRepo {
             }
             // Kursi dipegang lagi kalau memang tadi kita duduk di situ.
             if (seat != null) {
+                // Kalau kita sudah tercatat di kursi LAIN, jangan menulis kursi ini:
+                // itu yang dulu menarik pengguna kembali ke kursi lama setelah pindah.
+                val semua = Rtdb.ref("seats/$roomId").get().await()
+                val kursiLain = semua.children.any {
+                    it.key != seat.toString() && it.child("uid").getValue(String::class.java) == uid
+                }
+                if (kursiLain) return
                 val kursi = Rtdb.ref("seats/$roomId/$seat")
-                val isi = kursi.get().await()
+                val isi = semua.child(seat.toString())
                 val pemilik = isi.child("uid").getValue(String::class.java)
                 if (pemilik.isNullOrBlank() || pemilik == uid) {
                     val data = HashMap<String, Any?>()
@@ -936,6 +943,22 @@ object RoomRepo {
             }
             if (lama.isNotEmpty()) base.updateChildren(lama).await()
             for (k in lama.keys) Rtdb.ref("micPoints/$roomId/$k").removeValue()
+            // Pemeriksaan akhir: pastikan hanya kursi tujuan yang masih atas nama kita.
+            // Kalau ada sisa (penghapusan terpotong jaringan), dibersihkan sekali lagi
+            // supaya tidak ada profil ganda dan tidak ada yang menarik kita kembali.
+            try {
+                val sisa = HashMap<String, Any?>()
+                for (c in base.get().await().children) {
+                    val kunci = c.key ?: continue
+                    if (kunci != index.toString() && c.child("uid").getValue(String::class.java) == uid) sisa[kunci] = null
+                }
+                if (sisa.isNotEmpty()) {
+                    base.updateChildren(sisa).await()
+                    for (k in sisa.keys) Rtdb.ref("micPoints/$roomId/$k").removeValue()
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) { }
             null
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e

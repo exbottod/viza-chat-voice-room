@@ -1,3 +1,4 @@
-• Turun dari mic tidak lagi kembali sendiri ke kursi sebelumnya
-• Akun yang aplikasinya sudah ditutup tidak lagi menempel di kursi mic
-• Kehadiran di room dijaga otomatis supaya kursi kosong kembali kosong
+• Panel developer: tombol Ubah nama dan Reset nama untuk setiap room
+• Panel developer: Hapus room membuat room langsung hilang dan pemilik bisa membuat room baru kapan sa
+• Panel developer: Bersihkan room mengeluarkan semua peserta lalu kursi mic dan chat dikosongkan
+• Panel developer: tab Momen user untuk melihat pratinjau dan menghapus momen

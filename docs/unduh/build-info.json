@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.392",
-  "catatan": "• Turun dari mic tidak lagi kembali sendiri ke kursi sebelumnya\n• Akun yang aplikasinya sudah ditutup tidak lagi menempel di kursi mic\n• Kehadiran di room dijaga otomatis supaya kursi kosong kembali kosong",
-  "ukuran_apk": 75800325,
-  "sha256_apk": "fe42e81f3896af5711000799ac8882ed98591bacb7a0f4746644c259f079c3ee",
+  "versi": "1.0.393",
+  "catatan": "• Panel developer: tombol Ubah nama dan Reset nama untuk setiap room\n• Panel developer: Hapus room membuat room langsung hilang dan pemilik bisa membuat room baru kapan sa\n• Panel developer: Bersihkan room mengeluarkan semua peserta lalu kursi mic dan chat dikosongkan\n• Panel developer: tab Momen user untuk melihat pratinjau dan menghapus momen",
+  "ukuran_apk": 75800316,
+  "sha256_apk": "202849a8ba91e698a0957a0d8c85efc02e2bb8f3c5609df3b88efc0714669efc",
   "abis": {
     "arm64": {
-      "ukuran": 75800325,
-      "sha256": "fe42e81f3896af5711000799ac8882ed98591bacb7a0f4746644c259f079c3ee"
+      "ukuran": 75800316,
+      "sha256": "202849a8ba91e698a0957a0d8c85efc02e2bb8f3c5609df3b88efc0714669efc"
     },
     "armv7": {
-      "ukuran": 74034850,
-      "sha256": "8d883a71233c0931894730e4e8fee156790d2ceb9f6f82bce9f25572c8abee80"
+      "ukuran": 74034832,
+      "sha256": "135831608e7e03d6c4ee600dfbd57b3ee302f808cac5c259ca7d6828a5039735"
     },
     "universal": {
-      "ukuran": 123654327,
-      "sha256": "87a3ddc520a3e584c34665cf854428fc5cc6ccf26dfbca2c9fef70395a1d4abb"
+      "ukuran": 123654319,
+      "sha256": "ac478080c44515b86e6801c31daf55d89ccc596f09e0d79e7f23fa698a0a2758"
     }
   }
 }

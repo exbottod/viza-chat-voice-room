@@ -51,6 +51,7 @@ import java.net.URL
 object AgoraVoice {
     private const val TAG = "AgoraVoice"
     private const val TOKEN_URL = "https://viza.43-156-99-4.sslip.io/agora-token"
+    private const val LAPOR_URL = "https://viza.43-156-99-4.sslip.io/agora-lapor"
 
     var onProblem: ((String) -> Unit)? = null
 
@@ -73,6 +74,38 @@ object AgoraVoice {
     @Volatile private var errTerakhir = 0
     @Volatile private var alasanTerakhir = 0
     @Volatile private var kodeServerTerakhir = 0
+
+    /** Kirim sebab gagal ke server sekali, supaya bisa diperiksa dari server. */
+    private fun laporSebab() {
+        try {
+            val ctx = appCtx ?: return
+            val uid = try { FirebaseAuth.getInstance().currentUser?.uid ?: "" } catch (e: Exception) { "" }
+            val versi = try { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName ?: "" } catch (e: Exception) { "" }
+            val isi = org.json.JSONObject()
+                .put("uid", uid)
+                .put("room", roomId ?: "")
+                .put("kode", errTerakhir)
+                .put("alasan", alasanTerakhir)
+                .put("server", kodeServerTerakhir)
+                .put("status", lastStatus)
+                .put("versi", versi)
+                .toString()
+            scope.launch {
+                try {
+                    val c = (URL(LAPOR_URL).openConnection() as HttpURLConnection).apply {
+                        requestMethod = "POST"
+                        connectTimeout = 8000
+                        readTimeout = 8000
+                        doOutput = true
+                        setRequestProperty("Content-Type", "application/json")
+                    }
+                    c.outputStream.use { it.write(isi.toByteArray()) }
+                    c.responseCode
+                    c.disconnect()
+                } catch (e: Exception) { }
+            }
+        } catch (e: Exception) { }
+    }
 
     /** Teks status saat gagal, lengkap dengan kode sebabnya. */
     private fun gagalTeks(): String {
@@ -327,7 +360,7 @@ object AgoraVoice {
             lastStatus = ""
             delay(900L * attempt)
         }
-        if (!diam) lastStatus = gagalTeks()
+        if (!diam) { lastStatus = gagalTeks(); laporSebab() }
         return null
     }
 
@@ -509,6 +542,7 @@ object AgoraVoice {
                                 continue
                             }
                             lastStatus = gagalTeks()
+                            laporSebab()
                             return@withLock
                         }
                         try { tuneAudioRoute(app) } catch (x: Exception) { }

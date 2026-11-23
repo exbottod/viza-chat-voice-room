@@ -7755,15 +7755,38 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
     // Token suara room lewat Agora. HP hanya menerima App ID dan token; App
     // Certificate tidak pernah dikirim ke HP. Nilainya diambil dari lingkungan
     // server, jadi ganti akun Agora cukup ganti isian di server tanpa rilis APK.
+    if (url.pathname.toLowerCase() === "/agora-lapor") {
+      // HP melaporkan sebab suara gagal tersambung (kode Agora & kode server),
+      // supaya penyebabnya bisa dibaca dari server tanpa menebak.
+      let isiLapor = {};
+      try { isiLapor = await req.json(); } catch { isiLapor = {}; }
+      const uidLapor = String(isiLapor.uid ?? "").slice(0, 80);
+      const pesanLapor = [
+        "room=" + String(isiLapor.room ?? "-").slice(0, 40),
+        "agora=" + String(isiLapor.kode ?? "-").slice(0, 12),
+        "alasan=" + String(isiLapor.alasan ?? "-").slice(0, 12),
+        "server=" + String(isiLapor.server ?? "-").slice(0, 12),
+        "status=" + String(isiLapor.status ?? "-").slice(0, 80),
+        "versi=" + String(isiLapor.versi ?? "-").slice(0, 20),
+      ].join(" ");
+      await logGalat(env, uidLapor, "agora_app", pesanLapor);
+      return json({ ok: 1 });
+    }
     if (url.pathname.toLowerCase() === "/agora-token") {
       const kepalaAg = req.headers.get("authorization") || "";
       const idAg = kepalaAg.toLowerCase().startsWith("bearer ") ? kepalaAg.slice(7).trim() : "";
       const uidAg = idAg ? await uidDariToken(idAg) : null;
-      if (!uidAg) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
+      if (!uidAg) {
+        await logGalat(env, "", "agora_token", "sesi tidak sah (401)");
+        return json({ ok: 0, e: "Sesi tidak sah" }, 401);
+      }
       const kredAg = await agoraKredensial(env);
       const appIdAg = kredAg.appId;
       const certAg = kredAg.cert;
-      if (!appIdAg || !certAg) return json({ ok: 0, e: "Agora belum diatur di server" }, 503);
+      if (!appIdAg || !certAg) {
+        await logGalat(env, uidAg, "agora_token", "app id/cert kosong di panel");
+        return json({ ok: 0, e: "Agora belum diatur di server" }, 503);
+      }
       let isiAg = {};
       try { isiAg = await req.json(); } catch { isiAg = {}; }
       const roomAg = (String(
@@ -7774,15 +7797,24 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
       const akunAg = String(uidAg).slice(0, 60);
       let modAg = null;
       try { modAg = await import("agora-token"); }
-      catch (e) { return json({ ok: 0, e: "Pustaka token Agora belum terpasang di server" }, 503); }
+      catch (e) {
+        await logGalat(env, uidAg, "agora_token", "pustaka agora-token belum ada");
+        return json({ ok: 0, e: "Pustaka token Agora belum terpasang di server" }, 503);
+      }
       const pakAg = modAg.default ?? modAg;
       let tokenAg = "";
       try {
         tokenAg = pakAg.RtcTokenBuilder.buildTokenWithUserAccount(
           appIdAg, certAg, roomAg, akunAg, pakAg.RtcRole.PUBLISHER, 21600, 21600,
         );
-      } catch (e) { return json({ ok: 0, e: "Token suara gagal dibuat" }, 500); }
-      if (!tokenAg) return json({ ok: 0, e: "App ID atau App Certificate tidak sah" }, 500);
+      } catch (e) {
+        await logGalat(env, uidAg, "agora_token", "gagal buat token: " + String(e?.message ?? e));
+        return json({ ok: 0, e: "Token suara gagal dibuat" }, 500);
+      }
+      if (!tokenAg) {
+        await logGalat(env, uidAg, "agora_token", "app id/cert tidak sah");
+        return json({ ok: 0, e: "App ID atau App Certificate tidak sah" }, 500);
+      }
       return json({ ok: 1, appId: appIdAg, token: tokenAg, channel: roomAg, account: akunAg, exp: Math.floor(Date.now() / 1000) + 21600 });
     }
     // Pengaturan game Bikini (bet & RTP). Dibaca game tanpa login, jadi
@@ -7843,7 +7875,7 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           stafAktif = Number(r[0].rows[0]?.a ?? 0);
           peran = r[1].rows.map((x) => String(x.role) + ":" + Number(x.n));
         } catch (e) { /* tabel belum ada */ }
-        return json({ ok: 1, v: "viza-2026-11-23-setujui-topup", rondeMs: CF_RONDE_MS, db: 1, proj: PROJ_SAH, agora: ((await agoraKredensial(env)).appId && (await agoraKredensial(env)).cert) ? 1 : 0, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
+        return json({ ok: 1, v: "viza-2026-11-23-agora-lapor", rondeMs: CF_RONDE_MS, db: 1, proj: PROJ_SAH, agora: ((await agoraKredensial(env)).appId && (await agoraKredensial(env)).cert) ? 1 : 0, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
       } catch (e) {
         return json({ ok: 0, v: "viza-2026-11-13-mandiri", db: String(e?.message ?? e) }, 500);
       }

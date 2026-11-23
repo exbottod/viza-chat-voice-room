@@ -1,4 +1,3 @@
-• Banner masuk, efek masuk, bingkai, lencana, dan medali kini diambil lewat server Viza yang cepat, bu
-• Masuk room langsung tampil, tanpa layar memproses
-• Aset disimpan di HP sekali, jadi tidak ada unduhan berjalan saat sudah di room, saat pindah kursi, a
-• Animasi efek masuk, banner, dan medali langsung berjalan
+• Avatar di kursi mic tidak lagi berkedip atau naik-turun; cincin suara kini tenang dan hanya mengikut
+• Pemberitahuan masuk kamar langsung muncul di daftar chat saat kamu masuk room
+• Tampilan kursi tetap ringan saat banyak orang bicara

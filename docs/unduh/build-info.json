@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.396",
-  "catatan": "• Banner masuk, efek masuk, bingkai, lencana, dan medali kini diambil lewat server Viza yang cepat, bu\n• Masuk room langsung tampil, tanpa layar memproses\n• Aset disimpan di HP sekali, jadi tidak ada unduhan berjalan saat sudah di room, saat pindah kursi, a\n• Animasi efek masuk, banner, dan medali langsung berjalan",
-  "ukuran_apk": 75804703,
-  "sha256_apk": "09aab108f4fc9e4293ed808915ef16403a135a5b4ab98981d9ee7d8041360725",
+  "versi": "1.0.397",
+  "catatan": "• Avatar di kursi mic tidak lagi berkedip atau naik-turun; cincin suara kini tenang dan hanya mengikut\n• Pemberitahuan masuk kamar langsung muncul di daftar chat saat kamu masuk room\n• Tampilan kursi tetap ringan saat banyak orang bicara",
+  "ukuran_apk": 75804898,
+  "sha256_apk": "18e0440da7876e05a589334150559f6221d2bd6b0f7f2051f3f42308e311628f",
   "abis": {
     "arm64": {
-      "ukuran": 75804703,
-      "sha256": "09aab108f4fc9e4293ed808915ef16403a135a5b4ab98981d9ee7d8041360725"
+      "ukuran": 75804898,
+      "sha256": "18e0440da7876e05a589334150559f6221d2bd6b0f7f2051f3f42308e311628f"
     },
     "armv7": {
-      "ukuran": 74039233,
-      "sha256": "3f9927be4ab48076a70a0fa312c7705b2c5ba3c3ec5e203cebf3050bcb2f7677"
+      "ukuran": 74039421,
+      "sha256": "fe4ebbfc4a11f2b44acdd4fb34f6627bbe23b009c5ab825dd7c3f3a28a45fcbb"
     },
     "universal": {
-      "ukuran": 123658720,
-      "sha256": "2cd1efd47414ba268bfec94763effe9ebe4b8d883cbe481829b096296fd65055"
+      "ukuran": 123658899,
+      "sha256": "33773a748d598ddc55dc1a655992eabb8648134b5e26c1fa13decd822db04998"
     }
   }
 }

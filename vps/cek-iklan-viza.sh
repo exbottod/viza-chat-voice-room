@@ -11,7 +11,7 @@ echo "sidik: $(md5sum "$API_DIR/index.js" 2>/dev/null | cut -c1-32)"
 
 echo
 echo "== 2. Dukungan kunci iklan di berkas =="
-for k in iklanAktif iklanCoin iklanMaxHari iklanCooldown iklanAdUnit iklanUji iklanGameId iklanPlacement; do
+for k in iklanAktif iklanCoin iklanMaxHari iklanCooldown iklanAdUnit iklanUji iklanGameId iklanPlacement iklanBanner; do
   if grep -q "\"$k\"" "$API_DIR/index.js" 2>/dev/null; then echo "  ada   $k"; else echo "  HILANG $k"; fi
 done
 for op in iklan_info iklan_klaim; do

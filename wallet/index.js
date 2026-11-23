@@ -4833,6 +4833,51 @@ async function admin(env, body) {
   }
 
   // ---- Panel developer: atur panel manager/admin ----
+  // ---- Kirim coin / diamond / VIP ke satu akun (menu "Send coin") ----
+  // Hanya developer. Nilai coin & diamond ditambahkan, VIP memakai sisa masa
+  // aktif yang masih berjalan supaya perpanjangan tidak memotong hari lama.
+  if (op === "hadiah_user") {
+    if (!devPanel) return json({ ok: 0, e: "Hanya developer" }, 403);
+    const who = String(p.uid ?? "").trim();
+    if (!/^[A-Za-z0-9_-]{6,64}$/.test(who)) return gagal("UID tidak valid");
+    const coin = Math.trunc(Number(p.coins ?? 0) || 0);
+    const gem = Math.trunc(Number(p.diamonds ?? 0) || 0);
+    const vip = Math.max(0, Math.min(9, Math.trunc(Number(p.vip ?? 0) || 0)));
+    const hari = Math.max(0, Math.min(3650, Math.trunc(Number(p.hari ?? 0) || 0)));
+    if (coin < 0 || gem < 0) return gagal("Jumlah coin/diamond tidak boleh minus");
+    if (coin === 0 && gem === 0 && vip === 0) return gagal("Isi coin, diamond, atau VIP dulu");
+    try { await pastikan(env, who); } catch (e) { return gagal("Akun belum punya dompet: " + String(e?.message ?? e)); }
+    const kini = await pipe(env, [
+      { sql: "select coins, diamonds, vip, vip_until from wallets where uid = ?", args: [T(who)] },
+    ]);
+    const lama = kini[0].rows[0];
+    if (!lama) return gagal("Dompet akun tidak ditemukan");
+    let vipBaru = Number(lama.vip ?? 0);
+    let sampai = Number(lama.vip_until ?? 0);
+    if (vip > 0) {
+      vipBaru = vip;
+      if (hari > 0) {
+        const dasar = Math.max(Date.now(), sampai);
+        sampai = dasar + hari * 86400000;
+      }
+    }
+    const ubah = [];
+    if (coin) ubah.push({ sql: "update wallets set coins = coins + ?, updated_at = ? where uid = ?", args: [I(coin), I(Date.now()), T(who)] });
+    if (gem) ubah.push({ sql: "update wallets set diamonds = diamonds + ?, updated_at = ? where uid = ?", args: [I(gem), I(Date.now()), T(who)] });
+    if (vip > 0) ubah.push({ sql: "update wallets set vip = ?, vip_until = ?, updated_at = ? where uid = ?", args: [I(vipBaru), I(sampai), I(Date.now()), T(who)] });
+    if (ubah.length) await pipe(env, ubah);
+    const akhir = await pipe(env, [
+      { sql: "select coins, diamonds, vip, vip_until from wallets where uid = ?", args: [T(who)] },
+    ]);
+    const w = akhir[0].rows[0] || {};
+    return json({
+      ok: 1, uid: who,
+      coins: Number(w.coins ?? 0), diamonds: Number(w.diamonds ?? 0),
+      vip: Number(w.vip ?? 0), vipUntil: Number(w.vip_until ?? 0),
+      dikirim: { coins: coin, diamonds: gem, vip, hari },
+    });
+  }
+
   if (op === "panel_grant") {
     const who = String(p.uid ?? "").trim();
     const role = String(p.role ?? "").trim();

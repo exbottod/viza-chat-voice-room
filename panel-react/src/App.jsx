@@ -22,6 +22,7 @@ import Alat from "./pages/Alat.jsx";
 import Wallet from "./pages/Wallet.jsx";
 import Pencairan from "./pages/Pencairan.jsx";
 import Iklan from "./pages/Iklan.jsx";
+import SendCoin from "./pages/SendCoin.jsx";
 import Seller from "./pages/Seller.jsx";
 import StafApp, { StafAppShell } from "./pages/StafApp.jsx";
 import Staf from "./pages/Staf.jsx";
@@ -60,6 +61,7 @@ const KETERANGAN = {
   adminapp: "Admin aplikasi: isi stok coin dan stok aset untuk admin",
   wallet: "Paket coin, tujuan top-up, dan top-up manual",
   kirim: "Kirim frame, efek, atau medal ke satu akun",
+  sendcoin: "Kirim coin, diamond, dan VIP ke satu akun",
   game: "Bet, RTP, banner, dan kategori game",
   gamebet: "Chip bet tiap game: Bikini Wild Rush, Greedy King, Crazy Fruit",
   gamertp: "Persentase RTP tiap game",
@@ -100,6 +102,7 @@ const HALAMAN = {
   wallet: Wallet,
   pencairan: Pencairan,
   iklan: Iklan,
+  sendcoin: SendCoin,
   gift: Gift,
   giftdaftar: GiftDaftar,
   emote: Emote,

@@ -29,6 +29,7 @@ export const MENU = [
       ["vip", "military_tech", "VIP & Medali"],
       ["cekin", "event_available", "Plan history (cek in)"],
       ["wallet", "account_balance_wallet", "Currency (coin & reset)"],
+      ["sendcoin", "paid", "Send coin"],
       ["cashback", "savings", "Cashback gift"],
       ["pencairan", "payments", "Pencairan agency"],
       ["iklan", "ads_click", "Iklan & coin gratis"],

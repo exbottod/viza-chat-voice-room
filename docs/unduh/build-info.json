@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.399",
-  "catatan": "• Pemberitahuan masuk kamar kini selalu muncul di daftar chat saat kamu masuk room\n• Tombol Turun Mic bisa dipakai dengan pasti dan kursinya benar-benar kosong\n• Tombol Turun Mic juga ada di menu Alat dasar, jadi lebih mudah ditemukan\n• Avatar di kursi mic tetap diam, tidak berkedip atau naik-turun",
-  "ukuran_apk": 75801858,
-  "sha256_apk": "4e831dca4be8f30249a4c51555b6d665d81675d637ea9ae1fde498a30cf8e4ad",
+  "versi": "1.0.400",
+  "catatan": "• Pindah tab kini bergeser halus ke samping, tidak lagi melompat\n• Setiap halaman yang dibuka masuk dengan geseran halus dan menutup dengan rapi\n• Geseran dibuat singkat supaya aplikasi tetap ringan dan tidak memuat ulang isi\n• Pemberitahuan masuk kamar selalu muncul, tombol Turun Mic pasti bekerja",
+  "ukuran_apk": 75805485,
+  "sha256_apk": "95b35d7940c6d4be8c67aa51208ee9662cb77f1ce071498f47b6eb6117857f7e",
   "abis": {
     "arm64": {
-      "ukuran": 75801858,
-      "sha256": "4e831dca4be8f30249a4c51555b6d665d81675d637ea9ae1fde498a30cf8e4ad"
+      "ukuran": 75805485,
+      "sha256": "95b35d7940c6d4be8c67aa51208ee9662cb77f1ce071498f47b6eb6117857f7e"
     },
     "armv7": {
-      "ukuran": 74036365,
-      "sha256": "28a54af4d613fb473f4d1273550a594a7b0e276b7ac6f5134df0cd2e63398c46"
+      "ukuran": 74040001,
+      "sha256": "a6b2ce281cca54882b7d4c10cbdda0ac7636778791d13e1db4874e9caae83fc6"
     },
     "universal": {
-      "ukuran": 123655863,
-      "sha256": "d3360f35611e59f7135eafd9878c5d602e93a6ccd0afcea952f64521dde79ca3"
+      "ukuran": 123659485,
+      "sha256": "4ae203e082eafa3d0d151955399c04b45345b23e2a1e70fd730c9a0bab6120cd"
     }
   }
 }

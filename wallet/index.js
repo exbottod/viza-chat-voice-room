@@ -7846,6 +7846,59 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
       });
     }
     // Pengaturan aplikasi dari panel (versi & link APK) dibaca tanpa login.
+    if (url.pathname === "/aset" && req.method === "GET") {
+      // Aset room (efek masuk, banner masuk, bingkai, gelembung, lencana, medal)
+      // disajikan lewat VPS ini: sekali diambil dari sumbernya, lalu disimpan di
+      // disk VPS dan dikirim dengan cache panjang. Aplikasi tidak lagi menarik
+      // aset langsung dari Firebase, jadi masuk room langsung tampil dan tidak
+      // ada unduhan berjalan setelah berada di room.
+      try {
+        const asal = String(url.searchParams.get("u") || "");
+        let host = "";
+        try { host = new URL(asal).host.toLowerCase(); } catch (e) { host = ""; }
+        const akhir = ["googleapis.com", "firebasestorage.app", "firebaseio.com", "sslip.io", "r2.dev", "githubusercontent.com", "cloudflare.com", "cloudflarestream.com", "viza.id"];
+        const izin = host && akhir.some((a) => host === a || host.endsWith("." + a));
+        if (!asal.startsWith("https://") || !izin) {
+          return json({ ok: 0, galat: "alamat aset tidak diizinkan" }, 400);
+        }
+        const crypto = await import("node:crypto");
+        const fs = await import("node:fs");
+        const kunci = crypto.createHash("sha1").update(asal).digest("hex");
+        const dir = "/opt/viza-api/aset-cache";
+        const berkas = dir + "/" + kunci + ".bin";
+        const meta = dir + "/" + kunci + ".json";
+        let isi = null;
+        let jenis = "application/octet-stream";
+        try {
+          if (fs.existsSync(berkas)) {
+            isi = fs.readFileSync(berkas);
+            try { jenis = JSON.parse(fs.readFileSync(meta, "utf8")).jenis || jenis; } catch (e) { }
+          }
+        } catch (e) { isi = null; }
+        if (!isi || !isi.length) {
+          const r = await fetch(asal, { redirect: "follow" });
+          if (!r.ok) return json({ ok: 0, galat: "sumber " + r.status }, 502);
+          isi = Buffer.from(await r.arrayBuffer());
+          jenis = r.headers.get("content-type") || jenis;
+          try {
+            fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(berkas, isi);
+            fs.writeFileSync(meta, JSON.stringify({ jenis, asal, waktu: Date.now() }));
+          } catch (e) { }
+        }
+        return new Response(isi, {
+          status: 200,
+          headers: {
+            "content-type": jenis,
+            "content-length": String(isi.length),
+            "cache-control": "public, max-age=31536000, immutable",
+            "access-control-allow-origin": "*",
+          },
+        });
+      } catch (e) {
+        return json({ ok: 0, galat: String(e?.message ?? e) }, 500);
+      }
+    }
     if (url.pathname === "/app-cfg.json") {
       const c = await cfgSemua(env);
       return new Response(JSON.stringify({
@@ -7875,7 +7928,7 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           stafAktif = Number(r[0].rows[0]?.a ?? 0);
           peran = r[1].rows.map((x) => String(x.role) + ":" + Number(x.n));
         } catch (e) { /* tabel belum ada */ }
-        return json({ ok: 1, v: "viza-2026-11-23-agora-lapor", rondeMs: CF_RONDE_MS, db: 1, proj: PROJ_SAH, agora: ((await agoraKredensial(env)).appId && (await agoraKredensial(env)).cert) ? 1 : 0, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
+        return json({ ok: 1, v: "viza-2026-11-23-aset-vps", rondeMs: CF_RONDE_MS, db: 1, proj: PROJ_SAH, agora: ((await agoraKredensial(env)).appId && (await agoraKredensial(env)).cert) ? 1 : 0, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
       } catch (e) {
         return json({ ok: 0, v: "viza-2026-11-13-mandiri", db: String(e?.message ?? e) }, 500);
       }

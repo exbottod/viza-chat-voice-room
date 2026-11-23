@@ -257,7 +257,10 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
             if (ban != null) {
                 scope.launch { runCatching { RoomRepo.unbanFromRoom(room.id, uid) } }
             }
-            dompetJob?.await()?.let { w = it; wallet = it }
+            // Dompet dibatasi 1,2 detik saja: efek masuk sudah punya salinan di HP,
+            // jadi tidak perlu menahan masuk room sampai server menjawab.
+            val dompetBaru = kotlinx.coroutines.withTimeoutOrNull(1200L) { dompetJob?.await() }
+            dompetBaru?.let { w = it; wallet = it }
             if (activeRoom?.id != room.id) return@launch
             RoomRepo.join(room.id, myName, if (vipActive(w.vip, w.vipUntil)) w.vip else 0, fallbackEquip(w, "entry"), fallbackEquip(w, "banner"))
         }
@@ -432,6 +435,21 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
         // panel langsung terbaca.
         StoreCatalog.start(force = uid.isNotEmpty())
         GiftCatalog.start()
+        // Pemanas aset: efek masuk, banner, bingkai, gelembung, dan lencana diunduh
+        // di latar belakang begitu aplikasi terbuka, jadi saat masuk room semuanya
+        // sudah siap dan tidak ada unduhan berjalan di layar room.
+        kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                kotlinx.coroutines.delay(1500L)
+                VipAssets.panaskan(StoreCatalog.semuaAset())
+                // Katalog Store sering datang belakangan dari server: ulangi sekali
+                // setelah jeda supaya item kiriman panel ikut dipanaskan.
+                kotlinx.coroutines.delay(6000L)
+                VipAssets.panaskan(StoreCatalog.semuaAset())
+            } catch (e: kotlinx.coroutines.CancellationException) {
+            } catch (e: Exception) {
+            }
+        }
         if (uid.isEmpty()) return@LaunchedEffect
         ProfileRepo.loadRemote()?.let {
             profile = it

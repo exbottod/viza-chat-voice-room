@@ -96,6 +96,25 @@ data class VipAsset(
     val poster: String = "",
 )
 
+/**
+ * Aset room diambil lewat VPS Viza, bukan langsung dari Firebase.
+ * Sekali diambil, VPS menyimpannya dan mengirim dengan cache panjang, jadi
+ * masuk room langsung tampil dan tidak ada unduhan berjalan setelah di room.
+ */
+object AsetVps {
+    private const val INDUK = "https://viza.43-156-99-4.sslip.io"
+
+    /** Alamat aset versi VPS. Kalau sudah lewat VPS atau kosong, dikembalikan apa adanya. */
+    fun bungkus(url: String): String {
+        if (url.isBlank() || url.startsWith(INDUK)) return url
+        return try {
+            INDUK + "/aset?u=" + java.net.URLEncoder.encode(url, "UTF-8")
+        } catch (e: Exception) {
+            url
+        }
+    }
+}
+
 object VipAssets {
     /** Ringkasan diagnosa: berapa aset terbaca dan alasan gagal muat gambar (untuk akun developer). */
     val diag = mutableStateMapOf<String, String>()
@@ -114,6 +133,63 @@ object VipAssets {
         private set
 
     fun get(n: Int, slot: String): VipAsset? = cfg["${n}_$slot"]
+
+    /** Semua aset yang diketahui saat ini (salinan), dipakai pemanas aset. */
+    fun semuaAset(): List<VipAsset> = cfg.values.toList()
+
+    /**
+     * Pemanas aset: mengunduh isi berkas yang dipakai room (efek masuk, banner masuk,
+     * bingkai, gelembung, lencana) di latar belakang SEKALI, lalu menyimpannya ke
+     * memori dan disk. Saat masuk room, semuanya tinggal dipakai dari cache, tanpa
+     * unduhan berjalan di layar room. Berjalan beberapa berkas sekaligus, tetapi
+     * dibatasi supaya tidak membebani jaringan atau memori.
+     */
+    private val sedangMemanaskan = java.util.concurrent.atomic.AtomicBoolean(false)
+    private val sudahPanas = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
+    suspend fun panaskan(tambahan: Collection<VipAsset> = emptyList()) {
+        if (!sedangMemanaskan.compareAndSet(false, true)) return
+        try {
+            // Tunggu katalog termuat (paling lama 6 detik) sebelum memulai.
+            var tunggu = 0
+            while (cfg.isEmpty() && tunggu < 20) { kotlinx.coroutines.delay(300L); tunggu++ }
+            val dipakaiRoom = setOf("entry", "banner", "frame", "bubble", "badge", "title")
+            val daftar = (cfg.values + tambahan)
+                .filter { it.slot in dipakaiRoom || it.slot.startsWith("st_") }
+                .filter { (it.url.isNotBlank() || it.hasData) }
+                .distinctBy { "${it.n}_${it.slot}_${it.updatedAt}_${it.url}" }
+                .filter { sudahPanas.add("${it.n}_${it.slot}_${it.updatedAt}_${it.url}") }
+            if (daftar.isEmpty()) return
+            val batas = kotlinx.coroutines.sync.Semaphore(3)
+            kotlinx.coroutines.coroutineScope {
+                for (a in daftar) {
+                    launch(Dispatchers.IO) {
+                        batas.acquire()
+                        try {
+                            if (a.url.isNotBlank()) {
+                                ambildariUrl(a.url)
+                                // Gambar diam juga disiapkan di cache gambar supaya
+                                // kursi dan sheet profil tidak mendekode dari nol.
+                            } else if (a.hasData) {
+                                bytes(a)
+                            }
+                            if (a.poster.isNotBlank()) ambildariUrl(a.poster)
+                        } catch (e: kotlinx.coroutines.CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            // Gagal satu berkas tidak boleh menghentikan yang lain;
+                            // dicoba lagi pada pemanasan berikutnya.
+                            sudahPanas.remove("${a.n}_${a.slot}_${a.updatedAt}_${a.url}")
+                        } finally {
+                            batas.release()
+                        }
+                    }
+                }
+            }
+        } finally {
+            sedangMemanaskan.set(false)
+        }
+    }
 
     // Aset VIP disimpan juga di perangkat. Dulu daftar ini kosong sampai server
     // menjawab, jadi bingkai, medal, dan kartu VIP "belum ada" di awal lalu
@@ -253,6 +329,12 @@ object VipAssets {
         cacheUrl[url] = isi
     }
 
+    /** Berkas lokal hasil pemanasan untuk sebuah tautan, atau null kalau belum ada. */
+    fun berkasLokal(url: String): java.io.File? {
+        val f = berkasCache(url) ?: return null
+        return if (f.exists() && f.length() > 0L) f else null
+    }
+
     private fun berkasCache(url: String): java.io.File? = try {
         val ctx = com.google.firebase.FirebaseApp.getInstance().applicationContext
         val dir = java.io.File(ctx.cacheDir, "vip_url")
@@ -269,20 +351,32 @@ object VipAssets {
         if (f != null && f.exists() && f.length() > 0L) {
             val lama = try { f.readBytes() } catch (e: Exception) { null }
             if (lama != null && lama.isNotEmpty()) {
-                simpanCache(url, lama)
+                if (lama.size <= 2_000_000) simpanCache(url, lama)
                 return@withContext lama
             }
         }
         try {
-            val kon = (java.net.URL(url).openConnection() as java.net.HttpURLConnection).apply {
-                connectTimeout = 10000
-                readTimeout = 20000
-                instanceFollowRedirects = true
+            // Lewat VPS dulu (cepat dan tersimpan di VPS). Kalau VPS belum siap,
+            // alamat aslinya tetap dicoba supaya aset tidak hilang.
+            val lewatVps = AsetVps.bungkus(url)
+            fun ambil(alamat: String): ByteArray? = try {
+                val kon = (java.net.URL(alamat).openConnection() as java.net.HttpURLConnection).apply {
+                    connectTimeout = 6000
+                    readTimeout = 15000
+                    instanceFollowRedirects = true
+                }
+                val hasil = if (kon.responseCode in 200..299) kon.inputStream.use { it.readBytes() } else null
+                kon.disconnect()
+                hasil
+            } catch (e: Exception) {
+                null
             }
-            val isi = if (kon.responseCode in 200..299) kon.inputStream.use { it.readBytes() } else null
-            kon.disconnect()
-            if (isi != null && isi.isNotEmpty() && isi.size <= 4_000_000) {
-                simpanCache(url, isi)
+            var isi = if (lewatVps != url) ambil(lewatVps) else null
+            if (isi == null || isi.isEmpty()) isi = ambil(url)
+            if (isi != null && isi.isNotEmpty() && isi.size <= 20_000_000) {
+                // Berkas besar (animasi efek masuk) cukup disimpan di disk. Memori
+                // hanya untuk yang kecil supaya tidak memenuhi RAM HP.
+                if (isi.size <= 2_000_000) simpanCache(url, isi)
                 try { f?.writeBytes(isi) } catch (e: Exception) { }
             }
             isi
@@ -413,7 +507,7 @@ private val tanpaPangkas: MutableSet<String> = java.util.concurrent.ConcurrentHa
 private suspend fun muatBitmap(ctx: android.content.Context, a: VipAsset): Bitmap? {
     if (a.url.isNotBlank()) {
         val res = coil.Coil.imageLoader(ctx).execute(
-            coil.request.ImageRequest.Builder(ctx).data(a.url).allowHardware(false).build(),
+            coil.request.ImageRequest.Builder(ctx).data(AsetVps.bungkus(a.url)).allowHardware(false).build(),
         )
         val d = res.drawable ?: return null
         if (d is android.graphics.drawable.BitmapDrawable) return d.bitmap
@@ -498,7 +592,7 @@ private suspend fun ukurRasioAset(ctx: android.content.Context, a: VipAsset): Fl
                         }
                     }
                     if (a.url.isNotBlank()) {
-                        parser.decodeFromURL(java.net.URL(a.url), done)
+                        parser.decodeFromURL(java.net.URL(AsetVps.bungkus(a.url)), done)
                     } else {
                         parser.decodeFromInputStream(
                             ByteArrayInputStream(data!!),
@@ -514,7 +608,7 @@ private suspend fun ukurRasioAset(ctx: android.content.Context, a: VipAsset): Fl
         else -> {
             if (a.url.isNotBlank()) {
                 val res = coil.Coil.imageLoader(ctx).execute(
-                    ImageRequest.Builder(ctx).data(a.url).allowHardware(false).build(),
+                    ImageRequest.Builder(ctx).data(AsetVps.bungkus(a.url)).allowHardware(false).build(),
                 )
                 val d = res.drawable
                 if (d != null && d.intrinsicWidth > 0 && d.intrinsicHeight > 0) {
@@ -554,7 +648,8 @@ private fun VipVideo(
     val ctx = LocalContext.current
     val uri: Uri? = remember(a.n, a.slot, a.updatedAt, data) {
         if (a.url.isNotBlank()) {
-            Uri.parse(a.url)
+            // Sudah dipanaskan: putar dari berkas di HP, tidak mengunduh lagi.
+            VipAssets.berkasLokal(a.url)?.let { Uri.fromFile(it) } ?: Uri.parse(a.url)
         } else if (data != null) {
             val f = File(ctx.cacheDir, "vip_${a.n}_${a.slot}_${a.updatedAt}.mp4")
             if (!f.exists()) f.writeBytes(data)
@@ -649,7 +744,7 @@ private fun VipSvga(
                                     val d = doneObj
                                     if (d != null) {
                                         parser.decodeFromURL(
-                                            java.net.URL(a.url + (if (a.url.contains('?')) "&" else "?") + "ulang=" + System.currentTimeMillis()),
+                                            java.net.URL(AsetVps.bungkus(a.url) + (if (a.url.contains('?')) "&" else "?") + "ulang=" + System.currentTimeMillis()),
                                             d,
                                         )
                                     }
@@ -687,24 +782,9 @@ private fun VipSvga(
                     val alamat = a.url
                     val kunciSvga = "vip_${a.n}_${a.slot}_${a.updatedAt}"
                     Thread {
-                        var isi: ByteArray? = null
-                        for (percobaan in 1..2) {
-                            try {
-                                val kon = (java.net.URL(alamat).openConnection() as java.net.HttpURLConnection).apply {
-                                    connectTimeout = 10000
-                                    readTimeout = 20000
-                                    instanceFollowRedirects = true
-                                }
-                                if (kon.responseCode in 200..299) {
-                                    isi = kon.inputStream.use { it.readBytes() }
-                                }
-                                kon.disconnect()
-                                if (isi != null && isi!!.isNotEmpty()) break
-                            } catch (e: Exception) {
-                                isi = null
-                            }
-                        }
-                        val hasil = isi
+                        // Ambil dari simpanan HP dulu (hasil pemanasan aset), lalu
+                        // lewat VPS. Dengan begitu animasi sudah siap saat masuk room.
+                        val hasil = kotlinx.coroutines.runBlocking { VipAssets.ambildariUrl(alamat) }
                         post {
                             if (hasil != null && hasil.isNotEmpty()) {
                                 parser.decodeFromInputStream(ByteArrayInputStream(hasil), kunciSvga, done, true)
@@ -769,7 +849,7 @@ fun VipMedia(
         "mp4" -> VipVideo(a, data, modifier, loop, onEnd, sound, onMulai)
         "svga" -> VipSvga(a, data, modifier, loop, contentScale, onEnd, onSiap, onLangkah, onMulai)
         else -> AsyncImage(
-            model = if (remote) a.url else ByteBuffer.wrap(data!!),
+            model = if (remote) AsetVps.bungkus(a.url) else ByteBuffer.wrap(data!!),
             contentDescription = null,
             imageLoader = rememberVipLoader(),
             modifier = modifier,

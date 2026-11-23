@@ -308,6 +308,10 @@ object StoreCatalog {
     fun idSudahDipakai(customId: String): Boolean =
         customId.isNotBlank() && !idTerpakai[customId].isNullOrBlank()
 
+    /** Aset semua item Store (untuk pemanas aset), tanpa memicu pengambilan satuan. */
+    fun semuaAset(): List<VipAsset> =
+        (items.values + rtdbMap.values).map { it.asset }
+
     fun find(itemId: String?): CatalogItem? {
         if (itemId.isNullOrBlank()) return null
         // Item baru selalu berawalan sx_, tetapi item kiriman panel versi lama

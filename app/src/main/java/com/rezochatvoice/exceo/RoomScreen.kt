@@ -177,7 +177,16 @@ fun RoomScreen(
     var joinedOnce by remember { mutableStateOf(false) }
     var kickedOut by remember { mutableStateOf(false) }
     // Loading singkat saat masuk room, sampai kursi dan chat tampil.
-    var siapRoom by remember { mutableStateOf(RoomCache.kursi(ctxSimpan, roomId).isNotEmpty()) }
+    // Layar langsung tampil kalau room ini pernah dibuka di HP (ada info atau kursi
+    // tersimpan). Dulu hanya kursi yang dihitung, jadi room yang kursinya kosong
+    // selalu menunggu jawaban server dulu dan terasa lama memproses.
+    var siapRoom by remember {
+        mutableStateOf(
+            RoomCache.kursi(ctxSimpan, roomId).isNotEmpty() ||
+                initialRoom != null ||
+                RoomCache.info(ctxSimpan, roomId) != null,
+        )
+    }
     LaunchedEffect(roomId, myUid) {
         val reg = Rtdb.listen(Rtdb.ref("members/" + roomId + "/" + myUid)) { snap ->
             if (snap.exists()) {
@@ -233,18 +242,16 @@ fun RoomScreen(
         mutableStateOf(RoomCache.kursi(ctxSimpan, roomId))
     }
     androidx.compose.runtime.LaunchedEffect(roomId) {
-        // Kalau kursi terakhir sudah ada di HP, layar langsung tampil tanpa loading.
-        if (rawSeats.isNotEmpty()) {
+        // Kalau kursi atau info room sudah ada di HP, layar langsung tampil tanpa loading.
+        if (rawSeats.isNotEmpty() || siapRoom) {
             siapRoom = true
             return@LaunchedEffect
         }
-        siapRoom = false
         // Begitu kursi room terbaca, loading langsung dilepas supaya room cepat
         // normal; kalau jaringan lambat, paling lambat 1,2 detik tetap dibuka.
-        kotlinx.coroutines.withTimeoutOrNull(1200L) {
-            while (rawSeats.isEmpty()) kotlinx.coroutines.delay(80)
+        kotlinx.coroutines.withTimeoutOrNull(600L) {
+            while (rawSeats.isEmpty()) kotlinx.coroutines.delay(60)
         }
-        kotlinx.coroutines.delay(120)
         siapRoom = true
     }
     var micPoints by remember { mutableStateOf<Map<Int, Long>>(emptyMap()) }
@@ -673,7 +680,9 @@ fun RoomScreen(
     LaunchedEffect(roomId) {
         var tries = 0
         while (room == null && tries < 8) {
-            kotlinx.coroutines.delay(if (tries == 0) 2000L else 3000L)
+            // Percobaan pertama langsung, bukan menunggu 2 detik: info room yang belum
+            // ada di HP dulu membuat nama dan pemilik kosong selama itu.
+            kotlinx.coroutines.delay(if (tries == 0) 150L else 1500L)
             if (room != null) break
             val got = try { RoomRepo.getRoom(roomId) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { null }
             if (got != null && room == null) room = got

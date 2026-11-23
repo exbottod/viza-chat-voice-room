@@ -104,6 +104,10 @@ data class VipAsset(
 object AsetVps {
     private const val INDUK = "https://viza.43-156-99-4.sslip.io"
 
+    /** Alamat aset yang isinya berupa data di database (base64), lewat VPS. */
+    fun bungkusData(dasar: String, potong: Int): String =
+        INDUK + "/aset-db?d=" + java.net.URLEncoder.encode(dasar, "UTF-8") + "&c=" + potong
+
     /** Alamat aset versi VPS. Kalau sudah lewat VPS atau kosong, dikembalikan apa adanya. */
     fun bungkus(url: String): String {
         if (url.isBlank() || url.startsWith(INDUK)) return url
@@ -405,9 +409,26 @@ object VipAssets {
                 blobs[key] = cached
                 return cached
             }
+            val base = if (a.n == 0) "data_store_${a.slot.removePrefix("st_")}" else "data_vip${a.n}_${a.slot}"
+            // Lewat VPS dulu: server membacanya sekali lalu menyimpannya, jadi
+            // aset tidak lagi ditarik dari Firebase saat berada di room.
+            val lewatVps = AsetVps.bungkusData(base, a.chunks)
+            val dariVps = runCatching {
+                val kon = (java.net.URL(lewatVps).openConnection() as java.net.HttpURLConnection).apply {
+                    connectTimeout = 6000
+                    readTimeout = 20000
+                }
+                val hasil = if (kon.responseCode in 200..299) kon.inputStream.use { it.readBytes() } else null
+                kon.disconnect()
+                hasil
+            }.getOrNull()
+            if (dariVps != null && dariVps.isNotEmpty()) {
+                try { cache.writeBytes(dariVps) } catch (e: Exception) { }
+                blobs[key] = dariVps
+                return dariVps
+            }
             val col = FirebaseFirestore.getInstance().collection("vipConfig")
             val sb = StringBuilder()
-            val base = if (a.n == 0) "data_store_${a.slot.removePrefix("st_")}" else "data_vip${a.n}_${a.slot}"
             if (a.chunks > 0) {
                 for (i in 0 until a.chunks) {
                     sb.append(col.document("${base}_$i").get().await().getString("data") ?: return null)

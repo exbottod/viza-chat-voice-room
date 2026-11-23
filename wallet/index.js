@@ -7846,6 +7846,65 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
       });
     }
     // Pengaturan aplikasi dari panel (versi & link APK) dibaca tanpa login.
+    if (url.pathname === "/aset-db" && req.method === "GET") {
+      // Aset yang isinya tersimpan sebagai data (base64) di database: dibaca
+      // server ini sekali, diubah jadi berkas, lalu disimpan di disk VPS.
+      // Aplikasi tidak lagi membaca potongan data dari Firebase saat di room.
+      try {
+        const dasar = String(url.searchParams.get("d") || "").replace(/[^a-zA-Z0-9_]/g, "");
+        const potong = Math.max(0, Math.min(400, Number(url.searchParams.get("c") || 0)));
+        if (!dasar) return json({ ok: 0, galat: "nama aset kosong" }, 400);
+        const fs = await import("node:fs");
+        const dir = "/opt/viza-api/aset-cache";
+        const berkas = dir + "/db_" + dasar + "_" + potong + ".bin";
+        let isi = null;
+        try { if (fs.existsSync(berkas)) isi = fs.readFileSync(berkas); } catch (e) { isi = null; }
+        if (!isi || !isi.length) {
+          const token = await tokenLayanan(env);
+          if (!token) return json({ ok: 0, galat: "token layanan tidak ada" }, 500);
+          const proyek = String(env.FIREBASE_PROJECT || "my-app-e7f8c").trim();
+          const baca = async (dok) => {
+            const r = await fetch(
+              `https://firestore.googleapis.com/v1/projects/${proyek}/databases/(default)/documents/vipConfig/${encodeURIComponent(dok)}`,
+              { headers: { authorization: "Bearer " + token } },
+            );
+            if (!r.ok) return null;
+            const d = await r.json();
+            return d?.fields?.data?.stringValue ?? null;
+          };
+          let teks = "";
+          if (potong > 0) {
+            for (let i = 0; i < potong; i++) {
+              const bag = await baca(dasar + "_" + i);
+              if (bag == null) return json({ ok: 0, galat: "potongan " + i + " tidak ada" }, 404);
+              teks += bag;
+            }
+          } else {
+            const satu = await baca(dasar);
+            if (satu == null) return json({ ok: 0, galat: "aset tidak ada" }, 404);
+            teks = satu;
+          }
+          const b64 = teks.includes("base64,") ? teks.slice(teks.indexOf("base64,") + 7) : teks;
+          isi = Buffer.from(b64, "base64");
+          if (!isi.length) return json({ ok: 0, galat: "aset kosong" }, 404);
+          try {
+            fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(berkas, isi);
+          } catch (e) { }
+        }
+        return new Response(isi, {
+          status: 200,
+          headers: {
+            "content-type": "application/octet-stream",
+            "content-length": String(isi.length),
+            "cache-control": "public, max-age=31536000, immutable",
+            "access-control-allow-origin": "*",
+          },
+        });
+      } catch (e) {
+        return json({ ok: 0, galat: String(e?.message ?? e) }, 500);
+      }
+    }
     if (url.pathname === "/aset" && req.method === "GET") {
       // Aset room (efek masuk, banner masuk, bingkai, gelembung, lencana, medal)
       // disajikan lewat VPS ini: sekali diambil dari sumbernya, lalu disimpan di
@@ -7928,7 +7987,7 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           stafAktif = Number(r[0].rows[0]?.a ?? 0);
           peran = r[1].rows.map((x) => String(x.role) + ":" + Number(x.n));
         } catch (e) { /* tabel belum ada */ }
-        return json({ ok: 1, v: "viza-2026-11-23-aset-vps", rondeMs: CF_RONDE_MS, db: 1, proj: PROJ_SAH, agora: ((await agoraKredensial(env)).appId && (await agoraKredensial(env)).cert) ? 1 : 0, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
+        return json({ ok: 1, v: "viza-2026-11-23-aset-vps-db", rondeMs: CF_RONDE_MS, db: 1, proj: PROJ_SAH, agora: ((await agoraKredensial(env)).appId && (await agoraKredensial(env)).cert) ? 1 : 0, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
       } catch (e) {
         return json({ ok: 0, v: "viza-2026-11-13-mandiri", db: String(e?.message ?? e) }, 500);
       }

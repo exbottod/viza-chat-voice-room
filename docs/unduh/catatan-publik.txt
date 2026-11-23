@@ -1,5 +1,5 @@
+Banner masuk, efek masuk, bingkai, lencana, dan medali kini diambil lewat server Viza yang cepat, bukan langsung dari internet
 Masuk room langsung tampil, tanpa layar memproses
-Semua aset room (efek masuk, banner, bingkai, lencana) diambil lewat server Viza yang cepat, bukan lagi langsung dari internet
 Aset disimpan di HP sekali, jadi tidak ada unduhan berjalan saat sudah di room, saat pindah kursi, atau saat kembali dari WhatsApp
-Animasi efek masuk dan banner langsung berjalan tanpa menunggu
+Animasi efek masuk, banner, dan medali langsung berjalan
 Efek masuk yang sudah dilepas benar-benar hilang, tidak muncul efek lama

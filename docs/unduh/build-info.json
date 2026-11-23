@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.374",
-  "catatan": "• iklan: mode uji memakai properti UnityAds.debugMode\n• iklan: saklar Mode uji di panel (UnityAds.setDebugMode + kode galat tampil di layar)",
-  "ukuran_apk": 75739436,
-  "sha256_apk": "84813551814044b37080c4b41109427d9ec6657f78d54ff8fb8fbd6ed8561f5f",
+  "versi": "1.0.375",
+  "catatan": "• party: banner iklan coin gratis di urutan pertama tab Party (aset APK, tekan untuk putar iklan berha\n• iklan: cabang iklan_info & iklan_klaim di jalur aplikasi (sebelumnya hanya di panel, app dapat 'aksi",
+  "ukuran_apk": 75789834,
+  "sha256_apk": "999a55e557c872e60c57d6d0a789974af65ababd54ac0ecd70417559da899bda",
   "abis": {
     "arm64": {
-      "ukuran": 75739436,
-      "sha256": "84813551814044b37080c4b41109427d9ec6657f78d54ff8fb8fbd6ed8561f5f"
+      "ukuran": 75789834,
+      "sha256": "999a55e557c872e60c57d6d0a789974af65ababd54ac0ecd70417559da899bda"
     },
     "armv7": {
-      "ukuran": 73973944,
-      "sha256": "8f636cb79fdac32ccf49314806a4ce46bf429f7bd011ad3657210c9294a5403d"
+      "ukuran": 74024345,
+      "sha256": "32a0261ca8360dc596fd0d33c9bd6c89218b8022134a7369e4371c9de43217b9"
     },
     "universal": {
-      "ukuran": 123593453,
-      "sha256": "1728a728d2205d98a6f448454cde721a7c1c8256fe13a86463afe725bf2b1a0b"
+      "ukuran": 123643838,
+      "sha256": "5029a93872c48f78abb69c364de7502ef266000ffa642fb3b1372d01137d8749"
     }
   }
 }

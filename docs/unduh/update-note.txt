@@ -1,2 +1,2 @@
-• iklan: mode uji memakai properti UnityAds.debugMode
-• iklan: saklar Mode uji di panel (UnityAds.setDebugMode + kode galat tampil di layar)
+• party: banner iklan coin gratis di urutan pertama tab Party (aset APK, tekan untuk putar iklan berha
+• iklan: cabang iklan_info & iklan_klaim di jalur aplikasi (sebelumnya hanya di panel, app dapat 'aksi

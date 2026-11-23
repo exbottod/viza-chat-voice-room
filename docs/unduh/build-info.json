@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.400",
-  "catatan": "• Pindah tab kini bergeser halus ke samping, tidak lagi melompat\n• Setiap halaman yang dibuka masuk dengan geseran halus dan menutup dengan rapi\n• Geseran dibuat singkat supaya aplikasi tetap ringan dan tidak memuat ulang isi\n• Pemberitahuan masuk kamar selalu muncul, tombol Turun Mic pasti bekerja",
-  "ukuran_apk": 75805485,
-  "sha256_apk": "95b35d7940c6d4be8c67aa51208ee9662cb77f1ce071498f47b6eb6117857f7e",
+  "versi": "1.0.401",
+  "catatan": "• Avatar di kursi mic kini benar-benar diam, tidak berkedip saat ada suara\n• Cincin bicara menyala halus dan baru memudar setelah benar-benar sepi\n• Kursi tidak lagi menghitung ulang puluhan kali per detik, jadi room lebih ringan\n• Pindah tab dan membuka halaman tetap bergeser halus",
+  "ukuran_apk": 75806056,
+  "sha256_apk": "74805763150f8da882a6cd1c6749aacfabfd6737d8e622125a7c50d8f2c12ad2",
   "abis": {
     "arm64": {
-      "ukuran": 75805485,
-      "sha256": "95b35d7940c6d4be8c67aa51208ee9662cb77f1ce071498f47b6eb6117857f7e"
+      "ukuran": 75806056,
+      "sha256": "74805763150f8da882a6cd1c6749aacfabfd6737d8e622125a7c50d8f2c12ad2"
     },
     "armv7": {
-      "ukuran": 74040001,
-      "sha256": "a6b2ce281cca54882b7d4c10cbdda0ac7636778791d13e1db4874e9caae83fc6"
+      "ukuran": 74040575,
+      "sha256": "73af30a785892b52a22795bea7e1a11494f6442496cf705273c5fa735777b578"
     },
     "universal": {
-      "ukuran": 123659485,
-      "sha256": "4ae203e082eafa3d0d151955399c04b45345b23e2a1e70fd730c9a0bab6120cd"
+      "ukuran": 123660067,
+      "sha256": "c96d55b491c88a91eba503a4bf24be46ada94a37ebd6861e45fe4ada781bedb9"
     }
   }
 }

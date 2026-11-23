@@ -7144,6 +7144,60 @@ export default {
       await hargaVipKini();
       return json({ ok: 1, harga: HARGA_VIP.slice(1) });
     }
+    if (url.pathname.toLowerCase() === "/roomsaya" && req.method === "POST") {
+      // Aksi milik pengguna sendiri di dalam room, jadi tidak perlu jadi owner
+      // atau admin room: turun dari kursi mic dan pemberitahuan "masuk kamar".
+      // Dijalankan server dengan akun layanan supaya tetap berhasil walau
+      // aturan tulis dari HP menolak.
+      try {
+        const bSaya = await req.json().catch(() => ({}));
+        const sesiSaya = await sesiDariToken(String(bSaya.t || ""));
+        if (!sesiSaya) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
+        const uidSaya = String(sesiSaya.uid || "");
+        const roomSaya = String(bSaya.room || "").replace(/[^0-9A-Za-z_-]/g, "").slice(0, 80);
+        if (!uidSaya || !roomSaya) return json({ ok: 0, e: "Data tidak lengkap" }, 400);
+        const aksiSaya = String(bSaya.aksi || "");
+        if (aksiSaya === "turun") {
+          const kursiSaya = (await cfgRtdbSa(env, "seats/" + roomSaya)) || {};
+          let dilepas = 0;
+          for (const [kS, vS] of Object.entries(kursiSaya)) {
+            if (vS && String(vS.uid || "") === uidSaya) {
+              await tulisRtdbSa(env, "seats/" + roomSaya + "/" + kS, null);
+              try { await tulisRtdbSa(env, "micPoints/" + roomSaya + "/" + kS, null); } catch { }
+              dilepas++;
+            }
+          }
+          return json({ ok: 1, dilepas });
+        }
+        if (aksiSaya === "masuk") {
+          const namaSaya = String(bSaya.name || "").trim().slice(0, 40) || "Pengguna";
+          const tokenSaya = await tokenLayanan(env);
+          if (!tokenSaya) return json({ ok: 0, e: "Kunci layanan belum dipasang" }, 503);
+          const rSaya = await fetch(
+            `${RTDB}/messages/${roomSaya}.json?access_token=${encodeURIComponent(tokenSaya)}`,
+            {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({
+                text: namaSaya + " masuk kamar",
+                name: namaSaya,
+                createdAt: Date.now(),
+                uid: "",
+                vip: Number(bSaya.vip) || 0,
+                entry: String(bSaya.entry || "").slice(0, 300),
+                banner: String(bSaya.banner || "").slice(0, 300),
+                vipUid: uidSaya,
+              }),
+            },
+          );
+          if (!rSaya.ok) return json({ ok: 0, e: "RTDB " + rSaya.status }, 502);
+          return json({ ok: 1 });
+        }
+        return json({ ok: 0, e: "Aksi tidak dikenal" }, 400);
+      } catch (eSaya) {
+        return json({ ok: 0, e: String(eSaya?.message ?? eSaya).slice(0, 160) }, 500);
+      }
+    }
     if (url.pathname.toLowerCase() === "/roomadmin") {
       // Aksi kelola room dari admin room. Aturan Firestore/RTDB di Firebase hanya
       // mengizinkan pemilik room, jadi admin room ditangani di sini memakai akun
@@ -7987,7 +8041,7 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
           stafAktif = Number(r[0].rows[0]?.a ?? 0);
           peran = r[1].rows.map((x) => String(x.role) + ":" + Number(x.n));
         } catch (e) { /* tabel belum ada */ }
-        return json({ ok: 1, v: "viza-2026-11-23-aset-vps-db", rondeMs: CF_RONDE_MS, db: 1, proj: PROJ_SAH, agora: ((await agoraKredensial(env)).appId && (await agoraKredensial(env)).cert) ? 1 : 0, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
+        return json({ ok: 1, v: "viza-2026-11-23-saya-aset-vps", rondeMs: CF_RONDE_MS, db: 1, proj: PROJ_SAH, agora: ((await agoraKredensial(env)).appId && (await agoraKredensial(env)).cert) ? 1 : 0, simpan: modeDb, email: (env.RESEND_KEY || env.RESEND_API_KEY) ? 1 : 0, sa: (await tokenLayanan(env)) ? 1 : 0, staf, stafAktif, peran, node: typeof process !== "undefined" ? process.version : "?" });
       } catch (e) {
         return json({ ok: 0, v: "viza-2026-11-13-mandiri", db: String(e?.message ?? e) }, 500);
       }

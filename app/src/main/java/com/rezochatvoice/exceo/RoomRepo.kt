@@ -127,6 +127,41 @@ object RoomRepo {
         }
     }
 
+    /** Aksi milik pengguna sendiri di room (turun mic, pemberitahuan masuk). */
+    suspend fun aksiSendiri(
+        roomId: String,
+        aksi: String,
+        tambah: org.json.JSONObject = org.json.JSONObject(),
+    ): Boolean = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        try {
+            val t = tokenLogin()
+            if (t.isBlank()) return@withContext false
+            val isi = org.json.JSONObject().put("t", t).put("room", roomId).put("aksi", aksi)
+            val kunci = tambah.keys()
+            while (kunci.hasNext()) {
+                val k = kunci.next()
+                isi.put(k, tambah.get(k))
+            }
+            val c = (java.net.URL(VPS + "/roomsaya").openConnection() as java.net.HttpURLConnection).apply {
+                requestMethod = "POST"
+                connectTimeout = 10000
+                readTimeout = 20000
+                doOutput = true
+                setRequestProperty("Content-Type", "application/json")
+            }
+            c.outputStream.use { it.write(isi.toString().toByteArray()) }
+            val kode = c.responseCode
+            try {
+                (if (kode in 200..299) c.inputStream else c.errorStream)?.close()
+            } catch (e: Exception) { }
+            kode in 200..299
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     private fun db() = FirebaseFirestore.getInstance()
     private fun roomRef(id: String) = db().collection("rooms").document(id)
 
@@ -644,17 +679,28 @@ object RoomRepo {
                 val l = async { live.setValue(roomId).await() }
                 m.await(); l.await()
             }
-            Rtdb.ref("messages/$roomId").push().setValue(
-                hashMapOf<String, Any?>(
-                    "text" to "$name masuk kamar",
-                    "name" to name,
-                    "createdAt" to System.currentTimeMillis(),
-                    "vip" to vip,
-                    "entry" to entry,
-                    "banner" to banner,
-                    "vipUid" to (if (vip > 0 || entry.isNotBlank() || banner.isNotBlank()) uid else ""),
-                ),
-            ).await()
+            // Pemberitahuan "masuk kamar" ditulis server supaya selalu muncul
+            // (aturan tulis dari HP pernah menolaknya secara diam-diam). Kalau
+            // server tidak terjangkau, baru ditulis dari HP.
+            val lewatServer = aksiSendiri(
+                roomId,
+                "masuk",
+                org.json.JSONObject().put("name", name).put("vip", vip)
+                    .put("entry", entry).put("banner", banner),
+            )
+            if (!lewatServer) {
+                Rtdb.ref("messages/$roomId").push().setValue(
+                    hashMapOf<String, Any?>(
+                        "text" to "$name masuk kamar",
+                        "name" to name,
+                        "createdAt" to System.currentTimeMillis(),
+                        "vip" to vip,
+                        "entry" to entry,
+                        "banner" to banner,
+                        "vipUid" to (if (vip > 0 || entry.isNotBlank() || banner.isNotBlank()) uid else ""),
+                    ),
+                ).await()
+            }
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -1033,6 +1079,10 @@ object RoomRepo {
             throw e
         } catch (e: Exception) {
         }
+        // Penegasan lewat server: dulu tombol Turun Mic kadang tidak berefek
+        // karena aturan tulis dari HP menolak penghapusan kursi.
+        aksiSendiri(roomId, "turun")
+        Unit
     }
 
     /** Turunkan user lain dari kursi mic (owner / admin room). null = sukses. */

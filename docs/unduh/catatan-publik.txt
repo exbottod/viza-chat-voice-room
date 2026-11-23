@@ -1,4 +1,5 @@
-Avatar di kursi mic kini benar-benar diam: tidak berkedip dan tidak naik-turun lagi
-Penanda bicara berupa satu cincin tipis yang tenang selama orangnya berbicara
+Pemberitahuan masuk kamar kini selalu muncul di daftar chat saat kamu masuk room
+Tombol Turun Mic bisa dipakai dengan pasti dan kursinya benar-benar kosong
+Tombol Turun Mic juga ada di menu Alat dasar, jadi lebih mudah ditemukan
+Avatar di kursi mic tetap diam, tidak berkedip atau naik-turun
 Banner masuk, efek masuk, bingkai, lencana, dan medali tetap diambil lewat server Viza
-Masuk room langsung tampil, aset tidak diunduh ulang saat sudah di room

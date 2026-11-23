@@ -1784,6 +1784,20 @@ fun RoomScreen(
                         )
                     }
                     RmTool("Musik", onClick = { panel = P_MUSIC }) { Text("\uD83C\uDFB5", fontSize = 24.sp) }
+                    // Tombol Turun Mic dibuat mudah dijangkau (dulu hanya ada di
+                    // kartu profil kursi sendiri, sehingga terasa tidak bisa turun).
+                    if (mySeat != null) {
+                        RmTool("Turun Mic", onClick = {
+                            val idxTurun = mySeat.index
+                            panel = P_NONE
+                            sengajaTurun = true
+                            kursiCepat = null
+                            scope.launch {
+                                RoomRepo.leaveSeat(r.id, idxTurun)
+                                toast("Turun dari mic")
+                            }
+                        }) { Text("\u2B07", fontSize = 24.sp) }
+                    }
                     if (canManage) {
                         RmTool("Mode kamar", onClick = { panel = P_MODE }) { GridIcon(Modifier.size(26.dp)) }
                     }

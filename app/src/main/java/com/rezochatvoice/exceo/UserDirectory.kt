@@ -800,26 +800,39 @@ object UidAlias {
     /**
      * Unique ID yang masa aktifnya habis otomatis dilepas dari uidCustom, sehingga
      * item itu muncul lagi di Store dan bisa dibeli orang lain.
+     *
+     * Diperiksa SEMUA ID unik milik akun ini, bukan hanya yang sedang dipasang:
+     * ID yang sudah dilepas dari profil (aktif=false) juga harus kembali ke Store
+     * begitu masa berlakunya habis, kalau tidak nomornya terkunci selamanya.
      */
     fun bersihKedaluwarsa(uid: String, w: Wallet) {
         if (uid.isBlank()) return
         val sekarang = System.currentTimeMillis()
+        // Nomor unik yang barangnya sudah habis menurut isi tas akun ini.
+        val habis = w.inv.entries
+            .filter { (id, sampai) -> sampai in 1..sekarang && StoreCatalog.find(id)?.customId?.isNotBlank() == true }
+            .mapNotNull { (id, _) -> StoreCatalog.find(id)?.customId?.trim()?.takeIf { it.isNotBlank() } }
+            .toSet()
         kotlinx.coroutines.GlobalScope.launch {
             try {
-                kotlinx.coroutines.withTimeoutOrNull(7000L) {
-                    val nomor = Rtdb.ref("uidAliasOf/$uid").get().await()
+                kotlinx.coroutines.withTimeoutOrNull(8000L) {
+                    // Nomor yang sedang dipasang ikut diperiksa lewat uidAliasOf,
+                    // supaya ID yang hilang dari tas tetap dilepas.
+                    val dipasang = Rtdb.ref("uidAliasOf/$uid").get().await()
                         .getValue(String::class.java).orEmpty()
-                    if (nomor.isBlank()) return@withTimeoutOrNull
-                    val itemId = Rtdb.ref("uidCustom/$nomor/itemId").get().await()
-                        .getValue(String::class.java).orEmpty()
-                    val habis = itemId.isNotBlank() && (w.inv[itemId] ?: 0L) <= sekarang
-                    if (habis) {
+                    val daftar = if (dipasang.isBlank()) habis else habis + dipasang
+                    for (nomor in daftar) {
                         val pemilik = Rtdb.ref("uidCustom/$nomor/uid").get().await()
                             .getValue(String::class.java).orEmpty()
-                        if (pemilik == uid) {
-                            try { Rtdb.ref("uidCustom/$nomor").removeValue().await() } catch (e: Exception) { }
+                        if (pemilik.isNotBlank() && pemilik != uid) continue
+                        val itemId = Rtdb.ref("uidCustom/$nomor/itemId").get().await()
+                            .getValue(String::class.java).orEmpty()
+                        val masih = itemId.isNotBlank() && (w.inv[itemId] ?: 0L) > sekarang
+                        if (masih) continue
+                        try { Rtdb.ref("uidCustom/$nomor").removeValue().await() } catch (e: Exception) { }
+                        if (nomor == dipasang) {
+                            try { Rtdb.ref("uidAliasOf/$uid").removeValue().await() } catch (e: Exception) { }
                         }
-                        try { Rtdb.ref("uidAliasOf/$uid").removeValue().await() } catch (e: Exception) { }
                     }
                 }
             } catch (e: Exception) { }

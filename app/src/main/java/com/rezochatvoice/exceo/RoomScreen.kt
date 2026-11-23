@@ -2123,15 +2123,37 @@ private fun RmAvatar(bmp: ImageBitmap?, fallback: String, size: Dp) {
 }
 
 /**
- * Cincin penanda bicara di kursi mic: tebal dan kecerahannya TETAP, tidak
- * mengikuti level suara dan tidak beranimasi, jadi avatar tidak bergerak
- * naik-turun atau berkedip.
+ * Cincin penanda bicara di kursi mic.
+ *
+ * Penyebab avatar "berkedip cepat": cincin dulu hanya digambar kalau penanda
+ * bicara sedang menyala, sedangkan penanda itu mengikuti ambang suara yang
+ * berubah puluhan kali per detik saat orang bicara. Akibatnya cincin hijau
+ * muncul-hilang cepat sekali dan terlihat seperti avatar berkedip.
+ *
+ * Sekarang cincin memakai penahan: begitu ada suara langsung menyala, dan baru
+ * memudar setelah 800 ms benar-benar sepi. Perubahan terangnya halus 260 ms,
+ * jadi getaran ambang suara tidak lagi terlihat sebagai kedipan.
  */
 @Composable
-private fun CincinBicara(size: Dp) {
+private fun CincinBicara(bicara: Boolean, size: Dp) {
+    var tampil by remember { mutableStateOf(false) }
+    LaunchedEffect(bicara) {
+        if (bicara) {
+            tampil = true
+        } else {
+            delay(800)
+            tampil = false
+        }
+    }
+    val alfa by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (tampil) 1f else 0f,
+        animationSpec = tween(260),
+        label = "cincinBicara",
+    )
+    if (alfa <= 0.02f) return
     androidx.compose.foundation.Canvas(Modifier.size(size)) {
         drawCircle(
-            color = Color(0xFF3FE08C).copy(alpha = 0.55f),
+            color = Color(0xFF3FE08C).copy(alpha = 0.55f * alfa),
             radius = this.size.minDimension / 2f - 1f,
             center = androidx.compose.ui.geometry.Offset(this.size.width / 2f, this.size.height / 2f),
             style = androidx.compose.ui.graphics.drawscope.Stroke(width = this.size.minDimension * 0.03f),
@@ -2310,17 +2332,15 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
     // seluruhnya sekitar sepuluh kali per detik, dan dulu setiap kursi menghitung
     // ulang tiap kali walau angkanya tidak berubah. Sekarang kursi yang diam
     // benar-benar tidak dihitung ulang.
-    val suaraKursi by remember(uidKursi, seat?.muted) {
+    // Kursi hanya memantau SATU hal: apakah orangnya sedang bicara. Angka level
+    // suara tidak lagi dibaca di sini. Dulu level dibulatkan 40 langkah dan ikut
+    // dibaca, sehingga setiap kursi dihitung ulang sampai 40 kali per detik saat
+    // ada suara; itu membuat kursi bergetar dan CPU room naik tanpa perlu.
+    val bicaraEvent by remember(uidKursi, seat?.muted) {
         androidx.compose.runtime.derivedStateOf {
-            val b = seat != null && !seat.muted && AgoraVoice.bicara.contains(seat.uid)
-            val l = if (seat != null && !seat.muted) (AgoraVoice.levels[seat.uid] ?: 0f) else 0f
-            // Level dipakai apa adanya lalu dihaluskan animasi: pembulatan 20
-            // langkah dulu membuat balon dan gelombang bergerak menyentak.
-            Pair(b, ((l.coerceIn(0f, 1f) * 40f).toInt() / 40f))
+            seat != null && !seat.muted && AgoraVoice.bicara.contains(seat.uid)
         }
     }
-    val bicaraEvent = suaraKursi.first
-    val lvlMentah = suaraKursi.second
     // Kalau server suara hanya mengirim daftar pembicara tanpa angka level,
     // pakai nilai dasar supaya gelombang dan gelembung tetap kelihatan.
     // Kursi mic TIDAK memakai angka level suara lagi. Dulu cincin dan balon
@@ -2330,7 +2350,8 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
     val bicaraKursi = bicaraEvent
     Column(Modifier.clickable(onClick = onClick), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(size), contentAlignment = Alignment.Center) {
-            if (bicaraKursi) CincinBicara(size)
+            // Cincin memakai penahan dan pudar halus supaya tidak berkedip.
+            CincinBicara(bicaraKursi, size)
             Box(
                 Modifier.size(size).clip(CircleShape)
                 .then(

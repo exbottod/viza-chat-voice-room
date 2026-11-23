@@ -1,6 +1,6 @@
-Pindah tab kini bergeser halus ke samping, tidak lagi melompat
-Setiap halaman yang dibuka masuk dengan geseran halus dan menutup dengan rapi
-Geseran dibuat singkat supaya aplikasi tetap ringan dan tidak memuat ulang isi
-Pemberitahuan masuk kamar selalu muncul, tombol Turun Mic pasti bekerja
-Avatar di kursi mic tetap diam, tidak berkedip atau naik-turun
+Avatar di kursi mic kini benar-benar diam, tidak berkedip saat ada suara
+Cincin bicara menyala halus dan baru memudar setelah benar-benar sepi
+Kursi tidak lagi menghitung ulang puluhan kali per detik, jadi room lebih ringan
+Pindah tab dan membuka halaman tetap bergeser halus
+Pemberitahuan masuk kamar muncul, tombol Turun Mic bekerja
 Banner masuk, efek masuk, bingkai, lencana, dan medali tetap diambil lewat server Viza

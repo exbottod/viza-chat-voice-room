@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.380",
-  "catatan": "• Gift video MP4 sekarang benar-benar diputar saat dikirim di room\n• Gift berupa GIF, WebP, dan SVGA tetap tampil seperti biasa\n• Banner iklan di tab Party bisa diganti dari panel\n• Perbaikan kecil dan peningkatan kecepatan aplikasi",
-  "ukuran_apk": 75790521,
-  "sha256_apk": "dfe6955de2ea0dd4566f4e11b9e7621a79b2089889f8bb7b098ffc18278ac04b",
+  "versi": "1.0.381",
+  "catatan": "• Ikon salin ID di profil diganti ikon baru yang lebih rapi\n• Gift video MP4 diputar saat dikirim di room\n• Emot GIF tampil dan bergerak di room\n• Perbaikan kecil dan peningkatan kecepatan aplikasi",
+  "ukuran_apk": 75791666,
+  "sha256_apk": "06dfcd3fa68b898bda4aee5b7183becfd1c8dd6c75c2180a11ca3753aaa88566",
   "abis": {
     "arm64": {
-      "ukuran": 75790521,
-      "sha256": "dfe6955de2ea0dd4566f4e11b9e7621a79b2089889f8bb7b098ffc18278ac04b"
+      "ukuran": 75791666,
+      "sha256": "06dfcd3fa68b898bda4aee5b7183becfd1c8dd6c75c2180a11ca3753aaa88566"
     },
     "armv7": {
-      "ukuran": 74025041,
-      "sha256": "d3caccdf08a6491fe6810a49faff7e8d637a7dc974e27a91bb4ce92c9d719a77"
+      "ukuran": 74026183,
+      "sha256": "1e176c1b0291c004fcdaa9354d669a5f70969cce0e5b31f782b01279113ad23b"
     },
     "universal": {
-      "ukuran": 123644536,
-      "sha256": "19912c0ace0a73dcb43881b91286d91ecb52c34bdd81ce455e2818bb4a5aac75"
+      "ukuran": 123645663,
+      "sha256": "43e25bf0a935f624845ab00a2dec5aa4d6c054186b802fc09887079e075d7781"
     }
   }
 }

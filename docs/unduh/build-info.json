@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.375",
-  "catatan": "• party: banner iklan coin gratis di urutan pertama tab Party (aset APK, tekan untuk putar iklan berha\n• iklan: cabang iklan_info & iklan_klaim di jalur aplikasi (sebelumnya hanya di panel, app dapat 'aksi",
-  "ukuran_apk": 75789834,
-  "sha256_apk": "999a55e557c872e60c57d6d0a789974af65ababd54ac0ecd70417559da899bda",
+  "versi": "1.0.376",
+  "catatan": "• party: banner iklan masuk ke geseran banner Viza sebagai halaman nomor 1, bukan banner terpisah di a\n• party: banner iklan coin gratis di urutan pertama tab Party (aset APK, tekan untuk putar iklan berha",
+  "ukuran_apk": 75789617,
+  "sha256_apk": "b371ff67f9dc85b04da820707553fa7cb3c4fe4084616f890472fbada36c4cdb",
   "abis": {
     "arm64": {
-      "ukuran": 75789834,
-      "sha256": "999a55e557c872e60c57d6d0a789974af65ababd54ac0ecd70417559da899bda"
+      "ukuran": 75789617,
+      "sha256": "b371ff67f9dc85b04da820707553fa7cb3c4fe4084616f890472fbada36c4cdb"
     },
     "armv7": {
-      "ukuran": 74024345,
-      "sha256": "32a0261ca8360dc596fd0d33c9bd6c89218b8022134a7369e4371c9de43217b9"
+      "ukuran": 74024150,
+      "sha256": "de27df84a69dffcade04c739570991eb978b05160dcb0e8ef62214e240a1fb07"
     },
     "universal": {
-      "ukuran": 123643838,
-      "sha256": "5029a93872c48f78abb69c364de7502ef266000ffa642fb3b1372d01137d8749"
+      "ukuran": 123643632,
+      "sha256": "f884eb9deb1c94635615c7235ed00427879957127367943a311023192796168b"
     }
   }
 }

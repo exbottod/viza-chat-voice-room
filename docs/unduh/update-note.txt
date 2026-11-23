@@ -1,2 +1,2 @@
+• party: banner iklan masuk ke geseran banner Viza sebagai halaman nomor 1, bukan banner terpisah di a
 • party: banner iklan coin gratis di urutan pertama tab Party (aset APK, tekan untuk putar iklan berha
-• iklan: cabang iklan_info & iklan_klaim di jalur aplikasi (sebelumnya hanya di panel, app dapat 'aksi

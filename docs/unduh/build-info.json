@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.391",
-  "catatan": "• Pindah kursi mic tidak lagi kembali sendiri ke kursi sebelumnya\n• Foto tidak tertinggal di kursi lama dan satu orang tidak mungkin tampil dobel\n• Room lebih ringan saat banyak orang bicara",
-  "ukuran_apk": 75797780,
-  "sha256_apk": "15ccf7162b86af8d0483c8b0a48aefcbca72de15568b29bb6eecd4352cb3b147",
+  "versi": "1.0.392",
+  "catatan": "• Turun dari mic tidak lagi kembali sendiri ke kursi sebelumnya\n• Akun yang aplikasinya sudah ditutup tidak lagi menempel di kursi mic\n• Kehadiran di room dijaga otomatis supaya kursi kosong kembali kosong",
+  "ukuran_apk": 75800325,
+  "sha256_apk": "fe42e81f3896af5711000799ac8882ed98591bacb7a0f4746644c259f079c3ee",
   "abis": {
     "arm64": {
-      "ukuran": 75797780,
-      "sha256": "15ccf7162b86af8d0483c8b0a48aefcbca72de15568b29bb6eecd4352cb3b147"
+      "ukuran": 75800325,
+      "sha256": "fe42e81f3896af5711000799ac8882ed98591bacb7a0f4746644c259f079c3ee"
     },
     "armv7": {
-      "ukuran": 74032297,
-      "sha256": "b0056b2780d3322fff60d0514063d9777dd824317da82f089c6f30615dfb195b"
+      "ukuran": 74034850,
+      "sha256": "8d883a71233c0931894730e4e8fee156790d2ceb9f6f82bce9f25572c8abee80"
     },
     "universal": {
-      "ukuran": 123651774,
-      "sha256": "daf69399f073630342938a8f2727b848047346194aeefb2a557417258a23c165"
+      "ukuran": 123654327,
+      "sha256": "87a3ddc520a3e584c34665cf854428fc5cc6ccf26dfbca2c9fef70395a1d4abb"
     }
   }
 }

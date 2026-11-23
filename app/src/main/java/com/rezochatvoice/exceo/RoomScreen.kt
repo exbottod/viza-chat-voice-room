@@ -820,9 +820,16 @@ fun RoomScreen(
         // Tab chat: false = Semua (user + gift + sistem), true = Obrolan (hanya ketikan user).
         var onlyChat by remember { mutableStateOf(false) }
         val visible = remember(messages, clearedAt, onlyChat) {
+            val sekarang = System.currentTimeMillis()
             messages.filter {
-                (clearedAt == 0L || it.createdAt > clearedAt) &&
-                    (!onlyChat || it.uid.isNotEmpty() || it.img.isNotBlank())
+                // Pemberitahuan "masuk kamar" selalu ditampilkan walau dibuat
+                // bertepatan dengan saat masuk room (dulu ikut tersaring karena
+                // waktunya sama dengan penanda riwayat), dan walau jam HP
+                // pengirim sedikit di belakang.
+                val pemberitahuanMasuk = it.text.endsWith("masuk kamar") &&
+                    it.createdAt > sekarang - 180_000L
+                val baru = clearedAt == 0L || it.createdAt > clearedAt || pemberitahuanMasuk
+                baru && (!onlyChat || it.uid.isNotEmpty() || it.img.isNotBlank())
             }
         }
         // Data peran dibuat sekali selama pemilik dan admin sama, supaya baris chat
@@ -2112,31 +2119,20 @@ private fun GelombangBicara(level: Float, size: Dp) {
     // animasi tanpa henti walau tidak ada suara, dan itu membuat room berat serta
     // tersendat saat keyboard dibuka. Sekarang kanvas hanya digambar saat bicara.
     if (l < 0.02f) return
-    val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "gelombangKursi")
-    val fase by t.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(animation = tween(1100, easing = androidx.compose.animation.core.LinearEasing)),
-        label = "faseGelombang",
-    )
-    // Kanvas lebih besar dari kursi: cincin menyebar KELUAR dari garis lingkaran kursi,
-    // dan tidak pernah menggambar di atas avatar.
+    // Cincin TETAP di garis kursi, tebal dan terangnya mengikuti suara. Dulu
+    // cincinnya menyebar terus tanpa henti sehingga avatar tampak naik-turun.
     androidx.compose.foundation.Canvas(Modifier.size(size * 1.6f)) {
         val cx = this.size.width / 2f
         val cy = this.size.height / 2f
         val rKursi = this.size.minDimension / 1.6f / 2f
-        val maks = this.size.minDimension / 2f
-        for (i in 0..2) {
-            val f = (fase + i / 3f) % 1f
-            val r = rKursi + (maks - rKursi) * f
-            val alfa = (1f - f) * (0.35f + 0.55f * l)
-            drawCircle(
-                color = Color(0xFF3FE08C).copy(alpha = alfa.coerceIn(0f, 0.9f)),
-                radius = r,
-                center = androidx.compose.ui.geometry.Offset(cx, cy),
-                style = androidx.compose.ui.graphics.drawscope.Stroke(width = this.size.minDimension * (0.02f + 0.02f * l)),
-            )
-        }
+        drawCircle(
+            color = Color(0xFF3FE08C).copy(alpha = (0.35f + 0.5f * l).coerceIn(0f, 0.85f)),
+            radius = rKursi,
+            center = androidx.compose.ui.geometry.Offset(cx, cy),
+            style = androidx.compose.ui.graphics.drawscope.Stroke(
+                width = this.size.minDimension * (0.014f + 0.014f * l),
+            ),
+        )
     }
 }
 
@@ -2183,13 +2179,10 @@ private fun GelembungSuara(size: Dp, level: Float) {
     val l = level.coerceIn(0f, 1f)
     // Sama seperti gelombang: balon suara hanya hidup saat ada suara.
     if (l < 0.02f) return
-    val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "gelembungSuara")
-    val detak by t.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(animation = tween(520), repeatMode = RepeatMode.Reverse),
-        label = "detakSuara",
-    )
+    // Tidak ada denyut sendiri: dulu tiga batang ini bergerak naik-turun terus
+    // sehingga avatar di depannya terlihat berkedip. Sekarang tingginya hanya
+    // mengikuti suara yang benar-benar masuk.
+    val detak = 0.5f
     val lebar = (size.value * 0.34f).dp
     val tinggi = (size.value * 0.24f).dp
     Box(
@@ -2290,18 +2283,21 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
         androidx.compose.runtime.derivedStateOf {
             val b = seat != null && !seat.muted && AgoraVoice.bicara.contains(seat.uid)
             val l = if (seat != null && !seat.muted) (AgoraVoice.levels[seat.uid] ?: 0f) else 0f
-            Pair(b, (l.coerceIn(0f, 1f) * 20f).toInt() / 20f)
+            // Level dipakai apa adanya lalu dihaluskan animasi: pembulatan 20
+            // langkah dulu membuat balon dan gelombang bergerak menyentak.
+            Pair(b, ((l.coerceIn(0f, 1f) * 40f).toInt() / 40f))
         }
     }
     val bicaraEvent = suaraKursi.first
     val lvlMentah = suaraKursi.second
     // Kalau server suara hanya mengirim daftar pembicara tanpa angka level,
     // pakai nilai dasar supaya gelombang dan gelembung tetap kelihatan.
-    val lvlTarget = if (bicaraEvent) kotlin.math.max(lvlMentah.coerceIn(0f, 1f), 0.55f)
+    val lvlTarget = if (bicaraEvent) kotlin.math.max(lvlMentah.coerceIn(0f, 1f), 0.35f)
                     else lvlMentah.coerceIn(0f, 1f)
+    // Gerakan dibuat halus (bukan 120 ms) supaya balon dan cincin tidak menyentak.
     val lvl by androidx.compose.animation.core.animateFloatAsState(
         targetValue = lvlTarget,
-        animationSpec = androidx.compose.animation.core.tween(120),
+        animationSpec = androidx.compose.animation.core.tween(260),
         label = "levelSuara",
     )
     Column(Modifier.clickable(onClick = onClick), horizontalAlignment = Alignment.CenterHorizontally) {

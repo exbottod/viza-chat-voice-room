@@ -1,5 +1,3 @@
-Banner masuk, efek masuk, bingkai, lencana, dan medali kini diambil lewat server Viza yang cepat, bukan langsung dari internet
-Masuk room langsung tampil, tanpa layar memproses
-Aset disimpan di HP sekali, jadi tidak ada unduhan berjalan saat sudah di room, saat pindah kursi, atau saat kembali dari WhatsApp
-Animasi efek masuk, banner, dan medali langsung berjalan
-Efek masuk yang sudah dilepas benar-benar hilang, tidak muncul efek lama
+Avatar di kursi mic tidak lagi berkedip atau naik-turun; cincin suara kini tenang dan hanya mengikuti suara
+Pemberitahuan masuk kamar langsung muncul di daftar chat saat kamu masuk room
+Tampilan kursi tetap ringan saat banyak orang bicara

@@ -1,3 +1,4 @@
-• Efek masuk yang sudah dilepas benar-benar hilang, tidak muncul lagi efek lama
-• Ganti efek masuk langsung memakai efek yang baru dipilih, tanpa efek bawaan menyelip
-• Banner masuk yang dilepas juga tidak kembali sendiri
+• Masuk room langsung tampil, tanpa layar memproses
+• Semua aset room (efek masuk, banner, bingkai, lencana) diambil lewat server Viza yang cepat, bukan l
+• Aset disimpan di HP sekali, jadi tidak ada unduhan berjalan saat sudah di room, saat pindah kursi, a
+• Animasi efek masuk dan banner langsung berjalan tanpa menunggu

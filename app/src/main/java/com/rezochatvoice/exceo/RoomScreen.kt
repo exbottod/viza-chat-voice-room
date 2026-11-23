@@ -66,6 +66,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -2350,8 +2351,10 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
     val bicaraKursi = bicaraEvent
     Column(Modifier.clickable(onClick = onClick), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(size), contentAlignment = Alignment.Center) {
-            // Cincin memakai penahan dan pudar halus supaya tidak berkedip.
-            CincinBicara(bicaraKursi, size)
+            // Penanda bicara di kursi DIHAPUS. Cincin yang muncul-hilang mengikuti
+            // ambang suara itulah yang membuat avatar terlihat berkedip cepat:
+            // ambang suara berubah puluhan kali per detik. Tanpa penanda, avatar
+            // benar-benar diam seperti sebelumnya.
             Box(
                 Modifier.size(size).clip(CircleShape)
                 .then(
@@ -2388,10 +2391,15 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
                     ) { Image(painterResource(R.drawable.ic_mute_mic), null, Modifier.size(12.dp), contentScale = ContentScale.Fit) }
                 }
             }
-            // Bingkai di kursi dibuat DIAM: sepuluh bingkai SVGA/MP4 yang berputar
-            // terus adalah beban terbesar di room. Animasi penuh tetap ada di
-            // layar profil dan pratinjau.
-            seatFrame?.let { FrameOverlay(it, (size.value * 1.3f).dp, diam = true) }
+            // Bingkai di kursi BERGANTI BERGERAK lagi seperti sebelumnya. Kuncinya
+            // dibuat dari alamat + waktu ubah aset, jadi pemutar animasi dibuat
+            // sekali dan tidak dibuat ulang saat kursi dihitung ulang. Inilah yang
+            // dulu membuat bingkai berkedip: pemutar dibuat ulang terus.
+            seatFrame?.let { aset ->
+                key(aset.url, aset.updatedAt) {
+                    FrameOverlay(aset, (size.value * 1.3f).dp, diam = false)
+                }
+            }
             // Emote digambar SETELAH bingkai supaya tampil di depan frame,
             // bukan di belakangnya.
             var emoteShow by remember { mutableStateOf(false) }

@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.383",
-  "catatan": "• Melepas bingkai sekarang benar-benar tanpa bingkai, bingkai VIP tidak lagi muncul sendiri\n• Nama di kursi mic rata tengah dengan tulisan nomor kursi dan tidak menutupi kursi sebelah\n• Perbaikan kecil dan peningkatan kecepatan aplikasi",
-  "ukuran_apk": 75792681,
-  "sha256_apk": "795e54c933876b69cb41b08b34bf9021f592e80e6d936a7830d90b4b5bf582b5",
+  "versi": "1.0.384",
+  "catatan": "• Melepas bingkai sekarang benar-benar polos, termasuk cincin emas di foto profil ikut hilang\n• Bingkai VIP tidak lagi muncul sendiri setelah dilepas\n• Perbaikan kecil dan peningkatan kecepatan aplikasi",
+  "ukuran_apk": 75792991,
+  "sha256_apk": "4cfbd8db63c427a36ef5b0c19dd1f7befffc04c0f8d0367b3a0d614d4d5be9bd",
   "abis": {
     "arm64": {
-      "ukuran": 75792681,
-      "sha256": "795e54c933876b69cb41b08b34bf9021f592e80e6d936a7830d90b4b5bf582b5"
+      "ukuran": 75792991,
+      "sha256": "4cfbd8db63c427a36ef5b0c19dd1f7befffc04c0f8d0367b3a0d614d4d5be9bd"
     },
     "armv7": {
-      "ukuran": 74027204,
-      "sha256": "733bc9d67468134d2f87e6a66c43294b8c937add81bfde98838e75856800da8a"
+      "ukuran": 74027513,
+      "sha256": "4952734cf7b10fc29d9d25c30b6d98da67c319c8efabf98d4b340330a13f848e"
     },
     "universal": {
-      "ukuran": 123646679,
-      "sha256": "ec040a04d769765a6dce7faad889c8ea59471f9405a71ace0e24e0aab0a4efc4"
+      "ukuran": 123646991,
+      "sha256": "40092f87d440b6cbbb7edabd41a8c1cf44abda105b542ae790b6c9c797a41d75"
     }
   }
 }

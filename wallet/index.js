@@ -4267,6 +4267,48 @@ function fsBaca(f) {
   return null;
 }
 
+/** Baca satu dokumen Firestore lewat akun layanan (null kalau tidak ada). */
+async function fsSatu(env, jalur) {
+  try {
+    const t = await tokenLayanan(env);
+    if (!t) return null;
+    const proj = String(env.FIREBASE_PROJECT || "my-app-e7f8c").trim();
+    const dasar = `https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/`;
+    const url = dasar + String(jalur || "").split("/").filter(Boolean).map(encodeURIComponent).join("/");
+    const r = await fetch(url, { headers: { authorization: "Bearer " + t } });
+    if (!r.ok) return null;
+    return fsDok(await r.json());
+  } catch (e) {
+    return null;
+  }
+}
+
+/** Semua UID pada satu koleksi Firestore (dipenggal 500 per permintaan). */
+async function fsSemuaUid(env, koleksi, maks = 20000) {
+  const keluar = [];
+  try {
+    const t = await tokenLayanan(env);
+    if (!t) return keluar;
+    const proj = String(env.FIREBASE_PROJECT || "my-app-e7f8c").trim();
+    const dasar = `https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/`;
+    let token = "";
+    while (keluar.length < maks) {
+      const url = dasar + encodeURIComponent(koleksi) + "?pageSize=500" + (token ? "&pageToken=" + encodeURIComponent(token) : "");
+      const r = await fetch(url, { headers: { authorization: "Bearer " + t } });
+      if (!r.ok) break;
+      const d = await r.json();
+      for (const f of d.documents || []) {
+        const nama = String(f.name || "");
+        const uid = nama.slice(nama.lastIndexOf("/") + 1);
+        if (uid) keluar.push(uid);
+      }
+      token = String(d.nextPageToken || "");
+      if (!token) break;
+    }
+  } catch (e) { /* kembalikan yang sudah terkumpul */ }
+  return keluar;
+}
+
 function fsDok(d) {
   const o = {};
   const f = (d && d.fields) || {};
@@ -4838,14 +4880,52 @@ async function admin(env, body) {
   // aktif yang masih berjalan supaya perpanjangan tidak memotong hari lama.
   if (op === "hadiah_user") {
     if (!devPanel) return json({ ok: 0, e: "Hanya developer" }, 403);
-    const who = String(p.uid ?? "").trim();
-    if (!/^[A-Za-z0-9_-]{6,64}$/.test(who)) return gagal("UID tidak valid");
     const coin = Math.trunc(Number(p.coins ?? 0) || 0);
     const gem = Math.trunc(Number(p.diamonds ?? 0) || 0);
     const vip = Math.max(0, Math.min(9, Math.trunc(Number(p.vip ?? 0) || 0)));
     const hari = Math.max(0, Math.min(3650, Math.trunc(Number(p.hari ?? 0) || 0)));
     if (coin < 0 || gem < 0) return gagal("Jumlah coin/diamond tidak boleh minus");
     if (coin === 0 && gem === 0 && vip === 0) return gagal("Isi coin, diamond, atau VIP dulu");
+    const semua = p.semua === true || String(p.semua ?? "") === "1";
+    const sekarang = Date.now();
+
+    // ---- Kirim ke semua user ----
+    if (semua) {
+      const uids = await fsSemuaUid(env, "users", 20000);
+      if (!uids.length) return gagal("Daftar user tidak terbaca");
+      let n = 0;
+      for (let i = 0; i < uids.length; i += 100) {
+        const bagian = uids.slice(i, i + 100);
+        const stmt = [];
+        for (const u of bagian) {
+          stmt.push({ sql: "insert or ignore into wallets (uid) values (?)", args: [T(u)] });
+          stmt.push({
+            sql: "update wallets set coins = coins + ?, diamonds = diamonds + ?, updated_at = ? where uid = ?",
+            args: [I(coin), I(gem), I(sekarang), T(u)],
+          });
+          if (vip > 0) {
+            // Masa aktif ditambahkan dari sisa yang masih berjalan.
+            stmt.push({
+              sql: "update wallets set vip = ?, vip_until = max(coalesce(vip_until, 0), ?) + ?, updated_at = ? where uid = ?",
+              args: [I(vip), I(sekarang), I(hari * 86400000), I(sekarang), T(u)],
+            });
+          }
+        }
+        await pipe(env, stmt);
+        n += bagian.length;
+      }
+      return json({ ok: 1, semua: 1, jumlah: n, dikirim: { coins: coin, diamonds: gem, vip, hari } });
+    }
+
+    // ---- Satu akun: boleh pakai UID atau nomor ID angka ----
+    let who = String(p.uid ?? "").trim();
+    const nomorId = String(p.id ?? "").replace(/[^0-9]/g, "");
+    if (!who && nomorId) {
+      const d = await fsSatu(env, "userIds/" + nomorId);
+      who = String(d?.uid ?? "").trim();
+      if (!who) return gagal("ID " + nomorId + " tidak ditemukan");
+    }
+    if (!/^[A-Za-z0-9_-]{6,64}$/.test(who)) return gagal("Isi UID atau nomor ID user");
     try { await pastikan(env, who); } catch (e) { return gagal("Akun belum punya dompet: " + String(e?.message ?? e)); }
     const kini = await pipe(env, [
       { sql: "select coins, diamonds, vip, vip_until from wallets where uid = ?", args: [T(who)] },
@@ -4856,22 +4936,19 @@ async function admin(env, body) {
     let sampai = Number(lama.vip_until ?? 0);
     if (vip > 0) {
       vipBaru = vip;
-      if (hari > 0) {
-        const dasar = Math.max(Date.now(), sampai);
-        sampai = dasar + hari * 86400000;
-      }
+      if (hari > 0) sampai = Math.max(sekarang, sampai) + hari * 86400000;
     }
     const ubah = [];
-    if (coin) ubah.push({ sql: "update wallets set coins = coins + ?, updated_at = ? where uid = ?", args: [I(coin), I(Date.now()), T(who)] });
-    if (gem) ubah.push({ sql: "update wallets set diamonds = diamonds + ?, updated_at = ? where uid = ?", args: [I(gem), I(Date.now()), T(who)] });
-    if (vip > 0) ubah.push({ sql: "update wallets set vip = ?, vip_until = ?, updated_at = ? where uid = ?", args: [I(vipBaru), I(sampai), I(Date.now()), T(who)] });
+    if (coin) ubah.push({ sql: "update wallets set coins = coins + ?, updated_at = ? where uid = ?", args: [I(coin), I(sekarang), T(who)] });
+    if (gem) ubah.push({ sql: "update wallets set diamonds = diamonds + ?, updated_at = ? where uid = ?", args: [I(gem), I(sekarang), T(who)] });
+    if (vip > 0) ubah.push({ sql: "update wallets set vip = ?, vip_until = ?, updated_at = ? where uid = ?", args: [I(vipBaru), I(sampai), I(sekarang), T(who)] });
     if (ubah.length) await pipe(env, ubah);
     const akhir = await pipe(env, [
       { sql: "select coins, diamonds, vip, vip_until from wallets where uid = ?", args: [T(who)] },
     ]);
     const w = akhir[0].rows[0] || {};
     return json({
-      ok: 1, uid: who,
+      ok: 1, uid: who, nomor: nomorId || "",
       coins: Number(w.coins ?? 0), diamonds: Number(w.diamonds ?? 0),
       vip: Number(w.vip ?? 0), vipUntil: Number(w.vip_until ?? 0),
       dikirim: { coins: coin, diamonds: gem, vip, hari },

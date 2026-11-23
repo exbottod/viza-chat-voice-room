@@ -22,7 +22,9 @@ export default function SendCoin() {
   const [dompet, setDompet] = useState({});
   const [kata, setKata] = useState("");
   const [pilih, setPilih] = useState(null);
-  const [form, setForm] = useState({ coins: "", diamonds: "", vip: "0", hari: "30", catatan: "" });
+  const [form, setForm] = useState({ coins: "", diamonds: "", vip: "0", hari: "30", catatan: "", nomor: "" });
+  const [semua, setSemua] = useState(false);
+  const [ketik, setKetik] = useState("");
   const [sibuk, setSibuk] = useState(false);
   const [hasil, setHasil] = useState(null);
   const [riwayat, setRiwayat] = useState([]);
@@ -75,7 +77,9 @@ export default function SendCoin() {
   }, [daftar, kata]);
 
   const kirim = async () => {
-    if (!pilih) return toast("Pilih user dulu", true);
+    const nomor = String(form.nomor || "").replace(/[^0-9]/g, "");
+    if (!semua && !pilih && !nomor) return toast("Pilih user atau isi nomor ID", true);
+    if (semua && ketik.trim().toUpperCase() !== "KIRIM") return toast("Ketik KIRIM untuk mengonfirmasi kirim ke semua user", true);
     const coin = Math.max(0, Math.trunc(Number(form.coins) || 0));
     const gem = Math.max(0, Math.trunc(Number(form.diamonds) || 0));
     const vip = Math.max(0, Math.min(9, Math.trunc(Number(form.vip) || 0)));
@@ -84,18 +88,19 @@ export default function SendCoin() {
     setSibuk(true);
     setHasil(null);
     try {
-      const out = await walletAdmin({
-        op: "hadiah_user", uid: pilih.uid, coins: coin, diamonds: gem, vip, hari,
-      });
+      const out = await walletAdmin(semua
+        ? { op: "hadiah_user", semua: 1, coins: coin, diamonds: gem, vip, hari }
+        : { op: "hadiah_user", uid: pilih?.uid || "", id: nomor, coins: coin, diamonds: gem, vip, hari });
       if (Number(out?.ok) !== 1) throw new Error(out?.e || "Server menolak");
+      const tujuan = semua ? "SEMUA USER" : (pilih?.nama || ("ID " + (nomor || pilih?.nomor || "")));
       const rincian = [
         coin ? rupiah(coin) + " coin" : "",
         gem ? rupiah(gem) + " diamond" : "",
         vip ? "VIP " + vip + (hari ? " · " + hari + " hari" : "") : "",
       ].filter(Boolean).join(" · ");
-      setHasil({ ...out, rincian });
-      setRiwayat((r) => [{ uid: pilih.uid, nomor: pilih.nomor, nama: pilih.nama, rincian, at: Date.now() }, ...r].slice(0, 10));
-      await catatLog("Kirim coin ke user", (pilih.nomor || pilih.uid) + " · " + rincian + (form.catatan ? " · " + form.catatan : ""));
+      setHasil({ ...out, rincian, tujuan });
+      setRiwayat((r) => [{ nama: tujuan, rincian, at: Date.now() }, ...r].slice(0, 10));
+      await catatLog("Kirim coin ke user", tujuan + " · " + rincian + (form.catatan ? " · " + form.catatan : ""));
       toast("Terkirim: " + rincian);
       muatDompet();
     } catch (e) {
@@ -113,6 +118,21 @@ export default function SendCoin() {
           <input value={kata} onChange={(e) => setKata(e.target.value)} placeholder="mis. 1000 atau Nurul" />
         </label>
 
+        <div className="barisSaklar"><b>Kirim ke semua user</b>
+          <button type="button" className={"saklar" + (semua ? " nyala" : "")}
+            onClick={() => { setSemua(!semua); setPilih(null); }}><i /></button>
+        </div>
+        {semua ? (
+          <label className="isianForm"><span>Ketik KIRIM untuk konfirmasi ke semua user</span>
+            <input value={ketik} onChange={(e) => setKetik(e.target.value)} placeholder="KIRIM" />
+          </label>
+        ) : (
+          <label className="isianForm"><span>Atau langsung isi nomor ID user (mis. 1000)</span>
+            <input value={form.nomor} inputMode="numeric" placeholder="1000"
+              onChange={(e) => { setForm({ ...form, nomor: e.target.value }); setPilih(null); }} />
+          </label>
+        )}
+
         <div className="daftarPilih">
           {hasilCari.length ? hasilCari.map((u) => (
             <button type="button" key={u.uid}
@@ -125,9 +145,12 @@ export default function SendCoin() {
           )) : <div className="kosong">Tidak ada user yang cocok.</div>}
         </div>
 
-        {pilih ? (
+        {(pilih || semua || String(form.nomor).trim()) ? (
           <>
-            <div className="catatan">Dikirim ke: <b>{pilih.nama || "(tanpa nama)"}</b> · ID {pilih.nomor || "-"} · UID {pilih.uid}</div>
+            <div className="catatan">
+              {semua ? <><b>Dikirim ke SEMUA USER</b> · jumlah user dibaca server</>
+                : <><b>Dikirim ke: {pilih?.nama || "(nomor ID)"}</b> · ID {form.nomor || pilih?.nomor || "-"}{pilih ? " · UID " + pilih.uid : ""}</>}
+            </div>
 
             <label className="isianForm"><span>Coin</span>
               <input value={form.coins} inputMode="numeric" placeholder="0"
@@ -169,12 +192,12 @@ export default function SendCoin() {
             </label>
 
             <button className="tombolBaru" onClick={kirim} disabled={sibuk}>
-              {sibuk ? "Mengirim…" : "Kirim sekarang"}
+              {sibuk ? "Mengirim…" : semua ? "Kirim ke semua user" : "Kirim sekarang"}
             </button>
 
             {hasil ? (
               <div className="catatan">
-                Terkirim: {hasil.rincian}. Saldo sekarang: coin {rupiah(hasil.coins)} · diamond {rupiah(hasil.diamonds)}
+                Terkirim ke {hasil.tujuan}: {hasil.rincian}.{Number(hasil.jumlah) ? " Jumlah akun: " + rupiah(hasil.jumlah) + "." : ""} Saldo sekarang: coin {rupiah(hasil.coins)} · diamond {rupiah(hasil.diamonds)}
                 {Number(hasil.vip) ? " · VIP " + hasil.vip + (Number(hasil.vipUntil) ? " sampai " + waktu(hasil.vipUntil) : "") : ""}
               </div>
             ) : null}

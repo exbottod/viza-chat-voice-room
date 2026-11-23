@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.386",
-  "catatan": "• Nama di kursi mic kini sejajar dengan tulisan nomor kursi dan cincin hijau di foto kursi dihapus\n• Foto profil tanpa bingkai tampil polos dan sebesar lingkaran kursi mic\n• Suara di room melaporkan sendiri penyebabnya bila gagal tersambung",
-  "ukuran_apk": 75793764,
-  "sha256_apk": "dcd501954f4efda2a0cc47f868a37a3328b6d992874e1cb2bb39bf340b946abe",
+  "versi": "1.0.387",
+  "catatan": "• Saat mic menyala, tombol volume kini mengatur volume media, bukan volume panggilan\n• Pindah kursi mic terasa lebih ringan dan nama kursi tidak terpotong\n• Balon suara transparan muncul di belakang foto kursi mic saat ada suara",
+  "ukuran_apk": 75795381,
+  "sha256_apk": "4aebdde1cef5409adb5b8e8dc5c5ae2ddc862fe4ffecd304575db9c2bcd923ff",
   "abis": {
     "arm64": {
-      "ukuran": 75793764,
-      "sha256": "dcd501954f4efda2a0cc47f868a37a3328b6d992874e1cb2bb39bf340b946abe"
+      "ukuran": 75795381,
+      "sha256": "4aebdde1cef5409adb5b8e8dc5c5ae2ddc862fe4ffecd304575db9c2bcd923ff"
     },
     "armv7": {
-      "ukuran": 74028281,
-      "sha256": "ecdb1d88a1373d9235db1fd10360811627f60cf33913e795a11275169644cc40"
+      "ukuran": 74029889,
+      "sha256": "1c9d9ac52bac1189a6f41b662d5c60db8d22ce2b6afacedaceb379656f5db4db"
     },
     "universal": {
-      "ukuran": 123647768,
-      "sha256": "e2c4b074d840245640ac4aa7db9b8f5d1e5840ebbf73b04f3d35c68f41619697"
+      "ukuran": 123649379,
+      "sha256": "104318d2346dee82994492900d5d46f141c005cfb4807f4929a9fe2603d5f6f6"
     }
   }
 }

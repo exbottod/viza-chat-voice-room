@@ -1,3 +1,3 @@
-• Nama di kursi mic kini sejajar dengan tulisan nomor kursi dan cincin hijau di foto kursi dihapus
-• Foto profil tanpa bingkai tampil polos dan sebesar lingkaran kursi mic
-• Suara di room melaporkan sendiri penyebabnya bila gagal tersambung
+• Saat mic menyala, tombol volume kini mengatur volume media, bukan volume panggilan
+• Pindah kursi mic terasa lebih ringan dan nama kursi tidak terpotong
+• Balon suara transparan muncul di belakang foto kursi mic saat ada suara

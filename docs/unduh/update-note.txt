@@ -1,4 +1,4 @@
+• Daftar paket coin di menu top-up sekarang selalu sesuai harga terbaru
+• Angka coin di paket ditampilkan rapi dengan titik pemisah
 • Ikon salin ID di profil diganti ikon baru yang lebih rapi
-• Gift video MP4 diputar saat dikirim di room
-• Emot GIF tampil dan bergerak di room
 • Perbaikan kecil dan peningkatan kecepatan aplikasi

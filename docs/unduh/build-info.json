@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.381",
-  "catatan": "• Ikon salin ID di profil diganti ikon baru yang lebih rapi\n• Gift video MP4 diputar saat dikirim di room\n• Emot GIF tampil dan bergerak di room\n• Perbaikan kecil dan peningkatan kecepatan aplikasi",
-  "ukuran_apk": 75791666,
-  "sha256_apk": "06dfcd3fa68b898bda4aee5b7183becfd1c8dd6c75c2180a11ca3753aaa88566",
+  "versi": "1.0.382",
+  "catatan": "• Daftar paket coin di menu top-up sekarang selalu sesuai harga terbaru\n• Angka coin di paket ditampilkan rapi dengan titik pemisah\n• Ikon salin ID di profil diganti ikon baru yang lebih rapi\n• Perbaikan kecil dan peningkatan kecepatan aplikasi",
+  "ukuran_apk": 75792904,
+  "sha256_apk": "87633d4b60203d3b35f73a8e66dbc2c3c0635302e450e4c525310a2f50f08ef9",
   "abis": {
     "arm64": {
-      "ukuran": 75791666,
-      "sha256": "06dfcd3fa68b898bda4aee5b7183becfd1c8dd6c75c2180a11ca3753aaa88566"
+      "ukuran": 75792904,
+      "sha256": "87633d4b60203d3b35f73a8e66dbc2c3c0635302e450e4c525310a2f50f08ef9"
     },
     "armv7": {
-      "ukuran": 74026183,
-      "sha256": "1e176c1b0291c004fcdaa9354d669a5f70969cce0e5b31f782b01279113ad23b"
+      "ukuran": 74027410,
+      "sha256": "7531f8251beace7b40e95be595771a9613dff7162d1e7f131ee3ce76df7c0ba1"
     },
     "universal": {
-      "ukuran": 123645663,
-      "sha256": "43e25bf0a935f624845ab00a2dec5aa4d6c054186b802fc09887079e075d7781"
+      "ukuran": 123646895,
+      "sha256": "a00b8c52210930179dafc1ce502c88f55c24e2c47580e51656602f0379c36230"
     }
   }
 }

@@ -563,6 +563,21 @@ object SupaRepo {
         )
     }
 
+    /** Paket coin aktif dari server (sumber yang sama dengan menu Currency di panel). */
+    suspend fun paketInfo(): List<Pair<Long, Long>>? {
+        val o = postRaw("paket_info", org.json.JSONObject()) ?: return null
+        if (o.optInt("ok") != 1) return null
+        val arr = o.optJSONArray("paket") ?: return null
+        val out = ArrayList<Pair<Long, Long>>()
+        for (i in 0 until arr.length()) {
+            val x = arr.optJSONObject(i) ?: continue
+            val c = x.optLong("coins")
+            val h = x.optLong("harga")
+            if (c > 0L && h >= 0L) out.add(c to h)
+        }
+        return out
+    }
+
     /** Klaim coin setelah iklan selesai ditonton. Server tetap memeriksa batas dan jeda. */
     suspend fun iklanKlaim(): org.json.JSONObject? = postRaw("iklan_klaim", org.json.JSONObject())
 

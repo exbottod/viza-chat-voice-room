@@ -7854,6 +7854,13 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
         }
         case "migrate":
           return ok(await pastikan(env, uid));
+        case "paket_info": {
+          // Daftar paket coin yang aktif, sumber SAMA dengan menu Currency di
+          // panel. Dulu aplikasi membaca Firestore lama sehingga harga dan
+          // jumlah coin yang diubah di panel tidak pernah ikut berubah.
+          const daftar = (await daftarPaket(env)).filter((x) => x.aktif && x.coins > 0);
+          return json({ ok: 1, paket: daftar.map((x) => ({ coins: x.coins, harga: x.harga })) });
+        }
         case "iklan_info":
           return await iklanInfoPengguna(env, uid);
         case "iklan_klaim":

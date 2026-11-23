@@ -448,6 +448,18 @@ private object TopupPacks {
 
     suspend fun refresh(force: Boolean = false) {
         if (!force && System.currentTimeMillis() - loadedAt < 60_000L) return
+        // UTAMA: server dompet. Daftarnya sama persis dengan yang diatur di
+        // panel (Currency), jadi perubahan jumlah coin dan harga langsung tampil.
+        try {
+            val dariServer = SupaRepo.paketInfo()
+            if (!dariServer.isNullOrEmpty()) {
+                list = dariServer.map { (c, h) -> c to ("Rp " + String.format(java.util.Locale("id", "ID"), "%,d", h)) }
+                loadedAt = System.currentTimeMillis()
+                return
+            }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) { }
         try {
             val doc = com.google.firebase.firestore.FirebaseFirestore.getInstance()
                 .collection("vipConfig").document("topupPacks").get().await()
@@ -957,7 +969,7 @@ fun WalletScreen(
                                     CoinDot(30)
                                     Spacer(Modifier.width(12.dp))
                                     Text(
-                                        coins.toString(),
+                                        String.format(java.util.Locale("id", "ID"), "%,d", coins),
                                         color = WalCoinOrange,
                                         fontSize = 20.sp,
                                         modifier = Modifier.weight(1f),

@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.388",
-  "catatan": "• Nama pengguna di kursi mic kini turun sedikit dan memberi jarak dari foto, sejajar dengan nomor kurs\n• Tulisan nomor kursi tidak lagi terpotong\n• Saat mic menyala, tombol volume mengatur volume media, bukan volume panggilan",
-  "ukuran_apk": 75795406,
-  "sha256_apk": "33f79c7cdd80d28737880606d4af7af72b6fc9d3f0e8b69fe1de57defc467faf",
+  "versi": "1.0.389",
+  "catatan": "• Pindah kursi mic: profil tidak lagi tampil dobel, langsung berpindah ke kursi tujuan\n• Foto dan data kursi dimuat sekali saat masuk room, pindah kursi tidak memuat ulang\n• Nama pengguna di kursi mic turun sedikit dan sejajar dengan nomor kursi di sebelahnya",
+  "ukuran_apk": 75797118,
+  "sha256_apk": "01a7f8dc7ad08c43d0d369ba2120e1a746ae11685629e4564f3e9f505145a6ae",
   "abis": {
     "arm64": {
-      "ukuran": 75795406,
-      "sha256": "33f79c7cdd80d28737880606d4af7af72b6fc9d3f0e8b69fe1de57defc467faf"
+      "ukuran": 75797118,
+      "sha256": "01a7f8dc7ad08c43d0d369ba2120e1a746ae11685629e4564f3e9f505145a6ae"
     },
     "armv7": {
-      "ukuran": 74029924,
-      "sha256": "8943b5be734c6a331941873b956bca732bb0512c8811b4345c411feacf9db4c6"
+      "ukuran": 74031629,
+      "sha256": "d55b68c21b59e85de0e439bc2faa8628967dc0c25c1d190c653ad7157783a064"
     },
     "universal": {
-      "ukuran": 123649409,
-      "sha256": "5b99c9739dd6c17b1afd981e5403628752783741616173e03aa73ce1162d8dc9"
+      "ukuran": 123651127,
+      "sha256": "5a26dff5f3aea5d46318f751635899ecb72afa1bbada077527198f7bc84ca2b0"
     }
   }
 }

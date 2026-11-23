@@ -2301,12 +2301,12 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
                 }
             }
         }
-        // Nama di mic selebar kolom kursi, jadi letaknya rata tengah sama seperti
-        // tulisan "MC"/"No.7" pada kursi kosong. Lebarnya tetap dibatasi kolom
-        // supaya nama panjang tidak menyorok ke kursi sebelah.
-        // Tinggi baris dikunci 16.dp dan teks ditaruh di tengahnya, sehingga nama
-        // (termasuk nama VIP berwarna) jatuh di garis yang sama dengan No.9 / MC.
-        Box(Modifier.fillMaxWidth().padding(top = 2.dp), contentAlignment = Alignment.Center) {
+        // Nama di mic selebar kolom kursi, jadi letaknya rata tengah seperti tulisan
+        // "MC"/"No.7". Tulisan nomor kursi TIDAK diubah sama sekali; hanya nama
+        // pengguna yang digeser sedikit ke bawah (3.dp) supaya duduk sejajar dengan
+        // nomor kursi di sebelahnya. Lebar nama dibatasi kolom agar tidak menyorok
+        // ke kursi sebelah.
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             VipNameByUid(
                 seat?.name ?: (if (index == 0) "MC" else "No.${index + 1}"),
                 seat?.uid,
@@ -2315,7 +2315,10 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                modifier = Modifier.fillMaxWidth()
+                    .padding(horizontal = 8.dp)
+                    // Hanya nama pengguna yang turun; nomor kursi tetap di tempatnya.
+                    .then(if (seat != null) Modifier.padding(top = 3.dp) else Modifier),
             )
             // Ikon peran digambar menumpuk di sisi kiri, bukan ikut menggeser
             // nama, supaya nama tetap tepat di tengah kursi.

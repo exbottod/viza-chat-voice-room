@@ -339,6 +339,7 @@ object VipAssets {
 }
 
 fun vipFrameTier(frameId: String?, vip: Int, until: Long): Int {
+    if (frameId == "none") return 0
     if (!frameId.isNullOrBlank()) {
         if (frameId.startsWith("vipf_")) return frameId.removePrefix("vipf_").toIntOrNull() ?: 0
         // Bingkai SVIP (svf_N) memakai aset VIP N.

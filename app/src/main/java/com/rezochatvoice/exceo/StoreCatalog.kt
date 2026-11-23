@@ -381,7 +381,12 @@ object StoreCatalog {
 }
 
 /** Aset bingkai yang harus dipasang di avatar: item store (sx_) dulu, lalu bingkai VIP. */
+/** Nilai slot frame yang berarti pemain sengaja tidak memakai bingkai apa pun. */
+const val TANPA_BINGKAI = "none"
+
 fun frameAssetOf(frameId: String?, vip: Int, until: Long): VipAsset? {
+    // Bingkai dilepas dengan sengaja: jangan jatuh ke bingkai VIP otomatis.
+    if (frameId == TANPA_BINGKAI) return null
     if (!frameId.isNullOrBlank()) {
         // Bingkai yang dipakai user MENANG. Dulu yang dicek hanya id berawalan sx_,
         // jadi bingkai kiriman panel terlewat dan bingkai VIP yang tampil.

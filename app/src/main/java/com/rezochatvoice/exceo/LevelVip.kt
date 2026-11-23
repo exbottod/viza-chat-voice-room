@@ -217,6 +217,9 @@ fun activeEquip(w: Wallet, slot: String): String {
     }
     val id = raw
     if (id.isBlank()) return ""
+    // Penanda "sengaja tanpa bingkai": dipertahankan apa adanya supaya bingkai VIP
+    // tidak otomatis menggantikan saat bingkai dilepas, termasuk di profil orang lain.
+    if (slot == "frame" && id == TANPA_BINGKAI) return id
     val exp = w.inv[id]
     // Ada catatan masa aktif: ikuti catatan itu.
     if (exp != null) return if (exp > System.currentTimeMillis()) id else ""
@@ -250,6 +253,9 @@ private fun itemTerpakai(w: Wallet, slot: String, id: String): Boolean =
 
 /** Nilai equip baru setelah tombol Pakai/Lepas ditekan. */
 private fun equipBaru(w: Wallet, slot: String, id: String): String {
+    // Melepas bingkai menyimpan penanda tegas, bukan kosong: kosong berarti "belum
+    // memilih" dan dulu membuat bingkai VIP muncul sendiri.
+    if (slot == "frame") return if (itemTerpakai(w, slot, id)) TANPA_BINGKAI else id
     if (slot != "badge") return if (itemTerpakai(w, slot, id)) "" else id
     val kini = medalIdList(w.equip["badge"])
     val baru = if (kini.contains(id)) kini - id else kini + id

@@ -1,4 +1,4 @@
-• Ditambahkan banner iklan coin gratis di tab Party, tekan untuk menonton iklan dan dapatkan coin
-• Ditambahkan tombol Coin gratis di menu Dompet
-• ID unik yang sudah dibeli tidak muncul lagi di Store, jadi tidak ada ID kembar
+• ID unik yang masa berlakunya habis otomatis kembali ke Store dan bisa dibeli lagi
+• Banner iklan coin gratis di tab Party bisa diganti dari panel tanpa update aplikasi
+• ID unik yang sudah dibeli tidak muncul lagi di Store selama masih aktif
 • Perbaikan kecil dan peningkatan kecepatan aplikasi

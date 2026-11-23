@@ -571,6 +571,10 @@ fun GiftFxOverlay(roomId: String) {
     val d = fx
     if (d == null) return
     val big = d.jp || d.combo >= 2 || d.mediaUrl.isNotBlank()
+    // Gift yang ditandai "image" tapi isinya video (mis. MP4 bernama .jpg):
+    // kalau gambarnya gagal dimuat, videonya dicoba diputar supaya efeknya
+    // tetap tampil, bukan layar kosong.
+    var cobaVideo by remember(d.ts) { mutableStateOf(false) }
 
     LaunchedEffect(d.ts) {
         // SVGA butuh waktu unduh + urai, jadi diberi waktu lebih panjang.
@@ -598,12 +602,15 @@ fun GiftFxOverlay(roomId: String) {
                 val kind = kindOf(d.mediaUrl, d.mediaType)
                 if (kind == "svga") {
                     GiftSvga(mediaAman(d.mediaUrl), d.emoji, Modifier.fillMaxSize(), onEnd = { fx = null })
+                } else if (cobaVideo) {
+                    GiftVideo(mediaAman(d.mediaUrl), Modifier.fillMaxSize(), onEnd = { fx = null })
                 } else {
                     AsyncImage(
                         model = mediaAman(d.mediaUrl),
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Fit,
+                        onError = { cobaVideo = true },
                     )
                 }
             }

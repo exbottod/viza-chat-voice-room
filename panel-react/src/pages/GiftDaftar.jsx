@@ -120,7 +120,13 @@ export default function GiftDaftar() {
         setProgres("mengunggah animasi…");
         media = await unggahBerkas(berkasMedia, "gift", (p) => setProgres("animasi " + p + "%"));
         const e = (berkasMedia.name.split(".").pop() || "").toLowerCase();
-        tipe = e === "svga" ? "svga" : ["mp4", "webm", "mov", "m4v"].includes(e) ? "mp4" : "image";
+        // Jenis animasi dibaca dari tipe berkas lebih dulu: video MP4 sering
+        // bernama .jpg (hasil unduhan WhatsApp), dan kalau ditandai "image"
+        // videonya tidak pernah diputar saat gift dikirim.
+        const mime = String(berkasMedia.type || "").toLowerCase();
+        tipe = e === "svga" || mime.includes("svga") ? "svga"
+          : mime.startsWith("video/") || ["mp4", "webm", "mov", "m4v"].includes(e) ? "mp4"
+          : "image";
       }
       const id = form.id || ("g_" + Date.now().toString(36));
       const data = {

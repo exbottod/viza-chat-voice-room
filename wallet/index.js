@@ -5228,7 +5228,7 @@ async function admin(env, body) {
     ]);
     const row = cur[0].rows[0];
     if (!row) return gagal("Pengajuan tidak ditemukan");
-    if (row.status !== "pending") return gagal("Pengajuan sudah diproses");
+    if (row.status !== "pending") return gagal("Pengajuan sudah diproses (status sekarang: " + String(row.status) + ")");
     // Kunci baris dulu supaya klik ganda tidak menambah coin dua kali.
     // decided_at hanya penanda waktu. Kalau database lama belum punya kolomnya,
     // status tetap diproses supaya Setujui tidak gagal.
@@ -5251,6 +5251,7 @@ async function admin(env, body) {
       try {
         await beriCoin(env, String(row.uid), Number(row.coins), "topup", null);
       } catch (e) {
+        await logGalat(env, "panel", "manual_decide", String(e?.message ?? e));
         // Coin gagal masuk: kembalikan ke menunggu supaya bisa disetujui lagi
         // dan tidak tercatat "disetujui" padahal saldo pembeli belum bertambah.
         try {
@@ -7546,7 +7547,15 @@ async function kirimEmail(env, ke, subjek, isiHtml, isiTeks, kunci) {
     if (url.pathname === "/admin") {
       const b = await req.json().catch(() => null);
       if (!b) return json({ ok: 0, e: "Body tidak valid" }, 400);
-      return await admin(env, b);
+      // Galat tak terduga di panel dicatat supaya penyebabnya bisa dibaca
+      // langsung dari tabel wallet_galat, bukan hanya tampil di layar.
+      try {
+        return await admin(env, b);
+      } catch (e) {
+        const op = String(b?.p?.op ?? "?");
+        await logGalat(env, "panel", "admin:" + op, String(e?.message ?? e));
+        return json({ ok: 0, e: "Server gagal memproses " + op + ": " + String(e?.message ?? e).slice(0, 140) }, 500);
+      }
     }
     if (url.pathname === "/hivecatalog") {
       try { return await hiveKatalog(); } catch (e) { return json({ ok: 0, e: String(e?.message ?? e) }, 502); }

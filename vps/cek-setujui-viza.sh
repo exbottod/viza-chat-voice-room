@@ -5,7 +5,7 @@ set -u
 DB=/opt/viza-api/data/viza.db
 
 echo "== tanda versi server =="
-curl -s -m 8 http://127.0.0.1:8092/health | tr ',' '\n' | grep -E '"v"|"db"' | head -3
+curl -s -m 8 http://127.0.0.1:8080/health | tr ',' '\n' | grep -E '"v"|"db"' | head -3
 
 echo
 echo "== pengajuan top-up manual terakhir =="
@@ -25,7 +25,7 @@ echo "== galat dompet terakhir =="
 node -e '
 const { DatabaseSync } = require("node:sqlite");
 const db = new DatabaseSync("'"$DB"'", { readOnly: true });
-const r = db.prepare("select aksi, pesan from wallet_galat order by at desc limit 5").all();
+const r = db.prepare("select aksi, pesan from wallet_galat where aksi not like '%token%' order by at desc limit 6").all();
 if (!r.length) console.log("  tidak ada galat tercatat");
 for (const x of r) console.log("  " + x.aksi + " | " + String(x.pesan).slice(0, 110));
 db.close();

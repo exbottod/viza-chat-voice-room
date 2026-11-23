@@ -1,21 +1,21 @@
 {
   "status": "ok",
   "versi": "1.0.383",
-  "catatan": "• Nama di kursi mic sekarang rata tengah dengan tulisan nomor kursi\n• Nama boleh tampil sedikit lebih panjang tanpa menutupi kursi sebelah\n• Perbaikan kecil dan peningkatan kecepatan aplikasi",
-  "ukuran_apk": 75792568,
-  "sha256_apk": "f30d77e0a38d15aa671eaea5682a8f6e4112aea7b7d9712d6ad847c804867ef5",
+  "catatan": "• Melepas bingkai sekarang benar-benar tanpa bingkai, bingkai VIP tidak lagi muncul sendiri\n• Nama di kursi mic rata tengah dengan tulisan nomor kursi dan tidak menutupi kursi sebelah\n• Perbaikan kecil dan peningkatan kecepatan aplikasi",
+  "ukuran_apk": 75792681,
+  "sha256_apk": "795e54c933876b69cb41b08b34bf9021f592e80e6d936a7830d90b4b5bf582b5",
   "abis": {
     "arm64": {
-      "ukuran": 75792568,
-      "sha256": "f30d77e0a38d15aa671eaea5682a8f6e4112aea7b7d9712d6ad847c804867ef5"
+      "ukuran": 75792681,
+      "sha256": "795e54c933876b69cb41b08b34bf9021f592e80e6d936a7830d90b4b5bf582b5"
     },
     "armv7": {
-      "ukuran": 74027087,
-      "sha256": "b03e2a1230ab51faf130063faea6245330153bcbfd61e90f3847e85998157ddf"
+      "ukuran": 74027204,
+      "sha256": "733bc9d67468134d2f87e6a66c43294b8c937add81bfde98838e75856800da8a"
     },
     "universal": {
-      "ukuran": 123646563,
-      "sha256": "d48a83f6656fa767d37cae0852ed0b3d7806bb1cffa086c9e7fb2ef1a092968a"
+      "ukuran": 123646679,
+      "sha256": "ec040a04d769765a6dce7faad889c8ea59471f9405a71ace0e24e0aab0a4efc4"
     }
   }
 }

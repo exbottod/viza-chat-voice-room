@@ -156,6 +156,8 @@ fun PartyTab(
             }
             item(span = { GridItemSpan(maxLineSpan) }) { BannerFeed() }
         } else {
+            // Banner iklan coin gratis: selalu urutan pertama di atas tab Party.
+            item(span = { GridItemSpan(maxLineSpan) }) { BannerIklanParty() }
             if (subTab == 1) {
                 // Banner Koin banyak ikut jadi geseran di banner atas (bisa
                 // digeser manual dan bergeser sendiri), bukan banner kedua.
@@ -250,6 +252,63 @@ private fun TopTabs(
         Spacer(Modifier.weight(1f))
         IconButton(onClick = onSearch) { Icon(Icons.Default.Search, "Cari", tint = GoldLight) }
         IconButton(onClick = onCreate) { Icon(Icons.Default.Add, "Buat room", tint = GoldLight) }
+    }
+}
+
+/**
+ * Banner iklan di urutan pertama tab Party. Gambar diambil dari aset APK
+ * (assets/iklan/banner_party.jpg) supaya tetap tampil walau jaringan lambat.
+ * Menekan banner memutar iklan berhadiah Unity, lalu coin diklaim ke server,
+ * sama seperti tombol Coin gratis di menu Dompet.
+ */
+@Composable
+private fun BannerIklanParty() {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var info by remember { mutableStateOf<SupaRepo.IklanInfo?>(null) }
+    var sibuk by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { info = SupaRepo.iklanInfo() }
+    val ik = info
+    if (ik == null || !ik.aktif || ik.sisa <= 0) return
+    Box(
+        Modifier.fillMaxWidth().padding(bottom = 8.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(enabled = !sibuk) {
+                val act = IklanUnity.findActivity(context)
+                if (act == null) {
+                    Toast.makeText(context, tr("Iklan belum bisa dibuka"), Toast.LENGTH_SHORT).show()
+                } else {
+                    sibuk = true
+                    IklanUnity.tampil(
+                        act, ik.gameId, ik.placement, ik.uji,
+                        onHadiah = {
+                            scope.launch {
+                                val out = SupaRepo.iklanKlaim()
+                                sibuk = false
+                                if (out == null) {
+                                    Toast.makeText(context, tr("Server belum menjawab, coba lagi"), Toast.LENGTH_SHORT).show()
+                                } else if (out.optInt("ok") == 1) {
+                                    Toast.makeText(context, "+" + out.optLong("coins") + " coin", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(context, out.optString("e").ifBlank { "Klaim gagal" }, Toast.LENGTH_LONG).show()
+                                }
+                                info = SupaRepo.iklanInfo()
+                            }
+                        },
+                        onGagal = { m ->
+                            sibuk = false
+                            Toast.makeText(context, m, Toast.LENGTH_LONG).show()
+                        },
+                    )
+                }
+            },
+    ) {
+        coil.compose.AsyncImage(
+            model = "file:///android_asset/iklan/banner_party.jpg",
+            contentDescription = tr("Iklan coin gratis"),
+            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+            modifier = Modifier.fillMaxWidth().aspectRatio(3f),
+        )
     }
 }
 

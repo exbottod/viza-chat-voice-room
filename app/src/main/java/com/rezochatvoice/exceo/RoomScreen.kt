@@ -2109,6 +2109,23 @@ private fun RmAvatar(bmp: ImageBitmap?, fallback: String, size: Dp) {
 }
 
 /**
+ * Cincin penanda bicara di kursi mic: tebal dan kecerahannya TETAP, tidak
+ * mengikuti level suara dan tidak beranimasi, jadi avatar tidak bergerak
+ * naik-turun atau berkedip.
+ */
+@Composable
+private fun CincinBicara(size: Dp) {
+    androidx.compose.foundation.Canvas(Modifier.size(size)) {
+        drawCircle(
+            color = Color(0xFF3FE08C).copy(alpha = 0.55f),
+            radius = this.size.minDimension / 2f - 1f,
+            center = androidx.compose.ui.geometry.Offset(this.size.width / 2f, this.size.height / 2f),
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = this.size.minDimension * 0.03f),
+        )
+    }
+}
+
+/**
  * Gelombang suara di belakang kursi mic. Ukuran dan tebalnya mengikuti
  * tingkat suara peserta, jadi gerakannya sinkron dengan suara asli.
  */
@@ -2292,20 +2309,14 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
     val lvlMentah = suaraKursi.second
     // Kalau server suara hanya mengirim daftar pembicara tanpa angka level,
     // pakai nilai dasar supaya gelombang dan gelembung tetap kelihatan.
-    val lvlTarget = if (bicaraEvent) kotlin.math.max(lvlMentah.coerceIn(0f, 1f), 0.35f)
-                    else lvlMentah.coerceIn(0f, 1f)
-    // Gerakan dibuat halus (bukan 120 ms) supaya balon dan cincin tidak menyentak.
-    val lvl by androidx.compose.animation.core.animateFloatAsState(
-        targetValue = lvlTarget,
-        animationSpec = androidx.compose.animation.core.tween(260),
-        label = "levelSuara",
-    )
+    // Kursi mic TIDAK memakai angka level suara lagi. Dulu cincin dan balon
+    // mengikuti level yang berubah sekitar sepuluh kali per detik, sehingga
+    // avatar terlihat naik-turun dan berkedip. Sekarang hanya ada satu cincin
+    // tipis dengan tebal dan kecerahan TETAP selama orangnya bicara.
+    val bicaraKursi = bicaraEvent
     Column(Modifier.clickable(onClick = onClick), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(size), contentAlignment = Alignment.Center) {
-            if (lvl > 0.012f) {
-                BalonSuara(lvl, size)
-                GelombangBicara(lvl, size)
-            }
+            if (bicaraKursi) CincinBicara(size)
             Box(
                 Modifier.size(size).clip(CircleShape)
                 .then(

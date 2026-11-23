@@ -275,11 +275,14 @@ fun ProfileTab(
                 }
                 Spacer(Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    val vfAsset = frameAssetOf(activeEquip(wallet, "frame"), wallet.vip, wallet.vipUntil)
+                    val idBingkai = activeEquip(wallet, "frame")
+                    val vfAsset = frameAssetOf(idBingkai, wallet.vip, wallet.vipUntil)
+                    // Bingkai sengaja dilepas: tanpa aset DAN tanpa cincin emas pengganti.
+                    val adaBingkai = vfAsset != null || idBingkai == TANPA_BINGKAI
                     Box(contentAlignment = Alignment.Center) {
                         Box(
                             Modifier.clip(CircleShape).clickable(onClick = onProfileClick)
-                                .then(if (vfAsset != null) Modifier else Modifier.border(3.dp, frameBrush(activeEquip(wallet, "frame")), CircleShape))
+                                .then(if (adaBingkai) Modifier else Modifier.border(3.dp, frameBrush(idBingkai), CircleShape))
                                 .padding(3.dp),
                         ) {
                             AvatarImage(user, profile, 72.dp)

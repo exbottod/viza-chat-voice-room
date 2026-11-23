@@ -4267,6 +4267,33 @@ function fsBaca(f) {
   return null;
 }
 
+/**
+ * Terjemahkan nomor ID angka (mis. 100000) menjadi UID akun.
+ * Dua jalur: Firestore userIds/{nomor}, lalu RTDB pub (setiap profil menyimpan
+ * "id" berupa nomor resmi). RTDB dipakai cadangan karena Firestore sering kena
+ * batas kuota 429 dan dulu membuat pencarian ID gagal padahal akunnya ada.
+ */
+async function uidDariNomor(env, nomor) {
+  const n = String(nomor || "").replace(/[^0-9]/g, "");
+  if (!n) return { uid: "", galat: "Nomor ID kosong" };
+  const d = await fsSatu(env, "userIds/" + n);
+  if (d && String(d.uid || "").trim()) return { uid: String(d.uid).trim(), galat: "" };
+  try {
+    const token = await tokenLayanan(env);
+    if (!token) return { uid: "", galat: "Akun layanan belum siap" };
+    const q = `orderBy=${encodeURIComponent('"id"')}&equalTo=${encodeURIComponent(JSON.stringify(n))}`;
+    const r = await fetch(`${RTDB}/pub.json?${q}&access_token=${encodeURIComponent(token)}`);
+    if (r.ok) {
+      const j = await r.json();
+      if (j && typeof j === "object") {
+        const k = Object.keys(j)[0];
+        if (k) return { uid: k, galat: "" };
+      }
+    }
+  } catch (e) { /* lanjut ke pesan di bawah */ }
+  return { uid: "", galat: "ID " + n + " tidak ditemukan" };
+}
+
 /** Baca satu dokumen Firestore lewat akun layanan (null kalau tidak ada). */
 async function fsSatu(env, jalur) {
   try {
@@ -4306,6 +4333,20 @@ async function fsSemuaUid(env, koleksi, maks = 20000) {
       if (!token) break;
     }
   } catch (e) { /* kembalikan yang sudah terkumpul */ }
+  if (keluar.length) return keluar;
+  // Cadangan: daftar kunci di RTDB pub (satu permintaan, tanpa kuota Firestore).
+  try {
+    const t = await tokenLayanan(env);
+    if (t) {
+      const r = await fetch(`${RTDB}/pub.json?shallow=true&access_token=${encodeURIComponent(t)}`);
+      if (r.ok) {
+        const j = await r.json();
+        if (j && typeof j === "object") {
+          for (const k of Object.keys(j)) if (keluar.length < maks) keluar.push(k);
+        }
+      }
+    }
+  } catch (e) { /* tetap kembalikan yang ada */ }
   return keluar;
 }
 
@@ -4921,9 +4962,9 @@ async function admin(env, body) {
     let who = String(p.uid ?? "").trim();
     const nomorId = String(p.id ?? "").replace(/[^0-9]/g, "");
     if (!who && nomorId) {
-      const d = await fsSatu(env, "userIds/" + nomorId);
-      who = String(d?.uid ?? "").trim();
-      if (!who) return gagal("ID " + nomorId + " tidak ditemukan");
+      const cari = await uidDariNomor(env, nomorId);
+      who = cari.uid;
+      if (!who) return gagal(cari.galat || ("ID " + nomorId + " tidak ditemukan"));
     }
     if (!/^[A-Za-z0-9_-]{6,64}$/.test(who)) return gagal("Isi UID atau nomor ID user");
     try { await pastikan(env, who); } catch (e) { return gagal("Akun belum punya dompet: " + String(e?.message ?? e)); }

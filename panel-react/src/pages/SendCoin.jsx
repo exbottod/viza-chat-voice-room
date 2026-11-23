@@ -88,9 +88,12 @@ export default function SendCoin() {
     setSibuk(true);
     setHasil(null);
     try {
+      // Nomor ID dicari dulu di daftar yang sudah dimuat panel, jadi tetap
+      // jalan walau server sedang tidak bisa membaca Firestore.
+      const dariDaftar = !pilih && nomor ? daftar.find((u) => u.nomor === nomor) : null;
       const out = await walletAdmin(semua
         ? { op: "hadiah_user", semua: 1, coins: coin, diamonds: gem, vip, hari }
-        : { op: "hadiah_user", uid: pilih?.uid || "", id: nomor, coins: coin, diamonds: gem, vip, hari });
+        : { op: "hadiah_user", uid: pilih?.uid || dariDaftar?.uid || "", id: nomor, coins: coin, diamonds: gem, vip, hari });
       if (Number(out?.ok) !== 1) throw new Error(out?.e || "Server menolak");
       const tujuan = semua ? "SEMUA USER" : (pilih?.nama || ("ID " + (nomor || pilih?.nomor || "")));
       const rincian = [

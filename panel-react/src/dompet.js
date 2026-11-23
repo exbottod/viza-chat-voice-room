@@ -20,7 +20,8 @@ export async function walletAdminUlang(p, batasMs = 15000, percobaan = 3) {
     catch (e) {
       galat = e;
       const msg = String(e?.message || e);
-      const putus = msg.includes("Tidak bisa menghubungi") || msg.includes("tidak menjawab");
+      const putus = msg.includes("Tidak bisa menghubungi") || msg.includes("tidak menjawab")
+        || msg.includes("Server sedang sibuk") || msg.includes("Failed to fetch");
       if (!putus || i === percobaan - 1) break;
       await new Promise((r) => setTimeout(r, 1500 * (i + 1)));
     }

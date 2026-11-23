@@ -50,12 +50,16 @@ export default function Wallet() {
     if (sibuk) return; // cegah klik ganda
     setSibuk(true);
     try {
-      await walletAdminUlang({ op: "manual_decide", id, ok }, 20000, 3);
+      // Batas tunggu lebih longgar (45 dtk): menambah coin ke dompet bisa
+      // tertahan sebentar saat server sibuk. Aman diulang karena server
+      // mengunci pengajuan, jadi coin tidak pernah masuk dua kali.
+      await walletAdminUlang({ op: "manual_decide", id, ok }, 45000, 3);
       await catatLog(ok ? "Setujui top-up manual" : "Tolak top-up manual", id);
       toast(ok ? "Top-up disetujui, coin sudah dikirim" : "Top-up ditolak");
     } catch (e) {
       const pesan = String(e.message || e);
       if (pesan.includes("sudah diproses")) toast("Pengajuan ini sudah diproses sebelumnya");
+      else if (pesan.includes("tetap menunggu")) toast(pesan, true);
       else toast("Gagal: " + pesan + " Daftar disegarkan, cek dulu apakah coin sudah masuk sebelum mencoba lagi.", true);
     } finally {
       setSibuk(false); setTanya(null);

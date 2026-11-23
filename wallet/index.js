@@ -2626,7 +2626,9 @@ async function beriCoin(env, uid, coins, kind, itemId) {
   if (n <= 0) return 0;
   const now = Date.now();
   await pastikan(env, uid);
-  await pipe(env, [
+  // pipeTrx mengulang otomatis bila database sedang sibuk (bentrok transaksi),
+  // jadi menambah coin tidak gagal hanya karena permintaan lain sedang jalan.
+  await pipeTrx(env, [
     { sql: "begin immediate" },
     { sql: "update wallets set coins = coins + ?, updated_at = ? where uid = ?", args: [I(n), I(now), T(uid)] },
     {
@@ -5223,7 +5225,20 @@ async function admin(env, body) {
       },
     ]);
     if (kunci[0].affected === 0) return gagal("Pengajuan sudah diproses");
-    if (setuju) await beriCoin(env, String(row.uid), Number(row.coins), "topup", null);
+    if (setuju) {
+      try {
+        await beriCoin(env, String(row.uid), Number(row.coins), "topup", null);
+      } catch (e) {
+        // Coin gagal masuk: kembalikan ke menunggu supaya bisa disetujui lagi
+        // dan tidak tercatat "disetujui" padahal saldo pembeli belum bertambah.
+        try {
+          await pipe(env, [
+            { sql: "update topup_manual set status = 'pending', decided_at = null where id = ? and status = 'ok'", args: [T(id)] },
+          ]);
+        } catch (e2) { /* tetap laporkan galat asli */ }
+        return gagal("Coin belum masuk, pengajuan tetap menunggu. Coba Setujui lagi. (" + String(e?.message ?? e).slice(0, 120) + ")");
+      }
+    }
     return json({ ok: 1, r: { id, uid: row.uid, coins: row.coins, status: setuju ? "ok" : "tolak" } });
   }
   if (op === "get") {

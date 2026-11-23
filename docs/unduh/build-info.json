@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.397",
-  "catatan": "• Avatar di kursi mic tidak lagi berkedip atau naik-turun; cincin suara kini tenang dan hanya mengikut\n• Pemberitahuan masuk kamar langsung muncul di daftar chat saat kamu masuk room\n• Tampilan kursi tetap ringan saat banyak orang bicara",
-  "ukuran_apk": 75804898,
-  "sha256_apk": "18e0440da7876e05a589334150559f6221d2bd6b0f7f2051f3f42308e311628f",
+  "versi": "1.0.398",
+  "catatan": "• Avatar di kursi mic kini benar-benar diam: tidak berkedip dan tidak naik-turun lagi\n• Penanda bicara berupa satu cincin tipis yang tenang selama orangnya berbicara\n• Banner masuk, efek masuk, bingkai, lencana, dan medali tetap diambil lewat server Viza\n• Masuk room langsung tampil, aset tidak diunduh ulang saat sudah di room",
+  "ukuran_apk": 75804541,
+  "sha256_apk": "e7d3e84a72d75f34bfdc5c26d82284a90f9807bce62b7aa948ec6238ffcbdf78",
   "abis": {
     "arm64": {
-      "ukuran": 75804898,
-      "sha256": "18e0440da7876e05a589334150559f6221d2bd6b0f7f2051f3f42308e311628f"
+      "ukuran": 75804541,
+      "sha256": "e7d3e84a72d75f34bfdc5c26d82284a90f9807bce62b7aa948ec6238ffcbdf78"
     },
     "armv7": {
-      "ukuran": 74039421,
-      "sha256": "fe4ebbfc4a11f2b44acdd4fb34f6627bbe23b009c5ab825dd7c3f3a28a45fcbb"
+      "ukuran": 74039047,
+      "sha256": "eeb526493338fa5afbb34339c213ad879cf366e25c1828aafed39d0d5eb3c814"
     },
     "universal": {
-      "ukuran": 123658899,
-      "sha256": "33773a748d598ddc55dc1a655992eabb8648134b5e26c1fa13decd822db04998"
+      "ukuran": 123658540,
+      "sha256": "5a2d2925ed7fb63dd0e0602164f8dd29fb5831dfd04fe9712fcfb48056ac5d7c"
     }
   }
 }

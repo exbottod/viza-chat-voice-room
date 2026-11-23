@@ -733,7 +733,8 @@ object UserDirectory {
 
 /**
  * ID custom (item Unique ID) dipetakan ke akun lewat RTDB:
- *   uidCustom/{nomorID} = { uid, itemId }  -> dipakai pencarian & profil
+ *   uidCustom/{nomorID} = { uid, itemId, aktif } -> pencarian, profil, dan
+ *     penanda bahwa nomor itu sudah dimiliki (aktif=false artinya tidak dipasang)
  *   uidAliasOf/{uid}    = nomorID          -> supaya bisa dilepas lagi
  * Satu nomor hanya boleh dipakai satu akun; akun lain ditolak.
  */
@@ -749,10 +750,17 @@ object UidAlias {
             val bekas = Rtdb.ref("uidAliasOf/$uid").get().await().getValue(String::class.java).orEmpty()
             if (bekas.isNotBlank() && bekas != nomor) {
                 val pemilikBekas = Rtdb.ref("uidCustom/$bekas/uid").get().await().getValue(String::class.java).orEmpty()
-                if (pemilikBekas == uid) Rtdb.ref("uidCustom/$bekas").removeValue().await()
+                // Tetap milik akun ini, hanya tidak dipakai: ID unik yang sudah
+                // dibeli tidak kembali ke Store.
+                if (pemilikBekas == uid) {
+                    try { Rtdb.ref("uidCustom/$bekas/aktif").setValue(false).await() } catch (e: Exception) { }
+                }
             }
             Rtdb.ref("uidCustom/$nomor").setValue(
-                hashMapOf<String, Any?>("uid" to uid, "itemId" to itemId, "at" to System.currentTimeMillis()),
+                hashMapOf<String, Any?>(
+                    "uid" to uid, "itemId" to itemId,
+                    "at" to System.currentTimeMillis(), "aktif" to true,
+                ),
             ).await()
             Rtdb.ref("uidAliasOf/$uid").setValue(nomor).await()
             null
@@ -827,10 +835,14 @@ object UidAlias {
                 if (nomor.isNotBlank()) {
                     val pemilik = Rtdb.ref("uidCustom/$nomor/uid").get().await().getValue(String::class.java).orEmpty()
                     if (pemilik == uid || pemilik.isBlank()) {
-                        try { Rtdb.ref("uidCustom/$nomor").removeValue().await() } catch (e: Exception) { }
+                        // Dilepas dari profil, TAPI kepemilikannya tetap. Kalau
+                        // catatannya dihapus, ID unik muncul lagi di Store dan bisa
+                        // dibeli akun lain, lalu satu nomor menunjuk dua akun.
+                        try {
+                            Rtdb.ref("uidCustom/$nomor/aktif").setValue(false).await()
+                        } catch (e: Exception) { }
                     }
                 }
-                try { Rtdb.ref("uidAliasOf/$uid").removeValue().await() } catch (e: Exception) { }
             }
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e

@@ -5226,7 +5226,9 @@ async function admin(env, body) {
     if (nomorUnik) {
       // Alias pencarian: uidCustom/{nomor} = { uid, itemId }, sama dengan yang
       // ditulis aplikasi saat pemain memasang ID, jadi pencarian ID langsung jalan.
-      await tulisRtdbSa(env, `uidCustom/${nomorUnik}`, { uid: uidI, itemId: "sx_" + itemI, at: Date.now() });
+      // aktif=false nanti dipakai saat pemain melepas ID unik dari profil:
+      // nomornya tetap milik akun ini dan tidak kembali dijual di Store.
+      await tulisRtdbSa(env, `uidCustom/${nomorUnik}`, { uid: uidI, itemId: "sx_" + itemI, at: Date.now(), aktif: true });
       await tulisRtdbSa(env, `uidAliasOf/${uidI}`, nomorUnik);
     }
     // Langsung pasang di akun penerima (opsional). Lencana bisa banyak, jadi

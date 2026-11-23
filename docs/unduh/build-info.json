@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.401",
-  "catatan": "• Avatar di kursi mic kini benar-benar diam, tidak berkedip saat ada suara\n• Cincin bicara menyala halus dan baru memudar setelah benar-benar sepi\n• Kursi tidak lagi menghitung ulang puluhan kali per detik, jadi room lebih ringan\n• Pindah tab dan membuka halaman tetap bergeser halus",
-  "ukuran_apk": 75806056,
-  "sha256_apk": "74805763150f8da882a6cd1c6749aacfabfd6737d8e622125a7c50d8f2c12ad2",
+  "versi": "1.0.402",
+  "catatan": "• Avatar di kursi mic benar-benar diam, tidak ada lagi yang muncul-hilang cepat\n• Bingkai di kursi mic bergerak lagi seperti sebelumnya\n• Bingkai tidak dibuat ulang saat layar dihitung ulang, jadi tidak berkedip\n• Pindah tab dan membuka halaman tetap bergeser halus",
+  "ukuran_apk": 75805894,
+  "sha256_apk": "ff40d0c8c84833a82a6754203eb03fdd3a5cd837061c5396b8317eee3c65ec08",
   "abis": {
     "arm64": {
-      "ukuran": 75806056,
-      "sha256": "74805763150f8da882a6cd1c6749aacfabfd6737d8e622125a7c50d8f2c12ad2"
+      "ukuran": 75805894,
+      "sha256": "ff40d0c8c84833a82a6754203eb03fdd3a5cd837061c5396b8317eee3c65ec08"
     },
     "armv7": {
-      "ukuran": 74040575,
-      "sha256": "73af30a785892b52a22795bea7e1a11494f6442496cf705273c5fa735777b578"
+      "ukuran": 74040419,
+      "sha256": "1df35137774557297ec99d2277225f51a8792f8093ac13592833a13cd08461fd"
     },
     "universal": {
-      "ukuran": 123660067,
-      "sha256": "c96d55b491c88a91eba503a4bf24be46ada94a37ebd6861e45fe4ada781bedb9"
+      "ukuran": 123659902,
+      "sha256": "8b508a0ab25e2b5dfb8149ca25cfc5c25b49e6ddf4e149658b3667dde0f46c55"
     }
   }
 }

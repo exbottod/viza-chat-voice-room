@@ -1,4 +1,4 @@
-• Avatar di kursi mic kini benar-benar diam, tidak berkedip saat ada suara
-• Cincin bicara menyala halus dan baru memudar setelah benar-benar sepi
-• Kursi tidak lagi menghitung ulang puluhan kali per detik, jadi room lebih ringan
+• Avatar di kursi mic benar-benar diam, tidak ada lagi yang muncul-hilang cepat
+• Bingkai di kursi mic bergerak lagi seperti sebelumnya
+• Bingkai tidak dibuat ulang saat layar dihitung ulang, jadi tidak berkedip
 • Pindah tab dan membuka halaman tetap bergeser halus

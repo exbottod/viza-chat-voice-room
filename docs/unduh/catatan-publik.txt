@@ -1,5 +1,6 @@
-Pemberitahuan masuk kamar kini selalu muncul di daftar chat saat kamu masuk room
-Tombol Turun Mic bisa dipakai dengan pasti dan kursinya benar-benar kosong
-Tombol Turun Mic juga ada di menu Alat dasar, jadi lebih mudah ditemukan
+Pindah tab kini bergeser halus ke samping, tidak lagi melompat
+Setiap halaman yang dibuka masuk dengan geseran halus dan menutup dengan rapi
+Geseran dibuat singkat supaya aplikasi tetap ringan dan tidak memuat ulang isi
+Pemberitahuan masuk kamar selalu muncul, tombol Turun Mic pasti bekerja
 Avatar di kursi mic tetap diam, tidak berkedip atau naik-turun
 Banner masuk, efek masuk, bingkai, lencana, dan medali tetap diambil lewat server Viza

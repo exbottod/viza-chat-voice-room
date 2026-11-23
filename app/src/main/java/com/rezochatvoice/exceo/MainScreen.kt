@@ -7,6 +7,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import androidx.compose.foundation.layout.Box
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.layout.WindowInsets
@@ -611,7 +618,24 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
                     padding
                 }
                 Box(Modifier.fillMaxSize().padding(contentPadding)) {
-                    when (selected) {
+                    // Geseran halus saat berpindah tab: isi tab lama bergeser keluar,
+                    // isi tab tujuan masuk dari sisinya. Hanya 220 ms, isi tab tidak
+                    // dimuat ulang dan tidak ada data yang diambil lagi.
+                    AnimatedContent(
+                        targetState = selected,
+                        transitionSpec = {
+                            val maju = targetState > initialState
+                            (
+                                slideInHorizontally(tween(220)) { lebar -> if (maju) lebar / 7 else -lebar / 7 } +
+                                    fadeIn(tween(180))
+                                ) togetherWith (
+                                slideOutHorizontally(tween(220)) { lebar -> if (maju) -lebar / 7 else lebar / 7 } +
+                                    fadeOut(tween(140))
+                                )
+                        },
+                        label = "tab",
+                    ) { tabAktif ->
+                    when (tabAktif) {
                         0 -> KecilkanKonten(0.88f) {
                             PartyTab(
                                 myUid = uid,
@@ -661,10 +685,30 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
                         )
                         }
                     }
+                    }
                 }
             }
 
-            when (overlay) {
+            // Geseran halus saat halaman dibuka dan ditutup: halaman masuk dari
+            // kanan, dan saat ditutup bergeser keluar ke kanan.
+            AnimatedContent(
+                targetState = overlay,
+                transitionSpec = {
+                    if (targetState != OV_NONE) {
+                        (
+                            slideInHorizontally(tween(240)) { lebar -> lebar / 4 } +
+                                fadeIn(tween(190))
+                            ) togetherWith fadeOut(tween(120))
+                    } else {
+                        fadeIn(tween(170)) togetherWith (
+                            slideOutHorizontally(tween(240)) { lebar -> lebar / 4 } +
+                                fadeOut(tween(190))
+                            )
+                    }
+                },
+                label = "halaman",
+            ) { layarAktif ->
+            when (layarAktif) {
                 OV_EDIT -> EditProfileScreen(
                     user = user,
                     userId = userId,
@@ -693,6 +737,7 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
                     name = myName,
                     onBack = { overlay = OV_NONE },
                 )
+            }
             }
 
             // Halaman reward room (Koin banyak): dibuka dari ikon di dalam room

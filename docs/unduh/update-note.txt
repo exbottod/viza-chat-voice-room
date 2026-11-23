@@ -1,4 +1,3 @@
-• Panel developer: tombol Ubah nama dan Reset nama untuk setiap room
-• Panel developer: Hapus room membuat room langsung hilang dan pemilik bisa membuat room baru kapan sa
-• Panel developer: Bersihkan room mengeluarkan semua peserta lalu kursi mic dan chat dikosongkan
-• Panel developer: tab Momen user untuk melihat pratinjau dan menghapus momen
+• Efek masuk yang sudah dilepas benar-benar hilang, tidak muncul lagi efek lama
+• Ganti efek masuk langsung memakai efek yang baru dipilih, tanpa efek bawaan menyelip
+• Banner masuk yang dilepas juga tidak kembali sendiri

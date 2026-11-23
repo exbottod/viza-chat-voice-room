@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.393",
-  "catatan": "• Panel developer: tombol Ubah nama dan Reset nama untuk setiap room\n• Panel developer: Hapus room membuat room langsung hilang dan pemilik bisa membuat room baru kapan sa\n• Panel developer: Bersihkan room mengeluarkan semua peserta lalu kursi mic dan chat dikosongkan\n• Panel developer: tab Momen user untuk melihat pratinjau dan menghapus momen",
-  "ukuran_apk": 75800316,
-  "sha256_apk": "202849a8ba91e698a0957a0d8c85efc02e2bb8f3c5609df3b88efc0714669efc",
+  "versi": "1.0.394",
+  "catatan": "• Efek masuk yang sudah dilepas benar-benar hilang, tidak muncul lagi efek lama\n• Ganti efek masuk langsung memakai efek yang baru dipilih, tanpa efek bawaan menyelip\n• Banner masuk yang dilepas juga tidak kembali sendiri",
+  "ukuran_apk": 75800637,
+  "sha256_apk": "3827b628e9975488095c2e8d1bc022999f45ea47aa2153818bebb606f9b21ed0",
   "abis": {
     "arm64": {
-      "ukuran": 75800316,
-      "sha256": "202849a8ba91e698a0957a0d8c85efc02e2bb8f3c5609df3b88efc0714669efc"
+      "ukuran": 75800637,
+      "sha256": "3827b628e9975488095c2e8d1bc022999f45ea47aa2153818bebb606f9b21ed0"
     },
     "armv7": {
-      "ukuran": 74034832,
-      "sha256": "135831608e7e03d6c4ee600dfbd57b3ee302f808cac5c259ca7d6828a5039735"
+      "ukuran": 74035149,
+      "sha256": "8b405af89b1d66dde67aff9df8ca85e87d0f2d282848947091b3d3badea1a654"
     },
     "universal": {
-      "ukuran": 123654319,
-      "sha256": "ac478080c44515b86e6801c31daf55d89ccc596f09e0d79e7f23fa698a0a2758"
+      "ukuran": 123654630,
+      "sha256": "674631c3ef4cec6c7ac7b5570e84ae013fd0166cffdb1bf2f450a84893de736e"
     }
   }
 }

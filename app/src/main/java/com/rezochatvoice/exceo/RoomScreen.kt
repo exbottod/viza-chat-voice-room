@@ -326,15 +326,38 @@ fun RoomScreen(
     androidx.compose.runtime.LaunchedEffect(room) {
         room?.let { RoomCache.simpanInfo(ctxSimpan, it) }
     }
+    // Saat pindah kursi, kursi LAMA kita disembunyikan dan profil kita hanya tampil
+    // di kursi tujuan. Dulu keduanya tampil sekaligus (profil menempel jadi dua)
+    // sampai server menghapus kursi lama. Kursi tujuan tetap kosong di layar orang
+    // lain sampai server benar-benar memindahkan, jadi tidak ada loncatan palsu.
     val seats = rawSeats.filterValues { it.uid in members }.let { asli ->
         val k = kursiCepat
         if (k == null || asli[k]?.uid == myUid) asli
-        else asli + (k to Seat(index = k, uid = myUid, name = myName, avatarB64 = myAvatarB64, muted = false))
+        else {
+            val tanpaLama = asli.filterValues { it.uid != myUid }
+            val fotoSaya = asli.values.firstOrNull { it.uid == myUid }?.avatarB64 ?: myAvatarB64
+            tanpaLama + (k to Seat(index = k, uid = myUid, name = myName, avatarB64 = fotoSaya, muted = false))
+        }
     }
     // Profil orang yang duduk dipanaskan SEKALI di sini, bukan dari dalam tiap sel
     // kursi. Dulu setiap sel memanggil server sendiri saat dibuat ulang, jadi pindah
     // kursi terasa "memuat" berkali-kali. Yang sudah dicoba dicatat supaya tidak diulang.
     val profilDicoba = remember { java.util.Collections.synchronizedSet(HashSet<String>()) }
+    val hitunganDicoba = remember { java.util.Collections.synchronizedSet(HashSet<String>()) }
+    // Foto semua penghuni kursi didekode SEKALI ke cache bersama (ukuran kursi), jadi
+    // pindah kursi atau kursi dibuat ulang tinggal mengambil gambar yang sudah ada,
+    // tanpa decode dan tanpa tampil kosong sesaat.
+    val pxHangat = with(androidx.compose.ui.platform.LocalDensity.current) { 54.dp.toPx().toInt() }.coerceIn(96, 256)
+    LaunchedEffect(seats.values.map { (it.uid + "|" + (it.avatarB64?.length ?: 0)) }) {
+        for (st in seats.values) {
+            val foto = st.avatarB64?.takeIf { it.isNotBlank() } ?: UserCache.peek(st.uid)?.avatarB64
+            if (!foto.isNullOrBlank() && ProfileRepo.avatarKecilCached(foto, pxHangat) == null) {
+                launch(kotlinx.coroutines.Dispatchers.IO) {
+                    try { ProfileRepo.decodeAvatarKecil(foto, pxHangat) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { }
+                }
+            }
+        }
+    }
     LaunchedEffect(seats.values.map { it.uid }.sorted()) {
         // Semua kursi dimuat BERSAMAAN. Dulu satu per satu, jadi room dengan
         // 8-10 kursi terisi butuh 8-10 kali menunggu jaringan berurutan dan
@@ -345,7 +368,9 @@ fun RoomScreen(
         // jadi saat sheet kursi diketuk angkanya sudah ada.
         val semua = seats.values.map { it.uid }.distinct().filter { it.isNotBlank() }
         for (u in semua) {
-            if (FollowRepo.countsTersimpan(u) == null) {
+            // Sekali per orang selama room terbuka: pindah kursi atau kembali dari
+            // aplikasi lain tidak memanggil jaringan lagi untuk orang yang sama.
+            if (FollowRepo.countsTersimpan(u) == null && hitunganDicoba.add(u)) {
                 launch(kotlinx.coroutines.Dispatchers.IO) {
                     try { FollowRepo.counts(u) } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) { }
                 }

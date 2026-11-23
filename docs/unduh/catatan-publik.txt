@@ -1,3 +1,3 @@
-Tulisan nomor kursi mic kembali seperti semula, hanya nama pengguna yang turun sedikit agar sejajar
-Saat mic menyala, tombol volume mengatur volume media, bukan volume panggilan
-Balon suara transparan muncul di belakang foto kursi mic saat ada suara
+Pindah kursi mic: profil tidak lagi tampil dobel, langsung berpindah ke kursi tujuan
+Foto dan data kursi dimuat sekali saat masuk room, pindah kursi tidak memuat ulang
+Nama pengguna di kursi mic turun sedikit dan sejajar dengan nomor kursi di sebelahnya

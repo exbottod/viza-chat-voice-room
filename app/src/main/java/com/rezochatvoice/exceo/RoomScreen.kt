@@ -332,12 +332,24 @@ fun RoomScreen(
     // lain sampai server benar-benar memindahkan, jadi tidak ada loncatan palsu.
     val seats = rawSeats.filterValues { it.uid in members }.let { asli ->
         val k = kursiCepat
-        if (k == null || asli[k]?.uid == myUid) asli
+        val dasar = if (k == null || asli[k]?.uid == myUid) asli
         else {
             val tanpaLama = asli.filterValues { it.uid != myUid }
             val fotoSaya = asli.values.firstOrNull { it.uid == myUid }?.avatarB64 ?: myAvatarB64
             tanpaLama + (k to Seat(index = k, uid = myUid, name = myName, avatarB64 = fotoSaya, muted = false))
         }
+        // Satu orang hanya boleh tampil di SATU kursi. Kalau data server masih
+        // menyimpan kursi lama (penghapusan gagal sesaat), foto orang itu tidak
+        // boleh muncul dua kali: kursi tujuan kita menang, selain itu kursi
+        // bernomor terkecil yang dipakai supaya pilihannya tetap sama di semua HP.
+        val hasil = LinkedHashMap<Int, Seat>()
+        val sudah = HashSet<String>()
+        if (k != null) dasar[k]?.let { hasil[k] = it; sudah.add(it.uid) }
+        for (i in dasar.keys.sorted()) {
+            val st = dasar[i] ?: continue
+            if (sudah.add(st.uid)) hasil[i] = st
+        }
+        hasil
     }
     // Profil orang yang duduk dipanaskan SEKALI di sini, bukan dari dalam tiap sel
     // kursi. Dulu setiap sel memanggil server sendiri saat dibuat ulang, jadi pindah

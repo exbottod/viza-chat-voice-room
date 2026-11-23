@@ -1,3 +1,3 @@
-Pindah kursi mic: profil tidak lagi tampil dobel, langsung berpindah ke kursi tujuan
+Pindah kursi mic tidak lagi meninggalkan foto di kursi lama, dan satu orang tidak mungkin tampil dobel
 Foto dan data kursi dimuat sekali saat masuk room, pindah kursi tidak memuat ulang
-Nama pengguna di kursi mic turun sedikit dan sejajar dengan nomor kursi di sebelahnya
+Nama pengguna di kursi mic sejajar dengan nomor kursi dan tidak terpotong

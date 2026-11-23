@@ -924,17 +924,15 @@ object RoomRepo {
                 }
             }
             if (err != null) return err
-            // Kursi lama langsung dihapus tanpa membaca ulang seluruh node seats:
-            // layar sudah tahu di kursi mana pengguna tadi duduk.
+            // Kursi lama dihapus. Daftar kursi dibaca sekali dan SEMUA kursi lain milik
+            // uid yang sama dibersihkan, bukan hanya kursi yang diingat layar: kalau
+            // satu penghapusan gagal (jaringan putus sesaat), foto kita tertinggal di
+            // mic lain dan terlihat sebagai profil dobel oleh semua orang di room.
             val lama = HashMap<String, Any?>()
-            if (kursiLama != null && kursiLama.toString() != index.toString()) {
-                lama[kursiLama.toString()] = null
-            } else if (kursiLama == null) {
-                for (c in base.get().await().children) {
-                    if (c.key != index.toString() && c.child("uid").getValue(String::class.java) == uid) {
-                        lama[c.key!!] = null
-                    }
-                }
+            for (c in base.get().await().children) {
+                val kunci = c.key ?: continue
+                if (kunci == index.toString()) continue
+                if (c.child("uid").getValue(String::class.java) == uid) lama[kunci] = null
             }
             if (lama.isNotEmpty()) base.updateChildren(lama).await()
             for (k in lama.keys) Rtdb.ref("micPoints/$roomId/$k").removeValue()

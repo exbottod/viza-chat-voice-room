@@ -2255,11 +2255,10 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
                 }
             }
         }
-        Row(Modifier.width(size + 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-            if (seat != null) {
-                PeranRoomIcon(seat.uid, ukuran = 12.dp)
-                if (LocalPeranRoom.current.peranDari(seat.uid) != PeranRoom.BIASA) Spacer(Modifier.width(3.dp))
-            }
+        // Nama di mic selebar kolom kursi, jadi letaknya rata tengah sama seperti
+        // tulisan "MC"/"No.7" pada kursi kosong. Lebarnya tetap dibatasi kolom
+        // supaya nama panjang tidak menyorok ke kursi sebelah.
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             VipNameByUid(
                 seat?.name ?: (if (index == 0) "MC" else "No.${index + 1}"),
                 seat?.uid,
@@ -2268,8 +2267,17 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.weight(1f, fill = false),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
             )
+            // Ikon peran digambar menumpuk di sisi kiri, bukan ikut menggeser
+            // nama, supaya nama tetap tepat di tengah kursi.
+            if (seat != null && LocalPeranRoom.current.peranDari(seat.uid) != PeranRoom.BIASA) {
+                PeranRoomIcon(
+                    seat.uid,
+                    modifier = Modifier.align(Alignment.CenterStart).padding(start = 1.dp),
+                    ukuran = 12.dp,
+                )
+            }
         }
         // Ikon poin selalu tampil saat kalkulator menyala (termasuk 0 setelah
         // direset), dan hanya hilang saat Matikan kalkulator dipilih.

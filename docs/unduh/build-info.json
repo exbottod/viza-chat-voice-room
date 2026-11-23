@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.379",
-  "catatan": "• ID unik yang masa berlakunya habis otomatis kembali ke Store dan bisa dibeli lagi\n• Banner iklan coin gratis di tab Party bisa diganti dari panel tanpa update aplikasi\n• ID unik yang sudah dibeli tidak muncul lagi di Store selama masih aktif\n• Perbaikan kecil dan peningkatan kecepatan aplikasi",
-  "ukuran_apk": 75790135,
-  "sha256_apk": "14bb2c9e051651a0ffcd14a4f335b30eb577203cf12399c7753e3ac100627f93",
+  "versi": "1.0.380",
+  "catatan": "• Gift video MP4 sekarang benar-benar diputar saat dikirim di room\n• Gift berupa GIF, WebP, dan SVGA tetap tampil seperti biasa\n• Banner iklan di tab Party bisa diganti dari panel\n• Perbaikan kecil dan peningkatan kecepatan aplikasi",
+  "ukuran_apk": 75790521,
+  "sha256_apk": "dfe6955de2ea0dd4566f4e11b9e7621a79b2089889f8bb7b098ffc18278ac04b",
   "abis": {
     "arm64": {
-      "ukuran": 75790135,
-      "sha256": "14bb2c9e051651a0ffcd14a4f335b30eb577203cf12399c7753e3ac100627f93"
+      "ukuran": 75790521,
+      "sha256": "dfe6955de2ea0dd4566f4e11b9e7621a79b2089889f8bb7b098ffc18278ac04b"
     },
     "armv7": {
-      "ukuran": 74024647,
-      "sha256": "5901ff28e79ad6ab0247fa6f7d9dbaec2a0ea52cd006dd9b4df1dbbc59c9d453"
+      "ukuran": 74025041,
+      "sha256": "d3caccdf08a6491fe6810a49faff7e8d637a7dc974e27a91bb4ce92c9d719a77"
     },
     "universal": {
-      "ukuran": 123644160,
-      "sha256": "97210f27f94625fba5129b4ce6d05bf1ea08223925bb00c86a121ed4b4a657dd"
+      "ukuran": 123644536,
+      "sha256": "19912c0ace0a73dcb43881b91286d91ecb52c34bdd81ce455e2818bb4a5aac75"
     }
   }
 }

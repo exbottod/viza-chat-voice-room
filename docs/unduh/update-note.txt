@@ -1,4 +1,4 @@
-• ID unik yang masa berlakunya habis otomatis kembali ke Store dan bisa dibeli lagi
-• Banner iklan coin gratis di tab Party bisa diganti dari panel tanpa update aplikasi
-• ID unik yang sudah dibeli tidak muncul lagi di Store selama masih aktif
+• Gift video MP4 sekarang benar-benar diputar saat dikirim di room
+• Gift berupa GIF, WebP, dan SVGA tetap tampil seperti biasa
+• Banner iklan di tab Party bisa diganti dari panel
 • Perbaikan kecil dan peningkatan kecepatan aplikasi

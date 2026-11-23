@@ -319,7 +319,7 @@ fun ProfileTab(
                                     Text(tr("UID:$userId"), color = ink.copy(alpha = 0.75f), fontSize = 13.sp)
                                 }
                                 Spacer(Modifier.width(6.dp))
-                                Text("📋", fontSize = 14.sp)
+                                IkonSalin(15.dp)
                             }
                             Spacer(Modifier.width(10.dp))
                             LevelBadge(level)

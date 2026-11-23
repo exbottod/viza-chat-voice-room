@@ -362,7 +362,7 @@ fun OtherProfileScreen(
                             Text(tr("UID:${shownId}"), color = Muted, fontSize = 16.sp)
                         }
                         Spacer(Modifier.width(8.dp))
-                        Text("📋", fontSize = 14.sp)
+                        IkonSalin(15.dp)
                     }
                     Spacer(Modifier.height(14.dp))
                     if (!hidden) {

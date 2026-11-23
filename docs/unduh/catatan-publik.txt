@@ -1,4 +1,4 @@
-Gift video MP4 sekarang benar-benar diputar saat dikirim di room
-Gift berupa GIF, WebP, dan SVGA tetap tampil seperti biasa
-Banner iklan di tab Party bisa diganti dari panel
+Ikon salin ID di profil diganti ikon baru yang lebih rapi
+Gift video MP4 diputar saat dikirim di room
+Emot GIF tampil dan bergerak di room
 Perbaikan kecil dan peningkatan kecepatan aplikasi

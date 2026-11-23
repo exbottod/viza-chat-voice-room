@@ -3,6 +3,7 @@ import { walletAdmin } from "../dompet.js";
 import { tulisRtdbServer, unggahBerkas, kunciVip } from "../unggah.js";
 import { useKoleksi, rupiah, catatLog } from "../data.js";
 import { Konfirmasi, Laci, Rangka, toast } from "../ui.jsx";
+import { Pratinjau, Thumb, ekstensi, jenisMedia } from "../pratinjau.jsx";
 
 /** Gift dari Firestore (lama) digabung dengan RTDB giftCfg (utama). RTDB menang. */
 function useGiftGabungan() {
@@ -58,6 +59,24 @@ export default function GiftDaftar() {
   const [progres, setProgres] = useState("");
   const [berkasIkon, setBerkasIkon] = useState(null);
   const [berkasMedia, setBerkasMedia] = useState(null);
+  // Alamat sementara berkas yang baru dipilih, dibuat sekali lalu dilepas
+  // otomatis supaya tidak bocor memori tiap render.
+  const [alamatIkon, setAlamatIkon] = useState("");
+  const [alamatMedia, setAlamatMedia] = useState("");
+  useEffect(() => {
+    if (!berkasIkon) { setAlamatIkon(""); return; }
+    const u = URL.createObjectURL(berkasIkon);
+    setAlamatIkon(u);
+    return () => URL.revokeObjectURL(u);
+  }, [berkasIkon]);
+  useEffect(() => {
+    if (!berkasMedia) { setAlamatMedia(""); return; }
+    const u = URL.createObjectURL(berkasMedia);
+    setAlamatMedia(u);
+    return () => URL.revokeObjectURL(u);
+  }, [berkasMedia]);
+  // Pratinjau penuh (SVGA/MP4/PNG/GIF/WebP diputar sungguhan).
+  const [lihat, setLihat] = useState(null);
 
   const kelompok = useMemo(() => {
     const k = { Cashback: [], Special: [], Roket: [], "Gift biasa": [] };
@@ -101,7 +120,7 @@ export default function GiftDaftar() {
         setProgres("mengunggah animasi…");
         media = await unggahBerkas(berkasMedia, "gift", (p) => setProgres("animasi " + p + "%"));
         const e = (berkasMedia.name.split(".").pop() || "").toLowerCase();
-        tipe = e === "svga" ? "svga" : e === "mp4" ? "mp4" : "image";
+        tipe = e === "svga" ? "svga" : ["mp4", "webm", "mov", "m4v"].includes(e) ? "mp4" : "image";
       }
       const id = form.id || ("g_" + Date.now().toString(36));
       const data = {
@@ -203,22 +222,55 @@ export default function GiftDaftar() {
             </label>
 
             <div className="kotakPratinjau">
-              <div className="judulPratinjau">Ikon gift (1:1)</div>
+              <div className="judulPratinjau">Ikon gift (1:1) · PNG, GIF, WebP, SVGA, MP4</div>
               <div className="isiPratinjau">
-                {berkasIkon ? <img src={URL.createObjectURL(berkasIkon)} alt="" /> : form.ikon ? <img src={form.ikon} alt="" /> : <div className="ikonPratinjau"><span style={{ fontSize: 36 }}>{form.emoji}</span></div>}
+                {(() => {
+                  const src = alamatIkon || form.ikon;
+                  const nm = berkasIkon ? berkasIkon.name : form.ikon;
+                  if (!src) return <div className="ikonPratinjau"><span style={{ fontSize: 36 }}>{form.emoji}</span></div>;
+                  const jenis = jenisMedia(nm, ekstensi(nm));
+                  if (jenis === "gambar") return <img src={src} alt="" />;
+                  if (jenis === "video") return <video src={src} muted loop playsInline autoPlay />;
+                  return <div className="ikonPratinjau"><Thumb url={src} kind={ekstensi(nm)} nama={nm} lebar={84} /></div>;
+                })()}
                 <div className="ketPratinjau">
-                  <input type="file" accept="image/*" onChange={(e) => setBerkasIkon(e.target.files?.[0] || null)} />
+                  <b>{berkasIkon ? berkasIkon.name : form.ikon ? form.ikon.split("/").pop() : "Belum ada ikon"}</b>
+                  <input type="file" accept="image/*,video/mp4,.svga" onChange={(e) => setBerkasIkon(e.target.files?.[0] || null)} />
                   <span>Kosongkan bila ikon dibuat otomatis dari animasi.</span>
                 </div>
+                {(alamatIkon || form.ikon) ? (
+                  <button type="button" className="pil"
+                    onClick={() => { const nm = berkasIkon ? berkasIkon.name : form.ikon; setLihat({ url: alamatIkon || form.ikon, kind: ekstensi(nm), nama: form.nama || "Ikon gift" }); }}>Pratinjau</button>
+                ) : null}
               </div>
             </div>
             <div className="kotakPratinjau">
-              <div className="judulPratinjau">Animasi saat dikirim (SVGA atau MP4)</div>
+              <div className="judulPratinjau">Animasi saat dikirim · SVGA, MP4, PNG, GIF, WebP</div>
               <div className="isiPratinjau">
+                {(() => {
+                  const src = alamatMedia || form.media;
+                  const nm = berkasMedia ? berkasMedia.name : form.media;
+                  if (!src) return <div className="ikonPratinjau"><span style={{ fontSize: 36 }}>{form.emoji}</span></div>;
+                  const jenis = jenisMedia(nm, ekstensi(nm));
+                  if (jenis === "gambar") return <img src={src} alt="" />;
+                  if (jenis === "video") return <video src={src} muted loop playsInline autoPlay />;
+                  return (
+                    <div className="ikonPratinjau">
+                      <Thumb url={src} kind={ekstensi(nm)} nama={nm} lebar={84} />
+                      <b>{(ekstensi(nm) || "").toUpperCase()}</b>
+                      <i>Ketuk Pratinjau untuk memutar animasinya</i>
+                    </div>
+                  );
+                })()}
                 <div className="ketPratinjau">
                   <b>{berkasMedia ? berkasMedia.name : form.media ? form.media.split("/").pop() : "Belum ada animasi"}</b>
+                  {berkasMedia ? <span>{Math.max(1, Math.round(berkasMedia.size / 1024))} KB</span> : null}
                   <input type="file" accept=".svga,video/mp4,image/*" onChange={(e) => setBerkasMedia(e.target.files?.[0] || null)} />
                 </div>
+                {(alamatMedia || form.media) ? (
+                  <button type="button" className="pil"
+                    onClick={() => { const nm = berkasMedia ? berkasMedia.name : form.media; setLihat({ url: alamatMedia || form.media, kind: ekstensi(nm), nama: form.nama || "Animasi gift" }); }}>Pratinjau</button>
+                ) : null}
               </div>
             </div>
 
@@ -248,6 +300,8 @@ export default function GiftDaftar() {
           </>
         ) : null}
       </Laci>
+
+      <Pratinjau aset={lihat} onTutup={() => setLihat(null)} />
 
       <Konfirmasi buka={!!hapus} judul={"Hapus " + (hapus?.nama || "") + "?"}
         pesan="Gift hilang dari katalog dan tidak bisa dikirim lagi. Tindakan ini tidak bisa dibatalkan."

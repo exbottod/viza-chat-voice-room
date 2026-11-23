@@ -1,21 +1,21 @@
 {
   "status": "ok",
   "versi": "1.0.391",
-  "catatan": "• Room lebih ringan saat banyak orang bicara: tampilan suara hanya diperbarui bila benar-benar berubah\n• Pindah kursi mic tidak meninggalkan foto di kursi lama dan tidak tampil dobel\n• Foto dan data kursi dimuat sekali saat masuk room, pindah kursi tidak memuat ulang",
-  "ukuran_apk": 75797542,
-  "sha256_apk": "3fe26a73c27bfdb5eead235c40917d654c1a8d7f2dbce7ed67ec67f52abad058",
+  "catatan": "• Pindah kursi mic tidak lagi kembali sendiri ke kursi sebelumnya\n• Foto tidak tertinggal di kursi lama dan satu orang tidak mungkin tampil dobel\n• Room lebih ringan saat banyak orang bicara",
+  "ukuran_apk": 75797780,
+  "sha256_apk": "15ccf7162b86af8d0483c8b0a48aefcbca72de15568b29bb6eecd4352cb3b147",
   "abis": {
     "arm64": {
-      "ukuran": 75797542,
-      "sha256": "3fe26a73c27bfdb5eead235c40917d654c1a8d7f2dbce7ed67ec67f52abad058"
+      "ukuran": 75797780,
+      "sha256": "15ccf7162b86af8d0483c8b0a48aefcbca72de15568b29bb6eecd4352cb3b147"
     },
     "armv7": {
-      "ukuran": 74032069,
-      "sha256": "aa78f59a10bf6826474002d961d0a5540ebafc767240300853d1dd780042ad25"
+      "ukuran": 74032297,
+      "sha256": "b0056b2780d3322fff60d0514063d9777dd824317da82f089c6f30615dfb195b"
     },
     "universal": {
-      "ukuran": 123651551,
-      "sha256": "e30443f6b4111ebae3d592b7112483e79c3445033d1a5b0e1f644f485773046d"
+      "ukuran": 123651774,
+      "sha256": "daf69399f073630342938a8f2727b848047346194aeefb2a557417258a23c165"
     }
   }
 }

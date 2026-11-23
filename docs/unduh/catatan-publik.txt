@@ -1,3 +1,3 @@
-Room lebih ringan saat banyak orang bicara: tampilan suara hanya diperbarui bila benar-benar berubah
-Pindah kursi mic tidak meninggalkan foto di kursi lama dan tidak tampil dobel
-Foto dan data kursi dimuat sekali saat masuk room, pindah kursi tidak memuat ulang
+Pindah kursi mic tidak lagi kembali sendiri ke kursi sebelumnya
+Foto tidak tertinggal di kursi lama dan satu orang tidak mungkin tampil dobel
+Room lebih ringan saat banyak orang bicara

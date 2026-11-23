@@ -549,7 +549,7 @@ async function siapTabel(env) {
     { sql: "create table if not exists pay_info (id integer primary key, dana text, nama text, gopay text, qris text, updated_at integer)" },
     // Pengaturan dari panel developer (Agora, Firebase push, Stripe/Paystack, versi aplikasi).
     { sql: "create table if not exists app_cfg (kunci text primary key, nilai text, updated_at integer)" },
-    { sql: "create table if not exists topup_manual (id text primary key, uid text, coins integer, amount integer, payer text, method text, status text, created_at integer)" },
+    { sql: "create table if not exists topup_manual (id text primary key, uid text, coins integer, amount integer, payer text, method text, status text, created_at integer, decided_at integer)" },
     // Harga paket coin diatur dari panel developer, bukan ditulis mati di kode.
     { sql: "create table if not exists coin_paket (coins integer primary key, harga integer, aktif integer, updated_at integer)" },
     { sql: "create table if not exists money_tx (uid text, kind text, item_id text, amount integer, room_id text, created_at integer)" },
@@ -564,6 +564,18 @@ async function siapTabel(env) {
     { sql: "create table if not exists hive_order (order_id text primary key, uid text, kind text, amount integer, round_id text, game text, at integer)" },
     { sql: "create table if not exists wave_players (uid text primary key, name text, avatar text, updated_at integer)" },
   ]);
+  // Migrasi kolom yang ditambahkan belakangan. ALTER dijalankan terpisah dan
+  // galatnya ditelan, karena database lama belum punya kolom ini dan
+  // "duplicate column" bukan masalah. Tanpa kolom ini, tombol Setujui pada
+  // top-up manual selalu gagal ("no such column: decided_at").
+  for (const [tabel, kolom, tipe] of [
+    ["topup_manual", "decided_at", "integer"],
+    ["coin_paket", "aktif", "integer"],
+  ]) {
+    try {
+      await pipe(env, [{ sql: `alter table ${tabel} add column ${kolom} ${tipe}` }]);
+    } catch (e) { /* kolom sudah ada atau tabel belum dibuat */ }
+  }
   tabelSiap = true;
 }
 
@@ -5218,12 +5230,22 @@ async function admin(env, body) {
     if (!row) return gagal("Pengajuan tidak ditemukan");
     if (row.status !== "pending") return gagal("Pengajuan sudah diproses");
     // Kunci baris dulu supaya klik ganda tidak menambah coin dua kali.
-    const kunci = await pipe(env, [
+    // decided_at hanya penanda waktu. Kalau database lama belum punya kolomnya,
+    // status tetap diproses supaya Setujui tidak gagal.
+    const kunci = await pipeTrx(env, [
       {
         sql: "update topup_manual set status = ?, decided_at = ? where id = ? and status = 'pending'",
         args: [T(setuju ? "ok" : "tolak"), I(Date.now()), T(id)],
       },
-    ]);
+    ]).catch(async (e) => {
+      if (!/decided_at/i.test(String(e?.message ?? e))) throw e;
+      return pipe(env, [
+        {
+          sql: "update topup_manual set status = ? where id = ? and status = 'pending'",
+          args: [T(setuju ? "ok" : "tolak"), T(id)],
+        },
+      ]);
+    });
     if (kunci[0].affected === 0) return gagal("Pengajuan sudah diproses");
     if (setuju) {
       try {
@@ -5234,7 +5256,11 @@ async function admin(env, body) {
         try {
           await pipe(env, [
             { sql: "update topup_manual set status = 'pending', decided_at = null where id = ? and status = 'ok'", args: [T(id)] },
-          ]);
+          ]).catch(async () => {
+            await pipe(env, [
+              { sql: "update topup_manual set status = 'pending' where id = ? and status = 'ok'", args: [T(id)] },
+            ]);
+          });
         } catch (e2) { /* tetap laporkan galat asli */ }
         return gagal("Coin belum masuk, pengajuan tetap menunggu. Coba Setujui lagi. (" + String(e?.message ?? e).slice(0, 120) + ")");
       }

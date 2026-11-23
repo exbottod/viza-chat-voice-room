@@ -279,13 +279,16 @@ fun ProfileTab(
                     val vfAsset = frameAssetOf(idBingkai, wallet.vip, wallet.vipUntil)
                     // Bingkai sengaja dilepas: tanpa aset DAN tanpa cincin emas pengganti.
                     val adaBingkai = vfAsset != null || idBingkai == TANPA_BINGKAI
+                    // Tanpa bingkai: foto polos sebesar lingkaran kursi mic (54.dp), tanpa
+                    // cincin apa pun. Ada bingkai: ukuran penuh supaya bingkai tidak terpotong.
+                    val polos = vfAsset == null && idBingkai == TANPA_BINGKAI
                     Box(contentAlignment = Alignment.Center) {
                         Box(
                             Modifier.clip(CircleShape).clickable(onClick = onProfileClick)
                                 .then(if (adaBingkai) Modifier else Modifier.border(3.dp, frameBrush(idBingkai), CircleShape))
-                                .padding(3.dp),
+                                .padding(if (polos) 0.dp else 3.dp),
                         ) {
-                            AvatarImage(user, profile, 72.dp)
+                            AvatarImage(user, profile, if (polos) 54.dp else 72.dp)
                         }
                         if (vfAsset != null) FrameOverlay(vfAsset, 100.dp)
                     }

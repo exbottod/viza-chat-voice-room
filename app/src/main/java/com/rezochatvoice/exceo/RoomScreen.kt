@@ -2186,8 +2186,8 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
                 Modifier.size(size).clip(CircleShape)
                 .then(
                     if (seat != null) {
-                        if (seatFrame != null) Modifier.background(Color(0xFF0F3D33))
-                        else Modifier.background(Color(0xFF0F3D33)).border(2.dp, Teal, CircleShape)
+                        // Tanpa bingkai: avatar polos, tanpa cincin hijau.
+                        Modifier.background(Color(0xFF0F3D33))
                     } else Modifier
                 ),
                 contentAlignment = Alignment.Center,
@@ -2258,7 +2258,9 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
         // Nama di mic selebar kolom kursi, jadi letaknya rata tengah sama seperti
         // tulisan "MC"/"No.7" pada kursi kosong. Lebarnya tetap dibatasi kolom
         // supaya nama panjang tidak menyorok ke kursi sebelah.
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        // Tinggi baris dikunci 16.dp dan teks ditaruh di tengahnya, sehingga nama
+        // (termasuk nama VIP berwarna) jatuh di garis yang sama dengan No.9 / MC.
+        Box(Modifier.fillMaxWidth().height(16.dp).padding(top = 3.dp), contentAlignment = Alignment.Center) {
             VipNameByUid(
                 seat?.name ?: (if (index == 0) "MC" else "No.${index + 1}"),
                 seat?.uid,

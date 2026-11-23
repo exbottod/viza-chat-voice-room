@@ -9,6 +9,7 @@ export const MENU = [
       ["user", "person", "User"],
       ["reset", "restart_alt", "Reset user"],
       ["room", "mic", "Room"],
+      ["momen", "photo_library", "Momen user"],
       ["staf", "badge", "Host & Agency"],
       ["cs", "support_agent", "Customer Service"],
       // Staf aplikasi (bukan staf panel): Coin seller, Manager, dan Admin yang

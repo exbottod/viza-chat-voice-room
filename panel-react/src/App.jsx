@@ -13,6 +13,7 @@ import Cs from "./pages/Cs.jsx";
 import Background from "./pages/Background.jsx";
 import { GAME_HALAMAN } from "./pages/Game.jsx";
 import Room from "./pages/Room.jsx";
+import Momen from "./pages/Momen.jsx";
 import Gift from "./pages/Gift.jsx";
 import GiftDaftar from "./pages/GiftDaftar.jsx";
 import Emote from "./pages/Emote.jsx";
@@ -46,7 +47,8 @@ const KETERANGAN = {
   reset: "Reset coin, diamond, VIP, XP, nama, foto, dan aset satu user atau semua user",
   cs: "Tunjuk atau cabut akun Customer Service di aplikasi",
   latar: "Unggah gambar latar untuk tiap tab aplikasi dan bilah bawah",
-  room: "Pantau room, sematkan, beri tag official, dan tutup room",
+  room: "Pantau room, ubah nama, bersihkan peserta, dan hapus room",
+  momen: "Pratinjau momen user dan hapus momen yang melanggar",
   gift: "Kategori gift: gift biasa, cashback, video MP4, dan SVGA",
   giftdaftar: "Semua gift per kategori: tambah, edit, dan hapus",
   emote: "Emote yang tampil di bar emote semua room",
@@ -93,6 +95,7 @@ const HALAMAN = {
   user: User,
   reset: Reset,
   room: Room,
+  momen: Momen,
   staf: Staf,
   seller: Seller,
   stafapp: () => <StafAppShell awal="coinseller" />,

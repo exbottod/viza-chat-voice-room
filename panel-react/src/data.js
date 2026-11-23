@@ -103,6 +103,19 @@ export async function ambilRtdb(jalur) {
   return s.exists() ? s.val() : null;
 }
 
+/** Mengubah sebagian isian dokumen tanpa menimpa isian lain. */
+export async function ubahDokumen(nama, id, isi) {
+  const { updateDoc, doc } = await import("firebase/firestore");
+  await updateDoc(doc(db, nama, id), isi);
+}
+
+/** Menghapus satu cabang Realtime Database (nilai null = hapus). */
+export async function hapusRtdb(jalur) {
+  const { getDatabase, ref, set } = await import("firebase/database");
+  const { app } = await import("./firebase.js");
+  await set(ref(getDatabase(app), jalur), null);
+}
+
 export async function tulisRtdb(jalur, nilai) {
   const { getDatabase, ref, set } = await import("firebase/database");
   const { app } = await import("./firebase.js");

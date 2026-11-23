@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useKoleksi, rupiah, catatLog, ambilRtdb, tulisRtdb, hapusDokumen, teks } from "../data.js";
+import { useKoleksi, rupiah, catatLog, ambilRtdb, tulisRtdb, hapusRtdb, hapusDokumen, ubahDokumen, teks } from "../data.js";
 import { Kartu, Panel, Tag, Kosong, Cari, Konfirmasi, Tabel, Rangka, toast, pakaiUrut } from "../ui.jsx";
 import { walletAdmin } from "../dompet.js";
 
@@ -11,6 +11,8 @@ export default function Room() {
   const [kata, setKata] = useState("");
   const [konfirmasi, setKonfirmasi] = useState(null);
   const [sibuk, setSibuk] = useState(false);
+  // Isian ganti nama room: { id, nama, pemilik }
+  const [ubahNama, setUbahNama] = useState(null);
 
   const muatParty = async () => {
     try {
@@ -112,6 +114,111 @@ export default function Room() {
     },
   });
 
+  // Cabang Realtime Database milik satu room. Semua dibersihkan supaya room
+  // benar-benar hilang dari aplikasi, bukan hanya dari daftar Firestore.
+  const cabangRoom = (id) => [
+    "roomsPub/" + id,
+    "roomsBg/" + id,
+    "officialRooms/" + id,
+    "members/" + id,
+    "seats/" + id,
+    "micPoints/" + id,
+    "messages/" + id,
+    "locks/" + id,
+    "blacklist/" + id,
+    "emotes/" + id,
+    "roomTags/" + id,
+  ];
+
+  // Hapus room: hilang seketika, dan pemiliknya bisa langsung membuat room baru
+  // yang muncul lagi di daftar. Room lama tidak boleh tertinggal di Realtime
+  // Database, karena aplikasi mencari room lama pemilik di sana lebih dulu.
+  const hapusRoom = (r) => setKonfirmasi({
+    judul: "Hapus room " + (r.name || r.id) + "?",
+    pesan: "Room langsung hilang dari aplikasi dan peserta keluar. Pemilik tetap bisa membuat room baru kapan saja.",
+    tombol: "Hapus room",
+    jalan: async () => {
+      setSibuk(true);
+      const gagal = [];
+      for (const jalur of cabangRoom(r.id)) {
+        try { await hapusRtdb(jalur); } catch (e) { gagal.push(jalur); }
+      }
+      try { await hapusDokumen("rooms", r.id); } catch (e) { /* room lama hanya di RTDB */ }
+      await catatLog("Hapus room", (r.name || "") + " · " + r.id);
+      toast(gagal.length ? "Room dihapus, sebagian cabang gagal: " + gagal.join(", ") : "Room dihapus");
+      await Promise.all([muatParty(), rooms.segarkan()]);
+      setKonfirmasi(null);
+      setSibuk(false);
+    },
+  });
+
+  // Bersihkan room: semua peserta dikeluarkan dan kursi, chat, serta poin mic
+  // dikosongkan. Pengeluaran memakai daftar kick 60 detik, jadi peserta benar-
+  // benar terpental keluar lalu tetap boleh masuk lagi setelah itu.
+  const bersihkanRoom = (r) => setKonfirmasi({
+    judul: "Bersihkan room " + (r.name || r.id) + "?",
+    pesan: "Semua peserta dikeluarkan sekarang, kursi mic dan chat dikosongkan. Room tetap ada dan bisa dipakai lagi.",
+    tombol: "Bersihkan",
+    jalan: async () => {
+      setSibuk(true);
+      try {
+        const [pesertaMentah, kursi] = await Promise.all([
+          ambilRtdb("members/" + r.id).catch(() => null),
+          ambilRtdb("seats/" + r.id).catch(() => null),
+        ]);
+        const peserta = pesertaMentah || {};
+        // Nama peserta diambil dari kursi mic, karena daftar keanggotaan hanya
+        // menyimpan waktu hadir.
+        const namaKursi = {};
+        for (const k of Object.values(kursi || {})) {
+          if (k?.uid) namaKursi[k.uid] = k.name || "";
+        }
+        const kini = Date.now();
+        const sampai = kini + 60_000;
+        for (const uid of Object.keys(peserta)) {
+          try {
+            await tulisRtdb(`blacklist/${r.id}/${uid}`, {
+              name: String(namaKursi[uid] || peserta[uid]?.name || ""),
+              until: sampai,
+              at: kini,
+              sebab: "room dibersihkan",
+            });
+          } catch (e) { /* lanjut peserta lain */ }
+        }
+        await hapusRtdb("seats/" + r.id);
+        await hapusRtdb("micPoints/" + r.id);
+        await hapusRtdb("messages/" + r.id);
+        await hapusRtdb("members/" + r.id);
+        await catatLog("Bersihkan room", (r.name || "") + " · " + r.id + " · " + Object.keys(peserta).length + " peserta");
+        toast(Object.keys(peserta).length + " peserta dikeluarkan, room bersih");
+        await muatParty();
+      } catch (e) { toast("Gagal membersihkan: " + (e.message || "tidak diizinkan"), true); }
+      setKonfirmasi(null);
+      setSibuk(false);
+    },
+  });
+
+  const simpanNama = async (namaBaru) => {
+    const r = ubahNama;
+    if (!r) return;
+    const nama = String(namaBaru || "").trim();
+    if (!nama) { toast("Nama room tidak boleh kosong", true); return; }
+    setSibuk(true);
+    try {
+      await tulisRtdb(`roomsPub/${r.id}/name`, nama);
+      try { await ubahDokumen("rooms", r.id, { name: nama }); } catch (e) { /* hanya ada di RTDB */ }
+      await catatLog("Ubah nama room", r.id + " → " + nama);
+      toast("Nama room diganti");
+      setUbahNama(null);
+      await muatParty();
+      await rooms.segarkan();
+    } catch (e) { toast("Gagal: " + (e.message || "tidak diizinkan"), true); }
+    setSibuk(false);
+  };
+
+  // Nama bawaan saat reset: mengikuti pola pembuatan room di aplikasi.
+  const namaBawaan = (r) => "Room " + String(r.ownerName || "baru").trim();
+
   const kolomParty = [
     {
       kunci: "name", label: "ROOM", urut: true,
@@ -134,6 +241,9 @@ export default function Room() {
         <span className="aksiBaris">
           <button className="aksi" onClick={() => setSemat(r)}>{r.pinned ? "Lepas semat" : "Sematkan"}</button>
           <button className="aksi" onClick={() => tagOfficial(r)}>{official[r.id] ? "Lepas official" : "Tag official"}</button>
+          <button className="aksi" onClick={() => setUbahNama({ id: r.id, nama: r.name || "", pemilik: r.ownerName || "" })}>Ubah nama</button>
+          <button className="aksi" onClick={() => bersihkanRoom(r)}>Bersihkan</button>
+          <button className="aksi" onClick={() => hapusRoom(r)}>Hapus room</button>
         </span>
       ),
     },
@@ -171,6 +281,30 @@ export default function Room() {
           ? <Rangka baris={4} />
           : <Tabel kolom={kolomRoom} baris={urutRoom} urut={urutR} onUrut={klikR} kosong="Belum ada room." />}
       </Panel>
+
+      {ubahNama ? (
+        <Panel judul="Nama room" sub={"· " + (ubahNama.pemilik || ubahNama.id)}>
+          <div className="baris" style={{ gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <input
+              className="isian"
+              value={ubahNama.nama}
+              placeholder="Nama room baru"
+              onChange={(e) => setUbahNama({ ...ubahNama, nama: e.target.value })}
+              style={{ minWidth: 220 }}
+            />
+            <button className="aksi" onClick={() => simpanNama(ubahNama.nama)} disabled={sibuk}>Simpan</button>
+            <button
+              className="aksi"
+              onClick={() => { const bawaan = namaBawaan(ubahNama); setUbahNama({ ...ubahNama, nama: bawaan }); }}
+              disabled={sibuk}
+            >
+              Reset nama
+            </button>
+            <button className="aksi" onClick={() => setUbahNama(null)} disabled={sibuk}>Batal</button>
+          </div>
+          <div className="catatan">Reset nama memakai nama bawaan “{namaBawaan(ubahNama)}”. Tekan Simpan setelah itu.</div>
+        </Panel>
+      ) : null}
 
       <Konfirmasi
         buka={!!konfirmasi}

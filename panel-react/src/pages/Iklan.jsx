@@ -53,12 +53,15 @@ export default function Iklan() {
   const simpan = async () => {
     setSibuk(true);
     try {
+      // Alamat banner disimpan di variabel lokal. Kalau hanya mengandalkan
+      // setForm, nilai yang dikirim ke server masih yang lama (kosong), sehingga
+      // banner baru langsung hilang dan kembali ke gambar bawaan APK.
+      let bannerUrl = String(form.banner || "").trim();
       if (berkasBanner) {
         setProgresBanner("mengunggah banner…");
-        const url = await unggahBerkas(berkasBanner, "iklan", (p) => setProgresBanner("banner " + p + "%"));
-        setForm((f) => ({ ...f, banner: url }));
-        setBerkasBanner(null);
+        bannerUrl = String(await unggahBerkas(berkasBanner, "iklan", (p) => setProgresBanner("banner " + p + "%")) || "").trim();
         setProgresBanner("");
+        if (!bannerUrl) throw new Error("Banner gagal diunggah, coba lagi");
       }
       const nilai = {
         iklanAktif: form.aktif ? "1" : "0",
@@ -69,7 +72,7 @@ export default function Iklan() {
         iklanGameId: String(form.gameId || "").trim(),
         iklanPlacement: String(form.placement || "").trim(),
         iklanUji: form.uji ? "1" : "0",
-        iklanBanner: String(form.banner || "").trim(),
+        iklanBanner: bannerUrl,
       };
       // Server lama hanya mengenal sebagian kunci. Bila satu kunci ditolak,
       // kunci itu dibuang lalu sisanya dikirim ulang, supaya isian lain tetap
@@ -84,6 +87,8 @@ export default function Iklan() {
         delete nilai[m[1]];
         if (!Object.keys(nilai).length) throw new Error("Server belum mendukung pengaturan iklan");
       }
+      setForm((f) => ({ ...f, banner: bannerUrl }));
+      setBerkasBanner(null);
       if (ditolak.length) {
         toast("Tersimpan sebagian. Server belum mengenal: " + ditolak.join(", ") + ". Jalankan dompet.sh lalu simpan lagi.", true);
       } else {

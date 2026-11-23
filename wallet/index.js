@@ -3660,7 +3660,21 @@ async function asetUpload(env, b) {
   const b64 = String(b.b64 || "").replace(/^data:[^,]+,/, "").replace(/\s+/g, "");
   if (!b64) throw new Error("Isi file kosong");
   if (b64.length > 15 * 1024 * 1024) throw new Error("File terlalu besar (maks sekitar 11 MB)");
-  const ext = (String(b.ext || "png").toLowerCase().replace(/[^a-z0-9]/g, "") || "png").slice(0, 5);
+  let ext = (String(b.ext || "png").toLowerCase().replace(/[^a-z0-9]/g, "") || "png").slice(0, 5);
+  // Jenis berkas ditentukan dari ISI berkas, bukan hanya nama. Berkas GIF/WebP
+  // sering tersimpan dengan nama .jpg (mis. hasil unduhan WhatsApp), dan kalau
+  // dipakai nama itu, server mengirim Content-Type yang salah sehingga emot
+  // bergerak tidak pernah tampil di aplikasi.
+  try {
+    const kp = Buffer.from(b64.slice(0, 4000), "base64");
+    const isi = (i) => kp.subarray(i, i + 12).toString("latin1");
+    if (isi(0).startsWith("GIF8")) ext = "gif";
+    else if (kp[0] === 0x89 && isi(1).startsWith("PNG")) ext = "png";
+    else if (isi(0).startsWith("RIFF") && kp.subarray(8, 12).toString("latin1") === "WEBP") ext = "webp";
+    else if (kp[0] === 0xff && kp[1] === 0xd8) ext = "jpg";
+    else if (isi(4).startsWith("ftyp")) ext = "mp4";
+    else if (isi(0).startsWith("PK")) ext = "svga";
+  } catch (e) { /* pakai ext dari nama kalau isi tidak terbaca */ }
   const nama = (String(b.name || "aset").toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 40) || "aset");
   const berkas = nama + "_" + Date.now().toString(36) + "." + ext;
 

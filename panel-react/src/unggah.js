@@ -25,7 +25,17 @@ export function unggahBerkas(berkas, folder, lapor, opsi = {}) {
   if (!u) return Promise.reject(new Error("Sesi login tidak ada, muat ulang panel"));
   if (berkas.size > 8 * 1024 * 1024) return Promise.reject(new Error("Berkas lebih dari 8 MB, kecilkan dulu"));
   const namaAman = String(berkas.name || "aset").replace(/[^a-zA-Z0-9._-]/g, "_");
-  const ext = (namaAman.split(".").pop() || "png").toLowerCase();
+  // Jenis berkas diambil dari tipe berkas yang dilaporkan browser lebih dulu.
+  // Nama berkas sering tidak sesuai isi (mis. GIF tersimpan sebagai .jpg),
+  // dan jenis yang salah membuat berkas tidak pernah tampil di aplikasi.
+  const mime = String(berkas.type || "").toLowerCase();
+  const dariMime = mime.includes("gif") ? "gif"
+    : mime.includes("webp") ? "webp"
+    : mime.includes("png") ? "png"
+    : mime.includes("jpeg") || mime.includes("jpg") ? "jpg"
+    : mime.includes("mp4") ? "mp4"
+    : "";
+  const ext = dariMime || (namaAman.split(".").pop() || "png").toLowerCase();
   const dasar = folder + "-" + namaAman.replace(/\.[^.]+$/, "");
   const batas = opsi.batasMs || 120000;
   return u.getIdToken().then((t) => new Promise((selesai, gagal) => {

@@ -456,6 +456,11 @@ object AgoraVoice {
         // bukan 64 kbps seperti profil musik. Tetap dengan skenario CHATROOM agar
         // peredam gema aktif.
         try { e.setAudioProfile(Constants.AUDIO_PROFILE_SPEECH_STANDARD, Constants.AUDIO_SCENARIO_CHATROOM) } catch (x: Exception) { }
+        // Suara room memakai jalur MEDIA, bukan jalur panggilan. Tanpa ini, begitu mic
+        // menyala Android memindahkan tombol volume ke "Memanggil" dan volume media
+        // tidak lagi berpengaruh.
+        try { e.setParameters("{\"che.audio.force.use.media.volume\":true}") } catch (x: Exception) { }
+        try { e.setParameters("{\"che.audio.keep.audiosession\":true}") } catch (x: Exception) { }
         try { e.setParameters("{\"che.audio.enable.aec\":true}") } catch (x: Exception) { }
         try { e.setParameters("{\"che.audio.enable.agc\":true}") } catch (x: Exception) { }
         try { e.setParameters("{\"che.audio.enable.ns\":true}") } catch (x: Exception) { }
@@ -587,9 +592,34 @@ object AgoraVoice {
                 e.setClientRole(if (on) Constants.CLIENT_ROLE_BROADCASTER else Constants.CLIENT_ROLE_AUDIENCE)
                 e.enableLocalAudio(on)
                 e.muteLocalAudioStream(!on)
+                // Mic menyala membuat SDK memilih jalur panggilan. Tegaskan lagi
+                // jalur media dan arah tombol volume setiap peran berganti.
+                try { e.setParameters("{\"che.audio.force.use.media.volume\":true}") } catch (x: Exception) { }
+                appCtx?.let { tuneAudioRoute(it) }
+                pastikanMediaSetelahMic()
             } catch (x: Exception) {
                 Log.e(TAG, "mic: ${x.message}")
                 if (on) problem("Mic gagal: ${(x.message ?: "?").take(80)}")
+            }
+        }
+    }
+
+    /**
+     * Beberapa HP baru memindah mode audio ke "komunikasi" sesaat setelah mic dibuka
+     * (bukan seketika). Dicek beberapa kali dalam dua detik pertama dan dikembalikan
+     * ke normal, supaya tombol volume tetap mengatur volume media.
+     */
+    private fun pastikanMediaSetelahMic() {
+        mainScope.launch {
+            repeat(5) {
+                kotlinx.coroutines.delay(400L)
+                try {
+                    val mgr = audioMgr ?: return@launch
+                    if (mgr.mode == AudioManager.MODE_IN_COMMUNICATION || mgr.mode == AudioManager.MODE_IN_CALL) {
+                        mgr.mode = AudioManager.MODE_NORMAL
+                    }
+                    actAktif?.volumeControlStream = AudioManager.STREAM_MUSIC
+                } catch (x: Exception) { }
             }
         }
     }

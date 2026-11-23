@@ -311,8 +311,17 @@ fun RoomScreen(
 
     // Setiap perubahan kursi dan info room disimpan ke HP, jadi saat aplikasi
     // dibuka lagi semuanya sudah ada tanpa menunggu jaringan.
+    // Penyimpanan dijalankan di thread latar dan ditunda sebentar: pindah kursi
+    // mengubah daftar kursi beberapa kali beruntun, dan dulu setiap perubahan
+    // menulis ulang seluruh daftar (termasuk foto) di thread layar, itu penyebab
+    // tersendat saat pindah kursi. Sekarang hanya perubahan terakhir yang ditulis.
     androidx.compose.runtime.LaunchedEffect(rawSeats) {
-        if (rawSeats.isNotEmpty()) RoomCache.simpanKursi(ctxSimpan, roomId, rawSeats)
+        if (rawSeats.isEmpty()) return@LaunchedEffect
+        val salinan = rawSeats.toMap()
+        kotlinx.coroutines.delay(700L)
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            RoomCache.simpanKursi(ctxSimpan, roomId, salinan)
+        }
     }
     androidx.compose.runtime.LaunchedEffect(room) {
         room?.let { RoomCache.simpanInfo(ctxSimpan, it) }
@@ -320,7 +329,7 @@ fun RoomScreen(
     val seats = rawSeats.filterValues { it.uid in members }.let { asli ->
         val k = kursiCepat
         if (k == null || asli[k]?.uid == myUid) asli
-        else asli + (k to Seat(index = k, uid = myUid, name = myName, avatarB64 = null, muted = false))
+        else asli + (k to Seat(index = k, uid = myUid, name = myName, avatarB64 = myAvatarB64, muted = false))
     }
     // Profil orang yang duduk dipanaskan SEKALI di sini, bukan dari dalam tiap sel
     // kursi. Dulu setiap sel memanggil server sendiri saat dibuat ulang, jadi pindah
@@ -2058,20 +2067,16 @@ private fun GelombangBicara(level: Float, size: Dp) {
 private fun BalonSuara(level: Float, size: Dp) {
     val l = level.coerceIn(0f, 1f)
     if (l < 0.02f) return
-    val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "balonKursi")
-    val napas by t.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(animation = tween(900, easing = androidx.compose.animation.core.FastOutSlowInEasing), repeatMode = androidx.compose.animation.core.Reverse),
-        label = "napasBalon",
-    )
+    // Tanpa animasi tambahan: ukuran balon hanya mengikuti level suara yang sudah
+    // dianimasikan di kursi. Satu animasi lebih sedikit per kursi = pindah kursi
+    // tetap ringan walau banyak orang bicara.
     androidx.compose.foundation.Canvas(Modifier.size(size * 1.5f)) {
         val cx = this.size.width / 2f
         val cy = this.size.height / 2f
         val rDasar = this.size.minDimension / 1.5f / 2f
         // Gembung: makin keras suara, makin besar balonnya, plus napas halus.
-        val r = rDasar * (1.06f + 0.34f * l + 0.05f * napas)
-        val alfa = (0.10f + 0.26f * l + 0.05f * napas).coerceIn(0f, 0.42f)
+        val r = rDasar * (1.06f + 0.34f * l)
+        val alfa = (0.10f + 0.26f * l).coerceIn(0f, 0.42f)
         drawCircle(
             color = Color(0xFF3FE08C).copy(alpha = alfa),
             radius = r,
@@ -2301,7 +2306,7 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
         // supaya nama panjang tidak menyorok ke kursi sebelah.
         // Tinggi baris dikunci 16.dp dan teks ditaruh di tengahnya, sehingga nama
         // (termasuk nama VIP berwarna) jatuh di garis yang sama dengan No.9 / MC.
-        Box(Modifier.fillMaxWidth().height(16.dp).padding(top = 3.dp), contentAlignment = Alignment.Center) {
+        Box(Modifier.fillMaxWidth().padding(top = 2.dp), contentAlignment = Alignment.Center) {
             VipNameByUid(
                 seat?.name ?: (if (index == 0) "MC" else "No.${index + 1}"),
                 seat?.uid,

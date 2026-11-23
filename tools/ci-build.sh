@@ -144,7 +144,13 @@ if [ -n "${GH_TOKEN:-}" ] && command -v gh > /dev/null 2>&1 && [ -z "${SKIP_RELE
     # seperti "fix(ui): ...", supaya kalimat di dialog pembaruan bisa dibaca
     # pemain dan benar-benar menyebut perubahan versi itu.
     DAFTAR=""
-    if [ -n "$TAG_LAMA" ]; then
+    # Catatan publik: docs/unduh/catatan-publik.txt ditulis per rilis dengan
+    # bahasa pemain (mis. "Ditambahkan banner iklan coin gratis"), tanpa istilah
+    # teknis. Kalau ada, ini yang dipakai; pesan commit hanya cadangan.
+    if [ -s "docs/unduh/catatan-publik.txt" ]; then
+      DAFTAR="$(grep -v '^[[:space:]]*$' docs/unduh/catatan-publik.txt | sed 's/^[-•* ]*/- /' | head -5)"
+    fi
+    if [ -z "$DAFTAR" ] && [ -n "$TAG_LAMA" ]; then
       DAFTAR="$(git log --no-merges --pretty=format:"%b" "$TAG_LAMA"..HEAD | grep -E '^- ' | bersih | head -5)"
     fi
     if [ -z "$DAFTAR" ]; then

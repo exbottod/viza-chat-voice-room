@@ -137,7 +137,17 @@ def main():
         manual = open(os.path.join(TARGET, "catatan-rilis.txt"), encoding="utf-8").read().strip()
     except Exception:
         manual = ""
-    if poin:
+    # Catatan publik per rilis (bahasa pemain, tanpa istilah teknis) menang
+    # atas semua sumber lain, supaya dialog update tidak berisi kata developer.
+    publik = ""
+    try:
+        publik = open(os.path.join(TARGET, "catatan-publik.txt"), encoding="utf-8").read().strip()
+    except Exception:
+        publik = ""
+    baris_publik = [b.lstrip("-*\u2022 ").strip() for b in publik.splitlines() if b.strip()]
+    if baris_publik:
+        catatan = "\n".join("\u2022 " + x[:100] for x in baris_publik[:4])[:420]
+    elif poin:
         catatan = "\n".join("\u2022 " + x[:100] for x in poin[:4])[:420]
     elif manual:
         catatan = manual[:420]

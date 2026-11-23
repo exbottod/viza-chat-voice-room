@@ -1,7 +1,7 @@
 {
   "status": "ok",
   "versi": "1.0.378",
-  "catatan": "• iklan: banner tab Party bisa diganti dari panel (unggah gambar, tersimpan di server, APK pakai gamba",
+  "catatan": "• Ditambahkan banner iklan coin gratis di tab Party, tekan untuk menonton iklan dan dapatkan coin\n• Ditambahkan tombol Coin gratis di menu Dompet\n• ID unik yang sudah dibeli tidak muncul lagi di Store, jadi tidak ada ID kembar\n• Perbaikan kecil dan peningkatan kecepatan aplikasi",
   "ukuran_apk": 75789780,
   "sha256_apk": "a8386312caf14ee7c77ead85e04b127435d91c25b0dfd7e83671e8ff869b512a",
   "abis": {

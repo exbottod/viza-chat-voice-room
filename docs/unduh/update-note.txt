@@ -1,4 +1,3 @@
-• Daftar paket coin di menu top-up sekarang selalu sesuai harga terbaru
-• Angka coin di paket ditampilkan rapi dengan titik pemisah
-• Ikon salin ID di profil diganti ikon baru yang lebih rapi
+• Nama di kursi mic sekarang rata tengah dengan tulisan nomor kursi
+• Nama boleh tampil sedikit lebih panjang tanpa menutupi kursi sebelah
 • Perbaikan kecil dan peningkatan kecepatan aplikasi

@@ -412,8 +412,14 @@ object AgoraVoice {
                 if (lv > 0.01f) m[akun] = lv
                 if (lv > 0.12f) aktif.add(akun)
             }
-            levels = m
-            bicara = aktif
+            // Hanya ditulis bila benar-benar berubah. Laporan datang beberapa kali per
+            // detik; menulis peta yang isinya sama tetap memicu komposisi ulang semua
+            // kursi, dan itu yang membuat CPU naik dan room terasa macet saat ramai.
+            // Level dibulatkan ke kelipatan 0,1 supaya getaran kecil tidak dihitung.
+            val bulat = HashMap<String, Float>()
+            for ((k, v) in m) bulat[k] = Math.round(v * 10f) / 10f
+            if (bulat != levels) levels = bulat
+            if (aktif != bicara) bicara = aktif
         }
 
         override fun onConnectionStateChanged(state: Int, reason: Int) {
@@ -465,7 +471,7 @@ object AgoraVoice {
         try { e.setParameters("{\"che.audio.enable.agc\":true}") } catch (x: Exception) { }
         try { e.setParameters("{\"che.audio.enable.ns\":true}") } catch (x: Exception) { }
         try { e.setClientRole(if (wantSpeaking) Constants.CLIENT_ROLE_BROADCASTER else Constants.CLIENT_ROLE_AUDIENCE) } catch (x: Exception) { }
-        try { e.enableAudioVolumeIndication(300, 3, true) } catch (x: Exception) { }
+        try { e.enableAudioVolumeIndication(500, 3, true) } catch (x: Exception) { }
         try { e.setEnableSpeakerphone(true) } catch (x: Exception) { }
         try { e.muteAllRemoteAudioStreams(muteRemote) } catch (x: Exception) { }
         return e

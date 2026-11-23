@@ -1,3 +1,3 @@
-Nama pengguna di kursi mic kini turun sedikit dan memberi jarak dari foto, sejajar dengan nomor kursi di sebelahnya
-Tulisan nomor kursi tidak lagi terpotong
+Tulisan nomor kursi mic kembali seperti semula, hanya nama pengguna yang turun sedikit agar sejajar
 Saat mic menyala, tombol volume mengatur volume media, bukan volume panggilan
+Balon suara transparan muncul di belakang foto kursi mic saat ada suara

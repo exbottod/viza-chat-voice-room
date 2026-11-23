@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.387",
-  "catatan": "• Saat mic menyala, tombol volume kini mengatur volume media, bukan volume panggilan\n• Pindah kursi mic terasa lebih ringan dan nama kursi tidak terpotong\n• Balon suara transparan muncul di belakang foto kursi mic saat ada suara",
-  "ukuran_apk": 75795381,
-  "sha256_apk": "4aebdde1cef5409adb5b8e8dc5c5ae2ddc862fe4ffecd304575db9c2bcd923ff",
+  "versi": "1.0.388",
+  "catatan": "• Tulisan nomor kursi mic kembali seperti semula, hanya nama pengguna yang turun sedikit agar sejajar\n• Saat mic menyala, tombol volume mengatur volume media, bukan volume panggilan\n• Balon suara transparan muncul di belakang foto kursi mic saat ada suara",
+  "ukuran_apk": 75795415,
+  "sha256_apk": "45c06c4ac8045e96d5833f664ae8e8f79fb1e6a1e8f28ca3c2b96d22a1b5c590",
   "abis": {
     "arm64": {
-      "ukuran": 75795381,
-      "sha256": "4aebdde1cef5409adb5b8e8dc5c5ae2ddc862fe4ffecd304575db9c2bcd923ff"
+      "ukuran": 75795415,
+      "sha256": "45c06c4ac8045e96d5833f664ae8e8f79fb1e6a1e8f28ca3c2b96d22a1b5c590"
     },
     "armv7": {
-      "ukuran": 74029889,
-      "sha256": "1c9d9ac52bac1189a6f41b662d5c60db8d22ce2b6afacedaceb379656f5db4db"
+      "ukuran": 74029926,
+      "sha256": "bba5a233c2717b6977dc6861b00c5af8a188ae0ab4aea6583cb43d2dec15b605"
     },
     "universal": {
-      "ukuran": 123649379,
-      "sha256": "104318d2346dee82994492900d5d46f141c005cfb4807f4929a9fe2603d5f6f6"
+      "ukuran": 123649413,
+      "sha256": "094d2ec26f769f80b85022c5b93fcd4c5d9fef92c28b27d77075002468872f3f"
     }
   }
 }

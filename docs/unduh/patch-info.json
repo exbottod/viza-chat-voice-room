@@ -1027,15 +1027,6 @@
       }
     },
     {
-      "dari": "1.0.383",
-      "ke": "1.0.387",
-      "arm64": {
-        "file": "patch-1.0.383-1.0.387-arm64.bsdiff",
-        "ukuran": 4129126,
-        "sha256": "c1007d5ca0c43c56d54aee938244732085207d9a7ee2621fb6d8d0e0ccbded42"
-      }
-    },
-    {
       "dari": "1.0.384",
       "ke": "1.0.386",
       "arm64": {
@@ -1046,11 +1037,11 @@
     },
     {
       "dari": "1.0.384",
-      "ke": "1.0.387",
+      "ke": "1.0.388",
       "arm64": {
-        "file": "patch-1.0.384-1.0.387-arm64.bsdiff",
-        "ukuran": 4157679,
-        "sha256": "8f075dd9290b7829b67ef20c42025de6dd3db43245615d9f019eef86933dd852"
+        "file": "patch-1.0.384-1.0.388-arm64.bsdiff",
+        "ukuran": 4160093,
+        "sha256": "9068fdc4eab47deea02dba7822f30a26f89524768be127f0fe902c634d5043e5"
       }
     },
     {
@@ -1064,20 +1055,29 @@
     },
     {
       "dari": "1.0.385",
-      "ke": "1.0.387",
+      "ke": "1.0.388",
       "arm64": {
-        "file": "patch-1.0.385-1.0.387-arm64.bsdiff",
-        "ukuran": 4149388,
-        "sha256": "de1e9067ee1a1bc9d2e4886cce4efaa2388122fec862a57a70b54531ca576c37"
+        "file": "patch-1.0.385-1.0.388-arm64.bsdiff",
+        "ukuran": 4150758,
+        "sha256": "3ccb21eb70f395a3c14ddc2a66dc6a7867441fe44beb126ca2304861e36b4185"
       }
     },
     {
       "dari": "1.0.386",
-      "ke": "1.0.387",
+      "ke": "1.0.388",
       "arm64": {
-        "file": "patch-1.0.386-1.0.387-arm64.bsdiff",
-        "ukuran": 4151797,
-        "sha256": "74d7aeb01137eecc29c5574ec76c1e1f7aced6598c5d75e6c49a06e02c63cf3d"
+        "file": "patch-1.0.386-1.0.388-arm64.bsdiff",
+        "ukuran": 4153772,
+        "sha256": "0d26ae3c96e6ffbd1cdcd09e7f94c4439acd30737aed390ea9a33d2bb40348f5"
+      }
+    },
+    {
+      "dari": "1.0.387",
+      "ke": "1.0.388",
+      "arm64": {
+        "file": "patch-1.0.387-1.0.388-arm64.bsdiff",
+        "ukuran": 4028286,
+        "sha256": "69f360cdbaa5e4409b6cdfc51ae9d1c4528fbc35e15328d489cc6af8274282a3"
       }
     }
   ]

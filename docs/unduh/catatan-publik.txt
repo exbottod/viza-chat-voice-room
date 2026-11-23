@@ -1,3 +1,3 @@
-Nama di kursi mic kini sejajar dengan tulisan nomor kursi dan cincin hijau di foto kursi dihapus
-Foto profil tanpa bingkai tampil polos dan sebesar lingkaran kursi mic
-Suara di room melaporkan sendiri penyebabnya bila gagal tersambung
+Balon suara transparan muncul di belakang foto kursi mic saat ada suara
+Nama di kursi mic sejajar dengan tulisan nomor kursi dan cincin hijau dihapus
+Foto profil tanpa bingkai tampil polos sebesar lingkaran kursi mic

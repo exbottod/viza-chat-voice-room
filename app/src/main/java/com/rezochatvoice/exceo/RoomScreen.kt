@@ -2050,6 +2050,44 @@ private fun GelombangBicara(level: Float, size: Dp) {
 }
 
 /**
+ * Balon transparan di belakang foto kursi mic: menggelembung mengikuti level suara
+ * lalu mengempis saat diam. Digambar di belakang avatar, jadi foto tetap terlihat
+ * jelas dan tidak tertutup apa pun.
+ */
+@Composable
+private fun BalonSuara(level: Float, size: Dp) {
+    val l = level.coerceIn(0f, 1f)
+    if (l < 0.02f) return
+    val t = androidx.compose.animation.core.rememberInfiniteTransition(label = "balonKursi")
+    val napas by t.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(animation = tween(900, easing = androidx.compose.animation.core.FastOutSlowInEasing), repeatMode = androidx.compose.animation.core.Reverse),
+        label = "napasBalon",
+    )
+    androidx.compose.foundation.Canvas(Modifier.size(size * 1.5f)) {
+        val cx = this.size.width / 2f
+        val cy = this.size.height / 2f
+        val rDasar = this.size.minDimension / 1.5f / 2f
+        // Gembung: makin keras suara, makin besar balonnya, plus napas halus.
+        val r = rDasar * (1.06f + 0.34f * l + 0.05f * napas)
+        val alfa = (0.10f + 0.26f * l + 0.05f * napas).coerceIn(0f, 0.42f)
+        drawCircle(
+            color = Color(0xFF3FE08C).copy(alpha = alfa),
+            radius = r,
+            center = androidx.compose.ui.geometry.Offset(cx, cy),
+        )
+        // Garis tepi tipis supaya balon tetap terlihat di foto yang gelap.
+        drawCircle(
+            color = Color(0xFF7BF0B6).copy(alpha = (alfa + 0.18f).coerceIn(0f, 0.6f)),
+            radius = r,
+            center = androidx.compose.ui.geometry.Offset(cx, cy),
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = this.size.minDimension * 0.012f),
+        )
+    }
+}
+
+/**
  * Gelembung suara di atas kursi mic: balon putih kecil dengan tiga batang
  * yang bergerak mengikuti level suara, jadi jelas siapa yang sedang bicara.
  */
@@ -2181,7 +2219,10 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
     )
     Column(Modifier.clickable(onClick = onClick), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(size), contentAlignment = Alignment.Center) {
-            if (lvl > 0.012f) GelombangBicara(lvl, size)
+            if (lvl > 0.012f) {
+                BalonSuara(lvl, size)
+                GelombangBicara(lvl, size)
+            }
             Box(
                 Modifier.size(size).clip(CircleShape)
                 .then(

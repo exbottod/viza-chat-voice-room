@@ -2318,7 +2318,7 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
                 modifier = Modifier.fillMaxWidth()
                     .padding(horizontal = 8.dp)
                     // Hanya nama pengguna yang turun; nomor kursi tetap di tempatnya.
-                    .then(if (seat != null) Modifier.padding(top = 3.dp) else Modifier),
+                    .then(if (seat != null) Modifier.padding(top = 5.dp) else Modifier),
             )
             // Ikon peran digambar menumpuk di sisi kiri, bukan ikut menggeser
             // nama, supaya nama tetap tepat di tengah kursi.

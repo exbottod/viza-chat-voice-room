@@ -549,10 +549,61 @@ object RoomRepo {
             onChange(snap.children.associate { (it.key ?: "") to it.childrenCount.toInt() })
         }
 
-    fun observeMembers(id: String, onChange: (Set<String>) -> Unit): Reg =
+    /**
+     * Keanggotaan room apa adanya: uid -> waktu terakhir hadir (ms server).
+     * Nilai lama berbentuk 'true' dianggap hadir saat pembacaan.
+     */
+    fun observeMembersRinci(id: String, onChange: (Map<String, Long>) -> Unit): Reg =
         Rtdb.listen(Rtdb.ref("members/$id")) { snap ->
-            onChange(snap.children.mapNotNull { it.key }.toSet())
+            val kini = System.currentTimeMillis()
+            onChange(
+                snap.children.mapNotNull { c ->
+                    val k = c.key ?: return@mapNotNull null
+                    val v = c.value
+                    k to when (v) {
+                        is Number -> v.toLong()
+                        is Boolean -> kini
+                        else -> kini
+                    }
+                }.toMap(),
+            )
         }
+
+    fun observeMembers(id: String, onChange: (Set<String>) -> Unit): Reg =
+        observeMembersRinci(id) { m -> onChange(m.keys) }
+
+    /** Menegaskan kita masih hadir (dipanggil berkala selama layar room terbuka). */
+    fun denyut(roomId: String, uid: String) {
+        if (roomId.isBlank() || uid.isBlank()) return
+        try {
+            Rtdb.ref("members/$roomId/$uid").setValue(Rtdb.serverNow())
+            Rtdb.ref("live/$uid").setValue(roomId)
+        } catch (e: Exception) {
+        }
+    }
+
+    /**
+     * Kursi yang penghuninya sudah tidak hadir dilepas. Dijalankan owner/admin room
+     * supaya foto orang yang aplikasinya sudah mati tidak menempel di kursi mic.
+     */
+    suspend fun lepasKursiYatim(roomId: String, hadir: Set<String>, uidSaya: String) {
+        try {
+            val base = Rtdb.ref("seats/$roomId")
+            val buang = HashMap<String, Any?>()
+            for (c in base.get().await().children) {
+                val kunci = c.key ?: continue
+                val uid = c.child("uid").getValue(String::class.java) ?: continue
+                if (uid != uidSaya && uid !in hadir) buang[kunci] = null
+            }
+            if (buang.isNotEmpty()) {
+                base.updateChildren(buang).await()
+                for (k in buang.keys) Rtdb.ref("micPoints/$roomId/$k").removeValue()
+            }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+        }
+    }
 
     fun observeLocks(id: String, onChange: (Set<Int>) -> Unit): Reg =
         Rtdb.listen(Rtdb.ref("locks/$id")) { snap ->
@@ -587,7 +638,9 @@ object RoomRepo {
             live.onDisconnect().removeValue()
             // Keanggotaan dan penanda LIVE ditulis bersamaan.
             kotlinx.coroutines.coroutineScope {
-                val m = async { me.setValue(true).await() }
+                // Waktu server, bukan 'true': keanggotaan yang tertinggal (aplikasi
+                // mati tanpa sempat memutus) bisa dikenali basi dan dilepas sendiri.
+                val m = async { me.setValue(Rtdb.serverNow()).await() }
                 val l = async { live.setValue(roomId).await() }
                 m.await(); l.await()
             }
@@ -686,7 +739,7 @@ object RoomRepo {
             kotlinx.coroutines.coroutineScope {
                 val a = async {
                     val ada = try { me.get().await().exists() } catch (e: Exception) { false }
-                    if (!ada) me.setValue(true).await()
+                    if (!ada) me.setValue(Rtdb.serverNow()).await()
                 }
                 val b = async {
                     val ada = try { live.get().await().exists() } catch (e: Exception) { false }

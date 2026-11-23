@@ -191,7 +191,7 @@ fun RoomScreen(
                     if (ban != null && room?.let { it.ownerUid != myUid && !it.isAdminRoom(myUid) } != false) {
                         kickedOut = true
                     } else {
-                        try { Rtdb.ref("members/" + roomId + "/" + myUid).setValue(true) } catch (e: Exception) { }
+                        try { Rtdb.ref("members/" + roomId + "/" + myUid).setValue(Rtdb.serverNow()) } catch (e: Exception) { }
                     }
                 }
             }
@@ -202,7 +202,32 @@ fun RoomScreen(
 
     val appActions = LocalActions.current
 
-    var members by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var anggotaMentah by remember { mutableStateOf<Map<String, Long>>(emptyMap()) }
+    // Kehadiran dinilai dari detak terakhir. Orang yang aplikasinya mati tidak lagi
+    // dihitung hadir setelah 75 detik, jadi fotonya lepas dari kursi mic.
+    var waktuAcuan by remember { mutableStateOf(System.currentTimeMillis()) }
+    val members = androidx.compose.runtime.remember(anggotaMentah, waktuAcuan) {
+        anggotaMentah.filterValues { waktuAcuan - it < 75_000L }.keys
+    }
+    // Detak kehadiran: menegaskan kita masih hadir tiap 25 detik supaya keanggotaan
+    // yang tertinggal (aplikasi ditutup paksa) bisa dikenali basi.
+    androidx.compose.runtime.LaunchedEffect(roomId, myUid) {
+        while (true) {
+            waktuAcuan = System.currentTimeMillis()
+            if (members.contains(myUid)) {
+                try { RoomRepo.denyut(roomId, myUid) } catch (e: Exception) { }
+            }
+            kotlinx.coroutines.delay(25_000L)
+        }
+    }
+    // Kursi milik orang yang sudah tidak hadir dilepas oleh owner/admin room, supaya
+    // foto akun offline tidak menempel di kursi mic.
+    androidx.compose.runtime.LaunchedEffect(roomId, members, room?.ownerUid) {
+        val r = room ?: return@LaunchedEffect
+        if (r.ownerUid != myUid && !r.isAdminRoom(myUid)) return@LaunchedEffect
+        kotlinx.coroutines.delay(4000L)
+        try { RoomRepo.lepasKursiYatim(roomId, members, myUid) } catch (e: Exception) { }
+    }
     var locks by remember { mutableStateOf<Set<Int>>(emptySet()) }
     var rawSeats by remember {
         mutableStateOf(RoomCache.kursi(ctxSimpan, roomId))
@@ -260,6 +285,10 @@ fun RoomScreen(
     // jaringan. Begitu data asli dari server menyebut kita di kursi itu, penanda
     // sementara ini dilepas.
     var kursiCepat by remember { mutableStateOf<Int?>(null) }
+    // true = kita sengaja turun dari mic. Selama ini menyala, penegasan ulang
+    // keanggotaan (kembali dari WhatsApp / sambungan pulih) TIDAK boleh mendudukkan
+    // kita lagi, karena itulah yang dulu membuat turun mic malah kembali ke kursi lama.
+    var sengajaTurun by remember { mutableStateOf(false) }
     androidx.compose.runtime.LaunchedEffect(rawSeats.values.any { it.uid == myUid && it.index == kursiCepat }, kursiCepat) {
         val k = kursiCepat ?: return@LaunchedEffect
         if (rawSeats.values.any { it.uid == myUid && it.index == k }) {
@@ -286,7 +315,8 @@ fun RoomScreen(
             // Sedang pindah kursi: data server masih menyebut kursi LAMA. Menegaskan
             // kursi itu lagi akan menarik kita kembali ke kursi sebelumnya, jadi
             // yang ditegaskan adalah kursi tujuan, atau tidak ada kursi sama sekali.
-            val kursi = kursiCepat ?: rawSeats.values.firstOrNull { it.uid == myUid }?.index
+            val kursi = if (sengajaTurun) null
+            else kursiCepat ?: rawSeats.values.firstOrNull { it.uid == myUid }?.index
             RoomRepo.klaimKembali(roomId, myUid, kursi, myName)
         }
         AgoraVoice.sambungUlangJikaPerlu(roomId)
@@ -612,7 +642,7 @@ fun RoomScreen(
             }
         }
         val d = RoomExtras.observeEmotes(roomId) { emotes = it }
-        val e1 = RoomRepo.observeMembers(roomId) { members = it }
+        val e1 = RoomRepo.observeMembersRinci(roomId) { anggotaMentah = it }
         val e2 = RoomRepo.observeLocks(roomId) { locks = it }
         val f = RoomRepo.observeBans(roomId) { list ->
             bans = list
@@ -1245,6 +1275,8 @@ fun RoomScreen(
                         if (s.uid == myUid) {
                             ProfileSheetAction(tr("Turun Mic"), "down") {
                                 seatSheet = null
+                                sengajaTurun = true
+                                kursiCepat = null
                                 scope.launch { RoomRepo.leaveSeat(r.id, idx) }
                             }
                             ProfileSheetAction(if (s.muted) "Buka mic" else "Matikan mic", if (s.muted) "mic" else "mute") {
@@ -1335,6 +1367,7 @@ fun RoomScreen(
                                 // server berjalan di belakang. Kalau gagal, penanda
                                 // sementara dilepas dan pesan galat ditampilkan.
                                 val sebelum = mySeat?.index
+                                sengajaTurun = false
                                 kursiCepat = idx
                                 scope.launch {
                                     val err = RoomRepo.takeSeat(r.id, idx, myUid, myName, myAvatarB64, sebelum)

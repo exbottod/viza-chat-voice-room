@@ -426,6 +426,9 @@ fun BingkaiDiam(a: VipAsset, modifier: Modifier) {
 
 /** Efek masuk untuk satu pesan "masuk kamar": item store yang dipakai dulu, lalu efek VIP. */
 fun entryAssetOf(m: RoomMsg): VipAsset? {
+    // "none" = efek masuk sengaja dilepas: tidak ada efek sama sekali, termasuk
+    // tidak boleh memakai efek VIP sebagai pengganti.
+    if (m.entry == TANPA_BINGKAI) return null
     // Item store (sx_) yang dipakai user HARUS menang:
     // jangan fallback ke efek VIP default kalau katalog belum termuat,
     // biarkan pemanggil mencoba lagi (mencegah efek masuk "beda-beda").

@@ -1065,7 +1065,11 @@ fun VipEntryEffect(roomId: String) {
                 vip = if (m.vip in 1..9) m.vip else if (vipActive(wPasang.vip, wPasang.vipUntil)) wPasang.vip else 0,
             )
         } else m
-        val a = entryAssetOf(mPakai) ?: entryAssetCadangan()
+        // Efek cadangan hanya dipakai kalau user memang belum pernah memilih efek
+        // masuk. Kalau id-nya ada tetapi asetnya belum termuat, tunggu (jangan
+        // diganti efek lain) supaya tidak muncul efek masuk yang bukan pilihannya.
+        val a = if (mPakai.entry == TANPA_BINGKAI) null
+        else entryAssetOf(mPakai) ?: if (mPakai.entry.isBlank()) entryAssetCadangan() else null
         val b = bannerAssetOf(mPakai)
         playing = a
         banner = b
@@ -1118,8 +1122,11 @@ fun VipEntryEffect(roomId: String) {
                 else -> null
             }
         }.getOrNull()
-            ?: VipAssets.get(vipNow, "entry")
-            ?: entryAssetCadangan()
+            ?: when {
+                eId == TANPA_BINGKAI -> null
+                eId.isNotBlank() -> null
+                else -> VipAssets.get(vipNow, "entry") ?: entryAssetCadangan()
+            }
         val bAwal = runCatching {
             when {
                 bId.startsWith("sx_") -> StoreCatalog.find(bId)?.asset
@@ -1129,13 +1136,17 @@ fun VipEntryEffect(roomId: String) {
                 else -> null
             }
         }.getOrNull()
-            ?: vipBannerAsset(vipNow)
-            ?: bannerCadangan()
+            ?: when {
+                bId == TANPA_BINGKAI -> null
+                bId.isNotBlank() -> null
+                else -> vipBannerAsset(vipNow) ?: bannerCadangan()
+            }
         // Kalau aset yang menempel di id item hanya gambar diam (sampul lama),
         // sedangkan tier VIP punya berkas animasi dari halaman Aset & VIP, pakai
         // berkas tier itu supaya SVGA benar-benar diputar.
         val aTier = VipAssets.get(vipNow, "entry")
         val a = if (
+            eId != TANPA_BINGKAI &&
             aTier != null && kindAset(aTier.kind, aTier.url) != "image" &&
             (aAwal == null || kindAset(aAwal.kind, aAwal.url) == "image")
         ) aTier else aAwal
@@ -1143,6 +1154,7 @@ fun VipEntryEffect(roomId: String) {
         // di id item hanya gambar diam.
         val bTier = vipBannerAsset(vipNow)
         val b = if (
+            bId != TANPA_BINGKAI &&
             bTier != null && kindAset(bTier.kind, bTier.url) != "image" &&
             (bAwal == null || kindAset(bAwal.kind, bAwal.url) == "image")
         ) bTier else bAwal
@@ -1181,7 +1193,7 @@ fun VipEntryEffect(roomId: String) {
         }
         // Aset untuk tingkat user ini memang belum ada di panel. Pakai efek masuk
         // yang tersedia supaya pemain tetap melihat efek, tidak layar diam.
-        if (entryAssetCadangan() != null) {
+        if (m.entry != TANPA_BINGKAI && m.entry.isBlank() && entryAssetCadangan() != null) {
             pasangEfek(m)
         } else {
             VipAssets.diag["entry_kosong"] = "Efek masuk belum ada di panel untuk tingkat ini"
@@ -1193,7 +1205,8 @@ fun VipEntryEffect(roomId: String) {
     // masuk dan banner jadi kosong. Untuk item VIP/store, coba ulang sebentar
     // supaya efeknya tetap tampil (dulu hanya item sx_ yang dicoba ulang).
     fun perluUlang(m: RoomMsg): Boolean =
-        m.entry.startsWith("sx_") || m.banner.startsWith("sx_") ||
+        (m.entry != TANPA_BINGKAI && m.entry.startsWith("sx_")) ||
+            (m.banner != TANPA_BINGKAI && m.banner.startsWith("sx_")) ||
             m.vip in 1..9 || m.entry.isNotBlank() || m.banner.isNotBlank()
 
     DisposableEffect(roomId) {

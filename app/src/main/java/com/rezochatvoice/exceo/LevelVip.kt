@@ -239,6 +239,8 @@ fun activeEquip(w: Wallet, slot: String): String {
  */
 fun fallbackEquip(w: Wallet, slot: String): String {
     val cur = activeEquip(w, slot)
+    // "none" = sengaja dilepas. Jangan dicarikan pengganti dari isi tas.
+    if (cur == TANPA_BINGKAI) return TANPA_BINGKAI
     if (cur.isNotBlank()) return cur
     val awalan = if (slot == "banner") listOf("svbn_", "vipbn_") else listOf("sve_", "vipe_")
     val now = System.currentTimeMillis()
@@ -255,7 +257,12 @@ private fun itemTerpakai(w: Wallet, slot: String, id: String): Boolean =
 private fun equipBaru(w: Wallet, slot: String, id: String): String {
     // Melepas bingkai menyimpan penanda tegas, bukan kosong: kosong berarti "belum
     // memilih" dan dulu membuat bingkai VIP muncul sendiri.
-    if (slot == "frame") return if (itemTerpakai(w, slot, id)) TANPA_BINGKAI else id
+    // Bingkai, efek masuk, dan banner: melepas menyimpan penanda tegas "none".
+    // Dulu hanya bingkai yang punya penanda, jadi efek masuk yang sudah dilepas
+    // diisi lagi oleh efek VIP atau efek cadangan dan seolah tidak pernah lepas.
+    if (slot == "frame" || slot == "entry" || slot == "banner") {
+        return if (itemTerpakai(w, slot, id)) TANPA_BINGKAI else id
+    }
     if (slot != "badge") return if (itemTerpakai(w, slot, id)) "" else id
     val kini = medalIdList(w.equip["badge"])
     val baru = if (kini.contains(id)) kini - id else kini + id

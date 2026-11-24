@@ -618,24 +618,26 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
                     padding
                 }
                 Box(Modifier.fillMaxSize().padding(contentPadding)) {
-                    // Geseran halus saat berpindah tab: isi tab lama bergeser keluar,
-                    // isi tab tujuan masuk dari sisinya. Hanya 220 ms, isi tab tidak
-                    // dimuat ulang dan tidak ada data yang diambil lagi.
-                    AnimatedContent(
-                        targetState = selected,
-                        transitionSpec = {
-                            val maju = targetState > initialState
-                            (
-                                slideInHorizontally(tween(220)) { lebar -> if (maju) lebar / 7 else -lebar / 7 } +
-                                    fadeIn(tween(180))
-                                ) togetherWith (
-                                slideOutHorizontally(tween(220)) { lebar -> if (maju) -lebar / 7 else lebar / 7 } +
-                                    fadeOut(tween(140))
-                                )
+                    // Geseran tab TANPA menggandakan halaman. Dulu memakai
+                    // AnimatedContent yang menyusun dua tab sekaligus (tab lama dan
+                    // tab baru) selama animasi, dan itu membuat HP berat serta
+                    // tersendat. Sekarang hanya satu tab yang disusun, lalu
+                    // digeser sedikit lewat lapisan gambar: ringan, tetap halus.
+                    val geserTab = remember { androidx.compose.animation.core.Animatable(0f) }
+                    var tabSebelum by remember { mutableStateOf(selected) }
+                    LaunchedEffect(selected) {
+                        val maju = selected > tabSebelum
+                        tabSebelum = selected
+                        geserTab.snapTo(if (maju) 0.14f else -0.14f)
+                        geserTab.animateTo(0f, tween(190))
+                    }
+                    Box(
+                        Modifier.fillMaxSize().graphicsLayer {
+                            translationX = geserTab.value * size.width
+                            alpha = 1f - (kotlin.math.abs(geserTab.value) * 1.6f).coerceIn(0f, 0.3f)
                         },
-                        label = "tab",
-                    ) { tabAktif ->
-                    when (tabAktif) {
+                    ) {
+                    when (selected) {
                         0 -> KecilkanKonten(0.88f) {
                             PartyTab(
                                 myUid = uid,
@@ -689,26 +691,28 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
                 }
             }
 
-            // Geseran halus saat halaman dibuka dan ditutup: halaman masuk dari
-            // kanan, dan saat ditutup bergeser keluar ke kanan.
-            AnimatedContent(
-                targetState = overlay,
-                transitionSpec = {
-                    if (targetState != OV_NONE) {
-                        (
-                            slideInHorizontally(tween(240)) { lebar -> lebar / 4 } +
-                                fadeIn(tween(190))
-                            ) togetherWith fadeOut(tween(120))
-                    } else {
-                        fadeIn(tween(170)) togetherWith (
-                            slideOutHorizontally(tween(240)) { lebar -> lebar / 4 } +
-                                fadeOut(tween(190))
-                            )
-                    }
+            // Halaman masuk dan keluar dengan geseran murah, satu komposisi saja.
+            val geserLayar = remember { androidx.compose.animation.core.Animatable(0f) }
+            var layarSebelum by remember { mutableStateOf(overlay) }
+            LaunchedEffect(overlay) {
+                val buka = overlay != OV_NONE
+                val baru = layarSebelum == OV_NONE && buka
+                layarSebelum = overlay
+                if (buka) {
+                    geserLayar.snapTo(if (baru) 0.22f else 0f)
+                    geserLayar.animateTo(0f, tween(200))
+                } else {
+                    geserLayar.animateTo(0.22f, tween(180))
+                    geserLayar.snapTo(0f)
+                }
+            }
+            Box(
+                Modifier.fillMaxSize().graphicsLayer {
+                    translationX = geserLayar.value * size.width
+                    alpha = 1f - (kotlin.math.abs(geserLayar.value) * 1.4f).coerceIn(0f, 0.35f)
                 },
-                label = "halaman",
-            ) { layarAktif ->
-            when (layarAktif) {
+            ) {
+            when (overlay) {
                 OV_EDIT -> EditProfileScreen(
                     user = user,
                     userId = userId,

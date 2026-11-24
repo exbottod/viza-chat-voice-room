@@ -1,6 +1,6 @@
-Kursi mic tidak lagi menghitung ulang saat ada suara, jadi foto tidak berkedip
-Foto kursi yang sudah tampil tetap dipakai, tidak pernah kosong sesaat
+Aplikasi kembali ringan, tidak lagi macet dan patah-patah saat pindah tab
+Geseran halaman tetap halus tanpa menggandakan halaman di belakang layar
+Avatar kursi mic diam, tidak berkedip, dan tidak lagi dihitung ulang saat ada suara
 Bingkai di kursi mic tetap bergerak seperti dulu
-Pindah tab dan membuka halaman bergeser halus
 Pemberitahuan masuk kamar muncul, tombol Turun Mic bekerja
 Banner masuk, efek masuk, bingkai, lencana, dan medali tetap diambil lewat server Viza

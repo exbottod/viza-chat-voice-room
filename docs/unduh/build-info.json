@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.404",
-  "catatan": "• Bingkai tidak lagi terpasang sendiri: profil dan kursi mic polos kalau tidak memakai bingkai\n• Tidak ada cincin emas pengganti saat bingkai dilepas\n• Bingkai hanya tampil kalau dipilih dari Store\n• Avatar kursi mic diam dan bingkai yang dipilih tetap bergerak",
-  "ukuran_apk": 75805950,
-  "sha256_apk": "bb942ee1e5d57c34f651bf8aa305fa613a9e1ad617cd4c3513382a99dc3583ab",
+  "versi": "1.0.405",
+  "catatan": "• Banner tidak lagi memuat ulang terus, jadi menyekrol dan menyentuh layar tidak tersendat\n• Daftar banner dibaca sekali saat aplikasi dibuka lalu disimpan di HP\n• Bingkai tidak dipasang otomatis, profil dan kursi mic polos kalau tidak memakai bingkai\n• Avatar kursi mic diam dan bingkai yang dipilih tetap bergerak",
+  "ukuran_apk": 75804361,
+  "sha256_apk": "dc4eeaccb5067ea7225d7aab7b17b5b1add9cc4475117a32857f91b7d71e5fb8",
   "abis": {
     "arm64": {
-      "ukuran": 75805950,
-      "sha256": "bb942ee1e5d57c34f651bf8aa305fa613a9e1ad617cd4c3513382a99dc3583ab"
+      "ukuran": 75804361,
+      "sha256": "dc4eeaccb5067ea7225d7aab7b17b5b1add9cc4475117a32857f91b7d71e5fb8"
     },
     "armv7": {
-      "ukuran": 74040468,
-      "sha256": "67c04e5c0d193fe2ee89d654e1505e8d6530b5caa5f9a9b308725058de7b3a47"
+      "ukuran": 74038874,
+      "sha256": "10d6945db37d9c8ba850f797e5826baf23410245142d751f05f5e755ee521dc4"
     },
     "universal": {
-      "ukuran": 123659952,
-      "sha256": "a9084e20c12b42abd4776c1435ec84ff0c3bfcef4a04a58dd00d7cc2c1ce772e"
+      "ukuran": 123658357,
+      "sha256": "b7ec16ce549b3c12223c506bd096574729a1b9f13988c5a127850024a25dec9a"
     }
   }
 }

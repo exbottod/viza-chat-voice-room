@@ -2333,10 +2333,14 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
     // seluruhnya sekitar sepuluh kali per detik, dan dulu setiap kursi menghitung
     // ulang tiap kali walau angkanya tidak berubah. Sekarang kursi yang diam
     // benar-benar tidak dihitung ulang.
-    // Kursi TIDAK lagi membaca status atau level suara sama sekali. Dulu kursi
-    // ikut dihitung ulang puluhan kali per detik selama ada yang bicara, dan
-    // setiap hitung ulang itu bisa memulai ulang bingkai serta membuat foto
-    // sesaat kosong. Sekarang kursi hanya berubah kalau data kursinya berubah.
+    // Kursi hanya memantau satu hal: apakah orangnya sedang bicara. Pembacaan
+    // dibungkus derivedStateOf supaya kursi tidak dihitung ulang saat angka level
+    // berubah; hanya berubah saat status bicara benar-benar berganti.
+    val bicaraEvent by remember(uidKursi, seat?.muted) {
+        androidx.compose.runtime.derivedStateOf {
+            seat != null && !seat.muted && AgoraVoice.bicara.contains(seat.uid)
+        }
+    }
     Column(Modifier.clickable(onClick = onClick), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(size), contentAlignment = Alignment.Center) {
             // Penanda bicara di kursi DIHAPUS. Cincin yang muncul-hilang mengikuti
@@ -2357,12 +2361,7 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
                 val skalaAvatar = 1f
                 // bmp berasal dari produceState (delegated property), jadi smart cast
                 // tidak bisa langsung dipakai. Ambil salinan lokal dulu.
-                // Foto terakhir yang berhasil dibaca disimpan. Kalau pembacaan
-                // foto baru belum selesai, foto lama tetap tampil, jadi kursi
-                // tidak pernah kosong sesaat atau berkedip.
-                var fotoTerakhir by remember(uidKursi) { mutableStateOf<android.graphics.Bitmap?>(null) }
-                LaunchedEffect(bmp) { if (bmp != null) fotoTerakhir = bmp }
-                val bmpTampil = bmp ?: fotoTerakhir
+                val bmpTampil = bmp
                 when {
                     seat != null && bmpTampil != null ->
                     Image(bitmap = bmpTampil, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(skalaAvatar))

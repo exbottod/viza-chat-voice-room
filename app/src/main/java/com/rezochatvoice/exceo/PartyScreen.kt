@@ -475,7 +475,7 @@ private fun BannerFeed() {
                 }
             }
         }
-        if (sudah && daftar.isEmpty() && rewardBanner.isBlank()) {
+        if (daftar.isEmpty() && rewardBanner.isBlank()) {
             EmptyBlock(tr("Belum ada aktivitas"))
         }
     }

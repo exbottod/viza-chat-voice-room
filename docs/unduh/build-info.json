@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.403",
-  "catatan": "• Aplikasi kembali ringan, tidak lagi macet dan patah-patah saat pindah tab\n• Geseran halaman tetap halus tanpa menggandakan halaman di belakang layar\n• Avatar kursi mic diam, tidak berkedip, dan tidak lagi dihitung ulang saat ada suara\n• Bingkai di kursi mic tetap bergerak seperti dulu",
-  "ukuran_apk": 75805669,
-  "sha256_apk": "09117ca8c0bb4c17aeef7cbd4bede1131d07c0ba3e9865cafda8972a7eef3fb0",
+  "versi": "1.0.404",
+  "catatan": "• Bingkai tidak lagi terpasang sendiri: profil dan kursi mic polos kalau tidak memakai bingkai\n• Tidak ada cincin emas pengganti saat bingkai dilepas\n• Bingkai hanya tampil kalau dipilih dari Store\n• Avatar kursi mic diam dan bingkai yang dipilih tetap bergerak",
+  "ukuran_apk": 75805950,
+  "sha256_apk": "bb942ee1e5d57c34f651bf8aa305fa613a9e1ad617cd4c3513382a99dc3583ab",
   "abis": {
     "arm64": {
-      "ukuran": 75805669,
-      "sha256": "09117ca8c0bb4c17aeef7cbd4bede1131d07c0ba3e9865cafda8972a7eef3fb0"
+      "ukuran": 75805950,
+      "sha256": "bb942ee1e5d57c34f651bf8aa305fa613a9e1ad617cd4c3513382a99dc3583ab"
     },
     "armv7": {
-      "ukuran": 74040194,
-      "sha256": "e8b1f19c98c5e1098fd34371614a7fbf8b396b9c4f04e4a89016cdf839be9413"
+      "ukuran": 74040468,
+      "sha256": "67c04e5c0d193fe2ee89d654e1505e8d6530b5caa5f9a9b308725058de7b3a47"
     },
     "universal": {
-      "ukuran": 123659686,
-      "sha256": "439c96aad0d3483cb811c50098787f91f1b7513418e5af27444c590d5f64930f"
+      "ukuran": 123659952,
+      "sha256": "a9084e20c12b42abd4776c1435ec84ff0c3bfcef4a04a58dd00d7cc2c1ce772e"
     }
   }
 }

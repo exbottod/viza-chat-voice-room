@@ -1,4 +1,4 @@
-• Aplikasi kembali ringan, tidak lagi macet dan patah-patah saat pindah tab
-• Geseran halaman tetap halus tanpa menggandakan halaman di belakang layar
-• Avatar kursi mic diam, tidak berkedip, dan tidak lagi dihitung ulang saat ada suara
-• Bingkai di kursi mic tetap bergerak seperti dulu
+• Bingkai tidak lagi terpasang sendiri: profil dan kursi mic polos kalau tidak memakai bingkai
+• Tidak ada cincin emas pengganti saat bingkai dilepas
+• Bingkai hanya tampil kalau dipilih dari Store
+• Avatar kursi mic diam dan bingkai yang dipilih tetap bergerak

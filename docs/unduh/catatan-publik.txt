@@ -1,6 +1,5 @@
-Bingkai tidak lagi terpasang sendiri: profil dan kursi mic polos kalau tidak memakai bingkai
-Tidak ada cincin emas pengganti saat bingkai dilepas
-Bingkai hanya tampil kalau dipilih dari Store
+Banner tidak lagi memuat ulang terus, jadi menyekrol dan menyentuh layar tidak tersendat
+Daftar banner dibaca sekali saat aplikasi dibuka lalu disimpan di HP
+Bingkai tidak dipasang otomatis, profil dan kursi mic polos kalau tidak memakai bingkai
 Avatar kursi mic diam dan bingkai yang dipilih tetap bergerak
 Geseran halaman tetap halus dan aplikasi tetap ringan
-Pemberitahuan masuk kamar muncul, tombol Turun Mic bekerja

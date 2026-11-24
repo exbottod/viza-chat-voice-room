@@ -311,6 +311,97 @@ private fun HalamanBannerIklan(ik: SupaRepo.IklanInfo) {
 
 private data class AppBanner(val title: String, val subtitle: String, val imageB64: String?, val link: String = "", val imageUrl: String = "")
 
+/**
+ * Daftar banner dimuat sekali per proses aplikasi lalu disimpan di memori.
+ * Dulu pembacaan banner ada di dalam layar, jadi setiap kali tab Party disusun
+ * ulang (menyekrol, pindah tab, kembali dari WhatsApp) banner dibaca ulang dari
+ * server. Itu yang membuat banner seperti memuat ulang terus dan menyekrol
+ * terasa tersendat.
+ */
+private object BannerFeed {
+    var list by mutableStateOf<List<AppBanner>>(emptyList())
+        private set
+    private var mulai = false
+    private var sibuk = false
+    private val gambarCache = HashMap<Int, android.graphics.Bitmap?>()
+
+    /** Gambar banner dari teks base64, dibaca sekali lalu disimpan. */
+    fun gambar(b64: String?): android.graphics.Bitmap? {
+        if (b64.isNullOrBlank()) return null
+        val kunci = b64.hashCode()
+        if (gambarCache.containsKey(kunci)) return gambarCache[kunci]
+        val b = try { ProfileRepo.decodeB64(b64) } catch (e: Exception) { null }
+        gambarCache[kunci] = b
+        return b
+    }
+
+    fun start(paksa: Boolean = false) {
+        if (sibuk) return
+        if (mulai && !paksa) return
+        mulai = true
+        sibuk = true
+        AppScope.scope.launch {
+            try {
+        // Banner dikelola seperti frame/store: file di Cloudinary, data di vipCfg.
+        val disembunyikan = mutableSetOf<String>()
+        val dariVip: List<AppBanner> = try {
+            val snap = kotlinx.coroutines.withTimeoutOrNull(6000L) {
+                com.google.firebase.database.FirebaseDatabase.getInstance().getReference("vipCfg").get().await()
+            }
+            snap?.children?.mapNotNull { c ->
+                val x = c.value as? Map<*, *> ?: return@mapNotNull null
+                if (x["banner"] != true) return@mapNotNull null
+                (x["hiddenFs"] as? String)?.let { disembunyikan.add(it) }
+                if (x["active"] == false) return@mapNotNull null
+                val url = x["imageUrl"] as? String ?: ""
+                val b64 = x["imageB64"] as? String
+                if (url.isBlank() && b64.isNullOrBlank()) return@mapNotNull null
+                if (x["active"] == false) return@mapNotNull null
+                Pair(
+                    (x["order"] as? Number)?.toLong() ?: 0L,
+                    AppBanner(
+                        x["title"] as? String ?: "",
+                        x["subtitle"] as? String ?: "",
+                        b64,
+                        x["link"] as? String ?: "",
+                        url,
+                    ),
+                )
+            }?.sortedBy { it.first }?.map { it.second }.orEmpty()
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            android.util.Log.w("Banner", e)
+            emptyList()
+        }
+        // Banner lama di Firestore tetap ditampilkan kalau masih bisa dibaca.
+        val dariFsSemua: List<AppBanner> = try {
+            val snap = kotlinx.coroutines.withTimeoutOrNull(5000L) {
+                com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("banners").get().await()
+            }
+            snap?.documents
+                ?.filter { it.id !in disembunyikan && it.getBoolean("active") != false && (!it.getString("imageB64").isNullOrBlank() || !it.getString("imageUrl").isNullOrBlank()) }
+                ?.sortedBy { it.getLong("order") ?: 0L }
+                ?.map {
+                    AppBanner(
+                        it.getString("title") ?: "", it.getString("subtitle") ?: "",
+                        it.getString("imageB64"), it.getString("link") ?: "",
+                        it.getString("imageUrl") ?: "",
+                    )
+                }.orEmpty()
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            emptyList()
+        }
+        val dariFs = dariFsSemua
+        val semua = dariVip + dariFs.filter { f -> dariVip.none { v -> v.imageUrl.isNotBlank() && v.imageUrl == f.imageUrl } }
+        if (semua.isNotEmpty()) list = semua
+            } finally { sibuk = false }
+        }
+    }
+}
+
 /** Ambil semua banner yang tampil di atas tab Party (vipCfg + Firestore lama). */
 private suspend fun muatSemuaBanner(): List<AppBanner> {
     val disembunyikan = mutableSetOf<String>()
@@ -443,7 +534,7 @@ private fun BannerPager() {
         Triple("Event Spesial", "Kumpulkan poin dan menangkan hadiah", listOf(Color(0xFF3B1E5B), Color(0xFF120A1A))),
         Triple("Top Family", "Family terbaik pekan ini", listOf(Color(0xFF1E3B5B), Color(0xFF0A121A))),
     )
-    var remote by remember { mutableStateOf<List<AppBanner>>(emptyList()) }
+    val remote = BannerFeed.list
     // Banner iklan coin gratis: jadi geseran NOMOR SATU di grup banner yang sama
     // dengan banner Viza, bukan banner terpisah di atas.
     var iklan by remember { mutableStateOf<SupaRepo.IklanInfo?>(null) }
@@ -461,64 +552,8 @@ private fun BannerPager() {
             Toast.makeText(context, tr("Tidak bisa membuka link"), Toast.LENGTH_SHORT).show()
         }
     }
-    // Banner dibaca SEKALI per buka tab (hemat kuota listener Firestore).
-    androidx.compose.runtime.LaunchedEffect(Unit) {
-        // Banner dikelola seperti frame/store: file di Cloudinary, data di vipCfg.
-        val disembunyikan = mutableSetOf<String>()
-        val dariVip: List<AppBanner> = try {
-            val snap = kotlinx.coroutines.withTimeoutOrNull(6000L) {
-                com.google.firebase.database.FirebaseDatabase.getInstance().getReference("vipCfg").get().await()
-            }
-            snap?.children?.mapNotNull { c ->
-                val x = c.value as? Map<*, *> ?: return@mapNotNull null
-                if (x["banner"] != true) return@mapNotNull null
-                (x["hiddenFs"] as? String)?.let { disembunyikan.add(it) }
-                if (x["active"] == false) return@mapNotNull null
-                val url = x["imageUrl"] as? String ?: ""
-                val b64 = x["imageB64"] as? String
-                if (url.isBlank() && b64.isNullOrBlank()) return@mapNotNull null
-                if (x["active"] == false) return@mapNotNull null
-                Pair(
-                    (x["order"] as? Number)?.toLong() ?: 0L,
-                    AppBanner(
-                        x["title"] as? String ?: "",
-                        x["subtitle"] as? String ?: "",
-                        b64,
-                        x["link"] as? String ?: "",
-                        url,
-                    ),
-                )
-            }?.sortedBy { it.first }?.map { it.second }.orEmpty()
-        } catch (e: kotlinx.coroutines.CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            android.util.Log.w("Banner", e)
-            emptyList()
-        }
-        // Banner lama di Firestore tetap ditampilkan kalau masih bisa dibaca.
-        val dariFsSemua: List<AppBanner> = try {
-            val snap = kotlinx.coroutines.withTimeoutOrNull(5000L) {
-                com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("banners").get().await()
-            }
-            snap?.documents
-                ?.filter { it.id !in disembunyikan && it.getBoolean("active") != false && (!it.getString("imageB64").isNullOrBlank() || !it.getString("imageUrl").isNullOrBlank()) }
-                ?.sortedBy { it.getLong("order") ?: 0L }
-                ?.map {
-                    AppBanner(
-                        it.getString("title") ?: "", it.getString("subtitle") ?: "",
-                        it.getString("imageB64"), it.getString("link") ?: "",
-                        it.getString("imageUrl") ?: "",
-                    )
-                }.orEmpty()
-        } catch (e: kotlinx.coroutines.CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            emptyList()
-        }
-        val dariFs = dariFsSemua
-        val semua = dariVip + dariFs.filter { f -> dariVip.none { v -> v.imageUrl.isNotBlank() && v.imageUrl == f.imageUrl } }
-        if (semua.isNotEmpty()) remote = semua
-    }
+    // Banner dibaca SEKALI per proses aplikasi, bukan setiap layar disusun ulang.
+    androidx.compose.runtime.LaunchedEffect(Unit) { BannerFeed.start() }
     // Gambar banner Koin banyak diunggah owner lewat panel dan disajikan
     // server; ikut jadi geseran terakhir di banner atas tab Party.
     var rewardBanner by remember { mutableStateOf("") }
@@ -578,7 +613,8 @@ private fun BannerPager() {
                 }
             } else if (remote.isNotEmpty()) {
                 val b = remote[(page - geser).coerceIn(0, remote.lastIndex)]
-                val bmp = remember(b.imageB64) { ProfileRepo.decodeB64(b.imageB64) }
+                // Gambar diambil dari simpanan BannerFeed: tidak dibaca ulang saat menyekrol.
+                val bmp = remember(b.imageB64) { BannerFeed.gambar(b.imageB64) }
                 Box(
                     modifier = Modifier.fillMaxWidth().aspectRatio(3f).clip(frame)
                         .background(Color(0xFF1A1A1A)).border(1.dp, goldBorder, frame)

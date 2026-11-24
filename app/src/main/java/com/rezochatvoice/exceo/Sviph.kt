@@ -779,7 +779,8 @@ object SvipInv {
                 eq[name] = id; changed = true
             }
         }
-        setSlot("frame", "svf_$tier", listOf("vipf_", "svf_"))
+        // Bingkai tidak lagi dipasang otomatis: user yang tidak memakai bingkai
+        // harus benar-benar polos di profil dan di kursi mic.
         setSlot("entry", "sve_$tier", listOf("vipe_", "sve_"))
         setSlot("banner", "svbn_$tier", listOf("vipbn_", "svbn_"))
         setSlot("badge", "svbd_$tier", listOf("svbd_"))

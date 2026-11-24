@@ -391,13 +391,18 @@ const val TANPA_BINGKAI = "none"
 fun frameAssetOf(frameId: String?, vip: Int, until: Long): VipAsset? {
     // Bingkai dilepas dengan sengaja: jangan jatuh ke bingkai VIP otomatis.
     if (frameId == TANPA_BINGKAI) return null
-    if (!frameId.isNullOrBlank()) {
-        // Bingkai yang dipakai user MENANG. Dulu yang dicek hanya id berawalan sx_,
-        // jadi bingkai kiriman panel terlewat dan bingkai VIP yang tampil.
-        StoreCatalog.find(frameId)?.asset?.let { return it }
-    }
-    val tier = vipFrameTier(frameId, vip, until)
-    return if (tier in 1..9) VipAssets.get(tier, "frame") else null
+    // TIDAK memilih bingkai berarti benar-benar polos. Dulu VIP yang masih aktif
+    // otomatis dipasangi bingkai VIP, jadi user yang tidak memakai bingkai tetap
+    // terlihat memakai bingkai. Sekarang bingkai hanya tampil kalau dipilih.
+    if (frameId.isNullOrBlank()) return null
+    // Bingkai yang dipakai user MENANG. Dulu yang dicek hanya id berawalan sx_,
+    // jadi bingkai kiriman panel terlewat dan bingkai VIP yang tampil.
+    StoreCatalog.find(frameId)?.asset?.let { return it }
+    // Bingkai VIP/SVIP bawaan tidak dipasang sendiri lagi. Dulu id vipf_N/svf_N
+    // otomatis dipasang oleh sistem saat VIP aktif, jadi user yang tidak memakai
+    // bingkai tetap terlihat memakai bingkai. Sekarang bingkai hanya yang dipilih
+    // dari Store atau panel.
+    return null
 }
 
 @Composable

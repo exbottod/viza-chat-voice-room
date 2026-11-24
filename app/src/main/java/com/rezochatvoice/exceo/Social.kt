@@ -608,7 +608,7 @@ fun FramedAvatar(u: PublicUser?, size: Dp) {
     val fa = remember(u?.frame, u?.vip, u?.vipUntil) { frameAssetOf(u?.frame, u?.vip ?: 0, u?.vipUntil ?: 0L) }
     Box(
         Modifier.size(size + 16.dp)
-            .then(if (fa != null || u?.frame == TANPA_BINGKAI) Modifier else Modifier.border(3.dp, frameBrush(u?.frame), CircleShape))
+            .then(Modifier)
             .padding(8.dp),
         contentAlignment = Alignment.Center,
     ) {

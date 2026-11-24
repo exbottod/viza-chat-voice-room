@@ -406,14 +406,15 @@ private suspend fun muatSemuaBanner(): List<AppBanner> {
 @Composable
 private fun BannerFeed() {
     val context = LocalContext.current
-    var daftar by remember { mutableStateOf<List<AppBanner>>(emptyList()) }
-    var sudah by remember { mutableStateOf(false) }
+    // Daftar banner diambil dari simpanan bersama: tidak dibaca ulang setiap kali
+    // bagian ini masuk layar saat menyekrol. Dulu pembacaan ada di sini, jadi
+    // banner seperti memuat ulang terus dan sekrol jadi tersendat.
+    val daftar = BannerStore.list
     var rewardBanner by remember { mutableStateOf("") }
     LaunchedEffect(Unit) {
+        BannerStore.start()
         RewardRoomApi.muatTampilan()
         rewardBanner = RewardRoomApi.bannerUrl
-        daftar = muatSemuaBanner()
-        sudah = true
     }
     val buka = { url: String ->
         try {

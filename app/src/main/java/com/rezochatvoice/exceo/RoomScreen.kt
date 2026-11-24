@@ -2333,22 +2333,10 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
     // seluruhnya sekitar sepuluh kali per detik, dan dulu setiap kursi menghitung
     // ulang tiap kali walau angkanya tidak berubah. Sekarang kursi yang diam
     // benar-benar tidak dihitung ulang.
-    // Kursi hanya memantau SATU hal: apakah orangnya sedang bicara. Angka level
-    // suara tidak lagi dibaca di sini. Dulu level dibulatkan 40 langkah dan ikut
-    // dibaca, sehingga setiap kursi dihitung ulang sampai 40 kali per detik saat
-    // ada suara; itu membuat kursi bergetar dan CPU room naik tanpa perlu.
-    val bicaraEvent by remember(uidKursi, seat?.muted) {
-        androidx.compose.runtime.derivedStateOf {
-            seat != null && !seat.muted && AgoraVoice.bicara.contains(seat.uid)
-        }
-    }
-    // Kalau server suara hanya mengirim daftar pembicara tanpa angka level,
-    // pakai nilai dasar supaya gelombang dan gelembung tetap kelihatan.
-    // Kursi mic TIDAK memakai angka level suara lagi. Dulu cincin dan balon
-    // mengikuti level yang berubah sekitar sepuluh kali per detik, sehingga
-    // avatar terlihat naik-turun dan berkedip. Sekarang hanya ada satu cincin
-    // tipis dengan tebal dan kecerahan TETAP selama orangnya bicara.
-    val bicaraKursi = bicaraEvent
+    // Kursi TIDAK lagi membaca status atau level suara sama sekali. Dulu kursi
+    // ikut dihitung ulang puluhan kali per detik selama ada yang bicara, dan
+    // setiap hitung ulang itu bisa memulai ulang bingkai serta membuat foto
+    // sesaat kosong. Sekarang kursi hanya berubah kalau data kursinya berubah.
     Column(Modifier.clickable(onClick = onClick), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.size(size), contentAlignment = Alignment.Center) {
             // Penanda bicara di kursi DIHAPUS. Cincin yang muncul-hilang mengikuti
@@ -2369,7 +2357,12 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
                 val skalaAvatar = 1f
                 // bmp berasal dari produceState (delegated property), jadi smart cast
                 // tidak bisa langsung dipakai. Ambil salinan lokal dulu.
-                val bmpTampil = bmp
+                // Foto terakhir yang berhasil dibaca disimpan. Kalau pembacaan
+                // foto baru belum selesai, foto lama tetap tampil, jadi kursi
+                // tidak pernah kosong sesaat atau berkedip.
+                var fotoTerakhir by remember(uidKursi) { mutableStateOf<android.graphics.Bitmap?>(null) }
+                LaunchedEffect(bmp) { if (bmp != null) fotoTerakhir = bmp }
+                val bmpTampil = bmp ?: fotoTerakhir
                 when {
                     seat != null && bmpTampil != null ->
                     Image(bitmap = bmpTampil, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(skalaAvatar))

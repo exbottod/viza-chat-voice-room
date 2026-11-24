@@ -1,6 +1,6 @@
-Avatar di kursi mic benar-benar diam, tidak ada lagi yang muncul-hilang cepat
-Bingkai di kursi mic bergerak lagi seperti sebelumnya
-Bingkai tidak dibuat ulang saat layar dihitung ulang, jadi tidak berkedip
-Pindah tab dan membuka halaman tetap bergeser halus
+Kursi mic tidak lagi menghitung ulang saat ada suara, jadi foto tidak berkedip
+Foto kursi yang sudah tampil tetap dipakai, tidak pernah kosong sesaat
+Bingkai di kursi mic tetap bergerak seperti dulu
+Pindah tab dan membuka halaman bergeser halus
 Pemberitahuan masuk kamar muncul, tombol Turun Mic bekerja
 Banner masuk, efek masuk, bingkai, lencana, dan medali tetap diambil lewat server Viza

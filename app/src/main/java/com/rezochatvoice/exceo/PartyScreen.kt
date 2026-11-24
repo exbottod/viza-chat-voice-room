@@ -323,10 +323,10 @@ private object BannerStore {
         private set
     private var mulai = false
     private var sibuk = false
-    private val gambarCache = HashMap<Int, android.graphics.Bitmap?>()
+    private val gambarCache = HashMap<Int, androidx.compose.ui.graphics.ImageBitmap?>()
 
     /** Gambar banner dari teks base64, dibaca sekali lalu disimpan. */
-    fun gambar(b64: String?): android.graphics.Bitmap? {
+    fun gambar(b64: String?): androidx.compose.ui.graphics.ImageBitmap? {
         if (b64.isNullOrBlank()) return null
         val kunci = b64.hashCode()
         if (gambarCache.containsKey(kunci)) return gambarCache[kunci]

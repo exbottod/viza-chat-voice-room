@@ -1,4 +1,4 @@
-• Avatar di kursi mic benar-benar diam, tidak ada lagi yang muncul-hilang cepat
-• Bingkai di kursi mic bergerak lagi seperti sebelumnya
-• Bingkai tidak dibuat ulang saat layar dihitung ulang, jadi tidak berkedip
-• Pindah tab dan membuka halaman tetap bergeser halus
+• Aplikasi kembali ringan, tidak lagi macet dan patah-patah saat pindah tab
+• Geseran halaman tetap halus tanpa menggandakan halaman di belakang layar
+• Avatar kursi mic diam, tidak berkedip, dan tidak lagi dihitung ulang saat ada suara
+• Bingkai di kursi mic tetap bergerak seperti dulu

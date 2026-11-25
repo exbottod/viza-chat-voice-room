@@ -6978,9 +6978,24 @@ function tulasiDer(pem) {
   return hasil;
 }
 
+// Kunci bisa dari env atau dari berkas /opt/viza-api/tulasi.json
+// ({"public": "...", "private": "..."}), supaya pemilik cukup menempel sekali.
+let tulasiBerkas = null;
+async function tulasiNilai(env, jenis) {
+  const dariEnv = jenis === "publik" ? env.TULASI_PUBLIC : env.TULASI_PRIVATE;
+  if (dariEnv && String(dariEnv).trim()) return String(dariEnv);
+  if (tulasiBerkas === null) {
+    try {
+      const fs = await import("node:fs");
+      tulasiBerkas = JSON.parse(fs.readFileSync("/opt/viza-api/tulasi.json", "utf8")) || {};
+    } catch (e) { tulasiBerkas = {}; }
+  }
+  return String(tulasiBerkas[jenis] || "");
+}
+
 async function tulasiKunci(env, jenis) {
   const publik = jenis === "publik";
-  const der = tulasiDer(publik ? env.TULASI_PUBLIC : env.TULASI_PRIVATE);
+  const der = tulasiDer(await tulasiNilai(env, jenis));
   if (!der.length) return null;
   try {
     return await crypto.subtle.importKey(

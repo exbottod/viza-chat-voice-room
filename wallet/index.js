@@ -7020,6 +7020,24 @@ async function tulasiNilai(env, jenis) {
   return String(tulasiBerkas[jenis] || "");
 }
 
+/** Dari mana kunci diambil: env, berkas .pem, atau tulasi.json. */
+async function tulasiAsal(env, jenis) {
+  const dariEnv = jenis === "publik" ? env.TULASI_PUBLIC : env.TULASI_PRIVATE;
+  if (dariEnv && String(dariEnv).trim()) return { sumber: "env", isi: String(dariEnv) };
+  const berkasPem = "/opt/viza-api/tulasi-" + (jenis === "publik" ? "public" : "private") + ".pem";
+  try {
+    const fs = await import("node:fs");
+    const isi = fs.readFileSync(berkasPem, "utf8");
+    if (String(isi).trim()) return { sumber: "pem", isi: String(isi) };
+  } catch (e) { /* belum ada */ }
+  try {
+    const fs = await import("node:fs");
+    const j = JSON.parse(fs.readFileSync("/opt/viza-api/tulasi.json", "utf8")) || {};
+    if (String(j[jenis] || "").trim()) return { sumber: "json", isi: String(j[jenis]) };
+  } catch (e) { /* belum ada */ }
+  return { sumber: "-", isi: "" };
+}
+
 async function tulasiKunci(env, jenis) {
   const publik = jenis === "publik";
   const der = tulasiDer(await tulasiNilai(env, jenis));
@@ -7358,10 +7376,22 @@ export default {
           return json({ ok: 1, url: tautan, token: isiToken });
         }
         if (aksiT === "status") {
-          // Pemeriksaan cepat: kunci sudah terbaca atau belum (tanpa menampilkan isinya).
+          // Pemeriksaan cepat: kunci terbaca atau belum, tanpa menampilkan isinya.
+          const asalPub = await tulasiAsal(env, "publik");
+          const asalPriv = await tulasiAsal(env, "privat");
+          const label = (teks) => {
+            const m = String(teks || "").match(/-----BEGIN ([A-Z ]+)-----/);
+            return m ? m[1] : String(teks || "").trim().slice(0, 12);
+          };
           const pub = await tulasiKunci(env, "publik");
           const priv = await tulasiKunci(env, "privat");
-          return json({ ok: 1, publik: pub ? 1 : 0, privat: priv ? 1 : 0, merchant: TULASI_MERCHANT });
+          return json({
+            ok: 1, merchant: TULASI_MERCHANT,
+            publik: pub ? 1 : 0, privat: priv ? 1 : 0,
+            asal_publik: asalPub.sumber, asal_privat: asalPriv.sumber,
+            label_publik: label(asalPub.isi), label_privat: label(asalPriv.isi),
+            panjang_publik: asalPub.isi.length, panjang_privat: asalPriv.isi.length,
+          });
         }
         if (aksiT === "games") {
           await tulasiSiapkan(env);

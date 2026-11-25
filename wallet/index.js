@@ -6984,6 +6984,13 @@ let tulasiBerkas = null;
 async function tulasiNilai(env, jenis) {
   const dariEnv = jenis === "publik" ? env.TULASI_PUBLIC : env.TULASI_PRIVATE;
   if (dariEnv && String(dariEnv).trim()) return String(dariEnv);
+  // Dua berkas PEM lebih mudah ditempel pemilik daripada JSON satu baris.
+  const berkasPem = "/opt/viza-api/tulasi-" + (jenis === "publik" ? "public" : "private") + ".pem";
+  try {
+    const fs = await import("node:fs");
+    const isi = fs.readFileSync(berkasPem, "utf8");
+    if (String(isi).trim()) return String(isi);
+  } catch (e) { /* belum ada, lanjut ke json */ }
   if (tulasiBerkas === null) {
     try {
       const fs = await import("node:fs");

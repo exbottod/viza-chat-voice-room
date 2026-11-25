@@ -6951,6 +6951,157 @@ h1{font-size:20px}ul{line-height:2.2;padding-left:18px}a{color:#f5c542}</style><
 
 export { hadiahMenitRoom };
 
+
+// ---------- Tulasi Game: alat bantu ----------
+const TULASI_MERCHANT = "1000002";
+const TULASI_POTONG = 200; // batas satu blok RSA 2048 untuk PKCS1
+const TULASI_GAME_BAWAAN = [
+  { kode: "kingdoms", id: "58", nama: "Teen Patti Gold" },
+  { kode: "teenPatti", id: "1", nama: "Teen Patti" },
+  { kode: "lucky77", id: "2", nama: "Lucky 77" },
+  { kode: "roulette", id: "3", nama: "Roulette" },
+  { kode: "dragonTigerBattle", id: "4", nama: "Dragon Tiger" },
+  { kode: "slots777", id: "5", nama: "Slots 777" },
+];
+
+function tulasiDer(pem) {
+  const bersih = String(pem || "")
+    .replace(/-----BEGIN [^-]+-----/g, "")
+    .replace(/-----END [^-]+-----/g, "")
+    .replace(/\\r/g, "")
+    .replace(/\\n/g, "")
+    .replace(/\s+/g, "");
+  if (!bersih) return new Uint8Array(0);
+  const biner = atob(bersih);
+  const hasil = new Uint8Array(biner.length);
+  for (let i = 0; i < biner.length; i++) hasil[i] = biner.charCodeAt(i);
+  return hasil;
+}
+
+async function tulasiKunci(env, jenis) {
+  const publik = jenis === "publik";
+  const der = tulasiDer(publik ? env.TULASI_PUBLIC : env.TULASI_PRIVATE);
+  if (!der.length) return null;
+  try {
+    return await crypto.subtle.importKey(
+      publik ? "spki" : "pkcs8", der,
+      { name: "RSAES-PKCS1-v1_5" }, false, [publik ? "encrypt" : "decrypt"],
+    );
+  } catch (e) { return null; }
+}
+
+async function tulasiEnkripsi(env, objek) {
+  const kunci = await tulasiKunci(env, "publik");
+  if (!kunci) throw new Error("Kunci publik Tulasi belum diisi");
+  const data = new TextEncoder().encode(JSON.stringify(objek));
+  const bagian = [];
+  for (let i = 0; i < data.length; i += TULASI_POTONG) {
+    const potong = data.slice(i, Math.min(i + TULASI_POTONG, data.length));
+    const acak = await crypto.subtle.encrypt({ name: "RSAES-PKCS1-v1_5" }, kunci, potong);
+    bagian.push(btoa(String.fromCharCode(...new Uint8Array(acak))));
+  }
+  return bagian.join(":");
+}
+
+async function tulasiBuka(env, teks) {
+  const kunci = await tulasiKunci(env, "privat");
+  if (!kunci) throw new Error("Kunci privat Tulasi belum diisi");
+  let mentah = String(teks || "").trim();
+  // Body bisa datang sebagai string JSON (ada tanda kutip di ujung).
+  if (mentah.startsWith('"')) { try { mentah = JSON.parse(mentah); } catch (e) { } }
+  const potongan = [];
+  for (const bagian of mentah.split(":")) {
+    if (!bagian.trim()) continue;
+    const biner = atob(bagian.trim());
+    const isi = new Uint8Array(biner.length);
+    for (let i = 0; i < biner.length; i++) isi[i] = biner.charCodeAt(i);
+    potongan.push(new Uint8Array(await crypto.subtle.decrypt({ name: "RSAES-PKCS1-v1_5" }, kunci, isi)));
+  }
+  const total = potongan.reduce((n, x) => n + x.length, 0);
+  const gabung = new Uint8Array(total);
+  let posisi = 0;
+  for (const x of potongan) { gabung.set(x, posisi); posisi += x.length; }
+  return JSON.parse(new TextDecoder().decode(gabung));
+}
+
+async function tulasiSiapkan(env) {
+  await pipe(env, [
+    { sql: "create table if not exists tulasi_token (token text primary key, uid text, at integer)" },
+    { sql: "create table if not exists tulasi_tx (tid text primary key, uid text, type integer, coin integer, at integer)" },
+  ]);
+}
+
+async function tulasiUidDariToken(env, token) {
+  const t = String(token || "").trim();
+  if (!t) return "";
+  const r = await pipe(env, [{ sql: "select uid from tulasi_token where token = ?", args: [T(t)] }]);
+  return String(r[0]?.rows?.[0]?.uid || "");
+}
+
+async function tulasiProfil(env, uid) {
+  const r = await pipe(env, [
+    { sql: "select coins from wallets where uid = ?", args: [T(uid)] },
+    { sql: "select name, avatar from wave_players where uid = ?", args: [T(uid)] },
+  ]);
+  const koin = Number(r[0]?.rows?.[0]?.coins ?? 0);
+  const p = r[1]?.rows?.[0] || {};
+  let nomor = 0;
+  try { nomor = Number(await idResmiSa(env, uid)) || 0; } catch (e) { nomor = 0; }
+  if (!nomor) {
+    const cari = await pipe(env, [{ sql: "select nilai from app_cfg where kunci = ?", args: [T("nomor_" + uid)] }]);
+    nomor = Number(cari[0]?.rows?.[0]?.nilai || 0) || 0;
+  }
+  return {
+    id: nomor,
+    coin: koin,
+    gameCoin: 0,
+    nickname: String(p.name || "Pengguna"),
+    avatar: String(p.avatar || ""),
+  };
+}
+
+async function tulasiUbahSaldo(env, isi) {
+  const uid = String(await tulasiUidDariToken(env, isi?.token) || "");
+  if (!uid) return { ok: 0, e: "token not found" };
+  const jenis = Number(isi?.type ?? -1);
+  const tid = String(isi?.transactionId || "").trim();
+  if (!tid) return { ok: 0, e: "transactionId kosong" };
+  await tulasiSiapkan(env);
+  const sudah = await pipe(env, [{ sql: "select 1 from tulasi_tx where tid = ?", args: [T(tid)] }]);
+  if (sudah[0]?.rows?.length) {
+    const p = await tulasiProfil(env, uid);
+    return { ok: 1, id: p.id, coin: p.coin };
+  }
+  const koinUbah = Number(isi?.coin ?? 0) || 0;
+  if (jenis === 0) {
+    const akhir = Number(isi?.gameEndTimestamp || 0);
+    if (akhir && Date.now() >= akhir) return { ok: 0, e: "game timeout" };
+    const waktu = Number(isi?.timestamp || 0);
+    if (waktu && Math.abs(Date.now() - waktu) > 2000) return { ok: 0, e: "game timeout" };
+    if (koinUbah <= 0) return { ok: 0, e: "coin tidak sah" };
+    const potong = await pipe(env, [{
+      sql: "update wallets set coins = coins - ?, updated_at = ? where uid = ? and coins >= ?",
+      args: [I(koinUbah), I(Date.now()), T(uid), I(koinUbah)],
+    }]);
+    if (!(Number(potong[0]?.affected ?? 0) > 0)) {
+      const p = await tulasiProfil(env, uid);
+      return { ok: 0, e: "saldo kurang", coin: p.coin };
+    }
+  } else if (jenis === 1) {
+    if (koinUbah <= 0) return { ok: 0, e: "coin tidak sah" };
+    await pipe(env, [{
+      sql: "update wallets set coins = coins + ?, updated_at = ? where uid = ?",
+      args: [I(koinUbah), I(Date.now()), T(uid)],
+    }]);
+  }
+  await pipe(env, [{
+    sql: "insert into tulasi_tx (tid, uid, type, coin, at) values (?, ?, ?, ?, ?)",
+    args: [T(tid), T(uid), I(jenis), I(koinUbah), I(Date.now())],
+  }]);
+  const akhirP = await tulasiProfil(env, uid);
+  return { ok: 1, id: akhirP.id, coin: akhirP.coin };
+}
+
 export default {
   async fetch(req, env) {
     globalThis.__vizaEnv = env;
@@ -7138,6 +7289,70 @@ export default {
       if (!nm) return json({ ok: 0, e: "Nama berkas kosong" }, 400);
       try { await asetHapus(env, nm); return json({ ok: 1, nama: nm }); }
       catch (e) { return json({ ok: 0, e: String(e?.message ?? e) }, 502); }
+    }
+    // ---------- Tulasi Game (dompet seamless) ----------
+    // Panduan: 3 alamat merchant dipanggil platform, isinya RSA.
+    // Data permintaan dibuka dengan kunci privat merchant, balasan dienkripsi
+    // dengan kunci publik platform. Kunci disimpan di env TULASI_PUBLIC dan
+    // TULASI_PRIVATE (PEM utuh, boleh satu baris).
+    if (url.pathname.toLowerCase().startsWith("/api/tulasi/")) {
+      const aksiT = url.pathname.toLowerCase().slice("/api/tulasi/".length);
+      try {
+        if (aksiT === "mulai") {
+          const bT = await req.json().catch(() => ({}));
+          const sesiT = await sesiDariToken(String(bT.t || ""));
+          if (!sesiT) return json({ ok: 0, e: "Sesi tidak sah" }, 401);
+          await tulasiSiapkan(env);
+          const isiToken = [...crypto.getRandomValues(new Uint8Array(16))]
+            .map((x) => x.toString(16).padStart(2, "0")).join("");
+          await pipe(env, [{
+            sql: "insert into tulasi_token (token, uid, at) values (?, ?, ?)",
+            args: [T(isiToken), T(sesiT.uid), I(Date.now())],
+          }]);
+          const kode = String(bT.game || "kingdoms").replace(/[^0-9A-Za-z_]/g, "") || "kingdoms";
+          const idGame = String(bT.gameId || "58").replace(/[^0-9]/g, "") || "58";
+          const tautan = "https://gamesp.tulasigame.com/" + kode + "/?merchant=" + TULASI_MERCHANT +
+            "&gameId=" + idGame + "&lang=en&isLandscape=false&roomId=111&token=" + isiToken;
+          return json({ ok: 1, url: tautan, token: isiToken });
+        }
+        if (aksiT === "games") {
+          await tulasiSiapkan(env);
+          const rG = await pipe(env, [{ sql: "select nilai from app_cfg where kunci = 'tulasi_game'" }]);
+          const mentah = rG[0]?.rows?.[0]?.nilai || "";
+          let daftar = TULASI_GAME_BAWAAN;
+          try { const j = JSON.parse(mentah); if (Array.isArray(j) && j.length) daftar = j; } catch (e) { }
+          return json({ ok: 1, games: daftar });
+        }
+        if (aksiT === "userinformation") {
+          const isiU = await tulasiBuka(env, await req.text());
+          const uidU = await tulasiUidDariToken(env, isiU.token);
+          if (!uidU) return json({ code: 0, msg: "token not found" });
+          const profilU = await tulasiProfil(env, uidU);
+          return json({ code: 1, msg: "success", data: await tulasiEnkripsi(env, profilU) });
+        }
+        if (aksiT === "updatebalance") {
+          const isiB = await tulasiBuka(env, await req.text());
+          const hasilB = await tulasiUbahSaldo(env, isiB);
+          if (!hasilB.ok) return json({ code: 0, msg: hasilB.e || "failed" });
+          return json({ code: 1, msg: "success", data: await tulasiEnkripsi(env, { id: hasilB.id, coin: hasilB.coin }) });
+        }
+        if (aksiT === "updategamelist") {
+          const isiL = await tulasiBuka(env, await req.text());
+          await tulasiSiapkan(env);
+          const daftarL = Array.isArray(isiL?.games) ? isiL.games : Array.isArray(isiL) ? isiL : [];
+          if (daftarL.length) {
+            await pipe(env, [{
+              sql: "insert into app_cfg (kunci, nilai, updated_at) values ('tulasi_game', ?, ?) " +
+                "on conflict(kunci) do update set nilai = excluded.nilai, updated_at = excluded.updated_at",
+              args: [T(JSON.stringify(daftarL)), I(Date.now())],
+            }]);
+          }
+          return json({ code: 1, msg: "success", data: await tulasiEnkripsi(env, { ok: 1 }) });
+        }
+        return json({ ok: 0, e: "aksi tulasi tidak dikenal" }, 404);
+      } catch (e) {
+        return json({ ok: 0, e: String(e?.message ?? e) }, 500);
+      }
     }
     // Harga VIP terbaru untuk aplikasi (tanpa perlu build baru).
     if (url.pathname.toLowerCase() === "/vip-harga") {

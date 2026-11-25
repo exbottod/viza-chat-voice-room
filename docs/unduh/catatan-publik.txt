@@ -1,5 +1,5 @@
-Banner tidak lagi memuat ulang terus, jadi menyekrol dan menyentuh layar tidak tersendat
-Daftar banner dibaca sekali saat aplikasi dibuka lalu disimpan di HP
-Bingkai tidak dipasang otomatis, profil dan kursi mic polos kalau tidak memakai bingkai
-Avatar kursi mic diam dan bingkai yang dipilih tetap bergerak
-Geseran halaman tetap halus dan aplikasi tetap ringan
+Game Tulasi bisa dibuka dari menu Game, saldo memakai coin dompet Viza
+Coin berkurang dan bertambah otomatis saat bermain, tanpa pindah aplikasi
+Banner tidak memuat ulang lagi sehingga menyekrol terasa ringan
+Bingkai tidak dipasang otomatis, profil dan kursi mic polos bila tidak memakai bingkai
+Pemberitahuan masuk kamar muncul dan tombol turun mic bekerja

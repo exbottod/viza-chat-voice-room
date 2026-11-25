@@ -7357,6 +7357,12 @@ export default {
             "&gameId=" + idGame + "&lang=en&isLandscape=false&roomId=111&token=" + isiToken;
           return json({ ok: 1, url: tautan, token: isiToken });
         }
+        if (aksiT === "status") {
+          // Pemeriksaan cepat: kunci sudah terbaca atau belum (tanpa menampilkan isinya).
+          const pub = await tulasiKunci(env, "publik");
+          const priv = await tulasiKunci(env, "privat");
+          return json({ ok: 1, publik: pub ? 1 : 0, privat: priv ? 1 : 0, merchant: TULASI_MERCHANT });
+        }
         if (aksiT === "games") {
           await tulasiSiapkan(env);
           const rG = await pipe(env, [{ sql: "select nilai from app_cfg where kunci = 'tulasi_game'" }]);

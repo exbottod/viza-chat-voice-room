@@ -6964,40 +6964,38 @@ const TULASI_GAME_BAWAAN = [
   { kode: "slots777", id: "5", nama: "Slots 777" },
 ];
 
-function tulasiDer(pem) {
-  const bersih = String(pem || "")
-    .replace(/-----BEGIN [^-]+-----/g, "")
-    .replace(/-----END [^-]+-----/g, "")
-    .replace(/\\r/g, "")
-    .replace(/\\n/g, "")
-    .replace(/\s+/g, "");
-  if (!bersih) return new Uint8Array(0);
-  const biner = atob(bersih);
-  const hasil = new Uint8Array(biner.length);
-  for (let i = 0; i < biner.length; i++) hasil[i] = biner.charCodeAt(i);
-  return hasil;
+function tulasiPanjang(n) {
+  if (n < 0x80) return [n];
+  if (n < 0x100) return [0x81, n];
+  if (n < 0x10000) return [0x82, (n >> 8) & 0xff, n & 0xff];
+  return [0x83, (n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff];
 }
 
-// Kunci bisa dari env atau dari berkas /opt/viza-api/tulasi.json
-// ({"public": "...", "private": "..."}), supaya pemilik cukup menempel sekali.
-let tulasiBerkas = null;
-async function tulasiNilai(env, jenis) {
-  const dariEnv = jenis === "publik" ? env.TULASI_PUBLIC : env.TULASI_PRIVATE;
-  if (dariEnv && String(dariEnv).trim()) return String(dariEnv);
-  // Dua berkas PEM lebih mudah ditempel pemilik daripada JSON satu baris.
-  const berkasPem = "/opt/viza-api/tulasi-" + (jenis === "publik" ? "public" : "private") + ".pem";
-  try {
-    const fs = await import("node:fs");
-    const isi = fs.readFileSync(berkasPem, "utf8");
-    if (String(isi).trim()) return String(isi);
-  } catch (e) { /* belum ada, lanjut ke json */ }
-  if (tulasiBerkas === null) {
-    try {
-      const fs = await import("node:fs");
-      tulasiBerkas = JSON.parse(fs.readFileSync("/opt/viza-api/tulasi.json", "utf8")) || {};
-    } catch (e) { tulasiBerkas = {}; }
+/** Kunci privat dari panel kadang berformat PKCS#1 (BEGIN RSA PRIVATE KEY).
+ *  WebCrypto hanya menerima PKCS#8, jadi dibungkus dulu. */
+function tulasiPkcs1KePkcs8(der) {
+  const versi = [0x02, 0x01, 0x00];
+  const algoritma = [0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00];
+  const isi = [...versi, ...algoritma, 0x04, ...tulasiPanjang(der.length), ...der];
+  return new Uint8Array([0x30, ...tulasiPanjang(isi.length), ...isi]);
+}
+
+function tulasiDer(pem) {
+  const teks = String(pem || "");
+  // Kalau pemilik menempel dua kali, cukup blok pertama yang dipakai.
+  const blok = teks.match(/-----BEGIN ([A-Z ]+)-----([\s\S]*?)-----END \1-----/);
+  const label = blok ? blok[1] : "";
+  const badan = blok ? blok[2] : teks.replace(/-----[^-]+-----/g, "");
+  const bersih = String(badan).replace(/\s+/g, "");
+  if (!bersih) return new Uint8Array(0);
+  let biner;
+  try { biner = atob(bersih); } catch (e) { return new Uint8Array(0); }
+  const hasil = new Uint8Array(biner.length);
+  for (let i = 0; i < biner.length; i++) hasil[i] = biner.charCodeAt(i);
+  if (/RSA PRIVATE KEY/i.test(label) && !/BEGIN PRIVATE KEY/i.test(label)) {
+    return tulasiPkcs1KePkcs8(hasil);
   }
-  return String(tulasiBerkas[jenis] || "");
+  return hasil;
 }
 
 async function tulasiKunci(env, jenis) {

@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.405",
-  "catatan": "• Banner tidak lagi memuat ulang terus, jadi menyekrol dan menyentuh layar tidak tersendat\n• Daftar banner dibaca sekali saat aplikasi dibuka lalu disimpan di HP\n• Bingkai tidak dipasang otomatis, profil dan kursi mic polos kalau tidak memakai bingkai\n• Avatar kursi mic diam dan bingkai yang dipilih tetap bergerak",
-  "ukuran_apk": 75804361,
-  "sha256_apk": "dc4eeaccb5067ea7225d7aab7b17b5b1add9cc4475117a32857f91b7d71e5fb8",
+  "versi": "1.0.406",
+  "catatan": "• Game Tulasi bisa dibuka dari menu Game, saldo memakai coin dompet Viza\n• Coin berkurang dan bertambah otomatis saat bermain, tanpa pindah aplikasi\n• Banner tidak memuat ulang lagi sehingga menyekrol terasa ringan\n• Bingkai tidak dipasang otomatis, profil dan kursi mic polos bila tidak memakai bingkai",
+  "ukuran_apk": 75814758,
+  "sha256_apk": "6f211cea3389902205231cf041e2dc9897e65332067aeaa5e8691d691e6289c6",
   "abis": {
     "arm64": {
-      "ukuran": 75804361,
-      "sha256": "dc4eeaccb5067ea7225d7aab7b17b5b1add9cc4475117a32857f91b7d71e5fb8"
+      "ukuran": 75814758,
+      "sha256": "6f211cea3389902205231cf041e2dc9897e65332067aeaa5e8691d691e6289c6"
     },
     "armv7": {
-      "ukuran": 74038874,
-      "sha256": "10d6945db37d9c8ba850f797e5826baf23410245142d751f05f5e755ee521dc4"
+      "ukuran": 74049266,
+      "sha256": "57c4d6f20b3a4bbb3f15446688444bfc205fac059784fcc266aca20060acdbcd"
     },
     "universal": {
-      "ukuran": 123658357,
-      "sha256": "b7ec16ce549b3c12223c506bd096574729a1b9f13988c5a127850024a25dec9a"
+      "ukuran": 123668769,
+      "sha256": "c09225fbe0fc87b38929967a4efbdf605b0a52190e06e67ca4995e812c187953"
     }
   }
 }

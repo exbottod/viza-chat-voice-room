@@ -7058,32 +7058,58 @@ async function tulasiKunci(env, jenis) {
   }
 }
 
+// Node tidak menyediakan RSAES-PKCS1-v1_5 di WebCrypto ("Unrecognized
+// algorithm name"), jadi di server dipakai modul node:crypto. Di lingkungan
+// lain tetap memakai WebCrypto.
+async function tulasiModul() {
+  try { return await import("node:crypto"); } catch (e) { return null; }
+}
+
 async function tulasiEnkripsi(env, objek) {
-  const kunci = await tulasiKunci(env, "publik");
-  if (!kunci) throw new Error("Kunci publik Tulasi belum diisi");
   const data = new TextEncoder().encode(JSON.stringify(objek));
+  const pem = String(await tulasiNilai(env, "publik") || "");
+  if (!pem.trim()) throw new Error("Kunci publik Tulasi belum diisi");
+  const nc = await tulasiModul();
   const bagian = [];
   for (let i = 0; i < data.length; i += TULASI_POTONG) {
     const potong = data.slice(i, Math.min(i + TULASI_POTONG, data.length));
-    const acak = await crypto.subtle.encrypt({ name: "RSAES-PKCS1-v1_5" }, kunci, potong);
-    bagian.push(btoa(String.fromCharCode(...new Uint8Array(acak))));
+    if (nc) {
+      const acak = nc.publicEncrypt({ key: pem, padding: nc.constants.RSA_PKCS1_PADDING }, Buffer.from(potong));
+      bagian.push(acak.toString("base64"));
+    } else {
+      const kunci = await tulasiKunci(env, "publik");
+      if (!kunci) throw new Error("Kunci publik Tulasi tidak terbaca");
+      const acak = await crypto.subtle.encrypt({ name: "RSAES-PKCS1-v1_5" }, kunci, potong);
+      bagian.push(btoa(String.fromCharCode(...new Uint8Array(acak))));
+    }
   }
   return bagian.join(":");
 }
 
 async function tulasiBuka(env, teks) {
-  const kunci = await tulasiKunci(env, "privat");
-  if (!kunci) throw new Error("Kunci privat Tulasi belum diisi");
   let mentah = String(teks || "").trim();
-  // Body bisa datang sebagai string JSON (ada tanda kutip di ujung).
   if (mentah.startsWith('"')) { try { mentah = JSON.parse(mentah); } catch (e) { } }
+  mentah = String(mentah || "").trim();
+  if (!mentah) throw new Error("Isi permintaan kosong");
+  const pem = String(await tulasiNilai(env, "privat") || "");
+  if (!pem.trim()) throw new Error("Kunci privat Tulasi belum diisi");
+  const nc = await tulasiModul();
   const potongan = [];
   for (const bagian of mentah.split(":")) {
     if (!bagian.trim()) continue;
-    const biner = atob(bagian.trim());
-    const isi = new Uint8Array(biner.length);
-    for (let i = 0; i < biner.length; i++) isi[i] = biner.charCodeAt(i);
-    potongan.push(new Uint8Array(await crypto.subtle.decrypt({ name: "RSAES-PKCS1-v1_5" }, kunci, isi)));
+    if (nc) {
+      potongan.push(new Uint8Array(nc.privateDecrypt(
+        { key: pem, padding: nc.constants.RSA_PKCS1_PADDING },
+        Buffer.from(bagian.trim(), "base64"),
+      )));
+    } else {
+      const kunci = await tulasiKunci(env, "privat");
+      if (!kunci) throw new Error("Kunci privat Tulasi tidak terbaca");
+      const biner = atob(bagian.trim());
+      const isi = new Uint8Array(biner.length);
+      for (let i = 0; i < biner.length; i++) isi[i] = biner.charCodeAt(i);
+      potongan.push(new Uint8Array(await crypto.subtle.decrypt({ name: "RSAES-PKCS1-v1_5" }, kunci, isi)));
+    }
   }
   const total = potongan.reduce((n, x) => n + x.length, 0);
   const gabung = new Uint8Array(total);
@@ -7391,8 +7417,15 @@ export default {
             const m = String(teks || "").match(/-----BEGIN ([A-Z ]+)-----/);
             return m ? m[1] : String(teks || "").trim().slice(0, 12);
           };
-          const pub = await tulasiKunci(env, "publik");
-          const priv = await tulasiKunci(env, "privat");
+          const nc = await tulasiModul();
+          let pub = null, priv = null;
+          if (nc) {
+            try { nc.createPublicKey(asalPub.isi); pub = 1; } catch (e) { tulasiGalat.publik = String(e?.message ?? e); }
+            try { nc.createPrivateKey(asalPriv.isi); priv = 1; } catch (e) { tulasiGalat.privat = String(e?.message ?? e); }
+          } else {
+            pub = (await tulasiKunci(env, "publik")) ? 1 : 0;
+            priv = (await tulasiKunci(env, "privat")) ? 1 : 0;
+          }
           return json({
             ok: 1, merchant: TULASI_MERCHANT,
             publik: pub ? 1 : 0, privat: priv ? 1 : 0,

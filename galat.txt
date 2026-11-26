@@ -1,0 +1,43 @@
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/PartyScreen.kt:484:34 Smart cast to 'androidx.compose.ui.graphics.ImageBitmap' is impossible, because 'bmp' is a delegated property.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileReleaseKotlin' (registered by plugin 'org.jetbrains.kotlin.android').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+---- 120 baris terakhir ----
+1) Menyiapkan salinan bersih di /home/runner/work/_temp/kerja
+2) Mengganti paket menjadi com.vizachatvoice.app
+klien dipakai: 1:622104139221:android:294ad10f9eed7350acd95c untuk paket com.vizachatvoice.app
+3) Membersihkan merek Rezo, diganti Viza Chat
+de-brand selesai: 38 berkas, merek 'Viza Chat', slug 'vizachat', kode 'VizaChat'
+3b) Bersih: tidak ada lagi jejak Rezo di sumber
+tanda tangan rilis disiapkan
+3a) Ditandatangani dengan kunci rilis sendiri
+3c) Ikon diganti dengan /home/runner/work/viza-chat-voice-room/viza-chat-voice-room/tools/ikon_viza.png
+3d) Versi dimulai dari 1.0.x
+4) Mengatur nama aplikasi dan alamat database
+5) Membangun APK
+e: file:///home/runner/work/_temp/kerja/app/src/main/java/com/rezochatvoice/exceo/PartyScreen.kt:484:34 Smart cast to 'androidx.compose.ui.graphics.ImageBitmap' is impossible, because 'bmp' is a delegated property.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileReleaseKotlin' (registered by plugin 'org.jetbrains.kotlin.android').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 2m 53s
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.9.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+36 actionable tasks: 36 executed
+APK tidak terbentuk

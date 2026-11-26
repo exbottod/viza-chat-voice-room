@@ -474,14 +474,16 @@ private fun BannerFeed() {
                     BannerStore.gambarKecil(b.imageB64) ?: BannerStore.simpanKecil(b.imageB64)
                 }
             }
+            // Salinan lokal: properti hasil delegasi tidak bisa di-smart-cast.
+            val bmpTampil = bmp
             Box(
                 modifier = Modifier.fillMaxWidth().aspectRatio(3f).clip(frame)
                     .background(Color(0xFF1A1A1A)).border(1.dp, goldBorder, frame)
                     .clickable(enabled = b.link.isNotBlank()) { buka(b.link) },
             ) {
-                if (bmp != null) {
+                if (bmpTampil != null) {
                     androidx.compose.foundation.Image(
-                        bitmap = bmp, contentDescription = null,
+                        bitmap = bmpTampil, contentDescription = null,
                         contentScale = androidx.compose.ui.layout.ContentScale.Crop,
                         modifier = Modifier.fillMaxSize(),
                     )

@@ -1,4 +1,4 @@
-• Avatar di kursi mic tidak berkedip lagi saat sedang bicara
-• Room terasa ringan saat disekrol dan digeser, tidak macet seperti sebelumnya
+• Banner dan gambar tidak lagi tersendat saat digeser
+• Avatar di kursi mic tidak berkedip saat sedang bicara
+• Room terasa ringan saat disekrol dan digeser
 • Game Tulasi bisa dibuka dari menu Game dengan coin dompet Viza
-• Banner tidak memuat ulang sehingga menyekrol terasa halus

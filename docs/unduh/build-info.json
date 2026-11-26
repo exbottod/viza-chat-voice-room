@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.407",
-  "catatan": "• Avatar di kursi mic tidak berkedip lagi saat sedang bicara\n• Room terasa ringan saat disekrol dan digeser, tidak macet seperti sebelumnya\n• Game Tulasi bisa dibuka dari menu Game dengan coin dompet Viza\n• Banner tidak memuat ulang sehingga menyekrol terasa halus",
-  "ukuran_apk": 75814881,
-  "sha256_apk": "005f3adee895dfba995f48f2eadc6fb25a8774635e407329a0f570ae23247df2",
+  "versi": "1.0.408",
+  "catatan": "• Banner dan gambar tidak lagi tersendat saat digeser\n• Avatar di kursi mic tidak berkedip saat sedang bicara\n• Room terasa ringan saat disekrol dan digeser\n• Game Tulasi bisa dibuka dari menu Game dengan coin dompet Viza",
+  "ukuran_apk": 75815677,
+  "sha256_apk": "1fe8fd22b40117670581274b8430de10027c8cc364be799b773d1bfd1d2c6590",
   "abis": {
     "arm64": {
-      "ukuran": 75814881,
-      "sha256": "005f3adee895dfba995f48f2eadc6fb25a8774635e407329a0f570ae23247df2"
+      "ukuran": 75815677,
+      "sha256": "1fe8fd22b40117670581274b8430de10027c8cc364be799b773d1bfd1d2c6590"
     },
     "armv7": {
-      "ukuran": 74049394,
-      "sha256": "854a091dcbf6bd830416b45c6333939bdb1d0f9e1608eea2815d67011a03109d"
+      "ukuran": 74050206,
+      "sha256": "7eda730eac3b56e197fce2fbb388544381d0d348cb2698e83e568e3bdb0dea32"
     },
     "universal": {
-      "ukuran": 123668890,
-      "sha256": "4b6ec4b14f6a9ac9db433ab75f95c67b5b800f28953b13fde7927d7b4e162784"
+      "ukuran": 123669687,
+      "sha256": "fe2697aa0b8a77f721202ee984ac8522e819f966295d40407412452934515f0f"
     }
   }
 }

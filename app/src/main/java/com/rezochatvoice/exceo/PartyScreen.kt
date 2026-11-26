@@ -32,8 +32,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.tasks.await
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -335,6 +337,24 @@ private object BannerStore {
         return b
     }
 
+    /** Versi kecil banner: cukup selebar layar, bukan ukuran asli. */
+    fun gambarKecil(b64: String?): androidx.compose.ui.graphics.ImageBitmap? {
+        if (b64.isNullOrBlank()) return null
+        val kunci = b64.hashCode()
+        if (gambarCache.containsKey(kunci)) return gambarCache[kunci]
+        return null
+    }
+
+    /** Dekode banner diperkecil lalu disimpan. Dipanggil dari thread latar. */
+    fun simpanKecil(b64: String?): androidx.compose.ui.graphics.ImageBitmap? {
+        if (b64.isNullOrBlank()) return null
+        val kunci = b64.hashCode()
+        gambarCache[kunci]?.let { return it }
+        val b = try { ProfileRepo.decodeB64Scaled(b64, 1080) } catch (e: Exception) { null }
+        gambarCache[kunci] = b
+        return b
+    }
+
     fun start(paksa: Boolean = false) {
         if (sibuk) return
         if (mulai && !paksa) return
@@ -444,7 +464,16 @@ private fun BannerFeed() {
             }
         }
         daftar.forEach { b ->
-            val bmp = remember(b.imageB64) { ProfileRepo.decodeB64(b.imageB64) }
+            // Banner dulu didekode di thread UI tepat saat komposisi, jadi geseran
+            // banner tersendat. Sekarang didekode di latar dan disimpan.
+            val bmp by androidx.compose.runtime.produceState<androidx.compose.ui.graphics.ImageBitmap?>(
+                initialValue = BannerStore.gambarKecil(b.imageB64),
+                key1 = b.imageB64,
+            ) {
+                value = withContext(Dispatchers.IO) {
+                    BannerStore.gambarKecil(b.imageB64) ?: BannerStore.simpanKecil(b.imageB64)
+                }
+            }
             Box(
                 modifier = Modifier.fillMaxWidth().aspectRatio(3f).clip(frame)
                     .background(Color(0xFF1A1A1A)).border(1.dp, goldBorder, frame)

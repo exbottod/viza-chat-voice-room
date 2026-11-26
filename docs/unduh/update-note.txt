@@ -1,4 +1,4 @@
-• Game Tulasi bisa dibuka dari menu Game, saldo memakai coin dompet Viza
-• Coin berkurang dan bertambah otomatis saat bermain, tanpa pindah aplikasi
-• Banner tidak memuat ulang lagi sehingga menyekrol terasa ringan
-• Bingkai tidak dipasang otomatis, profil dan kursi mic polos bila tidak memakai bingkai
+• Avatar di kursi mic tidak berkedip lagi saat sedang bicara
+• Room terasa ringan saat disekrol dan digeser, tidak macet seperti sebelumnya
+• Game Tulasi bisa dibuka dari menu Game dengan coin dompet Viza
+• Banner tidak memuat ulang sehingga menyekrol terasa halus

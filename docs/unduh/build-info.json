@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.406",
-  "catatan": "• Game Tulasi bisa dibuka dari menu Game, saldo memakai coin dompet Viza\n• Coin berkurang dan bertambah otomatis saat bermain, tanpa pindah aplikasi\n• Banner tidak memuat ulang lagi sehingga menyekrol terasa ringan\n• Bingkai tidak dipasang otomatis, profil dan kursi mic polos bila tidak memakai bingkai",
-  "ukuran_apk": 75814758,
-  "sha256_apk": "6f211cea3389902205231cf041e2dc9897e65332067aeaa5e8691d691e6289c6",
+  "versi": "1.0.407",
+  "catatan": "• Avatar di kursi mic tidak berkedip lagi saat sedang bicara\n• Room terasa ringan saat disekrol dan digeser, tidak macet seperti sebelumnya\n• Game Tulasi bisa dibuka dari menu Game dengan coin dompet Viza\n• Banner tidak memuat ulang sehingga menyekrol terasa halus",
+  "ukuran_apk": 75814881,
+  "sha256_apk": "005f3adee895dfba995f48f2eadc6fb25a8774635e407329a0f570ae23247df2",
   "abis": {
     "arm64": {
-      "ukuran": 75814758,
-      "sha256": "6f211cea3389902205231cf041e2dc9897e65332067aeaa5e8691d691e6289c6"
+      "ukuran": 75814881,
+      "sha256": "005f3adee895dfba995f48f2eadc6fb25a8774635e407329a0f570ae23247df2"
     },
     "armv7": {
-      "ukuran": 74049266,
-      "sha256": "57c4d6f20b3a4bbb3f15446688444bfc205fac059784fcc266aca20060acdbcd"
+      "ukuran": 74049394,
+      "sha256": "854a091dcbf6bd830416b45c6333939bdb1d0f9e1608eea2815d67011a03109d"
     },
     "universal": {
-      "ukuran": 123668769,
-      "sha256": "c09225fbe0fc87b38929967a4efbdf605b0a52190e06e67ca4995e812c187953"
+      "ukuran": 123668890,
+      "sha256": "4b6ec4b14f6a9ac9db433ab75f95c67b5b800f28953b13fde7927d7b4e162784"
     }
   }
 }

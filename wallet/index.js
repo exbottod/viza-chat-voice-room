@@ -7038,16 +7038,24 @@ async function tulasiAsal(env, jenis) {
   return { sumber: "-", isi: "" };
 }
 
+const tulasiGalat = { publik: "", privat: "" };
+
 async function tulasiKunci(env, jenis) {
   const publik = jenis === "publik";
   const der = tulasiDer(await tulasiNilai(env, jenis));
   if (!der.length) return null;
   try {
-    return await crypto.subtle.importKey(
+    const kunci = await crypto.subtle.importKey(
       publik ? "spki" : "pkcs8", der,
       { name: "RSAES-PKCS1-v1_5" }, false, [publik ? "encrypt" : "decrypt"],
     );
-  } catch (e) { return null; }
+    tulasiGalat[jenis] = "";
+    return kunci;
+  } catch (e) {
+    tulasiGalat[jenis] = String(e?.message ?? e) + " (der " + der.length + " byte, awal " +
+      Array.from(der.slice(0, 4)).map((b) => b.toString(16).padStart(2, "0")).join(" ") + ")";
+    return null;
+  }
 }
 
 async function tulasiEnkripsi(env, objek) {
@@ -7391,6 +7399,7 @@ export default {
             asal_publik: asalPub.sumber, asal_privat: asalPriv.sumber,
             label_publik: label(asalPub.isi), label_privat: label(asalPriv.isi),
             panjang_publik: asalPub.isi.length, panjang_privat: asalPriv.isi.length,
+            galat_publik: tulasiGalat.publik, galat_privat: tulasiGalat.privat,
           });
         }
         if (aksiT === "games") {

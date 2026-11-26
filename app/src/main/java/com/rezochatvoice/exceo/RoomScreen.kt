@@ -445,7 +445,11 @@ fun RoomScreen(
         }
     }
     // Posisi avatar tiap kursi (untuk animasi gift terbang ke penerima).
-    val seatPoints = remember { mutableStateMapOf<Int, Offset>() }
+    // Peta titik kursi sengaja BUKAN state Compose: posisinya berubah tiap
+    // frame saat layar digeser, dan dulu setiap perubahan memicu komposisi ulang
+    // lapisan gift di atas room. Itu penyebab room terasa macet saat disekrol.
+    // Isinya hanya dibaca saat gift terbang, jadi cukup peta biasa.
+    val seatPoints = remember { HashMap<Int, Offset>() }
     // Riwayat chat room disimpan di memori supaya tidak hilang saat aplikasi
     // di-minimize; hanya bersih saat aplikasi ditutup.
     var messages by remember(roomId) { mutableStateOf(RoomChatCache.ambil(roomId)) }
@@ -2318,11 +2322,24 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
     // membuat layar room berat.
     val pxKursi = with(androidx.compose.ui.platform.LocalDensity.current) { size.toPx().toInt() }
         .coerceIn(96, 256)
+    // Foto terakhir yang berhasil didekode untuk kursi ini. Data kursi kadang
+    // kosong sesaat saat kehadiran diperbarui; dulu itu membuat kursi kembali
+    // menampilkan huruf nama lalu fotonya muncul lagi, dan mata melihatnya
+    // sebagai avatar berkedip. Sekarang foto lama dipertahankan.
+    val fotoTerakhir = remember(uidKursi) { androidx.compose.runtime.mutableStateOf<ImageBitmap?>(null) }
     val bmp by androidx.compose.runtime.produceState<ImageBitmap?>(
-        initialValue = ProfileRepo.avatarKecilCached(fotoKursi, pxKursi),
+        initialValue = ProfileRepo.avatarKecilCached(fotoKursi, pxKursi) ?: fotoTerakhir.value,
         key1 = fotoKursi,
         key2 = pxKursi,
-    ) { value = ProfileRepo.decodeAvatarKecil(fotoKursi, pxKursi) }
+    ) {
+        val hasil = ProfileRepo.decodeAvatarKecil(fotoKursi, pxKursi)
+        if (hasil != null) {
+            fotoTerakhir.value = hasil
+            value = hasil
+        } else if (value == null) {
+            value = fotoTerakhir.value
+        }
+    }
     // Pindah kursi tidak boleh memuat ulang profil: data yang sudah ada dipakai,
     // server hanya dipanggil kalau user ini belum dikenal, dan hasilnya masuk ke
     // penampung bersama tanpa mengosongkan tampilan.

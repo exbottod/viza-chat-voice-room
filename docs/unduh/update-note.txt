@@ -1,4 +1,4 @@
-• Pindah tab dan buka halaman sekarang langsung tampil, tanpa layar loading sebentar
-• Latar room tidak dihitung ulang tiap gambar, geseran layar lebih halus
-• Banner dan gambar tidak tersendat saat digeser
-• Avatar di kursi mic tidak berkedip saat bicara
+• Unduhan kecil sekarang benar-benar dipakai dan diperiksa keutuhannya
+• Pemasangan gagal "masalah saat mengurai paket" tidak terjadi lagi karena unduhan yang terpotong dito
+• Pindah tab dan buka halaman langsung tampil tanpa layar loading
+• Avatar di kursi mic tidak berkedip, latar room lebih ringan

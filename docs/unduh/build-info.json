@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.409",
-  "catatan": "• Pindah tab dan buka halaman sekarang langsung tampil, tanpa layar loading sebentar\n• Latar room tidak dihitung ulang tiap gambar, geseran layar lebih halus\n• Banner dan gambar tidak tersendat saat digeser\n• Avatar di kursi mic tidak berkedip saat bicara",
-  "ukuran_apk": 75815405,
-  "sha256_apk": "831cd329c2bce38a93bbd4b9e42e481e307b8bb0e9d14ec97cd4e5b710f68407",
+  "versi": "1.0.410",
+  "catatan": "• Unduhan kecil sekarang benar-benar dipakai dan diperiksa keutuhannya\n• Pemasangan gagal \"masalah saat mengurai paket\" tidak terjadi lagi karena unduhan yang terpotong dito\n• Pindah tab dan buka halaman langsung tampil tanpa layar loading\n• Avatar di kursi mic tidak berkedip, latar room lebih ringan",
+  "ukuran_apk": 75815618,
+  "sha256_apk": "8175957e757fafdd43d6f401fb7cb9136ab85437220815c5de24073f327539b9",
   "abis": {
     "arm64": {
-      "ukuran": 75815405,
-      "sha256": "831cd329c2bce38a93bbd4b9e42e481e307b8bb0e9d14ec97cd4e5b710f68407"
+      "ukuran": 75815618,
+      "sha256": "8175957e757fafdd43d6f401fb7cb9136ab85437220815c5de24073f327539b9"
     },
     "armv7": {
-      "ukuran": 74049922,
-      "sha256": "7bae478a9723b5bc6550a2676d2680520b92fd099727ad789c600a46348bf8b3"
+      "ukuran": 74050138,
+      "sha256": "4e4b2a4277e2a6437d185075a1e0e124bfec211c09a31e74aae7858203b8ed4a"
     },
     "universal": {
-      "ukuran": 123669412,
-      "sha256": "923c433a0724e1b7bffff63c0e383caf29e7ec43f5c00fb60330150aa4685363"
+      "ukuran": 123669632,
+      "sha256": "e1f201be10f36150c4c53dca5cdb39654470d157a0dcfc5fba413c2eec0af308"
     }
   }
 }

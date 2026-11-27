@@ -80,7 +80,8 @@ def main():
     data["patch"].append({
         "dari": a.dari,
         "ke": a.ke,
-        a.kunci: {"file": nama, "ukuran": ukuran, "sha256": sha256(tujuan)},
+        a.kunci: {"file": nama, "ukuran": ukuran, "sha256": sha256(tujuan),
+                  "sha_hasil": sha256(a.baru)},
     })
     pik.write_text(json.dumps(data, indent=2) + "\n")
 

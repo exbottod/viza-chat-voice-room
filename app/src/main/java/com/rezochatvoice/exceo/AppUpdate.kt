@@ -119,6 +119,8 @@ object AppUpdate {
         val patch: Patch? = null,
         /** Benar kalau versi terpasang di bawah versi minimum: "Nanti" disembunyikan. */
         val wajib: Boolean = false,
+        /** Sidik jari APK penuh untuk jenis HP ini, untuk menolak unduhan terpotong. */
+        val shaApk: String = "",
     )
 
     /**
@@ -132,7 +134,19 @@ object AppUpdate {
     }
 
     /** Satu bagian rantai: patch dari versi A ke versi B. */
-    class Langkah(val url: String, val ukuran: Long, val sha256: String)
+    /**
+     * Satu langkah patch. [sha256] adalah sidik jari BERKAS PATCH (untuk memastikan
+     * unduhannya utuh), sedangkan [shaHasil] sidik jari APK hasil gabungan. Dulu
+     * hanya ada satu nilai dan yang diperiksa APK hasil, padahal isinya sidik jari
+     * berkas patch, jadi pemeriksaan selalu gagal dan unduhan kecil tidak pernah
+     * dipakai. [shaHasil] kosong untuk entri lama.
+     */
+    class Langkah(
+        val url: String,
+        val ukuran: Long,
+        val sha256: String,
+        val shaHasil: String = "",
+    )
 
     /** "1.0.683" -> 683. Nomor terakhir dipakai sebagai urutan build. */
     /**
@@ -240,7 +254,12 @@ object AppUpdate {
             val nama = entri.optString("file")
             if (nama.isBlank()) break
             val tujuan = calon.optString("ke")
-            langkah.add(Langkah(REL + nama, entri.optLong("ukuran"), entri.optString("sha256")))
+            langkah.add(
+                Langkah(
+                    REL + nama, entri.optLong("ukuran"),
+                    entri.optString("sha256"), entri.optString("sha_hasil"),
+                ),
+            )
             kini = tujuan
             putaran++
         }
@@ -356,7 +375,13 @@ object AppUpdate {
             // Link APK dari panel dipakai apa adanya (sudah lengkap dengan
             // berkas arm64), selain itu pakai alamat bawaan sesuai jenis HP.
             val alamat = (cfg?.apkUrl ?: "").ifBlank { apkBase() }
-            Info(latest, akhir, alamat, patchInfo(latest, terpasang), wajib)
+            // Sidik jari APK penuh: unduhan yang terpotong (jaringan putus) dulu
+            // tetap dianggap sah karena hanya dicek ukurannya, lalu Android
+            // menolaknya dengan "Terjadi masalah saat mengurai paket".
+            val shaApk = try {
+                j.optJSONObject("abis")?.optJSONObject(kunci())?.optString("sha256").orEmpty()
+            } catch (e: Exception) { "" }
+            Info(latest, akhir, alamat, patchInfo(latest, terpasang), wajib, shaApk)
         } catch (e: Exception) { null }
     }
 
@@ -410,11 +435,23 @@ object AppUpdate {
      * dari VPS ternyata versi lama (pemasangan akan ditolak Android), ambil
      * ulang dari rilis GitHub.
      */
-    suspend fun downloadTerbaru(ctx: Context, url: String, onProgress: (Int) -> Unit): File? {
+    suspend fun downloadTerbaru(
+        ctx: Context,
+        url: String,
+        onProgress: (Int) -> Unit,
+        shaHarap: String = "",
+    ): File? {
+        // Unduhan dianggap sah hanya kalau versinya lebih baru DAN sidik jarinya
+        // cocok dengan yang tercatat di halaman unduh.
+        fun sah(f: File?): Boolean =
+            f != null && lebihBaru(ctx, f) &&
+                (shaHarap.isBlank() || sha256(f) == shaHarap)
         val utama = download(ctx, url, onProgress)
-        if (utama != null && lebihBaru(ctx, utama)) return utama
+        if (sah(utama)) return utama
+        if (utama != null) try { utama.delete() } catch (e: Exception) { }
         val cadangan = download(ctx, APK_CADANGAN, onProgress)
-        return if (cadangan != null && lebihBaru(ctx, cadangan)) cadangan else cadangan ?: utama
+        if (sah(cadangan)) return cadangan
+        return null
     }
 
     /**
@@ -437,6 +474,12 @@ object AppUpdate {
                     val jalan = mulai + step.ukuran * p / 100L
                     onProgress((jalan * 100L / total).toInt().coerceIn(0, 99))
                 } ?: return@withContext null
+                // Berkas patch diperiksa dulu: unduhan yang terpotong jangan
+                // sampai digabungkan.
+                if (step.sha256.isNotBlank() && sha256(berkas) != step.sha256) {
+                    try { berkas.delete() } catch (e: Exception) { }
+                    return@withContext null
+                }
                 val hasil = File(dir, "REZO-patch-$idx.apk")
                 if (hasil.exists()) hasil.delete()
                 val r = try {
@@ -449,7 +492,8 @@ object AppUpdate {
                     if (hasil.exists()) hasil.delete()
                     return@withContext null
                 }
-                if (step.sha256.isNotBlank() && sha256(hasil) != step.sha256) {
+                // Sidik jari APK hasil, bukan sidik jari berkas patch.
+                if (step.shaHasil.isNotBlank() && sha256(hasil) != step.shaHasil) {
                     hasil.delete()
                     return@withContext null
                 }
@@ -643,7 +687,7 @@ fun UpdateGate() {
                                     } else null
                                     if (f == null) {
                                         progress = 0
-                                        f = AppUpdate.downloadTerbaru(ctx, i.url) { progress = it }
+                                        f = AppUpdate.downloadTerbaru(ctx, i.url, { progress = it }, i.shaApk)
                                     }
                                     if (f == null) {
                                         progress = -1

@@ -190,16 +190,14 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
         }
     }
 
-    var memuatHalaman by remember { mutableStateOf(false) }
     // Loading singkat setiap halaman dibuka: ganti tab, dompet, store, VIP
     // center, profil orang lain, family, dan halaman lain.
     // Hanya berpindah halaman yang memicu loading. Dulu banyak status ikut jadi
     // kunci, jadi loading muncul berulang dan terasa menghambat medal serta suara.
-    androidx.compose.runtime.LaunchedEffect(selected, overlay, fullProfileUid, sheetUid) {
-        memuatHalaman = true
-        kotlinx.coroutines.delay(420)
-        memuatHalaman = false
-    }
+    // Loading buatan DIHAPUS. Dulu setiap pindah tab atau membuka halaman
+    // dipasang layar loading 420 ms lebih dulu, jadi terasa tersendat padahal
+    // isinya sudah siap di HP. Sekarang halaman langsung tampil dan geserannya
+    // tetap halus.
 
     fun enterRoom(room: RoomInfo) {
         if (activeRoom?.id == room.id) {
@@ -1005,8 +1003,7 @@ fun MainScreen(user: UserProfile, onSignOutClick: () -> Unit) {
             Box(Modifier.fillMaxSize().zIndex(55f)) {
                 GameWinBannerHost(Modifier.align(Alignment.TopCenter))
             }
-            // Loading khas Viza, digambar paling atas supaya menutupi halaman mana pun.
-            if (memuatHalaman) VizaLoadingLayar()
+
         }
     }
 }

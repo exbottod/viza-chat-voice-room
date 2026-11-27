@@ -1,12 +1,14 @@
 package com.rezochatvoice.exceo
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -23,35 +25,44 @@ val GoldBrush = Brush.horizontalGradient(listOf(GoldDark, GoldLight, Gold, GoldD
 
 @Composable
 fun RoyalBackground(modifier: Modifier = Modifier) {
-    Canvas(modifier.fillMaxSize()) {
-        drawRect(
-            Brush.verticalGradient(
-                listOf(Color(0xFF000000), Color(0xFF14100A), Color(0xFF000000))
+    // Latar room dihitung SEKALI per ukuran layar, bukan tiap kali digambar.
+    // Dulu tiap gambar ulang membuat tiga gradien baru dan menghitung ulang
+    // puluhan garis diagonal, dan itu ikut membuat geseran layar tersendat.
+    Box(
+        modifier.fillMaxSize().drawWithCache {
+            val dasar = Brush.verticalGradient(
+                listOf(Color(0xFF000000), Color(0xFF14100A), Color(0xFF000000)),
             )
-        )
-        val step = 56.dp.toPx()
-        val line = Gold.copy(alpha = 0.05f)
-        var x = -size.height
-        while (x < size.width) {
-            drawLine(line, Offset(x, 0f), Offset(x + size.height, size.height), 1.dp.toPx())
-            drawLine(line, Offset(x + size.height, 0f), Offset(x, size.height), 1.dp.toPx())
-            x += step
-        }
-        drawRect(
-            Brush.radialGradient(
+            val kananAtas = Brush.radialGradient(
                 listOf(Gold.copy(alpha = 0.22f), Color.Transparent),
                 center = Offset(size.width, 0f),
                 radius = size.width * 0.9f,
             )
-        )
-        drawRect(
-            Brush.radialGradient(
+            val kiriBawah = Brush.radialGradient(
                 listOf(Gold.copy(alpha = 0.16f), Color.Transparent),
                 center = Offset(0f, size.height),
                 radius = size.width * 0.9f,
             )
-        )
-    }
+            val langkah = 56.dp.toPx()
+            val warnaGaris = Gold.copy(alpha = 0.05f)
+            val tebal = 1.dp.toPx()
+            val posisi = ArrayList<Float>()
+            var x = -size.height
+            while (x < size.width) {
+                posisi.add(x)
+                x += langkah
+            }
+            onDrawBehind {
+                drawRect(dasar)
+                posisi.forEach { px ->
+                    drawLine(warnaGaris, Offset(px, 0f), Offset(px + size.height, size.height), tebal)
+                    drawLine(warnaGaris, Offset(px + size.height, 0f), Offset(px, size.height), tebal)
+                }
+                drawRect(kananAtas)
+                drawRect(kiriBawah)
+            }
+        },
+    )
 }
 
 @Composable

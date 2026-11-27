@@ -1,4 +1,4 @@
-Banner dan gambar tidak lagi tersendat saat digeser
-Avatar di kursi mic tidak berkedip saat sedang bicara
-Room terasa ringan saat disekrol dan digeser
-Game Tulasi bisa dibuka dari menu Game dengan coin dompet Viza
+Pindah tab dan buka halaman sekarang langsung tampil, tanpa layar loading sebentar
+Latar room tidak dihitung ulang tiap gambar, geseran layar lebih halus
+Banner dan gambar tidak tersendat saat digeser
+Avatar di kursi mic tidak berkedip saat bicara

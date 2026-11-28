@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.410",
+  "versi": "1.0.411",
   "catatan": "• Unduhan kecil sekarang benar-benar dipakai dan diperiksa keutuhannya\n• Pemasangan gagal \"masalah saat mengurai paket\" tidak terjadi lagi karena unduhan yang terpotong dito\n• Pindah tab dan buka halaman langsung tampil tanpa layar loading\n• Avatar di kursi mic tidak berkedip, latar room lebih ringan",
-  "ukuran_apk": 75815618,
-  "sha256_apk": "8175957e757fafdd43d6f401fb7cb9136ab85437220815c5de24073f327539b9",
+  "ukuran_apk": 75815596,
+  "sha256_apk": "7b7525a12b14086407e67df1ea8f70fdcf0e14f3fad350b5ddd1d2a2f95de506",
   "abis": {
     "arm64": {
-      "ukuran": 75815618,
-      "sha256": "8175957e757fafdd43d6f401fb7cb9136ab85437220815c5de24073f327539b9"
+      "ukuran": 75815596,
+      "sha256": "7b7525a12b14086407e67df1ea8f70fdcf0e14f3fad350b5ddd1d2a2f95de506"
     },
     "armv7": {
-      "ukuran": 74050138,
-      "sha256": "4e4b2a4277e2a6437d185075a1e0e124bfec211c09a31e74aae7858203b8ed4a"
+      "ukuran": 74050103,
+      "sha256": "1b4da518c3ee57edc6ce78c01c6990a2d72b52b00a2f4fa1a1eff226b7cb0de0"
     },
     "universal": {
-      "ukuran": 123669632,
-      "sha256": "e1f201be10f36150c4c53dca5cdb39654470d157a0dcfc5fba413c2eec0af308"
+      "ukuran": 123669592,
+      "sha256": "b15fee6ef770179bc525379f40de98d03bc483e0aeb271eda35e09e6caddc13d"
     }
   }
 }

@@ -1,4 +1,4 @@
-Unduhan kecil sekarang benar-benar dipakai dan diperiksa keutuhannya
-Pemasangan gagal "masalah saat mengurai paket" tidak terjadi lagi karena unduhan yang terpotong ditolak lebih dulu
+Animasi bingkai, efek masuk, dan video berhenti saat aplikasi ditinggal, jadi HP tidak menghangat dan tidak berat saat kembali
 Pindah tab dan buka halaman langsung tampil tanpa layar loading
-Avatar di kursi mic tidak berkedip, latar room lebih ringan
+Cache foto diperkecil, memori lebih lega
+Unduhan kecil diperiksa keutuhannya sebelum dipasang

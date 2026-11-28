@@ -190,11 +190,16 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         AppAktif.ya = true
         AppState.foreground = true
+        // Animasi bingkai, efek masuk, dan video dinyalakan lagi.
+        LayarAktif.hidup = true
     }
 
     override fun onPause() {
         AppAktif.ya = false
         AppState.foreground = false
+        // Aplikasi di latar: hentikan animasi berat supaya CPU tidak bekerja
+        // sia-sia dan HP tidak menghangat.
+        LayarAktif.hidup = false
         super.onPause()
     }
 

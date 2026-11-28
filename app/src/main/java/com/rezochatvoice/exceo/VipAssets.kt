@@ -680,10 +680,19 @@ private fun VipVideo(
         }
     }
     if (uri == null) return
+    val tampilanVideo = remember { androidx.compose.runtime.mutableStateOf<VideoView?>(null) }
+    val hidupVideo = LayarAktif.hidup
+    androidx.compose.runtime.LaunchedEffect(hidupVideo) {
+        val v = tampilanVideo.value ?: return@LaunchedEffect
+        try {
+            if (hidupVideo) v.start() else v.pause()
+        } catch (e: Exception) { }
+    }
     AndroidView(
         modifier = modifier,
         factory = { c ->
             VideoView(c).apply {
+                tampilanVideo.value = this
                 setVideoURI(uri)
                 setOnPreparedListener { mp ->
                     mp.isLooping = loop
@@ -717,10 +726,19 @@ private fun VipSvga(
     onLangkah: (Float) -> Unit = {},
     onMulai: () -> Unit = {},
 ) {
+    val tampilanSvga = remember { androidx.compose.runtime.mutableStateOf<SVGAImageView?>(null) }
+    val hidupSvga = LayarAktif.hidup
+    androidx.compose.runtime.LaunchedEffect(hidupSvga) {
+        val v = tampilanSvga.value ?: return@LaunchedEffect
+        try {
+            if (hidupSvga) v.startAnimation() else v.stopAnimation()
+        } catch (e: Exception) { }
+    }
     AndroidView(
         modifier = modifier,
         factory = { c ->
             SVGAImageView(c).apply {
+                tampilanSvga.value = this
                 loops = if (loop) 0 else 1
                 clearsAfterStop = true
                 // Sudah ada frame berjalan? Dipakai supaya startAnimation tidak
@@ -822,6 +840,7 @@ private fun VipSvga(
             }
         },
         onRelease = { v ->
+            tampilanSvga.value = null
             // Dulu animasi tetap jalan walau view sudah dilepas: memori naik terus
             // sampai aplikasi tertutup sendiri saat berada di room.
             try { v.stopAnimation() } catch (e: Exception) { }

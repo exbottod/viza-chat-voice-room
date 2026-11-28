@@ -2320,8 +2320,10 @@ private fun RmSeatView(index: Int, seat: Seat?, size: Dp, locked: Boolean = fals
     // Foto kursi didekode seukuran kursinya (64dp -> sekitar 170 px), bukan
     // seukuran foto asli. Sepuluh kursi berfoto besar sekaligus inilah yang
     // membuat layar room berat.
+    // Foto kursi cukup seukuran tampilnya. Dulu batas atasnya 256 px padahal
+    // kursi hanya 48 sampai 54 dp, jadi memori terbuang dan layar lebih berat.
     val pxKursi = with(androidx.compose.ui.platform.LocalDensity.current) { size.toPx().toInt() }
-        .coerceIn(96, 256)
+        .coerceIn(72, 144)
     // Foto terakhir yang berhasil didekode untuk kursi ini. Data kursi kadang
     // kosong sesaat saat kehadiran diperbarui; dulu itu membuat kursi kembali
     // menampilkan huruf nama lalu fotonya muncul lagi, dan mata melihatnya

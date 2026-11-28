@@ -254,8 +254,12 @@ object ProfileRepo {
     // Batas memakai ukuran memori nyata (KB), bukan jumlah foto. Satu perempat dari
     // memori aplikasi dipakai untuk foto, jadi foto kursi dan chat tidak digusur
     // saat game dibuka lalu ditutup, dan room tidak perlu mendekode ulang.
+    // Batas memori foto DIPERKECIL. Dulu seperempat memori aplikasi (sampai 96 MB)
+    // dipakai cache foto, sehingga memori cepat sesak, Android sering membersihkan
+    // memori di tengah pemakaian, dan seluruh layar terasa berat/patah-patah.
+    // Sekarang dibatasi 24 MB, cukup untuk semua kursi dan daftar chat.
     private val kuotaFotoKb: Int =
-        (Runtime.getRuntime().maxMemory() / 1024L / 4L).coerceIn(16_384L, 96_000L).toInt()
+        (Runtime.getRuntime().maxMemory() / 1024L / 8L).coerceIn(12_288L, 24_576L).toInt()
     private val avatarCache = object : android.util.LruCache<String, ImageBitmap>(kuotaFotoKb / 2) {
         override fun sizeOf(key: String, value: ImageBitmap): Int =
             ((value.width.toLong() * value.height.toLong() * 4L) / 1024L).toInt().coerceAtLeast(1)

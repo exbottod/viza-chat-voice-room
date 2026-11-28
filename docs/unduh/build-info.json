@@ -1,21 +1,21 @@
 {
   "status": "ok",
-  "versi": "1.0.411",
-  "catatan": "• Unduhan kecil sekarang benar-benar dipakai dan diperiksa keutuhannya\n• Pemasangan gagal \"masalah saat mengurai paket\" tidak terjadi lagi karena unduhan yang terpotong dito\n• Pindah tab dan buka halaman langsung tampil tanpa layar loading\n• Avatar di kursi mic tidak berkedip, latar room lebih ringan",
-  "ukuran_apk": 75815596,
-  "sha256_apk": "7b7525a12b14086407e67df1ea8f70fdcf0e14f3fad350b5ddd1d2a2f95de506",
+  "versi": "1.0.412",
+  "catatan": "• Animasi bingkai, efek masuk, dan video berhenti saat aplikasi ditinggal, jadi HP tidak menghangat da\n• Pindah tab dan buka halaman langsung tampil tanpa layar loading\n• Cache foto diperkecil, memori lebih lega\n• Unduhan kecil diperiksa keutuhannya sebelum dipasang",
+  "ukuran_apk": 75817126,
+  "sha256_apk": "785cd67ef1da208ea532a8ec923da410dbe263b9b4ff19e7eae0f0b480f28a05",
   "abis": {
     "arm64": {
-      "ukuran": 75815596,
-      "sha256": "7b7525a12b14086407e67df1ea8f70fdcf0e14f3fad350b5ddd1d2a2f95de506"
+      "ukuran": 75817126,
+      "sha256": "785cd67ef1da208ea532a8ec923da410dbe263b9b4ff19e7eae0f0b480f28a05"
     },
     "armv7": {
-      "ukuran": 74050103,
-      "sha256": "1b4da518c3ee57edc6ce78c01c6990a2d72b52b00a2f4fa1a1eff226b7cb0de0"
+      "ukuran": 74051644,
+      "sha256": "fabb8e84e8977988ef17238e23a5302c5db98289c73bd107f94c63fd8e928947"
     },
     "universal": {
-      "ukuran": 123669592,
-      "sha256": "b15fee6ef770179bc525379f40de98d03bc483e0aeb271eda35e09e6caddc13d"
+      "ukuran": 123671136,
+      "sha256": "b10ba9422b17be36dad21026eddef3615b146439e6c9b5232550c5a61a6ecf58"
     }
   }
 }
